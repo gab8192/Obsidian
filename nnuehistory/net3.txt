@@ -1,0 +1,3 @@
+Positions: 100M (from https://www.kaggle.com/datasets/linrock/sfnnv7-s3?select=test80-mar2023-2tb7p-filter-v6-sk16.min.binpack)
+L1: 256
+Epochs: 65
