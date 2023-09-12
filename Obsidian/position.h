@@ -152,10 +152,11 @@ __declspec(align(32)) struct Position {
 
   bool see_ge(Move m, Value threshold) const;
 
+  void setToFen(const string& fen, NNUE::Accumulator* accumulator);
+
+  string toFenString() const;
+
   void updateAccumulator(NNUE::Accumulator* accumulator);
 };
-
-void setPositionToFen(Position& pos, const string& fen, NNUE::Accumulator* accumulator);
-
 
 std::ostream& operator<<(std::ostream& stream, Position& sqr);

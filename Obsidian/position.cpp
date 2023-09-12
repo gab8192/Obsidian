@@ -2,6 +2,7 @@
 
 #include "move.h"
 #include "position.h"
+#include "uci.h"
 
 /// <summary>
 /// What castling rights can remain, once a piece goes from, or to the given square
@@ -318,9 +319,9 @@ int readNumberTillSpace(const std::string& str, int& i) {
   return num;
 }
 
-void setPositionToFen(Position& pos, const string& fen, NNUE::Accumulator* accumulator) {
+void Position::setToFen(const string& fen, NNUE::Accumulator* accumulator) {
 
-  memset(&pos, 0, sizeof(Position));
+  memset(this, 0, sizeof(Position));
 
   int idx = 0;
   {
@@ -350,15 +351,15 @@ void setPositionToFen(Position& pos, const string& fen, NNUE::Accumulator* accum
         case 'k': pc = B_KING; break;
         case 'K': pc = W_KING; break;
         }
-        pos.board[square] = pc;
-        pos.byPieceBB[ptypeOf(pc)] |= square;
-        pos.byColorBB[colorOf(pc)] |= square;
+        board[square] = pc;
+        byPieceBB[ptypeOf(pc)] |= square;
+        byColorBB[colorOf(pc)] |= square;
         ++square;
       }
     }
   }
 
-  pos.sideToMove = (fen[idx] == 'b') ? BLACK : WHITE;
+  sideToMove = (fen[idx] == 'b') ? BLACK : WHITE;
 
   idx += 2; // letter and space
 
@@ -367,10 +368,10 @@ void setPositionToFen(Position& pos, const string& fen, NNUE::Accumulator* accum
     
     while ((c = fen[idx++]) != ' ') {
       switch (c) {
-      case 'k': pos.castlingRights |= BLACK_OO;  break;
-      case 'q': pos.castlingRights |= BLACK_OOO; break;
-      case 'K': pos.castlingRights |= WHITE_OO;  break;
-      case 'Q': pos.castlingRights |= WHITE_OOO; break;
+      case 'k': castlingRights |= BLACK_OO;  break;
+      case 'q': castlingRights |= BLACK_OOO; break;
+      case 'K': castlingRights |= WHITE_OO;  break;
+      case 'Q': castlingRights |= WHITE_OOO; break;
       }
     }
   }
@@ -382,26 +383,76 @@ void setPositionToFen(Position& pos, const string& fen, NNUE::Accumulator* accum
 
     File epFile = File(fen[idx++] - 'a');
     Rank epRank = Rank(fen[idx++] - '1');      // should always be RANK_2 or RANK_7
-    pos.epSquare = make_square(epFile, epRank);
+    epSquare = make_square(epFile, epRank);
 
     idx++; // space
   }
   else {
-    pos.epSquare = SQ_NONE;
+    epSquare = SQ_NONE;
     idx += 2; // hyphen and space
   }
 
   // Accept incomplete FENs
   if (fen.size() > idx) {
-    pos.rule50_count = readNumberTillSpace(fen, idx);
+    rule50_count = readNumberTillSpace(fen, idx);
     idx++;
-    pos.ply = readNumberTillSpace(fen, idx);
+    ply = readNumberTillSpace(fen, idx);
   }
-  pos.ply = myMax(2 * (pos.ply - 1), 0) + (pos.sideToMove == BLACK);
+  ply = myMax(2 * (ply - 1), 0) + (sideToMove == BLACK);
 
-  pos.updateAttacksToKings();
-  pos.updateKey();
-  pos.updateAccumulator(accumulator);
+  updateAttacksToKings();
+  updateKey();
+  updateAccumulator(accumulator);
+}
+
+string Position::toFenString() const {
+  ostringstream ss;
+
+  for (Rank r = RANK_8; r >= RANK_1; --r) {
+    int emptyC = 0;
+    for (File f = FILE_A; f <= FILE_H; ++f) {
+      Piece pc = board[make_square(f, r)];
+      if (pc == NO_PIECE) {
+        emptyC++;
+      }
+      else {
+        if (emptyC)
+          ss << emptyC;
+        ss << piecesChar[pc];
+        emptyC = 0;
+      }
+    }
+    if (emptyC)
+      ss << emptyC;
+
+    if (r != RANK_1)
+      ss << '/';
+  }
+
+  ss << (sideToMove == WHITE ? " w " : " b ");
+
+  if (castlingRights & WHITE_OO)
+    ss << 'K';
+  if (castlingRights & WHITE_OOO)
+    ss << 'Q';
+  if (castlingRights & BLACK_OO)
+    ss << 'k';
+  if (castlingRights & BLACK_OOO)
+    ss << 'q';
+
+  if (!castlingRights)
+    ss << '-';
+
+  if (epSquare == SQ_NONE)
+    ss << " - ";
+  else
+    ss << ' ' << UCI::square(epSquare) << ' ';
+
+  ss << rule50_count << ' ';
+
+  ss << (1 + (ply - (sideToMove == BLACK)) / 2);
+
+  return ss.str();
 }
 
 std::ostream& operator<<(std::ostream& stream, Position& pos) {
@@ -422,9 +473,7 @@ std::ostream& operator<<(std::ostream& stream, Position& pos) {
   ss << rowSeparator;
   ss << "\n   a   b   c   d   e   f   g   h\n";
   ss << "\nKey: " << (void*) pos.key;
-  ss << "\nSide to move: " << (pos.sideToMove == WHITE ? "white" : "black");
-  ss << "\nCastling rights: " << pos.castlingRights;
-  ss << "\nEn passant square: " << pos.epSquare;
+  ss << "\nFEN: " << pos.toFenString();
 
   stream << ss.str();
 

@@ -55,7 +55,7 @@ namespace {
     searchLimits.depth = 10;
 
     for (int i = 0; i < posCount; i++) {
-      setPositionToFen(Search::position, TestFENs[i], Search::accumulatorStack);
+      Search::position.setToFen(TestFENs[i], & Search::accumulatorStack[0]);
 
       Search::clear();
 
@@ -92,7 +92,7 @@ namespace {
     else
         return;
 
-    setPositionToFen(pos, fen, &Search::accumulatorStack[0]);
+    pos.setToFen(fen, &Search::accumulatorStack[0]);
 
     seenPositions.push_back(pos.key);
 
@@ -173,7 +173,7 @@ void UCI::loop(int argc, char* argv[]) {
 
   string token, cmd;
 
-  setPositionToFen(Search::position, StartFEN, & Search::accumulatorStack[0]);
+  Search::position.setToFen(StartFEN, & Search::accumulatorStack[0]);
 
   for (int i = 1; i < argc; ++i)
       cmd += std::string(argv[i]) + " ";
