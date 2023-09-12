@@ -9,6 +9,7 @@ namespace Search {
   extern Position position;
   extern NNUE::Accumulator accumulatorStack[MAX_PLY];
 
+  extern uint64_t nodesSearched;
 
   enum State {
     STOPPED, RUNNING, STOP_PENDING
@@ -37,6 +38,8 @@ namespace Search {
   int perft(int depth);
 
   void clear();
+
+  void startSearch();
 
   // Unfortunately we need unsigned ###(void*) because it needs to be passed to CreateThread
   unsigned idleLoop(void*);
