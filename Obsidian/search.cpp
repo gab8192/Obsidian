@@ -398,9 +398,11 @@ namespace Search {
 	  }
 	}
 
+	// depth should always be >= 1 at this point
+
 	// Razoring
 	if (eval < alpha - 400 - 500 * depth) {
-	  return qsearch<NonPV>(alpha - 1, alpha, ss+1);
+	  return qsearch<nodeType>(alpha, beta, ss+1);
 	}
 
 	// Null move pruning
