@@ -25,7 +25,9 @@ namespace Search {
   struct SearchInfo {
 	Value staticEval;
 	Move playedMove;
+
 	Move pv[MAX_PLY];
+	int pvLength;
   };
 
   uint64_t nodesSearched;
@@ -315,6 +317,18 @@ namespace Search {
 	return bestValue;
   }
 
+  inline void updatePV(SearchInfo* ss, Move move) {
+	// set the move in the pv
+	ss->pv[ply] = move;
+
+	// copy all the moves that follow, from the child pv
+	for (int i = ply + 1; i < (ss + 1)->pvLength; i++) {
+	  ss->pv[i] = (ss + 1)->pv[i];
+	}
+
+	ss->pvLength = (ss + 1)->pvLength;
+  }
+
   template<NodeType nodeType>
   Value negaMax(Value alpha, const Value beta, int depth, bool cutNode, SearchInfo* ss) {
 	constexpr bool PvNode = nodeType != NonPV;
@@ -322,8 +336,13 @@ namespace Search {
 
 	const Color us = position.sideToMove, them = ~us;
 
-	if (PvNode && selDepth < ply)
-	  selDepth = ply;
+	if (PvNode) {
+	  // init node
+	  ss->pvLength = ply;
+
+	  if (ply > selDepth)
+		selDepth = ply;
+	}
 
 	if (!rootNode) {
 	  if (is2FoldRepetition() || position.rule50_count >= 50)
@@ -466,19 +485,16 @@ namespace Search {
 		  }
 
 		  // This is never reached on a NonPV node
+
 		  alpha = bestValue;
-		  ss->pv[ply] = bestMove;
+
+		  updatePV(ss, bestMove);
 		}
 	  }
 	}
 
 	if (!foundLegalMove)
 	  return position.checkers ? Value(ply - VALUE_MATE) : VALUE_DRAW;
-
-	// Pv, but not root
-	if (nodeType == PV) {
-	  memcpy((ss-1)->pv + ply, ss->pv + ply, depth * sizeof(Move));
-	}
 
 	ttEntry->store(alpha > oldAlpha ? TT::FLAG_EXACT : TT::FLAG_ALPHA, depth, bestMove, bestValue);
 
@@ -490,7 +506,7 @@ namespace Search {
 
 	ostringstream output;
 
-	for (int ply = 0; ply < rootDepth; ply++) {
+	for (int ply = 0; ply < ss->pvLength; ply++) {
 	  Move move = ss->pv[ply];
 	  if (!move)
 		break;
@@ -524,6 +540,8 @@ namespace Search {
 
 	for (int i = 0; i < MAX_PLY + SsOffset; i++) {
 	  searchStack[i].staticEval = VALUE_NONE;
+
+	  searchStack[i].pvLength = 0;
 	}
 
 	if (searchLimits.depth == 0)
@@ -604,7 +622,7 @@ namespace Search {
 		<< " nodes " << nodesSearched
 		<< " nps " << (nodesSearched * 1000ULL) / myMax(elapsed, 1)
 		<< " time " << elapsed
-	//	<< " pv " << getPvString(ss)
+		<< " pv " << getPvString(ss)
 		<< endl;
 
 	  // Stop searching if we can deliver a forced checkmate.
