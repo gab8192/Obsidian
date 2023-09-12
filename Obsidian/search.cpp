@@ -604,7 +604,7 @@ namespace Search {
 		<< " nodes " << nodesSearched
 		<< " nps " << (nodesSearched * 1000ULL) / myMax(elapsed, 1)
 		<< " time " << elapsed
-		<< " pv " << getPvString(ss)
+	//	<< " pv " << getPvString(ss)
 		<< endl;
 
 	  // Stop searching if we can deliver a forced checkmate.
