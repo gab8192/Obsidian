@@ -37,6 +37,8 @@ namespace Search {
   template<bool root>
   int perft(int depth);
 
+  void searchInit();
+
   void clear();
 
   void startSearch();

@@ -46,8 +46,22 @@ namespace Search {
   Position position;
   MoveList rootMoves;
 
+  // assume 128 is the maximum moves
+  int lmrTable[MAX_PLY][128];
+
   void clear() {
 	TT::clear();
+  }
+
+  // Called one at engine initialization
+  void searchInit() {
+	clear();
+
+	for (int i = 0; i < MAX_PLY; i++) {
+	  for (int m = 0; m < 128; m++) {
+		lmrTable[i][m] = 0.75 + log(i) * log(m) / 2.25;
+	  }
+	}
   }
 
   NNUE::Accumulator* currentAccumulator() {
@@ -379,6 +393,8 @@ namespace Search {
     if (depth <= 0)
 	  return qsearch<PvNode ? PV : NonPV>(alpha, beta, ss+1);
 
+	bool improving = false;
+
 	// Static evaluation of the position
 	if (position.checkers) {
 	  ss->staticEval = eval = VALUE_NONE;
@@ -390,12 +406,15 @@ namespace Search {
 	  if (ttEntry->getStaticEval() == VALUE_NONE)
 		ttEntry->storeStaticEval(Eval::evaluate());
 
-	  eval = ttEntry->getStaticEval();
+	  ss->staticEval = eval = ttEntry->getStaticEval();
 
 	  if (ttValue != VALUE_NONE) {
 		if (ttFlag == TT::FLAG_EXACT || ttFlag == flagForTT(ttValue > eval))
-		  eval = ttValue;
+		  ss->staticEval = eval = ttValue;
 	  }
+
+	  if ((ss - 2)->staticEval != VALUE_NONE)
+		improving = eval > (ss - 2)->staticEval;
 	}
 
 	// depth should always be >= 1 at this point
@@ -427,7 +446,9 @@ namespace Search {
 	if (cutNode && depth >= 4 && !ttMove)
 	  depth -= 2;
 
-	moves_loop:
+  moves_loop:
+
+	const bool wasInCheck = position.checkers;
 
 	MoveList moves;
 	if (rootNode)
@@ -464,12 +485,30 @@ namespace Search {
 
 	  Value value;
 
-	  if (!PvNode || playedMoves >= 1) {
-		value = -negaMax<NonPV>(-alpha - 1, -alpha, depth - 1, !cutNode, ss+1);
+	  bool needFullSearch;
+	  if (!wasInCheck && depth >= 3 && playedMoves > (1 + 2 * PvNode)) {
+		int R = lmrTable[depth][myMin(128, playedMoves + 1)];
+
+		R += !improving;
+		R += !PvNode;
+
+		// Do the clamp to avoid a qsearch or an extension in the child search
+		int reducedDepth = myClamp(depth - R, 1, depth + 1);
+
+		value = -negaMax<NonPV>(-alpha - 1, -alpha, reducedDepth, true, ss + 1);
+
+		needFullSearch = value > alpha && reducedDepth < depth;
 	  }
+	  else
+		needFullSearch = !PvNode || playedMoves >= 1;
+
+
+	  if (needFullSearch)
+		  value = -negaMax<NonPV>(-alpha - 1, -alpha, depth - 1, !cutNode, ss + 1);
+
 
 	  if (PvNode && (playedMoves == 0 || value > alpha))
-		value = -negaMax<PV>(-beta, -alpha, depth - 1, false, ss+1);
+		value = -negaMax<PV>(-beta, -alpha, depth - 1, false, ss + 1);
 
 	  cancelMove();
 
@@ -509,8 +548,8 @@ namespace Search {
 
 	ostringstream output;
 
-	for (int ply = 0; ply < ss->pvLength; ply++) {
-	  Move move = ss->pv[ply];
+	for (int i = 0; i < ss->pvLength; i++) {
+	  Move move = ss->pv[i];
 	  if (!move)
 		break;
 
@@ -539,13 +578,13 @@ namespace Search {
 
 	SearchLoopInfo iterDeepening[MAX_PLY];
 	
-	SearchInfo* ss = &searchStack[SsOffset];
-
 	for (int i = 0; i < MAX_PLY + SsOffset; i++) {
 	  searchStack[i].staticEval = VALUE_NONE;
 
 	  searchStack[i].pvLength = 0;
 	}
+
+	SearchInfo* ss = &searchStack[SsOffset];
 
 	if (searchLimits.depth == 0)
 	  searchLimits.depth = MAX_PLY;

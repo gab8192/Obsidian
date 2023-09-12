@@ -24,6 +24,8 @@ int main(int argc, char** argv)
   bitboardsInit();
   positionInit();
 
+  Search::searchInit();
+
   Threads::searchState = Search::STOPPED;
 
   UCI::init(Options);
@@ -31,8 +33,6 @@ int main(int argc, char** argv)
   TT::resize(Options["Hash"]);
 
   NNUE::load("net3.nnue");
-
-  Search::clear();
 
   Threads::searchThread = CreateThread(NULL, 16 * 1024 * 1024,
 	(LPTHREAD_START_ROUTINE) Search::idleLoop, NULL, 0, NULL);
