@@ -20,6 +20,7 @@ namespace Search {
   struct SearchLoopInfo {
 	Value score;
 	Move bestMove;
+	int selDepth;
   };
 
   struct SearchInfo {
@@ -609,6 +610,7 @@ namespace Search {
 		score = negaMax<Root>(-VALUE_INFINITE, VALUE_INFINITE, rootDepth, false, ss);
 	  }
 
+	  iterDeepening[rootDepth].selDepth = selDepth;
 	  iterDeepening[rootDepth].score = score;
 	  iterDeepening[rootDepth].bestMove = ss->pv[0];
 
@@ -630,6 +632,13 @@ namespace Search {
 	  // because we may have overlooked a way out of checkmate due to pruning
 	  if (score >= VALUE_MATE_IN_MAX_PLY)
 		goto bestMoveDecided;
+
+	  // If the position is a dead draw, stop searching
+	  if (rootDepth >= 8 && abs(score) < 4) {
+		if (iterDeepening[rootDepth].selDepth == iterDeepening[rootDepth - 1].selDepth &&
+		  iterDeepening[rootDepth].selDepth == iterDeepening[rootDepth - 2].selDepth)
+		  goto bestMoveDecided;
+	  }
 
 	  if (searchLimits.hasTimeLimit() && rootDepth >= 4) {
 
