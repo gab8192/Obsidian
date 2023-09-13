@@ -1,6 +1,5 @@
 #pragma once
 
-#include "position.h"
 #include "search.h"
 
 namespace Threads {

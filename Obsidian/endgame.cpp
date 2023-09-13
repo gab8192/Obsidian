@@ -1,9 +1,6 @@
 #include "endgame.h"
-#include "search.h"
 
 namespace Eval {
-
-#define pos Search::position
 
   inline int corner_distance(Square sq) {
 	return edge_distance(file_of(sq)) + edge_distance(rank_of(sq));
@@ -13,7 +10,7 @@ namespace Eval {
   /// Evaluate a position where one of the players has only the king
   /// </summary>
   /// <returns> A value relative to the strong side </returns>
-  Value evaluateEndgame(Color strongSide) {
+  Value evaluateEndgame(Position& pos, Color strongSide) {
 	Bitboard strongSidePieces = pos.pieces(strongSide) ^ pos.pieces(strongSide, KING);
 	const Square strongKing = pos.kingSquare(strongSide);
 	const Square weakKing = pos.kingSquare(~strongSide);

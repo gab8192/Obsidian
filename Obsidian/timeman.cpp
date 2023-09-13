@@ -1,10 +1,10 @@
+#include "timeman.h"
+#include "search.h"
+#include "uci.h"
+
 #include <algorithm>
 #include <cfloat>
 #include <cmath>
-
-#include "search.h"
-#include "timeman.h"
-#include "uci.h"
 
 namespace TimeMan {
 

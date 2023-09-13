@@ -1,8 +1,8 @@
-#include <iostream>
-#include <fstream>
-
 #include "nnue.h"
 #include "search.h"
+
+#include <iostream>
+#include <fstream>
 
 using namespace std;
 

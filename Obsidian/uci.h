@@ -1,11 +1,11 @@
 #pragma once
 
+#include "position.h"
+#include "types.h"
+
 #include <map>
 #include <string>
 #include <vector>
-
-#include "position.h"
-#include "types.h"
 
 extern std::vector<uint64_t> seenPositions;
 

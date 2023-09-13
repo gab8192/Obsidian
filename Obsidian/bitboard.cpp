@@ -1,7 +1,7 @@
+#include "bitboard.h"
+
 #include <immintrin.h>
 #include <iostream>
-
-#include "bitboard.h"
 
 
 /*

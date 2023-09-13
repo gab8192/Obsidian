@@ -1,10 +1,10 @@
 #pragma once
 
+#include "types.h"
+
 #ifdef USE_AVX2
   #include <immintrin.h>
 #endif
-
-#include "types.h"
 
 namespace NNUE {
 

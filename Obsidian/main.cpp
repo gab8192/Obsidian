@@ -1,20 +1,17 @@
 // Obsidian.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
-#include <iomanip>
-#include <iostream>
-#include <sstream>
-#include <vector>
 #include <Windows.h>
 
-#include "Bitboard.h"
-#include "evaluate.h"
-#include "nnue.h"
 #include "threads.h"
 #include "tt.h"
 #include "uci.h"
 
-using namespace Eval;
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+#include <vector>
+
 using namespace std;
 
 int main(int argc, char** argv)

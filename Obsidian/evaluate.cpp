@@ -1,9 +1,9 @@
+#include "evaluate.h"
+#include "endgame.h"
+#include "search.h"
+
 #include <algorithm>
 #include <iostream>
-
-#include "endgame.h"
-#include "evaluate.h"
-#include "search.h"
 
 using namespace Search;
 using namespace std;
@@ -24,7 +24,7 @@ namespace Eval {
 
 	if (whiteOnlyKing != blackOnlyKing) {
 	  Color strongSide = whiteOnlyKing ? BLACK : WHITE;
-	  Value strongV = evaluateEndgame(strongSide);
+	  Value strongV = evaluateEndgame(pos, strongSide);
 
 	  v = ( strongSide == pos.sideToMove ? strongV : -strongV);
 

@@ -1,17 +1,16 @@
-#include <sstream>
-#include <Windows.h>
-
-#ifdef USE_AVX2
-  #include <immintrin.h>
-#endif
-
+#include "search.h"
 #include "evaluate.h"
 #include "movegen.h"
-#include "search.h"
 #include "timeman.h"
 #include "threads.h"
 #include "tt.h"
 #include "uci.h"
+
+#include <sstream>
+
+#ifdef USE_AVX2
+  #include <immintrin.h>
+#endif
 
 using namespace Threads;
 

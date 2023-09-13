@@ -1,8 +1,8 @@
 #pragma once
 
-#include <immintrin.h>
-
 #include "types.h"
+
+#include <immintrin.h>
 
 inline Square getLsb(Bitboard bb) {
     return Square(_tzcnt_u64(bb));

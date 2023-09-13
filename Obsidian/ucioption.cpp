@@ -1,11 +1,11 @@
+#include "uci.h"
+#include "search.h"
+#include "tt.h"
+
 #include <algorithm>
 #include <cassert>
 #include <ostream>
 #include <sstream>
-
-#include "search.h"
-#include "tt.h"
-#include "uci.h"
 
 using std::string;
 

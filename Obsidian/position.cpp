@@ -1,8 +1,8 @@
-#include <sstream>
-
-#include "move.h"
 #include "position.h"
+#include "move.h"
 #include "uci.h"
+
+#include <sstream>
 
 /// <summary>
 /// What castling rights can remain, once a piece goes from, or to the given square

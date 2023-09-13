@@ -1,10 +1,4 @@
-#include <cassert>
-#include <cmath>
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <vector>
-
+#include "uci.h"
 #include "bench.h"
 #include "evaluate.h"
 #include "move.h"
@@ -12,7 +6,13 @@
 #include "nnue.h"
 #include "search.h"
 #include "threads.h"
-#include "uci.h"
+
+#include <cassert>
+#include <cmath>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
 
 using namespace std;
 using namespace Threads;
