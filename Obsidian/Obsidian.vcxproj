@@ -149,6 +149,7 @@
     <ClCompile Include="ucioption.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="bench.h" />
     <ClInclude Include="bitboard.h" />
     <ClInclude Include="endgame.h" />
     <ClInclude Include="evaluate.h" />

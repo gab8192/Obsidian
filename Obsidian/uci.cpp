@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "bench.h"
 #include "evaluate.h"
 #include "move.h"
 #include "movegen.h"
@@ -23,36 +24,13 @@ namespace {
   // Initial position
   const char* StartFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-  const char* TestFENs[] = {
-    "rn1qkb1r/p4ppp/1pp1pn2/3p3b/2PP3N/1QN1P2P/PP3PP1/R1B1KB1R w KQkq - 1 9",
-    "r2qk2r/ppp1ppbp/3p1np1/3Pn3/2P1P3/2N2B2/PP3PPP/R1BQK2R w KQkq - 1 9",
-    "r1bqkb1r/ppp1p1pp/1n1pp3/6N1/2PP4/3n4/PP3PPP/RNBQK2R w KQkq - 0 9",
-    "r2q1rk1/ppp2ppp/2np1n2/2b1pb2/2P5/2N1P1PP/PP1PNPB1/R1BQ1RK1 w - - 1 9",
-    "r2qk1nr/1ppb2bp/p1np1pp1/4p1B1/B1PPP3/2N2N2/PP3PPP/R2QK2R w KQkq - 0 9",
-    "rnb1kb1r/2q2ppp/p2ppn2/1p6/3NPP2/2N5/PPP1B1PP/R1BQ1RK1 w kq b6 0 9",
-    "r1bqk2r/p3bppp/2p2n2/n3p1N1/8/8/PPPPBPPP/RNBQK2R w KQkq - 2 9",
-    "r1bq1rk1/pp1nppbp/2p2np1/8/2QPP3/2N2N2/PP2BPPP/R1B1K2R w KQ - 2 9",
-    "r2q1rk1/pbpnbppp/1p1ppn2/8/2PP4/2N2NP1/PPQ1PPBP/R1B2RK1 w - - 2 9",
-    "r1bqk2r/ppp2ppp/2n5/3pp3/2PPn3/P3P3/1PQ2PPP/R1B1KBNR w KQkq - 0 9",
-    "r1b1qrk1/ppp1b1pp/2nppn2/5p2/2PP4/2N2NP1/PPQ1PPBP/R1B2RK1 w - - 3 9",
-    "r1b1k2r/pppp1ppp/2n5/3QP3/2P2Bn1/q1P2N2/P3PPPP/R3KB1R w KQkq - 1 9",
-    "r1b2rk1/ppqnbppp/2pppn2/8/2PPP3/2N2N2/PP2BPPP/R1BQR1K1 w - - 2 9",
-    "rnb1k2r/p3ppbp/2p2np1/qp6/3PP3/1QN2N2/PP3PPP/R1B1KB1R w KQkq - 2 9",
-    "r1bqk2r/pp2ppbp/2n2np1/3p4/3NP3/2N1B3/PPP1BPPP/R2Q1RK1 w kq - 0 9",
-    "r2q1rk1/pp1bppbp/n2p1np1/2p5/2PPP3/2N2NP1/PP3PBP/R1BQ1RK1 w - - 1 9",
-    "r1b1k1nr/pp2qppp/2pp4/2b5/2BpPP2/3P4/PPP3PP/RNBQ1RK1 w kq - 1 9",
-    "r1bqk2r/ppnnppbp/2p3p1/8/Q2PP3/2N1BN2/PP3PPP/R3KB1R w KQkq - 3 9",
-    "r1bqk1nr/pp1n3p/2pb4/3p1pp1/3P4/5NP1/PP1NPPBP/R1BQ1RK1 w kq - 0 9",
-    "rn2kb1r/pb3ppp/5q2/1Ppp4/8/5N2/PP2PPPP/R1BQKB1R w KQkq d6 0 9"
-  };
-
   void bench() {
     constexpr int posCount = sizeof(TestFENs) / sizeof(char*);
 
-    int totalNodes = 0;
+    uint64_t totalNodes = 0;
 
     searchLimits = Search::Limits();
-    searchLimits.depth = 10;
+    searchLimits.depth = 11;
 
     for (int i = 0; i < posCount; i++) {
       Search::position.setToFen(TestFENs[i], & Search::accumulatorStack[0]);
@@ -69,7 +47,6 @@ namespace {
 
     cout << "\n###\n\n";
 
-    cout << "Average nodes -> " << (totalNodes / posCount) << endl;
     cout << "Total nodes (bench) -> " << (totalNodes) << endl;
   }
 

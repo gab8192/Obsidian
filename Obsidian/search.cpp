@@ -55,7 +55,6 @@ namespace Search {
 
   // Called one at engine initialization
   void searchInit() {
-	clear();
 
 	for (int i = 0; i < MAX_PLY; i++) {
 	  for (int m = 0; m < 128; m++) {
@@ -505,7 +504,6 @@ namespace Search {
 
 	  if (needFullSearch)
 		  value = -negaMax<NonPV>(-alpha - 1, -alpha, depth - 1, !cutNode, ss + 1);
-
 
 	  if (PvNode && (playedMoves == 0 || value > alpha))
 		value = -negaMax<PV>(-beta, -alpha, depth - 1, false, ss + 1);

@@ -98,5 +98,8 @@
     <ClInclude Include="nnue.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="bench.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
