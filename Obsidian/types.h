@@ -96,16 +96,6 @@ struct CastlingData {
   Square kingSrc, kingDest, rookSrc, rookDest;
 };
 
-const string CASTLING_STRING[9] = {
-    "",
-    "e1g1", // WHITE_OO
-    "e1c1", // WHITE_OOO
-    "",
-    "e8g8", // BLACK_OO
-    "", "", "",
-    "e8c8" // BLACK_OOO
-};
-
 constexpr CastlingData CASTLING_DATA[9] = {
     {},
     {SQ_E1, SQ_G1, SQ_H1, SQ_F1}, // WHITE_OO

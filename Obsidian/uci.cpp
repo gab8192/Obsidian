@@ -236,7 +236,8 @@ string UCI::move(Move m) {
   string move;
 
   if (getMoveType(m) == MT_CASTLING) {
-    move = CASTLING_STRING[getCastlingType(m)];
+    const CastlingData& cd = CASTLING_DATA[getCastlingType(m)];
+    move = UCI::square(cd.kingSrc) + UCI::square(cd.kingDest);
   }
   else {
     move = UCI::square(getMoveSrc(m)) + UCI::square(getMoveDest(m));
