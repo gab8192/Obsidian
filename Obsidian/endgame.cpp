@@ -39,7 +39,7 @@ namespace Eval {
 	  Bitboard sspIter = strongSidePieces;
 	  while (sspIter) {
 		Square sq = popLsb(sspIter);
-		value += PieceValue[ptypeOf(pos.board[sq])];
+		value += PieceValue[pos.board[sq]];
 	  }
 	}
 
