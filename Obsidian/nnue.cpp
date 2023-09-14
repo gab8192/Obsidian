@@ -201,7 +201,7 @@ namespace NNUE {
 
 #endif // USE_AVX2
 
-	return Value(sum / 32);
+	return Value(sum / 40);
   }
 
 }
