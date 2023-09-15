@@ -52,6 +52,14 @@ struct MoveList {
 	moves[head++] = move;
   }
 
+  inline int indexOf(Move move) const {
+	for (int i = 0; i < size(); i++) {
+	  if (moves[i] == move)
+		return i;
+	}
+	return -1;
+  }
+
   inline int size() const {
 	return head;
   }

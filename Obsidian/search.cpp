@@ -449,11 +449,16 @@ namespace Search {
 	const bool wasInCheck = position.checkers;
 
 	MoveList moves;
-	if (rootNode)
+	if (rootNode) {
 	  moves = rootMoves;
-	else
+
+	  for (int i = 0; i < rootMoves.size(); i++)
+		rootMoves.scores[i] = -VALUE_INFINITE;
+	}
+	else {
 	  getPseudoLegalMoves(position, &moves);
-	scoreMoves(moves, ttMove);
+	  scoreMoves(moves, ttMove);
+	}
 
 	bool foundLegalMove = false;
 	int playedMoves = 0;
@@ -510,6 +515,9 @@ namespace Search {
 	  cancelMove();
 
 	  playedMoves++;
+
+	  if (rootNode)
+		rootMoves.scores[rootMoves.indexOf(move)] = value;
 
 	  if (value > bestValue) {
 		bestValue = value;
@@ -602,7 +610,6 @@ namespace Search {
 		rootMoves.add(move);
 	  }
 	}
-	scoreMoves(rootMoves, MOVE_NONE);
 
 	for (rootDepth = 1; rootDepth <= searchLimits.depth; rootDepth++) {
 	  selDepth = 0;
