@@ -30,6 +30,8 @@ namespace Search {
 	int pvLength;
   };
 
+  Color rootColor;
+
   uint64_t nodesSearched;
 
   int selDepth;
@@ -125,8 +127,29 @@ namespace Search {
 	Root, PV, NonPV
   };
 
+  inline clock_t elapsedTime() {
+	return clock() - searchLimits.startTime;
+  }
+
+  void checkTime() {
+	if (!searchLimits.hasTimeLimit())
+	  return;
+
+	// never use more than 70~80 % of our time
+	double d = 0.7;
+	if (searchLimits.inc[rootColor])
+	  d += 0.1;
+
+	if (elapsedTime() >= d * searchLimits.time[rootColor]) {
+	  searchState = STOP_PENDING;
+	}
+  }
+
   inline void playNullMove(SearchInfo* ss) {
 	nodesSearched++;
+	if ((nodesSearched % 32768) == 0)
+	  checkTime();
+
 	ss->playedMove = MOVE_NONE;
 	pushPosition();
 	position.doNullMove();
@@ -134,6 +157,9 @@ namespace Search {
 
   inline void playMove(Move move, SearchInfo* ss) {
 	nodesSearched++;
+	if ((nodesSearched % 32768) == 0)
+	  checkTime();
+
 	ss->playedMove = move;
 	pushPosition();
 	position.doMove(move, & accumulatorStack[ply]);
@@ -362,6 +388,9 @@ namespace Search {
 		return makeDrawValue();
 	}
 
+	if (searchState == STOP_PENDING)
+	  return makeDrawValue();
+
 	TT::Entry* ttEntry = TT::probe(position);
 	TT::Flag ttFlag = ttEntry->getFlag();
 	Value ttValue = ttEntry->getValue();
@@ -568,11 +597,9 @@ namespace Search {
 
   SearchInfo searchStack[MAX_PLY + SsOffset];
 
-  clock_t elapsedTime() {
-	return clock() - searchLimits.startTime;
-  }
-
   void startSearch() {
+
+	Move bestMove;
 
 	clock_t optimumTime;
 
@@ -580,6 +607,10 @@ namespace Search {
 	  optimumTime = TimeMan::calcOptimumTime(searchLimits, position.sideToMove);
 
 	ply = 0;
+
+	nodesSearched = 0;
+
+	rootColor = position.sideToMove;
 
 	SearchLoopInfo iterDeepening[MAX_PLY];
 	
@@ -593,8 +624,6 @@ namespace Search {
 
 	if (searchLimits.depth == 0)
 	  searchLimits.depth = MAX_PLY;
-
-	nodesSearched = 0;
 
 	// Setup root moves
 	rootMoves = MoveList();
@@ -625,15 +654,10 @@ namespace Search {
 		  
 		  int adjustedDepth = myMax(1, rootDepth - failedHighCnt);
 
-		  score = negaMax<Root>(alpha, beta, rootDepth, false, ss);
+		  score = negaMax<Root>(alpha, beta, adjustedDepth, false, ss);
 
 		  if (Threads::searchState == STOP_PENDING)
 			goto bestMoveDecided;
-
-		  if (searchLimits.hasTimeLimit()) {
-			if (elapsedTime() >= optimumTime)
-			  goto bestMoveDecided;
-		  }
 
 		  if (score <= alpha) {
 			beta = Value((alpha + beta) / 2);
@@ -655,9 +679,13 @@ namespace Search {
 		score = negaMax<Root>(-VALUE_INFINITE, VALUE_INFINITE, rootDepth, false, ss);
 	  }
 
+	  // It's super important to not update the best move if the search was abruptly stopped
+	  if (Threads::searchState == STOP_PENDING)
+		goto bestMoveDecided;
+
 	  iterDeepening[rootDepth].selDepth = selDepth;
 	  iterDeepening[rootDepth].score = score;
-	  iterDeepening[rootDepth].bestMove = ss->pv[0];
+	  iterDeepening[rootDepth].bestMove = bestMove = ss->pv[0];
 
 	  clock_t elapsed = elapsedTime();
 
@@ -693,7 +721,7 @@ namespace Search {
 		if (elapsed > optimumTime)
 		  goto bestMoveDecided;
 
-		if (elapsed > optimumTime / 3) {
+		if (elapsed > optimumTime * 0.4) {
 
 		  // And the best move is the same as that of prev iteration
 		  bool sameBestMove = iterDeepening[rootDepth - 1].bestMove == iterDeepening[rootDepth].bestMove;
@@ -701,10 +729,10 @@ namespace Search {
 
 		  // If the score is almost the same or the best move is stable, we can stop searching
 
-		  if (scoreDiff < 8)
+		  if (scoreDiff < 5)
 			goto bestMoveDecided;
 
-		  if (sameBestMove && scoreDiff < 30)
+		  if (sameBestMove && scoreDiff < 20)
 			goto bestMoveDecided;
 		  
 		}
@@ -713,7 +741,7 @@ namespace Search {
 
   bestMoveDecided:
 
-	std::cout << "bestmove " << UCI::move(ss->pv[0]) << endl;
+	std::cout << "bestmove " << UCI::move(bestMove) << endl;
 
 	Threads::searchState = STOPPED;
   }
