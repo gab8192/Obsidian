@@ -693,7 +693,7 @@ namespace Search {
 		if (elapsed > optimumTime)
 		  goto bestMoveDecided;
 
-		if (elapsed > optimumTime * 0.3) {
+		if (elapsed > optimumTime / 3) {
 
 		  // And the best move is the same as that of prev iteration
 		  bool sameBestMove = iterDeepening[rootDepth - 1].bestMove == iterDeepening[rootDepth].bestMove;
@@ -701,10 +701,10 @@ namespace Search {
 
 		  // If the score is almost the same or the best move is stable, we can stop searching
 
-		  if (scoreDiff < 10)
+		  if (scoreDiff < 8)
 			goto bestMoveDecided;
 
-		  if (sameBestMove && scoreDiff < 35)
+		  if (sameBestMove && scoreDiff < 30)
 			goto bestMoveDecided;
 		  
 		}
