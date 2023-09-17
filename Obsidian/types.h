@@ -5,7 +5,7 @@
 
 using namespace std;
 
-const string engineVersion = "dev";
+const string engineVersion = "2.0";
 
 
 using Key = unsigned __int64;
