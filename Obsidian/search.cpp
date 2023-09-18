@@ -706,17 +706,12 @@ namespace Search {
 	  if (score >= VALUE_MATE_IN_MAX_PLY)
 		goto bestMoveDecided;
 
-	  // If the position is a dead draw, stop searching
-	  if (rootDepth >= 8 && abs(score) < 4) {
-		if (iterDeepening[rootDepth].selDepth == iterDeepening[rootDepth - 1].selDepth &&
-		  iterDeepening[rootDepth].selDepth == iterDeepening[rootDepth - 2].selDepth)
-		  goto bestMoveDecided;
-	  }
-
 	  if (searchLimits.hasTimeLimit() && rootDepth >= 4) {
 
-		if (rootDepth > 12 && score == VALUE_DRAW) // FIXME
+		// If the position is a dead draw, stop searching
+		if (rootDepth >= 40 && abs(score) < 5) {
 		  goto bestMoveDecided;
+		}
 
 		if (elapsed > optimumTime)
 		  goto bestMoveDecided;
