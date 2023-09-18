@@ -28,7 +28,7 @@ namespace Eval {
 
 	  v = ( strongSide == pos.sideToMove ? strongV : -strongV);
 
-	  v = Value(v * (200 - pos.rule50_count) / 200);
+	  v = Value(v * (200 - pos.halfMoveClock) / 200);
 	}
 	else {
 	  v = NNUE::evaluate();

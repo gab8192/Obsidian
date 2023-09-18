@@ -253,7 +253,7 @@ namespace Search {
   }
 
   inline Value makeDrawValue() {
-	return VALUE_DRAW + int(nodesSearched & 0x2);
+	return Value( int(nodesSearched % 3ULL) - 1 );
   }
 
   template<NodeType nodeType>
@@ -266,7 +266,7 @@ namespace Search {
 	TT::Flag ttFlag = ttEntry->getFlag();
 	Value ttValue = ttEntry->getValue();
 
-	if (position.rule50_count >= 50)
+	if (position.halfMoveClock >= 100)
 	  return makeDrawValue();
 
 	if (!PvNode 
@@ -384,7 +384,7 @@ namespace Search {
 	}
 
 	if (!rootNode) {
-	  if (is2FoldRepetition() || position.rule50_count >= 50)
+	  if (is2FoldRepetition() || position.halfMoveClock >= 100)
 		return makeDrawValue();
 	}
 

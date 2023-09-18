@@ -166,7 +166,7 @@ void Position::doNullMove() {
 
   ply++;
 
-  rule50_count++;
+  halfMoveClock++;
 
   sideToMove = them;
   key ^= RANDOM_ARRAY[780];
@@ -185,7 +185,7 @@ void Position::doMove(Move move, NNUE::Accumulator* acc) {
 
   ply++;
 
-  rule50_count++;
+  halfMoveClock++;
 
   CastlingRights oldCastlingRights = castlingRights;
 
@@ -200,7 +200,7 @@ void Position::doMove(Move move, NNUE::Accumulator* acc) {
     const Piece capturedPc = board[to];
 
     if (capturedPc != NO_PIECE) {
-      rule50_count = 0;
+      halfMoveClock = 0;
 
       removePiece(to, capturedPc, acc);
 
@@ -212,7 +212,7 @@ void Position::doMove(Move move, NNUE::Accumulator* acc) {
 
     switch (ptypeOf(movedPc)) {
     case PAWN: {
-      rule50_count = 0;
+      halfMoveClock = 0;
 
       if (to == from + 16) { // black can take en passant
         epSquare = from + 8;
@@ -259,7 +259,7 @@ void Position::doMove(Move move, NNUE::Accumulator* acc) {
     break;
   }
   case MT_EN_PASSANT: {
-    rule50_count = 0;
+    halfMoveClock = 0;
 
     const Square from = getMoveSrc(move);
     const Square to = getMoveDest(move);
@@ -278,7 +278,7 @@ void Position::doMove(Move move, NNUE::Accumulator* acc) {
     break;
   }
   case MT_PROMOTION: {
-    rule50_count = 0;
+    halfMoveClock = 0;
 
     const Square from = getMoveSrc(move);
     const Square to = getMoveDest(move);
@@ -393,7 +393,7 @@ void Position::setToFen(const string& fen, NNUE::Accumulator* accumulator) {
 
   // Accept incomplete FENs
   if (fen.size() > idx) {
-    rule50_count = readNumberTillSpace(fen, idx);
+    halfMoveClock = readNumberTillSpace(fen, idx);
     idx++;
     ply = readNumberTillSpace(fen, idx);
   }
@@ -447,7 +447,7 @@ string Position::toFenString() const {
   else
     ss << ' ' << UCI::square(epSquare) << ' ';
 
-  ss << rule50_count << ' ';
+  ss << halfMoveClock << ' ';
 
   ss << (1 + (ply - (sideToMove == BLACK)) / 2);
 

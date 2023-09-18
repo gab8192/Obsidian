@@ -22,7 +22,7 @@ __declspec(align(32)) struct Position {
   Bitboard byPieceBB[PIECE_TYPE_NB];
   Piece board[SQUARE_NB];
 
-  int rule50_count;
+  int halfMoveClock;
 
   Key key;
 
