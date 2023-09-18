@@ -54,14 +54,13 @@ Bitboard Position::slidingAttackersTo(Square square, Color attackerColor, Bitboa
 void Position::updatePins(Color us) {
   const Color them = ~us;
 
-  Bitboard sliders = pieces(them);
-  Square ksq = kingSquare(us);
-
   blockersForKing[us] = 0;
   pinners[them] = 0;
 
+  Square ksq = kingSquare(us);
+
   Bitboard snipers = ((get_rook_attacks(ksq) & pieces(QUEEN, ROOK))
-    | (get_bishop_attacks(ksq) & pieces(QUEEN, BISHOP))) & sliders;
+    | (get_bishop_attacks(ksq) & pieces(QUEEN, BISHOP))) & pieces(them);
   Bitboard occupancy = pieces() ^ snipers;
 
   while (snipers)
@@ -73,7 +72,7 @@ void Position::updatePins(Color us) {
     if (BitCount(b) == 1)
     {
       blockersForKing[us] |= b;
-      if (b & pieces(colorOf(board[ksq])))
+      if (b & pieces(us))
         pinners[them] |= sniperSq;
     }
   }
