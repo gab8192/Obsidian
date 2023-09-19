@@ -15,6 +15,7 @@ using Bitboard = unsigned __int64;
 const string piecesChar = " PNBRQK  pnbrqk";
 
 constexpr int MAX_PLY = 246;
+constexpr int MAX_MOVES = 224; // 32*7
 
 #define BitCount(x) _mm_popcnt_u64(x)
 

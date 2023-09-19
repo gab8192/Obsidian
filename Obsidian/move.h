@@ -3,23 +3,33 @@
 #include "types.h"
 
 /*
-* 6 bits for dest, 6 bits for src, 2 bits for move type, 2 bits for promotion type
+* 6 bits for src
+* 6 bits for dest
+* 2 bits for move type
+* 2 bits for extra info ( castling or promotion type )
 */
 
-inline Move createMove(Square src, Square dest, MoveType moveType) {
-  return Move(src | (dest << 6) | (moveType << 12));
+constexpr Move createMove(Square src, Square dest, MoveType moveType, int extra = 0) {
+  return Move( src | (dest << 6) | (moveType << 12) | (extra << 14) );
 }
 
 inline Move createPromoMove(Square src, Square dest, PieceType promoType) {
-  return Move(src | (dest << 6) | (MT_PROMOTION << 12) | ((promoType - KNIGHT) << 14));
+  return createMove(src, dest, MT_PROMOTION, promoType - KNIGHT);
 }
 
 inline Move createCastlingMove(CastlingRights type) {
-  return Move(type | (MT_CASTLING << 12));
-}
 
-inline CastlingRights getCastlingType(Move move) {
-  return CastlingRights(move & 63);
+  constexpr Move CastlingMoves[9] = {
+    MOVE_NONE,
+    createMove(SQ_E1, SQ_G1, MT_CASTLING, 0),
+    createMove(SQ_E1, SQ_C1, MT_CASTLING, 1),
+    MOVE_NONE,
+    createMove(SQ_E8, SQ_G8, MT_CASTLING, 2),
+    MOVE_NONE, MOVE_NONE, MOVE_NONE,
+    createMove(SQ_E8, SQ_C8, MT_CASTLING, 3)
+  };
+
+  return CastlingMoves[type];
 }
 
 inline Square getMoveSrc(Move move) {
@@ -35,14 +45,22 @@ inline MoveType getMoveType(Move move) {
   return (MoveType)((move >> 12) & 3);
 }
 
-inline PieceType getPromoType(Move move) {
+inline int getMoveExtra(Move move) {
   //  being these the last bits, we do not need to AND anything
-  return PieceType((move >> 14) + KNIGHT);
+  return move >> 14;
+}
+
+inline PieceType getPromoType(Move move) {
+  return PieceType(getMoveExtra(move) + KNIGHT);
+}
+
+inline CastlingRights getCastlingType(Move move) {
+  return CastlingRights(1 << getMoveExtra(move));
 }
 
 struct MoveList {
-  Move moves[128];
-  int scores[128];
+  Move moves[MAX_MOVES];
+  int scores[MAX_MOVES];
   int head;
 
   MoveList() : head(0) {

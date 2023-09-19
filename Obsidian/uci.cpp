@@ -231,20 +231,12 @@ std::string UCI::square(Square s) {
 string UCI::move(Move m) {
 
   if (m == MOVE_NONE)
-      return "(none)";
+    return "(none)";
 
-  string move;
+  string move = UCI::square(getMoveSrc(m)) + UCI::square(getMoveDest(m));
 
-  if (getMoveType(m) == MT_CASTLING) {
-    const CastlingData& cd = CASTLING_DATA[getCastlingType(m)];
-    move = UCI::square(cd.kingSrc) + UCI::square(cd.kingDest);
-  }
-  else {
-    move = UCI::square(getMoveSrc(m)) + UCI::square(getMoveDest(m));
-
-    if (getMoveType(m) == MT_PROMOTION)
-      move += "  nbrq"[getPromoType(m)];
-  }
+  if (getMoveType(m) == MT_PROMOTION)
+    move += "  nbrq"[getPromoType(m)];
 
   return move;
 }

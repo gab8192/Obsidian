@@ -47,8 +47,7 @@ namespace Search {
   Position position;
   MoveList rootMoves;
 
-  // assume 128 is the maximum moves
-  int lmrTable[MAX_PLY][128];
+  int lmrTable[MAX_PLY][MAX_MOVES];
 
   void clear() {
 	TT::clear();
@@ -61,7 +60,7 @@ namespace Search {
 	lmrTable[0][0] = 0;
 
 	for (int i = 1; i < MAX_PLY; i++) {
-	  for (int m = 1; m < 128; m++) {
+	  for (int m = 1; m < MAX_MOVES; m++) {
 		lmrTable[i][m] = 0.75 + log(i) * log(m) / 2.25;
 	  }
 	}
@@ -530,7 +529,7 @@ namespace Search {
 
 	  bool needFullSearch;
 	  if (!wasInCheck && depth >= 3 && playedMoves > (1 + 2 * PvNode)) {
-		int R = lmrTable[depth][myMin(128, playedMoves + 1)];
+		int R = lmrTable[depth][playedMoves + 1];
 
 		R += !improving;
 		R += !PvNode;
