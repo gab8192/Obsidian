@@ -178,7 +178,7 @@ namespace Search {
 
 	  Move m = moves[i];
 	  if (m == ttMove) {
-		moveScore = 2000;
+		moveScore = 1000000;
 		continue;
 	  }
 
