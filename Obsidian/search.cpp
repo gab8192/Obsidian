@@ -534,7 +534,7 @@ namespace Search {
 		int R = lmrTable[depth][playedMoves + 1];
 
 		R += !improving;
-		R += !PvNode;
+		R -= PvNode;
 
 		// Do the clamp to avoid a qsearch or an extension in the child search
 		int reducedDepth = myClamp(depth - R, 1, depth + 1);
