@@ -454,6 +454,14 @@ namespace Search {
 	  return qsearch<nodeType>(alpha, beta, ss+1);
 	}
 
+	// Reverse futility pruning
+	if (!PvNode
+	  && depth < 9
+	  && abs(eval) < VALUE_TB_WIN_IN_MAX_PLY
+	  && eval >= beta
+	  && eval + 65*improving - 75*depth >= beta)
+	  return eval;
+
 	// Null move pruning
 	if (!PvNode
 	  && (ss-1)->playedMove != MOVE_NONE
