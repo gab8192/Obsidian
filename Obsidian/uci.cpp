@@ -30,7 +30,7 @@ namespace {
     uint64_t totalNodes = 0;
 
     searchLimits = Search::Limits();
-    searchLimits.depth = 11;
+    searchLimits.depth = 12;
 
     for (int i = 0; i < posCount; i++) {
       Search::position.setToFen(TestFENs[i], & Search::accumulatorStack[0]);
