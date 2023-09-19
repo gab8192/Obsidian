@@ -57,8 +57,11 @@ namespace Search {
   // Called one at engine initialization
   void searchInit() {
 
-	for (int i = 0; i < MAX_PLY; i++) {
-	  for (int m = 0; m < 128; m++) {
+	// avoid log(0) because it's negative infinity
+	lmrTable[0][0] = 0;
+
+	for (int i = 1; i < MAX_PLY; i++) {
+	  for (int m = 1; m < 128; m++) {
 		lmrTable[i][m] = 0.75 + log(i) * log(m) / 2.25;
 	  }
 	}
