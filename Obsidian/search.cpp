@@ -239,15 +239,17 @@ namespace Search {
 
   // Should not be called from Root node
   bool is2FoldRepetition() {
-	int spN = seenPositions.size();
-	for (int i = 0; i < spN; i++) {
-	  if (position.key == seenPositions[i])
+	if (position.halfMoveClock < 4)
+	  return false;
+
+	// End at ply=1  because  posStack[0] = seenPositions[most-recent]
+	for (int i = ply - 1; i >= 1; --i) {
+	  if (position.key == posStack[i].key)
 		return true;
 	}
 
-	// Start from ply=1  because  posStack[0] = seenPositions[last]
-	for (int i = 1; i < ply; ++i) {
-	  if (position.key == posStack[i].key)
+	for (int i = seenPositions.size() - 1; i >= 0; --i) {
+	  if (position.key == seenPositions[i])
 		return true;
 	}
 
