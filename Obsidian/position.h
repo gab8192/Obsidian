@@ -13,7 +13,6 @@ using namespace std;
 void positionInit();
 
 __declspec(align(32)) struct Position {
-  int ply;
   Color sideToMove;
   Square epSquare;
   CastlingRights castlingRights;
@@ -23,6 +22,7 @@ __declspec(align(32)) struct Position {
   Piece board[SQUARE_NB];
 
   int halfMoveClock;
+  int gamePly;
 
   Key key;
 

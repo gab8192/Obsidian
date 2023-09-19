@@ -164,7 +164,7 @@ void Position::doNullMove() {
     epSquare = SQ_NONE;
   }
 
-  ply++;
+  gamePly++;
 
   halfMoveClock++;
 
@@ -183,7 +183,7 @@ void Position::doMove(Move move, NNUE::Accumulator* acc) {
     epSquare = SQ_NONE;
   }
 
-  ply++;
+  gamePly++;
 
   halfMoveClock++;
 
@@ -395,9 +395,9 @@ void Position::setToFen(const string& fen, NNUE::Accumulator* accumulator) {
   if (fen.size() > idx) {
     halfMoveClock = readNumberTillSpace(fen, idx);
     idx++;
-    ply = readNumberTillSpace(fen, idx);
+    gamePly = readNumberTillSpace(fen, idx);
   }
-  ply = myMax(2 * (ply - 1), 0) + (sideToMove == BLACK);
+  gamePly = myMax(2 * (gamePly - 1), 0) + (sideToMove == BLACK);
 
   updateAttacksToKings();
   updateKey();
@@ -449,7 +449,7 @@ string Position::toFenString() const {
 
   ss << halfMoveClock << ' ';
 
-  ss << (1 + (ply - (sideToMove == BLACK)) / 2);
+  ss << (1 + (gamePly - (sideToMove == BLACK)) / 2);
 
   return ss.str();
 }
