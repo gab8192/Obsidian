@@ -142,7 +142,7 @@ namespace Search {
 	if (searchLimits.inc[rootColor])
 	  d += 0.1;
 
-	if (elapsedTime() >= d * searchLimits.time[rootColor]) {
+	if (elapsedTime() >= d * searchLimits.time[rootColor] - 10) {
 	  searchState = STOP_PENDING;
 	}
   }
