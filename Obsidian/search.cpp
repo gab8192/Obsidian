@@ -758,7 +758,6 @@ namespace Search {
 
 	  while (Threads::searchState != RUNNING) {
 		_mm_pause();
-		continue;
 	  }
 
 	  startSearch();
