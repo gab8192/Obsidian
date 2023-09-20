@@ -373,7 +373,7 @@ namespace Search {
   }
 
   template<NodeType nodeType>
-  Value negaMax(Value alpha, const Value beta, int depth, bool cutNode, SearchInfo* ss) {
+  Value negaMax(Value alpha, Value beta, int depth, bool cutNode, SearchInfo* ss) {
 	constexpr bool PvNode = nodeType != NonPV;
 	constexpr bool rootNode = nodeType == Root;
 
@@ -390,6 +390,12 @@ namespace Search {
 	if (!rootNode) {
 	  if (is2FoldRepetition() || position.halfMoveClock >= 100)
 		return makeDrawValue();
+
+	  // mate distance pruning
+	  alpha = (Value) myMax(alpha, ply - VALUE_MATE);
+	  beta = (Value) myMin(beta, VALUE_MATE - ply - 1);
+	  if (alpha >= beta)
+		return alpha;
 	}
 
 	if (searchState == STOP_PENDING)
