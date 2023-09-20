@@ -234,7 +234,7 @@ namespace Search {
   }
 
   inline TT::Flag flagForTT(bool failsHigh) {
-	return  failsHigh ? TT::FLAG_BETA : TT::FLAG_ALPHA;
+	return  failsHigh ? TT::FLAG_LOWER : TT::FLAG_UPPER;
   }
 
   // Should not be called from Root node
@@ -342,7 +342,7 @@ namespace Search {
 
 		  // value >= beta is always true if beta==alpha+1 and value>alpha
 		  if (!PvNode || bestValue >= beta) {
-			ttEntry->store(TT::FLAG_BETA, 0, bestMove, bestValue);
+			ttEntry->store(TT::FLAG_LOWER, 0, bestMove, bestValue);
 			return bestValue;
 		  }
 
@@ -355,7 +355,7 @@ namespace Search {
 	if (position.checkers && !foundLegalMoves)
 	  return Value(ply - VALUE_MATE);
 
-	ttEntry->store(alpha > oldAlpha ? TT::FLAG_EXACT : TT::FLAG_ALPHA, 0, bestMove, bestValue);
+	ttEntry->store(alpha > oldAlpha ? TT::FLAG_EXACT : TT::FLAG_UPPER, 0, bestMove, bestValue);
 
 	return bestValue;
   }
@@ -574,7 +574,7 @@ namespace Search {
 
 		  // value >= beta is always true if beta==alpha+1 and value>alpha
 		  if (!PvNode || bestValue >= beta) {
-			ttEntry->store(TT::FLAG_BETA, depth, bestMove, bestValue);
+			ttEntry->store(TT::FLAG_LOWER, depth, bestMove, bestValue);
 			return bestValue;
 		  }
 
@@ -590,7 +590,7 @@ namespace Search {
 	if (!foundLegalMove)
 	  return position.checkers ? Value(ply - VALUE_MATE) : VALUE_DRAW;
 
-	ttEntry->store(alpha > oldAlpha ? TT::FLAG_EXACT : TT::FLAG_ALPHA, depth, bestMove, bestValue);
+	ttEntry->store(alpha > oldAlpha ? TT::FLAG_EXACT : TT::FLAG_UPPER, depth, bestMove, bestValue);
 
 	return bestValue;
   }

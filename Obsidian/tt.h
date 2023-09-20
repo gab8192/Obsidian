@@ -6,7 +6,7 @@
 namespace TT {
 
   enum Flag : uint8_t {
-    FLAG_ABSENT, FLAG_BETA, FLAG_ALPHA, FLAG_EXACT
+    FLAG_ABSENT, FLAG_LOWER, FLAG_UPPER, FLAG_EXACT
   };
 
 #pragma pack(1)
