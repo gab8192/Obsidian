@@ -452,6 +452,8 @@ namespace Search {
 
 	  if ((ss - 2)->staticEval != VALUE_NONE)
 		improving = eval > (ss - 2)->staticEval;
+	  else if ((ss - 4)->staticEval != VALUE_NONE)
+		improving = eval > (ss - 4)->staticEval;
 	}
 
 	// depth should always be >= 1 at this point
@@ -471,7 +473,7 @@ namespace Search {
 
 	// Null move pruning
 	if (!PvNode
-	  && (ss-1)->playedMove != MOVE_NONE
+	  && (ss - 1)->playedMove != MOVE_NONE
 	  && eval >= beta
 	  && position.hasNonPawns(position.sideToMove)
 	  && beta > VALUE_TB_LOSS_IN_MAX_PLY) {
@@ -611,7 +613,7 @@ namespace Search {
 	return output.str();
   }
 
-  constexpr int SsOffset = 2;
+  constexpr int SsOffset = 4;
 
   SearchInfo searchStack[MAX_PLY + SsOffset];
 
