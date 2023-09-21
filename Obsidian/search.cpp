@@ -679,6 +679,11 @@ namespace Search {
 		  if (Threads::searchState == STOP_PENDING)
 			goto bestMoveDecided;
 
+		  if (score >= VALUE_MATE_IN_MAX_PLY) {
+			beta = VALUE_INFINITE;
+			failedHighCnt = 0;
+		  }
+
 		  if (score <= alpha) {
 			beta = Value((alpha + beta) / 2);
 			alpha = (Value)myMax(-VALUE_INFINITE, alpha - windowSize);
