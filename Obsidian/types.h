@@ -228,8 +228,8 @@ ENABLE_LOGIC_OPERATORS_ON(CastlingRights)
 
 constexpr Color operator~(Color d1) { return Color(int(d1) ^ 1); }
 
-constexpr int PieceValue[PIECE_NB] = { 0, 100, 300, 350, 500, 1000, 0, 0,
-                                       0, 100, 300, 350, 500, 1000, 0, 0 };
+constexpr int PieceValue[PIECE_NB] = { 0, 101, 307, 349, 503, 1009, 0, 0,
+                                       0, 101, 307, 349, 503, 1009, 0, 0 };
 
 inline std::ostream& operator<<(std::ostream& stream, Color color) {
   stream << (color == WHITE ? "white" : "black");
