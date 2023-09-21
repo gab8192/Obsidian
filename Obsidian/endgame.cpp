@@ -22,8 +22,6 @@ namespace Eval {
 
 	// Only bishops
 	if (strongSidePieces == pos.pieces(BISHOP)) {
-	  if (BitCount(strongSidePieces) == 1)
-		return VALUE_DRAW;
 
 	  if ((strongSidePieces & DARK_SQUARES_BB)
 		&& (strongSidePieces & LIGHT_SQUARES_BB)) {
@@ -33,7 +31,7 @@ namespace Eval {
 		return VALUE_DRAW;
 	}
 
-	Value value = Value( 2000 );
+	Value value = Value(2000);
 
 	{
 	  Bitboard sspIter = strongSidePieces;
@@ -43,26 +41,22 @@ namespace Eval {
 	  }
 	}
 
-	if (strongSidePieces & ~pos.pieces(PAWN)) {
-	  // We have pieces other than pawns
+	// Keeping the strong king close to the opponent's king is good in any won endgame
+	value -= 20 * SquareDistance[strongKing][weakKing];
 
-	  value -= 20 * SquareDistance[strongKing][weakKing];
+	// Pushing the weak king towards a corner is good in any won endgame.
+	// It is not possible when having only pawns tho
+	if (strongSidePieces & ~pos.pieces(PAWN))
 	  value -= 20 * corner_distance(weakKing);
 
-	  return value;
-	}
-
 	Bitboard pawns = pos.pieces(PAWN);
-	if (pawns) {
-	  value -= 20 * SquareDistance[strongKing][weakKing];
-	  while (pawns) {
-		Square pawn = popLsb(pawns);
+	while (pawns) {
+	  Square pawn = popLsb(pawns);
 
-		if (strongKing & passed_pawn_span(strongSide, pawn))
-		  value += 100 + 30 * relative_rank(strongSide, pawn);
+	  if (strongKing & passed_pawn_span(strongSide, pawn))
+		value += 100 + 30 * relative_rank(strongSide, pawn);
 
-		value += 25 * (SquareDistance[weakKing][pawn] - SquareDistance[strongKing][pawn]);
-	  }
+	  value += 25 * (SquareDistance[weakKing][pawn] - SquareDistance[strongKing][pawn]);
 	}
 
 	return value;
