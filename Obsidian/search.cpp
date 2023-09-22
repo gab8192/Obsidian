@@ -266,12 +266,12 @@ namespace Search {
 
 	const Color us = position.sideToMove, them = ~us;
 
+	if (position.halfMoveClock >= 100)
+	  return makeDrawValue();
+
 	TT::Entry* ttEntry = TT::probe(position);
 	TT::Flag ttFlag = ttEntry->getFlag();
 	Value ttValue = ttEntry->getValue();
-
-	if (position.halfMoveClock >= 100)
-	  return makeDrawValue();
 
 	if (!PvNode 
 	  && ttValue != VALUE_NONE) {
