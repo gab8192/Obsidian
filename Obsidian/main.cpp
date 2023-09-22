@@ -29,7 +29,7 @@ int main(int argc, char** argv)
 
   TT::resize(Options["Hash"]);
 
-  NNUE::load("net3.nnue");
+  NNUE::load("net4.nnue");
 
   Threads::searchThread = CreateThread(NULL, 16 * 1024 * 1024,
 	(LPTHREAD_START_ROUTINE) Search::idleLoop, NULL, 0, NULL);

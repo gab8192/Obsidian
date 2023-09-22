@@ -9,7 +9,7 @@
 namespace NNUE {
 
   constexpr int FeatureDimensions = 768;
-  constexpr int TransformedFeatureDimensions = 256;
+  constexpr int TransformedFeatureDimensions = 384;
 
   struct Accumulator {
 	int16_t white[TransformedFeatureDimensions];
