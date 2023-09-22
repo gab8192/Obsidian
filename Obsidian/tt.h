@@ -6,7 +6,7 @@
 namespace TT {
 
   enum Flag : uint8_t {
-    FLAG_ABSENT, FLAG_LOWER, FLAG_UPPER, FLAG_EXACT
+    FLAG_LOWER, FLAG_UPPER, FLAG_EXACT
   };
 
 #pragma pack(1)
@@ -56,7 +56,6 @@ namespace TT {
 
     inline void clear() {
       depth = 0;
-      flag = FLAG_ABSENT;
       move = MOVE_NONE;
       value = VALUE_NONE;
       staticEval = VALUE_NONE;
