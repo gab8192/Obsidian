@@ -109,13 +109,10 @@ namespace Search {
 	  position.doMove(moves[i], & accumulatorStack[0]);
 
 	  int thisNodes = perft<false>(depth - 1);
-	  if constexpr (root) {
+	  if constexpr (root)
 		cout << UCI::move(moves[i]) << " -> " << thisNodes << endl;
-	  }
 
 	  popPosition();
-
-	  
 
 	  n += thisNodes;
 	}
@@ -621,13 +618,6 @@ namespace Search {
 
   SearchInfo searchStack[MAX_PLY + SsOffset];
 
-  double powSigned(double x, double y) {
-	if (x < 0)
-	  return -pow(-x, y);
-	else
-	  return pow(x, y);
-  }
-
   void startSearch() {
 
 	Move bestMove;
@@ -644,9 +634,6 @@ namespace Search {
 	rootColor = position.sideToMove;
 
 	SearchLoopInfo iterDeepening[MAX_PLY];
-	iterDeepening[0].bestMove = MOVE_NONE;
-	iterDeepening[0].score = VALUE_NONE;
-	iterDeepening[0].selDepth = 0;
 	
 	for (int i = 0; i < MAX_PLY + SsOffset; i++) {
 	  searchStack[i].staticEval = VALUE_NONE;
@@ -764,11 +751,8 @@ namespace Search {
 
 		double optScale = 1.0 - 0.05 * searchStability;
 
-		if (elapsed > optScale * optimumTime) {
-
+		if (elapsed > optScale * optimumTime)
 			goto bestMoveDecided;
-		  
-		}
 	  }
 	}
 
