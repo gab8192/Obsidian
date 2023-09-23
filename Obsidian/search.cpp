@@ -621,6 +621,13 @@ namespace Search {
 
   SearchInfo searchStack[MAX_PLY + SsOffset];
 
+  double powSigned(double x, double y) {
+	if (x < 0)
+	  return -pow(-x, y);
+	else
+	  return pow(x, y);
+  }
+
   void startSearch() {
 
 	Move bestMove;
@@ -637,6 +644,9 @@ namespace Search {
 	rootColor = position.sideToMove;
 
 	SearchLoopInfo iterDeepening[MAX_PLY];
+	iterDeepening[0].bestMove = MOVE_NONE;
+	iterDeepening[0].score = VALUE_NONE;
+	iterDeepening[0].selDepth = 0;
 	
 	for (int i = 0; i < MAX_PLY + SsOffset; i++) {
 	  searchStack[i].staticEval = VALUE_NONE;
@@ -663,6 +673,8 @@ namespace Search {
 		rootMoves.add(move);
 	  }
 	}
+
+	int searchStability = 0;
 
 	for (rootDepth = 1; rootDepth <= searchLimits.depth; rootDepth++) {
 	  selDepth = 0;
@@ -729,6 +741,11 @@ namespace Search {
 		<< " pv " << getPvString(ss)
 		<< endl;
 
+	  if (bestMove == iterDeepening[rootDepth - 1].bestMove)
+		searchStability = std::min(searchStability + 1, 10);
+	  else
+		searchStability = 0;
+
 	  // Stop searching if we can deliver a forced checkmate.
 	  // No need to stop if we are getting checkmated, instead keep searching,
 	  // because we may have overlooked a way out of checkmate due to pruning
@@ -736,7 +753,7 @@ namespace Search {
 		goto bestMoveDecided;
 
 	  if (searchLimits.hasTimeLimit() && rootDepth >= 4) {
-
+		
 		// If the position is a dead draw, stop searching
 		if (rootDepth >= 40 && abs(score) < 5) {
 		  goto bestMoveDecided;
@@ -745,18 +762,10 @@ namespace Search {
 		if (elapsed > optimumTime)
 		  goto bestMoveDecided;
 
-		if (elapsed > optimumTime * 0.4) {
+		double optScale = 1.0 - 0.05 * searchStability;
 
-		  // And the best move is the same as that of prev iteration
-		  bool sameBestMove = iterDeepening[rootDepth - 1].bestMove == iterDeepening[rootDepth].bestMove;
-		  int scoreDiff = abs(iterDeepening[rootDepth - 1].score - iterDeepening[rootDepth].score);
+		if (elapsed > optScale * optimumTime) {
 
-		  // If the score is almost the same or the best move is stable, we can stop searching
-
-		  if (scoreDiff < 5)
-			goto bestMoveDecided;
-
-		  if (sameBestMove && scoreDiff < 20)
 			goto bestMoveDecided;
 		  
 		}
