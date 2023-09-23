@@ -25,14 +25,11 @@ namespace TT {
 	clear();
   }
 
-  Entry* probe(Position& pos) {
+  Entry* probe(Position& pos, bool& hit) {
 	Key key = pos.key;
 
 	Entry* entry = &transTable[key % entryCount];
-	if (entry->getKey() != key) {
-	  entry->clear();
-	  entry->storeKey(key);
-	}
+	hit = (entry->getKey() == key);
 	return entry;
   }
 }

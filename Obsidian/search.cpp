@@ -269,9 +269,11 @@ namespace Search {
 	if (position.halfMoveClock >= 100)
 	  return makeDrawValue();
 
-	TT::Entry* ttEntry = TT::probe(position);
-	TT::Flag ttFlag = ttEntry->getFlag();
-	Value ttValue = ttEntry->getValue();
+	bool ttHit;
+	TT::Entry* ttEntry = TT::probe(position, ttHit);
+	TT::Flag ttFlag = ttHit ? ttEntry->getFlag() : (TT::Flag)0;
+	Value ttValue = ttHit ? ttEntry->getValue() : VALUE_NONE;
+	Move ttMove = ttHit ? ttEntry->getMove() : MOVE_NONE;
 
 	if (!PvNode 
 	  && ttValue != VALUE_NONE) {
@@ -281,18 +283,19 @@ namespace Search {
 	}
 
 	Move bestMove = MOVE_NONE;
-	Value bestValue;
+	Value bestValue, eval;
 	const Value oldAlpha = alpha;
 
 	if (position.checkers) {
 	  bestValue = -VALUE_INFINITE;
+	  eval = VALUE_NONE;
 	}
 	else {
 
-	  if (ttEntry->getStaticEval() == VALUE_NONE)
-		ttEntry->storeStaticEval(Eval::evaluate());
-
-	  bestValue = ttEntry->getStaticEval();
+	  if (ttHit && ttEntry->getStaticEval() != VALUE_NONE)
+		bestValue = eval = ttEntry->getStaticEval();
+	  else
+		bestValue = eval = Eval::evaluate();
 
 	  if (ttValue != VALUE_NONE) {
 		if (ttFlag == TT::FLAG_EXACT || ttFlag == flagForTT(ttValue > bestValue)) {
@@ -312,7 +315,7 @@ namespace Search {
 	else
 	  getAggressiveMoves(position, &moves);
 
-	scoreMoves(moves, ttEntry->getMove());
+	scoreMoves(moves, ttMove);
 
 	bool foundLegalMoves = false; 
 
@@ -342,7 +345,7 @@ namespace Search {
 
 		  // value >= beta is always true if beta==alpha+1 and value>alpha
 		  if (!PvNode || bestValue >= beta) {
-			ttEntry->store(TT::FLAG_LOWER, 0, bestMove, bestValue);
+			ttEntry->store(position.key, TT::FLAG_LOWER, 0, bestMove, bestValue, eval);
 			return bestValue;
 		  }
 
@@ -355,7 +358,7 @@ namespace Search {
 	if (position.checkers && !foundLegalMoves)
 	  return Value(ply - VALUE_MATE);
 
-	ttEntry->store(alpha > oldAlpha ? TT::FLAG_EXACT : TT::FLAG_UPPER, 0, bestMove, bestValue);
+	ttEntry->store(position.key, alpha > oldAlpha ? TT::FLAG_EXACT : TT::FLAG_UPPER, 0, bestMove, bestValue, eval);
 
 	return bestValue;
   }
@@ -401,10 +404,11 @@ namespace Search {
 	if (searchState == STOP_PENDING)
 	  return makeDrawValue();
 
-	TT::Entry* ttEntry = TT::probe(position);
-	TT::Flag ttFlag = ttEntry->getFlag();
-	Value ttValue = ttEntry->getValue();
-	Move ttMove = ttEntry->getMove();
+	bool ttHit;
+	TT::Entry* ttEntry = TT::probe(position, ttHit);
+	TT::Flag ttFlag = ttHit ? ttEntry->getFlag() : (TT::Flag)0;
+	Value ttValue = ttHit ? ttEntry->getValue() : VALUE_NONE;
+	Move ttMove = ttHit ? ttEntry->getMove() : MOVE_NONE;
 
 	if (rootNode) {
 	  if (!ttMove)
@@ -419,7 +423,7 @@ namespace Search {
 	if (position.checkers)
 	  depth = myMax(1, depth+1);
 
-	if (!PvNode 
+	if (!PvNode
 	  && ttEntry->getDepth() >= depth
 	  && ttValue != VALUE_NONE) {
 
@@ -440,10 +444,10 @@ namespace Search {
 	  goto moves_loop;
 	}
 	else {
-	  if (ttEntry->getStaticEval() == VALUE_NONE)
-		ttEntry->storeStaticEval(Eval::evaluate());
-
-	  ss->staticEval = eval = ttEntry->getStaticEval();
+	  if (ttHit && ttEntry->getStaticEval() != VALUE_NONE)
+		ss->staticEval = eval = ttEntry->getStaticEval();
+	  else
+		ss->staticEval = eval = Eval::evaluate();
 
 	  if (ttValue != VALUE_NONE) {
 		if (ttFlag == TT::FLAG_EXACT || ttFlag == flagForTT(ttValue > eval))
@@ -451,9 +455,9 @@ namespace Search {
 	  }
 
 	  if ((ss - 2)->staticEval != VALUE_NONE)
-		improving = eval > (ss - 2)->staticEval;
+		improving = ss->staticEval > (ss - 2)->staticEval;
 	  else if ((ss - 4)->staticEval != VALUE_NONE)
-		improving = eval > (ss - 4)->staticEval;
+		improving = ss->staticEval > (ss - 4)->staticEval;
 	}
 
 	// depth should always be >= 1 at this point
@@ -576,7 +580,7 @@ namespace Search {
 
 		  // value >= beta is always true if beta==alpha+1 and value>alpha
 		  if (!PvNode || bestValue >= beta) {
-			ttEntry->store(TT::FLAG_LOWER, depth, bestMove, bestValue);
+			ttEntry->store(position.key, TT::FLAG_LOWER, depth, bestMove, bestValue, ss->staticEval);
 			return bestValue;
 		  }
 
@@ -592,7 +596,7 @@ namespace Search {
 	if (!foundLegalMove)
 	  return position.checkers ? Value(ply - VALUE_MATE) : VALUE_DRAW;
 
-	ttEntry->store(alpha > oldAlpha ? TT::FLAG_EXACT : TT::FLAG_UPPER, depth, bestMove, bestValue);
+	ttEntry->store(position.key, alpha > oldAlpha ? TT::FLAG_EXACT : TT::FLAG_UPPER, depth, bestMove, bestValue, ss->staticEval);
 
 	return bestValue;
   }

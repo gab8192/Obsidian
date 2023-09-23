@@ -12,16 +12,23 @@ namespace TT {
 #pragma pack(1)
   struct Entry {
 
-    inline void store(Flag _flag, int _depth, Move _move, Value _value) {
+    inline void store(Key _key, Flag _flag, int _depth, Move _move, Value _value, Value _eval) {
       if (abs(_value) >= VALUE_TB_WIN_IN_MAX_PLY)
         return;
 
-      if (_depth >= this->depth) {
 
+
+      if (_key != this->key
+        || _depth >= this->depth) {
+
+        if (_key != this->key || _move || !this->move)
+          this->move = _move;
+
+        this->key = _key;
         this->flag = _flag;
         this->depth = _depth;
-        this->move = _move;
         this->value = _value;
+        this->staticEval = _eval;
       }
     }
 
@@ -29,16 +36,8 @@ namespace TT {
       return key;
     }
 
-    inline void storeKey(Key _key) {
-      this->key = _key;
-    }
-
     inline Value getStaticEval() {
       return Value(staticEval);
-    }
-
-    inline void storeStaticEval(Value _staticEval) {
-      this->staticEval = _staticEval;
     }
 
     inline int getDepth() {
@@ -55,7 +54,9 @@ namespace TT {
     }
 
     inline void clear() {
-      depth = 0;
+      key = 0xcafe;
+      depth = -1;
+      flag = (Flag)0;
       move = MOVE_NONE;
       value = VALUE_NONE;
       staticEval = VALUE_NONE;
@@ -76,5 +77,5 @@ namespace TT {
 
   void resize(size_t megaBytes);
 
-  Entry* probe(Position& pos);
+  Entry* probe(Position& pos, bool& hit);
 }
