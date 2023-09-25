@@ -1,6 +1,7 @@
 #pragma once
 
 #include "bitboard.h"
+#include "move.h"
 #include "nnue.h"
 #include "types.h"
 #include "zobrist.h"
@@ -140,6 +141,16 @@ __declspec(align(32)) struct Position {
     byPieceBB[ptypeOf(pc)] ^= fromTo;
 
     acc->moveFeature(from, to, pc);
+  }
+
+  inline bool isQuiet(Move move) {
+    MoveType mt = getMoveType(move);
+    if (mt == MT_PROMOTION || mt == MT_EN_PASSANT)
+      return false;
+    if (mt == MT_CASTLING)
+      return true;
+
+    return board[getMoveDest(move)] == NO_PIECE;
   }
 
   bool isLegal(Move move);

@@ -49,8 +49,17 @@ namespace Search {
 
   int lmrTable[MAX_PLY][MAX_MOVES];
 
+  int mainHistory[COLOR_NB][SQUARE_NB * SQUARE_NB];
+
+  inline int fromTo(Move m) {
+	return getMoveSrc(m) * SQUARE_NB + getMoveDest(m);
+  }
+
   void clear() {
+
 	TT::clear();
+
+	memset(mainHistory, 0, sizeof(mainHistory));
   }
 
   // Called one at engine initialization
@@ -170,6 +179,10 @@ namespace Search {
 	popPosition();
   }
 
+  int stat_bonus(int d) {
+	return std::min(2 * d * d + 16 * d, 1000);
+  }
+
   void scoreMoves(MoveList& moves, Move ttMove) {
 	for (int i = 0; i < moves.size(); i++) {
 	  int& moveScore = moves.scores[i];
@@ -182,6 +195,9 @@ namespace Search {
 
 	  // init it to 0
 	  moveScore = 0;
+
+	  if (position.isQuiet(m))
+		moveScore += mainHistory[position.sideToMove][fromTo(m)] / 300;
 
 	  switch (getMoveType(m)) {
 	  case MT_NORMAL: {
@@ -233,7 +249,7 @@ namespace Search {
   }
 
   inline TT::Flag flagForTT(bool failsHigh) {
-	return  failsHigh ? TT::FLAG_LOWER : TT::FLAG_UPPER;
+	return failsHigh ? TT::FLAG_LOWER : TT::FLAG_UPPER;
   }
 
   // Should not be called from Root node
@@ -590,6 +606,18 @@ namespace Search {
 	if (!foundLegalMove)
 	  return position.checkers ? Value(ply - VALUE_MATE) : VALUE_DRAW;
 
+	// Update histories
+	if (bestMove &&
+	  position.isQuiet(bestMove)) 
+	{
+	  int bonus = (bestValue > beta + 150) ? stat_bonus(depth + 1) : stat_bonus(depth);
+
+	  int& history = mainHistory[position.sideToMove][fromTo(bestMove)];
+
+	  history = myClamp(history + bonus, -12000, +12000);
+	}
+
+	// Store to TT
 	TT::Flag flag;
 	if (bestValue >= beta)
 	  flag = TT::FLAG_LOWER;
@@ -629,6 +657,12 @@ namespace Search {
 
 	if (searchLimits.hasTimeLimit())
 	  optimumTime = TimeMan::calcOptimumTime(searchLimits, position.sideToMove);
+
+	for (int c = WHITE; c <= BLACK; c++) {
+	  for (int i = 0; i < 4096; i++) {
+		  mainHistory[c][i] /= 5;
+	  }
+	}
 
 	ply = 0;
 
