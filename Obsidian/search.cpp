@@ -64,6 +64,8 @@ namespace Search {
 		lmrTable[i][m] = 0.75 + log(i) * log(m) / 2.25;
 	  }
 	}
+
+	clear();
   }
 
   NNUE::Accumulator* currentAccumulator() {
