@@ -77,5 +77,5 @@ namespace TT {
 
   void resize(size_t megaBytes);
 
-  Entry* probe(Position& pos, bool& hit);
+  Entry* probe(Key key, bool& hit);
 }

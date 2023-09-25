@@ -267,7 +267,7 @@ namespace Search {
 	  return makeDrawValue();
 
 	bool ttHit;
-	TT::Entry* ttEntry = TT::probe(position, ttHit);
+	TT::Entry* ttEntry = TT::probe(position.key, ttHit);
 	TT::Flag ttFlag = ttHit ? ttEntry->getFlag() : (TT::Flag)0;
 	Value ttValue = ttHit ? ttEntry->getValue() : VALUE_NONE;
 	Move ttMove = ttHit ? ttEntry->getMove() : MOVE_NONE;
@@ -402,7 +402,7 @@ namespace Search {
 	  return makeDrawValue();
 
 	bool ttHit;
-	TT::Entry* ttEntry = TT::probe(position, ttHit);
+	TT::Entry* ttEntry = TT::probe(position.key, ttHit);
 	TT::Flag ttFlag = ttHit ? ttEntry->getFlag() : (TT::Flag)0;
 	Value ttValue = ttHit ? ttEntry->getValue() : VALUE_NONE;
 	Move ttMove = ttHit ? ttEntry->getMove() : MOVE_NONE;
@@ -469,7 +469,7 @@ namespace Search {
 	  && depth < 9
 	  && abs(eval) < VALUE_TB_WIN_IN_MAX_PLY
 	  && eval >= beta
-	  && eval + 65*improving - 75*depth >= beta)
+	  && eval + 120*improving - 140*depth >= beta)
 	  return eval;
 
 	// Null move pruning

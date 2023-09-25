@@ -25,9 +25,7 @@ namespace TT {
 	clear();
   }
 
-  Entry* probe(Position& pos, bool& hit) {
-	Key key = pos.key;
-
+  Entry* probe(Key key, bool& hit) {
 	Entry* entry = &entries[key % entryCount];
 	hit = (entry->getKey() == key);
 	return entry;
