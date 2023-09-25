@@ -417,7 +417,6 @@ namespace Search {
 	Value eval;
 	Move bestMove = MOVE_NONE;
 	Value bestValue = -VALUE_INFINITE;
-	const Value oldAlpha = alpha;
 
 	if (position.checkers)
 	  depth = myMax(1, depth+1);
@@ -577,13 +576,9 @@ namespace Search {
 		if (bestValue > alpha) {
 		  bestMove = move;
 
-		  // value >= beta is always true if beta==alpha+1 and value>alpha
-		  if (!PvNode || bestValue >= beta) {
-			ttEntry->store(position.key, TT::FLAG_LOWER, depth, bestMove, bestValue, ss->staticEval);
-			return bestValue;
-		  }
-
-		  // This is never reached on a NonPV node
+		  // Always true in NonPV nodes
+		  if (bestValue >= beta) 
+			break;
 
 		  alpha = bestValue;
 
@@ -595,7 +590,13 @@ namespace Search {
 	if (!foundLegalMove)
 	  return position.checkers ? Value(ply - VALUE_MATE) : VALUE_DRAW;
 
-	ttEntry->store(position.key, alpha > oldAlpha ? TT::FLAG_EXACT : TT::FLAG_UPPER, depth, bestMove, bestValue, ss->staticEval);
+	TT::Flag flag;
+	if (bestValue >= beta)
+	  flag = TT::FLAG_LOWER;
+	else
+	  flag = (PvNode && bestMove) ? TT::FLAG_EXACT : TT::FLAG_UPPER;
+
+	ttEntry->store(position.key, flag, depth, bestMove, bestValue, ss->staticEval);
 
 	return bestValue;
   }
