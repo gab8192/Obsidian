@@ -19,9 +19,9 @@ namespace TT {
 	entryCount = bytes / sizeof(Entry);
 
 	if (entries != nullptr)
-	  free(entries);
+	  delete[] entries;
 
-	entries = (Entry*) malloc(bytes);
+	entries = new Entry[entryCount];
 	clear();
   }
 
