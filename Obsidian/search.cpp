@@ -189,7 +189,7 @@ namespace Search {
 
 	  Move m = moves[i];
 	  if (m == ttMove) {
-		moveScore = 1000000;
+		moveScore = INT_MAX;
 		continue;
 	  }
 
@@ -213,15 +213,22 @@ namespace Search {
 		break;
 	  }
 	  case MT_CASTLING: {
-		moveScore = 60;
+		moveScore += 60;
 		break;
 	  }
 	  case MT_EN_PASSANT: {
-		moveScore = 80;
+		moveScore += 80;
 		break;
 	  }
 	  case MT_PROMOTION: {
-		moveScore = PieceValue[getPromoType(m)];
+		const Square to = getMoveDest(m);
+		const Piece capturedPc = position.board[to];
+
+		moveScore += PieceValue[getPromoType(m)];
+
+		if (capturedPc != NO_PIECE)
+		  moveScore += PieceValue[capturedPc];
+
 		break;
 	  }
 	  }
