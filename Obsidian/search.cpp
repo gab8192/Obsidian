@@ -545,8 +545,8 @@ namespace Search {
 
 	  foundLegalMove = true;
 
-	  // Pruning at shallow depth
-	  if (nodeType != Root) {
+	  if ( !rootNode
+		&& bestValue > VALUE_TB_LOSS_IN_MAX_PLY) {
 		bool capture = false;
 		if (getMoveType(move) == MT_NORMAL) {
 		  capture = position.board[getMoveDest(move)] != NO_PIECE;
