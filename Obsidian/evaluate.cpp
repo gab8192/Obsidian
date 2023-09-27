@@ -31,7 +31,7 @@ namespace Eval {
 	  v = Value(v * (200 - pos.halfMoveClock) / 200);
 	}
 	else {
-	  v = NNUE::evaluate();
+	  v = NNUE::evaluate(Search::currentAccumulator(), pos.sideToMove);
 	}
 
 	return v;

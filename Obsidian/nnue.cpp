@@ -1,5 +1,5 @@
 #include "nnue.h"
-#include "search.h"
+#include "bitboard.h"
 
 #include <iostream>
 #include <fstream>
@@ -144,15 +144,11 @@ namespace NNUE {
 	}
   }
 
-  Value evaluate() {
-	Position& position = Search::position;
-
-	Accumulator* accumulator = Search::currentAccumulator();
-
+  Value evaluate(Accumulator* accumulator, Color sideToMove) {
 	int16_t* stmAccumulator;
 	int16_t* oppAccumulator;
 
-	if (position.sideToMove == WHITE) {
+	if (sideToMove == WHITE) {
 	  stmAccumulator = accumulator->white;
 	  oppAccumulator = accumulator->black;
 	}

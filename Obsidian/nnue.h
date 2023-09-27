@@ -26,5 +26,5 @@ namespace NNUE {
 
   void load(const char* file);
 
-  Value evaluate();
+  Value evaluate(Accumulator* accumulator, Color sideToMove);
 }
