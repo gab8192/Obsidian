@@ -54,7 +54,9 @@ namespace Eval {
 	  Square pawn = popLsb(pawns);
 
 	  if (strongKing & passed_pawn_span(strongSide, pawn))
-		value += 100 + 30 * relative_rank(strongSide, pawn);
+		value += 200;
+
+	  value += 30 * relative_rank(strongSide, pawn);
 
 	  value += 25 * (SquareDistance[weakKing][pawn] - SquareDistance[strongKing][pawn]);
 	}
