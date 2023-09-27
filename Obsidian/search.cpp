@@ -453,7 +453,7 @@ namespace Search {
 	}
 
     if (depth <= 0)
-	  return qsearch<PvNode ? PV : NonPV>(alpha, beta, ss+1);
+	  return qsearch<PvNode ? PV : NonPV>(alpha, beta, ss);
 
 	bool improving = false;
 
@@ -485,7 +485,7 @@ namespace Search {
 
 	// Razoring
 	if (eval < alpha - 400 - 500 * depth) {
-	  return qsearch<nodeType>(alpha, beta, ss+1);
+	  return qsearch<nodeType>(alpha, beta, ss);
 	}
 
 	// Reverse futility pruning
