@@ -197,7 +197,7 @@ namespace Search {
 	  moveScore = 0;
 
 	  if (position.isQuiet(m))
-		moveScore += mainHistory[position.sideToMove][fromTo(m)] / 300;
+		moveScore += mainHistory[position.sideToMove][fromTo(m)] / 200;
 
 	  switch (getMoveType(m)) {
 	  case MT_NORMAL: {
@@ -213,11 +213,11 @@ namespace Search {
 		break;
 	  }
 	  case MT_CASTLING: {
-		moveScore += 60;
+		moveScore += 50;
 		break;
 	  }
 	  case MT_EN_PASSANT: {
-		moveScore += 80;
+		moveScore += 70;
 		break;
 	  }
 	  case MT_PROMOTION: {
