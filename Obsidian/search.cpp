@@ -298,10 +298,8 @@ namespace Search {
 	Value ttValue = ttHit ? ttEntry->getValue() : VALUE_NONE;
 	Move ttMove = ttHit ? ttEntry->getMove() : MOVE_NONE;
 
-	if (!PvNode 
-	  && ttValue != VALUE_NONE) {
-
-		if (ttFlag == TT::FLAG_EXACT || ttFlag == flagForTT(ttValue >= beta))
+	if (!PvNode) {
+		if (ttFlag & flagForTT(ttValue >= beta))
 		  return ttValue;
 	}
 
@@ -320,10 +318,8 @@ namespace Search {
 	  else
 		bestValue = eval = Eval::evaluate();
 
-	  if (ttValue != VALUE_NONE) {
-		if (ttFlag == TT::FLAG_EXACT || ttFlag == flagForTT(ttValue > bestValue)) {
-		  bestValue = ttValue;
-		}
+	  if (ttFlag & flagForTT(ttValue > bestValue)) {
+		bestValue = ttValue;
 	  }
 
 	  if (bestValue >= beta)
@@ -429,7 +425,7 @@ namespace Search {
 
 	bool ttHit;
 	TT::Entry* ttEntry = TT::probe(position.key, ttHit);
-	TT::Flag ttFlag = ttHit ? ttEntry->getFlag() : (TT::Flag)0;
+	TT::Flag ttFlag = ttHit ? ttEntry->getFlag() : TT::NO_FLAG;
 	Value ttValue = ttHit ? ttEntry->getValue() : VALUE_NONE;
 	Move ttMove = ttHit ? ttEntry->getMove() : MOVE_NONE;
 
@@ -446,10 +442,9 @@ namespace Search {
 	  depth = myMax(1, depth+1);
 
 	if (!PvNode
-	  && ttEntry->getDepth() >= depth
-	  && ttValue != VALUE_NONE) {
+	  && ttEntry->getDepth() >= depth) {
 
-		if (ttFlag == TT::FLAG_EXACT || ttFlag == flagForTT(ttValue >= beta))
+		if (ttFlag & flagForTT(ttValue >= beta))
 		  return ttValue;
 	}
 
@@ -471,10 +466,8 @@ namespace Search {
 	  else
 		ss->staticEval = eval = Eval::evaluate();
 
-	  if (ttValue != VALUE_NONE) {
-		if (ttFlag == TT::FLAG_EXACT || ttFlag == flagForTT(ttValue > eval))
-		  ss->staticEval = eval = ttValue;
-	  }
+	  if (ttFlag & flagForTT(ttValue > eval))
+		ss->staticEval = eval = ttValue;
 
 	  if ((ss - 2)->staticEval != VALUE_NONE)
 		improving = ss->staticEval > (ss - 2)->staticEval;
