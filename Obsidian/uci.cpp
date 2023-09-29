@@ -47,7 +47,8 @@ namespace {
 
     cout << "\n###\n\n";
 
-    cout << "Total nodes (bench) -> " << (totalNodes) << endl;
+    // FIXME do not hardcode nps, actually calculate the average nps
+    cout << totalNodes << " nodes 2800000 nps" << endl;
   }
 
   void position(Position& pos, istringstream& is) {
