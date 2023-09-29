@@ -6,6 +6,7 @@
 #include "tt.h"
 #include "uci.h"
 
+#include <cmath>
 #include <sstream>
 
 #ifdef USE_AVX2
@@ -807,7 +808,7 @@ namespace Search {
 	Threads::searchState = STOPPED;
   }
 
-  unsigned idleLoop(void*) {
+  void* idleLoop(void*) {
 	while (true) {
 
 	  while (Threads::searchState != RUNNING) {

@@ -1,8 +1,6 @@
 // Obsidian.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
-#include <Windows.h>
-
 #include "threads.h"
 #include "tt.h"
 #include "uci.h"
@@ -10,6 +8,7 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <thread>
 #include <vector>
 
 using namespace std;
@@ -31,12 +30,11 @@ int main(int argc, char** argv)
 
   NNUE::load("net4.nnue");
 
-  Threads::searchThread = CreateThread(NULL, 16 * 1024 * 1024,
-	(LPTHREAD_START_ROUTINE) Search::idleLoop, NULL, 0, NULL);
+  std::thread searchThread(Search::idleLoop, nullptr);
 
   UCI::loop(argc, argv);
 
-  TerminateThread(Threads::searchThread, 0);
+  searchThread.detach();
 
   return 0;
 }

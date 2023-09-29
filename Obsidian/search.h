@@ -43,6 +43,5 @@ namespace Search {
 
   void startSearch();
 
-  // Unfortunately we need unsigned ###(void*) because it needs to be passed to CreateThread
-  unsigned idleLoop(void*);
+  void* idleLoop(void*);
 }
