@@ -6,7 +6,9 @@
 namespace TT {
 
   enum Flag : uint8_t {
-    FLAG_LOWER, FLAG_UPPER, FLAG_EXACT
+    FLAG_LOWER = 1,
+    FLAG_UPPER = 2,
+    FLAG_EXACT = 3
   };
 
 #pragma pack(1)
@@ -15,8 +17,6 @@ namespace TT {
     inline void store(Key _key, Flag _flag, int _depth, Move _move, Value _value, Value _eval) {
       if (abs(_value) >= VALUE_TB_WIN_IN_MAX_PLY)
         return;
-
-
 
       if (_key != this->key
         || _depth >= this->depth) {
