@@ -699,6 +699,8 @@ namespace Search {
 	  }
 	}
 
+	scoreMoves(rootMoves, MOVE_NONE);
+
 	int searchStability = 0;
 
 	for (rootDepth = 1; rootDepth <= searchLimits.depth; rootDepth++) {
