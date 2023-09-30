@@ -6,6 +6,8 @@
   #include <immintrin.h>
 #endif
 
+#define EvalFile "net4.nnue"
+
 namespace NNUE {
 
   constexpr int FeatureDimensions = 768;
@@ -24,7 +26,7 @@ namespace NNUE {
 	void moveFeature(Square from, Square to, Piece pc);
   };
 
-  void load(const char* file);
+  void load();
 
   Value evaluate(Accumulator* accumulator, Color sideToMove);
 }

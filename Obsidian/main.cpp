@@ -28,7 +28,7 @@ int main(int argc, char** argv)
 
   TT::resize(Options["Hash"]);
 
-  NNUE::load("net4.nnue");
+  NNUE::load();
 
   std::thread searchThread(Search::idleLoop, nullptr);
 

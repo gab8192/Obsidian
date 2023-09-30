@@ -1,8 +1,13 @@
 #include "nnue.h"
 #include "bitboard.h"
+#include "incbin.h"
 
 #include <iostream>
 #include <fstream>
+
+#ifndef _MSC_VER
+INCBIN(EmbeddedNNUE, EvalFile);
+#endif
 
 using namespace std;
 
@@ -146,8 +151,9 @@ namespace NNUE {
 	  TransformedFeatureDimensions * FeatureIndexTable[BLACK][pc][from]);
   }
 
-  void load(const char* file) {
-	ifstream stream(file, ios::binary);
+  void load() {
+#ifdef _MSC_VER
+	ifstream stream(EvalFile, ios::binary);
 
 	if (!bool(stream)) {
 	  cout << "Failed to load NNUE" << endl;
@@ -155,6 +161,9 @@ namespace NNUE {
 	}
 
 	stream.read((char*)&Content, sizeof(Content));
+#else
+	memcpy(&Content, gEmbeddedNNUEData, sizeof(Content));
+#endif // _MSC_VER	
 
 	// Cache feature indexes
 	for (int pt = PAWN; pt <= KING; ++pt) {
@@ -180,6 +189,7 @@ namespace NNUE {
   }
 
   Value evaluate(Accumulator* accumulator, Color sideToMove) {
+	
 	int16_t* stmAccumulator;
 	int16_t* oppAccumulator;
 

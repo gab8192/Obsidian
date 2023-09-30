@@ -153,6 +153,7 @@
     <ClInclude Include="bitboard.h" />
     <ClInclude Include="endgame.h" />
     <ClInclude Include="evaluate.h" />
+    <ClInclude Include="incbin.h" />
     <ClInclude Include="move.h" />
     <ClInclude Include="movegen.h" />
     <ClInclude Include="nnue.h" />

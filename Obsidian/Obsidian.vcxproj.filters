@@ -101,5 +101,8 @@
     <ClInclude Include="bench.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="incbin.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
