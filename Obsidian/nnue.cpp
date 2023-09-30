@@ -33,7 +33,7 @@ namespace NNUE {
 
 #ifdef USE_AVX2
 
-  inline int vecHadd(Vec vec) {
+  __forceinline int vecHadd(Vec vec) {
 	__m128i xmm0;
 	__m128i xmm1;
 
