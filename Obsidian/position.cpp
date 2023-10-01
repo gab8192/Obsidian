@@ -523,42 +523,39 @@ bool Position::see_ge(Move m, Bitboard& occupied, Value threshold) const {
     // Locate and remove the next least valuable attacker, and add to
     // the bitboard 'attackers' any X-ray attackers behind it.
     if ((bb = stmAttackers & pieces(PAWN))) {
-      occupied ^= getLsb_bb(bb);
       if ((swap = PieceValue[PAWN] - swap) < res)
         break;
-
+      occupied ^= getLsb_bb(bb);
       attackers |= get_bishop_attacks(to, occupied) & pieces(BISHOP, QUEEN);
     }
 
     else if ((bb = stmAttackers & pieces(KNIGHT))) {
-      occupied ^= getLsb_bb(bb);
       if ((swap = PieceValue[KNIGHT] - swap) < res)
         break;
+      occupied ^= getLsb_bb(bb);
     }
 
     else if ((bb = stmAttackers & pieces(BISHOP))) {
-      occupied ^= getLsb_bb(bb);
       if ((swap = PieceValue[BISHOP] - swap) < res)
         break;
-
+      occupied ^= getLsb_bb(bb);
       attackers |= get_bishop_attacks(to, occupied) & pieces(BISHOP, QUEEN);
     }
 
     else if ((bb = stmAttackers & pieces(ROOK))) {
-      occupied ^= getLsb_bb(bb);
       if ((swap = PieceValue[ROOK] - swap) < res)
         break;
-
+      occupied ^= getLsb_bb(bb);
       attackers |= get_rook_attacks(to, occupied) & pieces(ROOK, QUEEN);
     }
 
     else if ((bb = stmAttackers & pieces(QUEEN))) {
-      occupied ^= getLsb_bb(bb);
       if ((swap = PieceValue[QUEEN] - swap) < res)
         break;
+      occupied ^= getLsb_bb(bb);
 
-      attackers |= (get_bishop_attacks(to, occupied) & pieces(BISHOP, QUEEN))
-        | (get_rook_attacks(to, occupied) & pieces(ROOK, QUEEN));
+      attackers |=  (get_bishop_attacks(to, occupied) & pieces(BISHOP, QUEEN))
+                  | (get_rook_attacks(to, occupied)  &  pieces(ROOK, QUEEN));
     }
 
     else // KING
