@@ -34,7 +34,8 @@ namespace {
 
     for (int i = 0; i < posCount; i++) {
       Search::position.setToFen(TestFENs[i], & Search::accumulatorStack[0]);
-
+      seenPositions.clear();
+      seenPositions.push_back(Search::position.key);
       Search::clear();
 
       Threads::searchState = Search::RUNNING;
