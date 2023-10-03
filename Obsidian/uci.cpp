@@ -30,7 +30,11 @@ namespace {
     uint64_t totalNodes = 0;
 
     searchLimits = Search::Limits();
-    searchLimits.depth = 12;
+    searchLimits.depth = 13;
+
+    clock_t elapsed = 0;
+
+    Search::printingEnabled = false;
 
     for (int i = 0; i < posCount; i++) {
       Search::position.setToFen(TestFENs[i], & Search::accumulatorStack[0]);
@@ -41,15 +45,20 @@ namespace {
       Threads::searchState = Search::RUNNING;
 
       while (Threads::searchState == Search::RUNNING)
-        _mm_pause();
+        _sleep(1);
 
-      totalNodes += Search::nodesSearched;
+      if (i >= 10) {
+        // Skip the first 10 positions from nps calculation
+
+        elapsed += Search::lastSearchTimeSpan;
+
+        totalNodes += Search::nodesSearched;
+      }
     }
 
-    cout << "\n###\n\n";
+    Search::printingEnabled = true;
 
-    // FIXME do not hardcode nps, actually calculate the average nps
-    cout << totalNodes << " nodes 2800000 nps" << endl;
+    cout << totalNodes << " nodes " << (totalNodes * 1000 / elapsed) << " nps" << endl;
   }
 
   void position(Position& pos, istringstream& is) {
@@ -138,7 +147,7 @@ namespace {
 
       std::cout << "nodes: " << nodes << std::endl;
       std::cout << "time: " << took << std::endl;
-      std::cout << "nps: " << int(1000.0 * double(nodes) / double(took)) << std::endl;
+      std::cout << "nps: " << int(nodes * 1000 / took) << std::endl;
       return;
     }
     else {

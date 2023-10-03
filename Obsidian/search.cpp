@@ -33,6 +33,9 @@ namespace Search {
 
   Color rootColor;
 
+  clock_t lastSearchTimeSpan;
+  bool printingEnabled = true;
+
   uint64_t nodesSearched;
 
   int selDepth;
@@ -699,8 +702,9 @@ namespace Search {
 		rootMoves.add(move);
 	  }
 	}
-
 	scoreMoves(rootMoves, MOVE_NONE);
+
+	clock_t startTime = clock();
 
 	int searchStability = 0;
 
@@ -758,16 +762,17 @@ namespace Search {
 
 	  clock_t elapsed = elapsedTime();
 
-	  std::cout 
-		<< "info" 
-		<< " depth " << rootDepth
-		<< " seldepth " << selDepth
-		<< " score " << UCI::value(score)
-		<< " nodes " << nodesSearched
-		<< " nps " << (nodesSearched * 1000ULL) / myMax(elapsed, 1)
-		<< " time " << elapsed
-		<< " pv " << getPvString(ss)
-		<< endl;
+	  if (printingEnabled)
+	    std::cout 
+		  << "info" 
+		  << " depth " << rootDepth
+		  << " seldepth " << selDepth
+		  << " score " << UCI::value(score)
+		  << " nodes " << nodesSearched
+		  << " nps " << (nodesSearched * 1000ULL) / std::max(int(elapsed), 1)
+		  << " time " << elapsed
+		  << " pv " << getPvString(ss)
+		  << endl;
 
 	  if (bestMove == iterDeepening[rootDepth - 1].bestMove)
 		searchStability = std::min(searchStability + 1, 10);
@@ -799,7 +804,10 @@ namespace Search {
 
   bestMoveDecided:
 
-	std::cout << "bestmove " << UCI::move(bestMove) << endl;
+	lastSearchTimeSpan = clock() - startTime;
+
+	if (printingEnabled)
+	  std::cout << "bestmove " << UCI::move(bestMove) << endl;
 
 	Threads::searchState = STOPPED;
   }
