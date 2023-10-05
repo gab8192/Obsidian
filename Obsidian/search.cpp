@@ -33,6 +33,7 @@ namespace Search {
 
   Color rootColor;
 
+  Move lastBestMove;
   clock_t lastSearchTimeSpan;
   bool printingEnabled = true;
 
@@ -804,6 +805,7 @@ namespace Search {
 
   bestMoveDecided:
 
+	lastBestMove = bestMove;
 	lastSearchTimeSpan = clock() - startTime;
 
 	if (printingEnabled)

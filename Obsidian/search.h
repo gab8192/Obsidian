@@ -9,6 +9,7 @@ namespace Search {
   extern Position position;
   extern NNUE::Accumulator accumulatorStack[MAX_PLY];
 
+  extern Move lastBestMove;
   extern clock_t lastSearchTimeSpan;
   extern bool printingEnabled;
   extern uint64_t nodesSearched;
