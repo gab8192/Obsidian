@@ -763,9 +763,10 @@ namespace Search {
 
 	  clock_t elapsed = elapsedTime();
 
-	  if (printingEnabled)
-	    std::cout 
-		  << "info" 
+	  if (printingEnabled) {
+		ostringstream infoStr;
+		infoStr
+		  << "info"
 		  << " depth " << rootDepth
 		  << " seldepth " << selDepth
 		  << " score " << UCI::value(score)
@@ -774,6 +775,8 @@ namespace Search {
 		  << " time " << elapsed
 		  << " pv " << getPvString(ss)
 		  << endl;
+		cout << infoStr.str();
+	  }
 
 	  if (bestMove == iterDeepening[rootDepth - 1].bestMove)
 		searchStability = std::min(searchStability + 1, 10);
