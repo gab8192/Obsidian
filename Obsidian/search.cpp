@@ -27,6 +27,8 @@ namespace Search {
 	Value staticEval;
 	Move playedMove;
 
+	Move killers[2];
+
 	Move pv[MAX_PLY];
 	int pvLength;
   };
@@ -188,7 +190,9 @@ namespace Search {
 	return std::min(2 * d * d + 16 * d, 1000);
   }
 
-  void scoreMoves(MoveList& moves, Move ttMove) {
+  void scoreMoves(MoveList& moves, Move ttMove, SearchInfo* ss) {
+	Move killer0 = ss->killers[0], killer1 = ss->killers[1];
+
 	for (int i = 0; i < moves.size(); i++) {
 	  int& moveScore = moves.scores[i];
 
@@ -201,8 +205,15 @@ namespace Search {
 	  // init it to 0
 	  moveScore = 0;
 
-	  if (position.isQuiet(m))
+	  if (position.isQuiet(m)) {
 		moveScore += mainHistory[position.sideToMove][fromTo(m)] / 200;
+
+		if (m == killer0)
+		  moveScore += 40;
+
+		if (m == killer1)
+		  moveScore += 20;
+	  }
 
 	  switch (getMoveType(m)) {
 	  case MT_NORMAL: {
@@ -339,7 +350,7 @@ namespace Search {
 	else
 	  getAggressiveMoves(position, &moves);
 
-	scoreMoves(moves, ttMove);
+	scoreMoves(moves, ttMove, ss);
 
 	bool foundLegalMoves = false; 
 
@@ -414,6 +425,12 @@ namespace Search {
 		selDepth = ply;
 	}
 
+	if (searchState == STOP_PENDING)
+	  return makeDrawValue();
+
+	(ss+1)->killers[0] = MOVE_NONE;
+	(ss+1)->killers[1] = MOVE_NONE;
+
 	if (!rootNode) {
 	  if (is2FoldRepetition() || position.halfMoveClock >= 100)
 		return makeDrawValue();
@@ -424,9 +441,6 @@ namespace Search {
 	  if (alpha >= beta)
 		return alpha;
 	}
-
-	if (searchState == STOP_PENDING)
-	  return makeDrawValue();
 
 	bool ttHit;
 	TT::Entry* ttEntry = TT::probe(position.key, ttHit);
@@ -530,7 +544,7 @@ namespace Search {
 	}
 	else {
 	  getPseudoLegalMoves(position, &moves);
-	  scoreMoves(moves, ttMove);
+	  scoreMoves(moves, ttMove, ss);
 	}
 
 	bool foundLegalMove = false;
@@ -621,6 +635,11 @@ namespace Search {
 	  int& history = mainHistory[position.sideToMove][fromTo(bestMove)];
 
 	  history = myClamp(history + bonus, -12000, +12000);
+
+	  if (bestMove != ss->killers[0]) {
+		ss->killers[1] = ss->killers[0];
+		ss->killers[0] = bestMove;
+	  }
 	}
 
 	// Store to TT
@@ -682,6 +701,9 @@ namespace Search {
 	  searchStack[i].staticEval = VALUE_NONE;
 
 	  searchStack[i].pvLength = 0;
+
+	  searchStack[i].killers[0] = MOVE_NONE;
+	  searchStack[i].killers[1] = MOVE_NONE;
 	}
 
 	SearchInfo* ss = &searchStack[SsOffset];
@@ -703,7 +725,7 @@ namespace Search {
 		rootMoves.add(move);
 	  }
 	}
-	scoreMoves(rootMoves, MOVE_NONE);
+	scoreMoves(rootMoves, MOVE_NONE, ss);
 
 	clock_t startTime = clock();
 
