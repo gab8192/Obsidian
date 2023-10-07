@@ -795,9 +795,8 @@ namespace Search {
 		  << " nodes " << nodesSearched
 		  << " nps " << (nodesSearched * 1000ULL) / std::max(int(elapsed), 1)
 		  << " time " << elapsed
-		  << " pv " << getPvString(ss)
-		  << endl;
-		cout << infoStr.str();
+		  << " pv " << getPvString(ss);
+		cout << infoStr.str() << endl;
 	  }
 
 	  if (bestMove == iterDeepening[rootDepth - 1].bestMove)
