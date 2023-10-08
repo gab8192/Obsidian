@@ -10,24 +10,24 @@ namespace TT {
   uint64_t entryCount;
 
   void clear() {
-	for (uint64_t i = 0; i < entryCount; i++)
-	  entries[i].clear();
+    for (uint64_t i = 0; i < entryCount; i++)
+      entries[i].clear();
   }
 
   void resize(size_t megaBytes) {
-	size_t bytes = megaBytes * 1024ULL * 1024ULL;
-	entryCount = bytes / sizeof(Entry);
+    size_t bytes = megaBytes * 1024ULL * 1024ULL;
+    entryCount = bytes / sizeof(Entry);
 
-	if (entries != nullptr)
-	  delete[] entries;
+    if (entries != nullptr)
+      delete[] entries;
 
-	entries = new Entry[entryCount];
-	clear();
+    entries = new Entry[entryCount];
+    clear();
   }
 
   Entry* probe(Key key, bool& hit) {
-	Entry* entry = &entries[key % entryCount];
-	hit = (entry->getKey() == key);
-	return entry;
+    Entry* entry = &entries[key % entryCount];
+    hit = (entry->getKey() == key);
+    return entry;
   }
 }

@@ -3,7 +3,7 @@
 #include "types.h"
 
 #ifdef USE_AVX2
-  #include <immintrin.h>
+#include <immintrin.h>
 #endif
 
 #define EvalFile "net4.nnue"
@@ -16,16 +16,16 @@ namespace NNUE {
   constexpr int TransformedFeatureDimensions = 384;
 
   struct Accumulator {
-	weight_t white[TransformedFeatureDimensions];
-	weight_t black[TransformedFeatureDimensions];
+    weight_t white[TransformedFeatureDimensions];
+    weight_t black[TransformedFeatureDimensions];
 
-	void reset();
+    void reset();
 
-	void activateFeature(Square sq, Piece pc);
+    void activateFeature(Square sq, Piece pc);
 
-	void deactivateFeature(Square sq, Piece pc);
+    void deactivateFeature(Square sq, Piece pc);
 
-	void moveFeature(Square from, Square to, Piece pc);
+    void moveFeature(Square from, Square to, Piece pc);
   };
 
   void load();

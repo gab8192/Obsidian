@@ -5,17 +5,17 @@
 #include <immintrin.h>
 
 inline Square getLsb(Bitboard bb) {
-    return Square(_tzcnt_u64(bb));
+  return Square(_tzcnt_u64(bb));
 }
 
 inline Square popLsb(Bitboard& bbPtr) {
-    Square taken = getLsb(bbPtr);
-    bbPtr &= (bbPtr - 1);
-    return taken;
+  Square taken = getLsb(bbPtr);
+  bbPtr &= (bbPtr - 1);
+  return taken;
 }
 
 inline Bitboard getLsb_bb(Bitboard bb) {
-    return bb & ( - int64_t(bb));
+  return bb & (-int64_t(bb));
 }
 
 inline Bitboard square_bb(Square sq) {
@@ -35,7 +35,7 @@ inline Bitboard& operator^=(Bitboard& d1, Square d2) { return d1 = d1 ^ d2; }
 inline Bitboard operator|(Square d1, Square d2) { return square_bb(d1) | square_bb(d2); }
 
 
-constexpr Bitboard AllSquares = ~ Bitboard(0);
+constexpr Bitboard AllSquares = ~Bitboard(0);
 constexpr Bitboard DARK_SQUARES_BB = 0xAA55AA55AA55AA55ULL;
 constexpr Bitboard LIGHT_SQUARES_BB = ~DARK_SQUARES_BB;
 
@@ -57,7 +57,7 @@ constexpr Bitboard FILE_FBB = FILE_ABB << 5;
 constexpr Bitboard FILE_GBB = FILE_ABB << 6;
 constexpr Bitboard FILE_HBB = FILE_ABB << 7;
 
-constexpr Bitboard FILES_BB[FILE_NB] = { 
+constexpr Bitboard FILES_BB[FILE_NB] = {
     FILE_ABB,
     FILE_BBB,
     FILE_CBB,
@@ -101,37 +101,39 @@ constexpr Bitboard KingFlank[FILE_NB] = {
 };
 
 constexpr bool more_than_one(Bitboard bb) {
-    return bb & (bb - 1);
+  return bb & (bb - 1);
 }
 
-inline int edge_distance(File f) { 
-    return myMin(f, File(FILE_H - f)); }
+inline int edge_distance(File f) {
+  return myMin(f, File(FILE_H - f));
+}
 
-inline int edge_distance(Rank r) { 
-    return myMin(r, Rank(RANK_8 - r)); }
+inline int edge_distance(Rank r) {
+  return myMin(r, Rank(RANK_8 - r));
+}
 
-inline int edge_distance(Square sqr) { 
-    return myMin(edge_distance(file_of(sqr)), edge_distance(rank_of(sqr)));
+inline int edge_distance(Square sqr) {
+  return myMin(edge_distance(file_of(sqr)), edge_distance(rank_of(sqr)));
 }
 
 inline Square flip_rank(Square s) { // Swap A1 <-> A8
-    return Square(int(s) ^ int(SQ_A8));
+  return Square(int(s) ^ int(SQ_A8));
 }
 
 inline Square flip_file(Square s) { // Swap A1 <-> H1
-    return Square(int(s) ^ int(SQ_H1));
+  return Square(int(s) ^ int(SQ_H1));
 }
 
 inline Bitboard file_bb(Square sqr) {
-    return FILES_BB[sqr & 0x7];
+  return FILES_BB[sqr & 0x7];
 }
 
 inline Bitboard file_bb(File file) {
-    return FILE_ABB << file;
+  return FILE_ABB << file;
 }
 
 inline Bitboard rank_bb(Square sqr) {
-    return RANKS_BB[sqr >> 3];
+  return RANKS_BB[sqr >> 3];
 }
 
 typedef int (*SquareConsumer)(Square sq);
@@ -190,19 +192,19 @@ extern Bitboard BetweenBB[SQUARE_NB][SQUARE_NB];
 extern Bitboard LineBB[SQUARE_NB][SQUARE_NB];
 
 inline Bitboard get_bishop_attacks(Square s, Bitboard occupied) {
-    return BishopAttacks[s][_pext_u64(occupied, BishopMasks[s])];
+  return BishopAttacks[s][_pext_u64(occupied, BishopMasks[s])];
 }
 
 inline Bitboard get_bishop_attacks(Square s) {
-    return BishopAttacks[s][0];
+  return BishopAttacks[s][0];
 }
 
 inline Bitboard get_rook_attacks(Square s, Bitboard occupied) {
-    return RookAttacks[s][_pext_u64(occupied, RookMasks[s])];
+  return RookAttacks[s][_pext_u64(occupied, RookMasks[s])];
 }
 
 inline Bitboard get_rook_attacks(Square s) {
-    return RookAttacks[s][0];
+  return RookAttacks[s][0];
 }
 
 inline Bitboard get_queen_attacks(Square s) {
@@ -214,15 +216,15 @@ inline Bitboard get_queen_attacks(Square s, Bitboard occupied) {
 }
 
 inline Bitboard get_king_attacks(Square square) {
-    return king_attacks[square];
+  return king_attacks[square];
 }
 
 inline Bitboard get_knight_attacks(Square square) {
-    return knight_attacks[square];
+  return knight_attacks[square];
 }
 
 inline Bitboard get_pawn_attacks(Square square, Color pawnColor) {
-    return pawn_attacks[pawnColor][square];
+  return pawn_attacks[pawnColor][square];
 }
 
 template<Color PawnColor>
@@ -231,21 +233,21 @@ Bitboard get_pawns_bb_attacks(Bitboard bb);
 void bitboardsInit();
 
 inline Bitboard shiftEast(Bitboard bb) {
-    return (bb & ~FILE_HBB) << 1;
+  return (bb & ~FILE_HBB) << 1;
 }
 
 inline Bitboard shiftWest(Bitboard bb) {
-    return (bb & ~FILE_ABB) >> 1;
+  return (bb & ~FILE_ABB) >> 1;
 }
 
 inline Bitboard adjacent_files_bb(Square s) {
-    return ADJACENT_FILES_BB[file_of(s)];
+  return ADJACENT_FILES_BB[file_of(s)];
 }
 
 // This function is Copied from stockfish bitboard.h
 inline Bitboard forward_ranks_bb(Color c, Square s) {
-    return c == WHITE ? (~Rank1BB) << (8 * relative_rank(WHITE, s))
-                           : (~Rank8BB) >> (8 * relative_rank(BLACK, s));
+  return c == WHITE ? (~Rank1BB) << (8 * relative_rank(WHITE, s))
+    : (~Rank8BB) >> (8 * relative_rank(BLACK, s));
 }
 
 // All the squares in front of a pawn (including adjacent squares)

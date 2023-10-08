@@ -73,7 +73,7 @@ namespace TT {
     int16_t value;
   };
 #pragma pack()
-  
+
   // Initialize/clear the TT
   void clear();
 

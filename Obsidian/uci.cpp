@@ -37,7 +37,7 @@ namespace {
     Search::printingEnabled = false;
 
     for (int i = 0; i < posCount; i++) {
-      Search::position.setToFen(TestFENs[i], & Search::accumulatorStack[0]);
+      Search::position.setToFen(TestFENs[i], &Search::accumulatorStack[0]);
       seenPositions.clear();
       seenPositions.push_back(Search::position.key);
       Search::clear();
@@ -71,14 +71,14 @@ namespace {
 
     if (token == "startpos")
     {
-        fen = StartFEN;
-        is >> token; // Consume the "moves" token, if any
+      fen = StartFEN;
+      is >> token; // Consume the "moves" token, if any
     }
     else if (token == "fen")
-        while (is >> token && token != "moves")
-            fen += token + " ";
+      while (is >> token && token != "moves")
+        fen += token + " ";
     else
-        return;
+      return;
 
     pos.setToFen(fen, &Search::accumulatorStack[0]);
 
@@ -87,7 +87,7 @@ namespace {
     // Parse the move list, if any
     while (is >> token && (m = UCI::to_move(pos, token)) != MOVE_NONE)
     {
-      pos.doMove(m, & Search::accumulatorStack[0]);
+      pos.doMove(m, &Search::accumulatorStack[0]);
       seenPositions.push_back(pos.key);
     }
   }
@@ -102,16 +102,16 @@ namespace {
 
     // Read the option name (can contain spaces)
     while (is >> token && token != "value")
-        name += (name.empty() ? "" : " ") + token;
+      name += (name.empty() ? "" : " ") + token;
 
     // Read the option value (can contain spaces)
     while (is >> token)
-        value += (value.empty() ? "" : " ") + token;
+      value += (value.empty() ? "" : " ") + token;
 
     if (Options.count(name))
-        Options[name] = value;
+      Options[name] = value;
     else
-        cout << "No such option: " << name << endl;
+      cout << "No such option: " << name << endl;
   }
 
   Move calcBestMove(int depth) {
@@ -199,15 +199,15 @@ namespace {
     int perftPlies = 0;
 
     while (is >> token)
-             if (token == "wtime")     is >> searchLimits.time[WHITE];
-        else if (token == "btime")     is >> searchLimits.time[BLACK];
-        else if (token == "winc")      is >> searchLimits.inc[WHITE];
-        else if (token == "binc")      is >> searchLimits.inc[BLACK];
-        else if (token == "movestogo") is >> searchLimits.movestogo;
-        else if (token == "depth")     is >> searchLimits.depth;
-        else if (token == "nodes")     is >> searchLimits.nodes;
-        else if (token == "movetime")  is >> searchLimits.movetime;
-        else if (token == "perft")     is >> perftPlies;
+      if (token == "wtime")     is >> searchLimits.time[WHITE];
+      else if (token == "btime")     is >> searchLimits.time[BLACK];
+      else if (token == "winc")      is >> searchLimits.inc[WHITE];
+      else if (token == "binc")      is >> searchLimits.inc[BLACK];
+      else if (token == "movestogo") is >> searchLimits.movestogo;
+      else if (token == "depth")     is >> searchLimits.depth;
+      else if (token == "nodes")     is >> searchLimits.nodes;
+      else if (token == "movetime")  is >> searchLimits.movetime;
+      else if (token == "perft")     is >> perftPlies;
 
     if (perftPlies) {
       clock_t begin = clock();
@@ -230,50 +230,50 @@ void UCI::loop(int argc, char* argv[]) {
 
   string token, cmd;
 
-  Search::position.setToFen(StartFEN, & Search::accumulatorStack[0]);
+  Search::position.setToFen(StartFEN, &Search::accumulatorStack[0]);
 
   for (int i = 1; i < argc; ++i)
-      cmd += std::string(argv[i]) + " ";
+    cmd += std::string(argv[i]) + " ";
 
   do {
-      if (argc == 1 && !getline(cin, cmd))
-          cmd = "quit";
+    if (argc == 1 && !getline(cin, cmd))
+      cmd = "quit";
 
-      istringstream is(cmd);
+    istringstream is(cmd);
 
-      token.clear(); // Do not crash when given a blank line
-      is >> skipws >> token;
+    token.clear(); // Do not crash when given a blank line
+    is >> skipws >> token;
 
-      if (token == "quit"
-        || token == "stop") {
+    if (token == "quit"
+      || token == "stop") {
 
-        if (searchState == Search::RUNNING) {
-          searchState = Search::STOP_PENDING;
-        }
+      if (searchState == Search::RUNNING) {
+        searchState = Search::STOP_PENDING;
       }
+    }
 
-      else if (token == "uci") {
-        cout << "id name Obsidian " << engineVersion
-          << "\nid author gabe"
-          << "\n" << Options
-          << "\nuciok" << endl;
-      }
-      else if (token == "bench")      bench();
-      else if (token == "setoption")  setoption(is);
-      else if (token == "plan")       plan(is);
-      else if (token == "go")         go(is);
-      else if (token == "position")   position(Search::position, is);
-      else if (token == "ucinewgame") Search::clear();
-      else if (token == "isready")    cout << "readyok" << endl;
-      else if (token == "d")        cout << Search::position << endl;
-      else if (token == "eval") {
-        Value eval = Eval::evaluate();
-        if (Search::position.sideToMove == BLACK)
-          eval = -eval;
-        cout << "Evaluation: " << UCI::to_cp(eval) << endl;
-      }
-      else if (!token.empty() && token[0] != '#')
-          cout << "Unknown command: '" << cmd << "'. Type help for more information." << endl;
+    else if (token == "uci") {
+      cout << "id name Obsidian " << engineVersion
+        << "\nid author gabe"
+        << "\n" << Options
+        << "\nuciok" << endl;
+    }
+    else if (token == "bench")      bench();
+    else if (token == "setoption")  setoption(is);
+    else if (token == "plan")       plan(is);
+    else if (token == "go")         go(is);
+    else if (token == "position")   position(Search::position, is);
+    else if (token == "ucinewgame") Search::clear();
+    else if (token == "isready")    cout << "readyok" << endl;
+    else if (token == "d")        cout << Search::position << endl;
+    else if (token == "eval") {
+      Value eval = Eval::evaluate();
+      if (Search::position.sideToMove == BLACK)
+        eval = -eval;
+      cout << "Evaluation: " << UCI::to_cp(eval) << endl;
+    }
+    else if (!token.empty() && token[0] != '#')
+      cout << "Unknown command: '" << cmd << "'. Type help for more information." << endl;
 
   } while (token != "quit" && argc == 1); // The command-line arguments are one-shot
 }
@@ -293,7 +293,7 @@ string UCI::value(Value v) {
   stringstream ss;
 
   if (abs(v) < VALUE_TB_WIN_IN_MAX_PLY)
-      ss << "cp " << UCI::to_cp(v);
+    ss << "cp " << UCI::to_cp(v);
   else {
     if (v > 0)
       ss << "mate " << (VALUE_MATE - v + 1) / 2;
