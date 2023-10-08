@@ -10,12 +10,14 @@
 
 namespace NNUE {
 
+  using weight_t = int16_t;
+
   constexpr int FeatureDimensions = 768;
   constexpr int TransformedFeatureDimensions = 384;
 
   struct Accumulator {
-	int16_t white[TransformedFeatureDimensions];
-	int16_t black[TransformedFeatureDimensions];
+	weight_t white[TransformedFeatureDimensions];
+	weight_t black[TransformedFeatureDimensions];
 
 	void reset();
 

@@ -16,7 +16,7 @@ namespace NNUE {
 #ifdef USE_AVX2
 
   using Vec = __m256i;
-  constexpr int WeightsPerVec = sizeof(Vec) / sizeof(int16_t);
+  constexpr int WeightsPerVec = sizeof(Vec) / sizeof(weight_t);
 
 #else
 
@@ -25,10 +25,10 @@ namespace NNUE {
   int FeatureIndexTable[COLOR_NB][PIECE_NB][SQUARE_NB];
 
   struct {
-	int16_t FeatureWeights[FeatureDimensions * TransformedFeatureDimensions];
-	int16_t FeatureBiases[TransformedFeatureDimensions];
-	int16_t OutputWeights[2 * TransformedFeatureDimensions];
-	int16_t OutputBias;
+	weight_t FeatureWeights[FeatureDimensions * TransformedFeatureDimensions];
+	weight_t FeatureBiases[TransformedFeatureDimensions];
+	weight_t OutputWeights[2 * TransformedFeatureDimensions];
+	weight_t OutputBias;
   } Content;
 
 #ifdef USE_AVX2
@@ -61,7 +61,7 @@ namespace NNUE {
   }
 
   template <int InputSize>
-  inline void addToAll(int16_t* input, int offset)
+  inline void addToAll(weight_t* input, int offset)
   {
 	offset /= WeightsPerVec;
 
@@ -74,7 +74,7 @@ namespace NNUE {
   }
 
   template <int InputSize>
-  inline void subtractFromAll(int16_t* input, int offset)
+  inline void subtractFromAll(weight_t* input, int offset)
   {
 	offset /= WeightsPerVec;
 
@@ -87,7 +87,7 @@ namespace NNUE {
   }
 
   template <int InputSize>
-  inline void addAndSubtractFromAll(int16_t* input, int addOff, int subtractOff) {
+  inline void addAndSubtractFromAll(weight_t* input, int addOff, int subtractOff) {
 	addOff /= WeightsPerVec;
 	subtractOff /= WeightsPerVec;
 
@@ -100,21 +100,21 @@ namespace NNUE {
   }
 #else
   template <int InputSize>
-  inline void addToAll(int16_t* input, int offset)
+  inline void addToAll(weight_t* input, int offset)
   {
 	for (int i = 0; i < InputSize; ++i)
 	  input[i] += Content.FeatureWeights[offset + i];
   }
 
   template <int InputSize>
-  inline void subtractFromAll(int16_t* input, int offset)
+  inline void subtractFromAll(weight_t* input, int offset)
   {
 	for (int i = 0; i < InputSize; ++i)
 	  input[i] -= Content.FeatureWeights[offset + i];
   }
 
   template <int InputSize>
-  inline void addAndSubtractFromAll(int16_t* input, int addOff, int subtractOff) {
+  inline void addAndSubtractFromAll(weight_t* input, int addOff, int subtractOff) {
 	for (int i = 0; i < InputSize; ++i)
 	  input[i] += Content.FeatureWeights[addOff + i] - Content.FeatureWeights[subtractOff + i];
   }
@@ -180,7 +180,7 @@ namespace NNUE {
 	}
   }
 
-  inline int clippedRelu(int16_t x) {
+  inline int clippedRelu(weight_t x) {
 	if (x < 0)
 	  return 0;
 	if (x > 255)
@@ -190,8 +190,8 @@ namespace NNUE {
 
   Value evaluate(Accumulator* accumulator, Color sideToMove) {
 	
-	int16_t* stmAccumulator;
-	int16_t* oppAccumulator;
+	weight_t* stmAccumulator;
+	weight_t* oppAccumulator;
 
 	if (sideToMove == WHITE) {
 	  stmAccumulator = accumulator->white;
