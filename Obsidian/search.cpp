@@ -310,7 +310,7 @@ namespace Search {
 
     bool ttHit;
     TT::Entry* ttEntry = TT::probe(position.key, ttHit);
-    TT::Flag ttFlag = ttHit ? ttEntry->getFlag() : (TT::Flag)0;
+    TT::Flag ttFlag = ttHit ? ttEntry->getFlag() : TT::NO_FLAG;
     Value ttValue = ttHit ? ttEntry->getValue() : VALUE_NONE;
     Move ttMove = ttHit ? ttEntry->getMove() : MOVE_NONE;
 
@@ -329,7 +329,7 @@ namespace Search {
     }
     else {
 
-      if (ttHit && ttEntry->getStaticEval() != VALUE_NONE)
+      if (ttHit)
         bestValue = eval = ttEntry->getStaticEval();
       else
         bestValue = eval = Eval::evaluate();
@@ -361,7 +361,7 @@ namespace Search {
 
       foundLegalMoves = true;
 
-      if (getMoveType(move) == MT_NORMAL && !generateAllMoves) {
+      if (!generateAllMoves) {
         if (!position.see_ge(move, Value(-95)))
           continue;
       }
@@ -480,7 +480,7 @@ namespace Search {
       goto moves_loop;
     }
     else {
-      if (ttHit && ttEntry->getStaticEval() != VALUE_NONE)
+      if (ttHit)
         ss->staticEval = eval = ttEntry->getStaticEval();
       else
         ss->staticEval = eval = Eval::evaluate();
