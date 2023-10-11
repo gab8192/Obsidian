@@ -498,7 +498,9 @@ namespace Search {
 
     // Razoring
     if (eval < alpha - 400 - 500 * depth) {
-      return qsearch<nodeType>(alpha, beta, ss);
+      Value value = qsearch<NonPV>(alpha-1, alpha, ss);
+      if (value < alpha)
+        return value;
     }
 
     // Reverse futility pruning
