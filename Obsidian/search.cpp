@@ -819,9 +819,6 @@ namespace Search {
           goto bestMoveDecided;
         }
 
-        if (elapsed > optimumTime)
-          goto bestMoveDecided;
-
         double optScale = 1.0 - 0.05 * searchStability;
 
         if (elapsed > optScale * optimumTime)
