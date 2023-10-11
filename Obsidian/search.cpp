@@ -734,6 +734,10 @@ namespace Search {
     int searchStability = 0;
 
     for (rootDepth = 1; rootDepth <= searchLimits.depth; rootDepth++) {
+
+      if (searchLimits.nodes && nodesSearched >= searchLimits.nodes)
+        break;
+
       selDepth = 0;
 
       Value score;
@@ -751,6 +755,9 @@ namespace Search {
 
           if (Threads::searchState == STOP_PENDING)
             goto bestMoveDecided;
+
+          if (searchLimits.nodes && nodesSearched >= searchLimits.nodes)
+            break; // only break, in order to print info about the partial search we've done
 
           if (score >= VALUE_MATE_IN_MAX_PLY) {
             beta = VALUE_INFINITE;
