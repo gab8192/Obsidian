@@ -31,6 +31,8 @@ namespace Search {
 
     Move pv[MAX_PLY];
     int pvLength;
+
+    Move excludedMove;
   };
 
   Color rootColor;
@@ -446,6 +448,8 @@ namespace Search {
         return alpha;
     }
 
+    Move excludedMove = ss->excludedMove;
+
     bool ttHit;
     TT::Entry* ttEntry = TT::probe(position.key, ttHit);
     TT::Flag ttFlag = ttHit ? ttEntry->getFlag() : TT::NO_FLAG;
@@ -465,6 +469,7 @@ namespace Search {
       depth = myMax(1, depth + 1);
 
     if (!PvNode
+      && !excludedMove
       && ttEntry->getDepth() >= depth) {
 
       if (ttFlag & flagForTT(ttValue >= beta))
@@ -517,6 +522,7 @@ namespace Search {
 
     // Null move pruning
     if (!PvNode
+      && !excludedMove
       && (ss - 1)->playedMove != MOVE_NONE
       && eval >= beta
       && position.hasNonPawns(position.sideToMove)
@@ -559,6 +565,9 @@ namespace Search {
     for (int i = 0; i < moves.size(); i++) {
       Move move = nextBestMove(moves, i);
 
+      if (move == excludedMove)
+        continue;
+
       if (!position.isLegal(move))
         continue;
 
@@ -577,7 +586,33 @@ namespace Search {
         }
       }
 
+      int extension = 0;
+      
+      if ( !rootNode
+        && ply < 2 * rootDepth
+        && depth >= 6
+        && !excludedMove
+        && ttHit
+        && move == ttMove
+        && abs(ttValue) < VALUE_TB_WIN_IN_MAX_PLY
+        && ttFlag & TT::FLAG_LOWER
+        && ttEntry->getDepth() >= depth - 3) 
+      {
+        Value singularBeta = ttValue - depth;
+        
+        ss->excludedMove = move;
+        Value seValue = negaMax<NonPV>(singularBeta - 1, singularBeta, (depth - 1) / 2, cutNode, ss);
+        ss->excludedMove = MOVE_NONE;
+        
+        if (seValue < singularBeta)
+          extension = 1;
+        else if (singularBeta >= beta)
+          return singularBeta;
+      }
+
       playMove(move, ss);
+
+      int newDepth = depth + extension - 1;
 
       Value value;
 
@@ -586,24 +621,25 @@ namespace Search {
         int R = lmrTable[depth][playedMoves + 1];
 
         R += !improving;
+
         R -= PvNode;
 
         // Do the clamp to avoid a qsearch or an extension in the child search
-        int reducedDepth = myClamp(depth - R, 1, depth + 1);
+        int reducedDepth = myClamp(newDepth - R, 1, newDepth + 1);
 
         value = -negaMax<NonPV>(-alpha - 1, -alpha, reducedDepth, true, ss + 1);
 
-        needFullSearch = value > alpha && reducedDepth < depth;
+        needFullSearch = value > alpha && reducedDepth < newDepth;
       }
       else
         needFullSearch = !PvNode || playedMoves >= 1;
 
 
       if (needFullSearch)
-        value = -negaMax<NonPV>(-alpha - 1, -alpha, depth - 1, !cutNode, ss + 1);
+        value = -negaMax<NonPV>(-alpha - 1, -alpha, newDepth, !cutNode, ss + 1);
 
       if (PvNode && (playedMoves == 0 || value > alpha))
-        value = -negaMax<PV>(-beta, -alpha, depth - 1, false, ss + 1);
+        value = -negaMax<PV>(-beta, -alpha, newDepth, false, ss + 1);
 
       cancelMove();
 
@@ -629,8 +665,12 @@ namespace Search {
       }
     }
 
-    if (!foundLegalMove)
+    if (!foundLegalMove) {
+      if (excludedMove) 
+        return alpha;
+
       return position.checkers ? Value(ply - VALUE_MATE) : VALUE_DRAW;
+    }
 
     // Update histories
     if (bestMove &&
@@ -649,13 +689,15 @@ namespace Search {
     }
 
     // Store to TT
-    TT::Flag flag;
-    if (bestValue >= beta)
-      flag = TT::FLAG_LOWER;
-    else
-      flag = (PvNode && bestMove) ? TT::FLAG_EXACT : TT::FLAG_UPPER;
+    if (!excludedMove) {
+      TT::Flag flag;
+      if (bestValue >= beta)
+        flag = TT::FLAG_LOWER;
+      else
+        flag = (PvNode && bestMove) ? TT::FLAG_EXACT : TT::FLAG_UPPER;
 
-    ttEntry->store(position.key, flag, depth, bestMove, bestValue, ss->staticEval);
+      ttEntry->store(position.key, flag, depth, bestMove, bestValue, ss->staticEval);
+    }
 
     return bestValue;
   }
@@ -710,6 +752,8 @@ namespace Search {
 
       searchStack[i].killers[0] = MOVE_NONE;
       searchStack[i].killers[1] = MOVE_NONE;
+
+      searchStack[i].excludedMove = MOVE_NONE;
     }
 
     SearchInfo* ss = &searchStack[SsOffset];
