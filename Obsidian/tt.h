@@ -20,13 +20,13 @@ namespace TT {
       if (abs(_value) >= VALUE_TB_WIN_IN_MAX_PLY)
         return;
 
-      if (_key != this->key
+      if (!matches(_key)
         || _depth >= this->depth) {
 
-        if (_key != this->key || _move || !this->move)
+        if (!matches(_key) || _move || !this->move)
           this->move = _move;
 
-        this->key = _key;
+        this->keyHi32 = (_key >> 32);
         this->flag = _flag;
         this->depth = _depth;
         this->value = _value;
@@ -34,8 +34,8 @@ namespace TT {
       }
     }
 
-    inline Key getKey() {
-      return key;
+    inline bool matches(Key key) {
+      return this->keyHi32 == (key >> 32);
     }
 
     inline Value getStaticEval() {
@@ -56,7 +56,7 @@ namespace TT {
     }
 
     inline void clear() {
-      key = 0xcafe;
+      keyHi32 = 0xcafe;
       depth = -1;
       flag = NO_FLAG;
       move = MOVE_NONE;
@@ -65,7 +65,7 @@ namespace TT {
     }
 
   private:
-    Key key;
+    uint32_t keyHi32;
     int16_t staticEval;
     Flag flag;
     uint8_t depth;

@@ -27,7 +27,7 @@ namespace TT {
 
   Entry* probe(Key key, bool& hit) {
     Entry* entry = &entries[key % entryCount];
-    hit = (entry->getKey() == key);
+    hit = entry->matches(key);
     return entry;
   }
 }
