@@ -378,11 +378,9 @@ namespace Search {
         if (bestValue > alpha) {
           bestMove = move;
 
-          // value >= beta is always true if beta==alpha+1 and value>alpha
-          if (!PvNode || bestValue >= beta) {
-            ttEntry->store(position.key, TT::FLAG_LOWER, 0, bestMove, bestValue, eval);
-            return bestValue;
-          }
+          // Always true in NonPV nodes
+          if (bestValue >= beta)
+            break;
 
           // This is never reached on a NonPV node
           alpha = bestValue;
@@ -393,7 +391,13 @@ namespace Search {
     if (position.checkers && !foundLegalMoves)
       return Value(ply - VALUE_MATE);
 
-    ttEntry->store(position.key, alpha > oldAlpha ? TT::FLAG_EXACT : TT::FLAG_UPPER, 0, bestMove, bestValue, eval);
+    TT::Flag flag;
+    if (bestValue >= beta)
+      flag = TT::FLAG_LOWER;
+    else
+      flag = (alpha > oldAlpha ? TT::FLAG_EXACT : TT::FLAG_UPPER);
+
+    ttEntry->store(position.key, flag, 0, bestMove, bestValue, eval);
 
     return bestValue;
   }
