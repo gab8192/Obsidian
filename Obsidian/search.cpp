@@ -79,7 +79,7 @@ namespace Search {
 
     for (int i = 1; i < MAX_PLY; i++) {
       for (int m = 1; m < MAX_MOVES; m++) {
-        lmrTable[i][m] = 0.75 + log(i) * log(m) / 2.25;
+        lmrTable[i][m] = 0.25 + log(i) * log(m) / 2.25;
       }
     }
 
@@ -623,6 +623,8 @@ namespace Search {
         R += !improving;
 
         R -= PvNode;
+
+        R += cutNode;
 
         // Do the clamp to avoid a qsearch or an extension in the child search
         int reducedDepth = myClamp(newDepth - R, 1, newDepth + 1);
