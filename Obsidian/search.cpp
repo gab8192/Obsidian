@@ -148,7 +148,7 @@ namespace Search {
   };
 
   inline clock_t elapsedTime() {
-    return clock() - searchLimits.startTime;
+    return timeMillis() - searchLimits.startTime;
   }
 
   void checkTime() {
@@ -780,7 +780,7 @@ namespace Search {
     }
     scoreMoves(rootMoves, MOVE_NONE, ss);
 
-    clock_t startTime = clock();
+    clock_t startTime = timeMillis();
 
     int searchStability = 0;
 
@@ -887,7 +887,7 @@ namespace Search {
   bestMoveDecided:
 
     lastBestMove = bestMove;
-    lastSearchTimeSpan = clock() - startTime;
+    lastSearchTimeSpan = timeMillis() - startTime;
 
     if (printingEnabled)
       std::cout << "bestmove " << UCI::move(bestMove) << endl;

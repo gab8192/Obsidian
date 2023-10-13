@@ -117,7 +117,7 @@ namespace {
   Move calcBestMove(int depth) {
     // Setup search options
     searchLimits = Search::Limits();
-    searchLimits.startTime = clock();
+    searchLimits.startTime = timeMillis();
     searchLimits.depth = depth;
 
     // Do search
@@ -194,7 +194,7 @@ namespace {
     string token;
 
     searchLimits = Search::Limits();
-    searchLimits.startTime = clock();
+    searchLimits.startTime = timeMillis();
 
     int perftPlies = 0;
 
@@ -210,9 +210,9 @@ namespace {
       else if (token == "perft")     is >> perftPlies;
 
     if (perftPlies) {
-      clock_t begin = clock();
+      clock_t begin = timeMillis();
       int nodes = Search::perft<true>(perftPlies);
-      clock_t took = clock() - begin;
+      clock_t took = timeMillis() - begin;
 
       std::cout << "nodes: " << nodes << std::endl;
       std::cout << "time: " << took << std::endl;

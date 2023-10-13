@@ -138,36 +138,9 @@ inline Bitboard rank_bb(Square sqr) {
 
 typedef int (*SquareConsumer)(Square sq);
 
-inline void printPerSquareInfo(SquareConsumer consumer)
-{
-  printf("\n");
+void printPerSquareInfo(SquareConsumer consumer);
 
-  // loop over board ranks
-  for (Rank y = RANK_8; y >= RANK_1; --y)
-  {
-    // print rank
-    printf("  %d ", y + 1);
-
-    // loop over board files
-    for (File x = FILE_A; x < FILE_NB; ++x)
-    {
-      // init board square
-      Square square = make_square(x, y);
-
-      // print bit indexed by board square
-      printf(" %d", consumer(square));
-    }
-
-    printf("\n");
-  }
-
-  // print files
-  printf("\n     a b c d e f g h\n\n");
-
-  std::cout << std::endl;
-}
-
-void print_bitboard(Bitboard bitboard);
+void printBitboard(Bitboard bitboard);
 
 // masks
 

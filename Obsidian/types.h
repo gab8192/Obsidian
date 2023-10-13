@@ -15,7 +15,6 @@ const string engineVersion = "dev";
 using Key = uint64_t;
 using Bitboard = uint64_t;
 
-
 const string piecesChar = " PNBRQK  pnbrqk";
 
 constexpr int MAX_PLY = 246;
@@ -25,6 +24,13 @@ constexpr int MAX_MOVES = 224; // 32*7
 
 inline void sleep(int millis) {
   this_thread::sleep_for(chrono::milliseconds(millis));
+}
+
+inline int64_t timeMillis() {
+
+  auto sinceEpoch = chrono::steady_clock::now().time_since_epoch();
+
+  return chrono::duration_cast<chrono::milliseconds>(sinceEpoch).count();
 }
 
 enum Value : int {
