@@ -45,7 +45,7 @@ namespace {
       Threads::searchState = Search::RUNNING;
 
       while (Threads::searchState == Search::RUNNING)
-        _sleep(1);
+        sleep(1);
 
       if (i >= 10) {
         // Skip the first 10 positions from nps calculation
@@ -122,7 +122,7 @@ namespace {
 
     // Do search
     Threads::searchState = Search::RUNNING;
-    while (Threads::searchState == Search::RUNNING) _sleep(1);
+    while (Threads::searchState == Search::RUNNING) sleep(1);
 
     return Search::lastBestMove;
   }

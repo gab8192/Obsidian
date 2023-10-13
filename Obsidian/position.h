@@ -13,7 +13,7 @@ using namespace std;
 /// </summary>
 void positionInit();
 
-__declspec(align(32)) struct Position {
+struct alignas(32) Position {
   Color sideToMove;
   Square epSquare;
   CastlingRights castlingRights;

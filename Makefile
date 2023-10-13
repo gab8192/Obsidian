@@ -1,7 +1,7 @@
 ifeq ($(OS),Windows_NT)
 	EXE := Obsidian.exe
 else
-	EXE := Obsidian
+	EXE := Obsidian.elf
 endif
 
 FILES = Obsidian/*.cpp

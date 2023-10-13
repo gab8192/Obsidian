@@ -6,6 +6,7 @@
 #include "tt.h"
 #include "uci.h"
 
+#include <climits>
 #include <cmath>
 #include <sstream>
 
@@ -898,7 +899,7 @@ namespace Search {
     while (true) {
 
       while (Threads::searchState != RUNNING) {
-        _sleep(1);
+        sleep(1);
       }
 
       startSearch();

@@ -1,17 +1,19 @@
 #pragma once
 
+#include <chrono>
 #include <cstdint>
 #include <cstring>
 #include <iostream>
 #include <nmmintrin.h>
+#include <thread>
 
 using namespace std;
 
 const string engineVersion = "dev";
 
 
-using Key = unsigned __int64;
-using Bitboard = unsigned __int64;
+using Key = uint64_t;
+using Bitboard = uint64_t;
 
 
 const string piecesChar = " PNBRQK  pnbrqk";
@@ -20,6 +22,10 @@ constexpr int MAX_PLY = 246;
 constexpr int MAX_MOVES = 224; // 32*7
 
 #define BitCount(x) _mm_popcnt_u64(x)
+
+inline void sleep(int millis) {
+  this_thread::sleep_for(chrono::milliseconds(millis));
+}
 
 enum Value : int {
   VALUE_DRAW = 0,
