@@ -507,7 +507,7 @@ namespace Search {
     // depth should always be >= 1 at this point
 
     // Razoring
-    if (eval < alpha - 400 - 500 * depth) {
+    if (eval < alpha - 400 * depth) {
       Value value = qsearch<NonPV>(alpha-1, alpha, ss);
       if (value < alpha)
         return value;
