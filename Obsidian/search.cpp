@@ -193,6 +193,10 @@ namespace Search {
     return std::min(2 * d * d + 16 * d, 1000);
   }
 
+  Piece pieceOn(Square sq) {
+    return position.board[sq];
+  }
+
   void scoreMoves(MoveList& moves, Move ttMove, SearchInfo* ss) {
     Move killer0 = ss->killers[0], killer1 = ss->killers[1];
 
@@ -220,11 +224,8 @@ namespace Search {
 
       switch (getMoveType(m)) {
       case MT_NORMAL: {
-        const Square from = getMoveSrc(m);
-        const Square to = getMoveDest(m);
-        const Piece movedPc = position.board[from];
-        const Piece capturedPc = position.board[to];
 
+        const Piece capturedPc = pieceOn(getMoveDest(m));
         // mvv
         if (capturedPc != NO_PIECE)
           moveScore += PieceValue[capturedPc];
@@ -240,8 +241,7 @@ namespace Search {
         break;
       }
       case MT_PROMOTION: {
-        const Square to = getMoveDest(m);
-        const Piece capturedPc = position.board[to];
+        const Piece capturedPc = pieceOn(getMoveDest(m));
 
         moveScore += PieceValue[getPromoType(m)];
 
@@ -578,7 +578,7 @@ namespace Search {
         && bestValue > VALUE_TB_LOSS_IN_MAX_PLY) {
         bool capture = false;
         if (getMoveType(move) == MT_NORMAL) {
-          capture = position.board[getMoveDest(move)] != NO_PIECE;
+          capture = pieceOn(getMoveDest(move)) != NO_PIECE;
         }
 
         if (capture) {
