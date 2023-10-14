@@ -1,11 +1,6 @@
 #pragma once
 
 const char* TestFENs[] = {
-  "r1bqkb1r/ppp2pp1/5n1p/3P4/2P1p3/5N2/PPP2PPP/RNBQK2R w KQkq - 0 9",
-  "r1bqk1nr/pp2bpp1/3p3p/4p3/2P5/2NQ2P1/PP2PP1P/R1B1KB1R w KQkq - 0 9",
-  "rnbq1k1r/pp1nb1pp/4pp2/2ppP1BQ/3P3P/2NB4/PPP2PP1/R3K1NR w KQ - 2 9",
-  "r3kb1r/pppq2pp/2n2n2/8/2Pp2b1/5NP1/PP1NPPBP/R1BQK2R w KQkq - 0 9",
-  "r1bq1rk1/pppp1ppp/5nn1/3Pp3/1bP5/2NBP3/PPQ1NPPP/R1B1K2R w KQ - 3 9",
   "rnbqnrk1/ppp3bp/3p2p1/3Ppp2/2P1P3/2N1BP2/PP1Q2PP/R3KBNR w KQ f6 0 9",
   "r1bq1rk1/1pp2ppp/2n1pn2/p2p2B1/2PP4/P1Q2N2/1P2PPPP/R3KB1R w KQ a6 0 9",
   "rn1q1rk1/pbp1bppp/1p3n2/3p4/3PP3/2NB1N2/PP3PPP/R1BQK2R w KQ - 0 9",
@@ -26,10 +21,10 @@ const char* TestFENs[] = {
   "r1bqkb1r/ppp1p1pp/1n1pp3/6N1/2PP4/3n4/PP3PPP/RNBQK2R w KQkq - 0 9",
   "r2q1rk1/ppp2ppp/2np1n2/2b1pb2/2P5/2N1P1PP/PP1PNPB1/R1BQ1RK1 w - - 1 9",
   "r2qk1nr/1ppb2bp/p1np1pp1/4p1B1/B1PPP3/2N2N2/PP3PPP/R2QK2R w KQkq - 0 9",
-  "rnb1kb1r/2q2ppp/p2ppn2/1p6/3NPP2/2N5/PPP1B1PP/R1BQ1RK1 w kq b6 0 9",
-  "r1bqk2r/p3bppp/2p2n2/n3p1N1/8/8/PPPPBPPP/RNBQK2R w KQkq - 2 9",
-  "r1bq1rk1/pp1nppbp/2p2np1/8/2QPP3/2N2N2/PP2BPPP/R1B1K2R w KQ - 2 9",
-  "r2q1rk1/pbpnbppp/1p1ppn2/8/2PP4/2N2NP1/PPQ1PPBP/R1B2RK1 w - - 2 9",
-  "r1bqk2r/ppp2ppp/2n5/3pp3/2PPn3/P3P3/1PQ2PPP/R1B1KBNR w KQkq - 0 9",
+  "8/pp2nkR1/5n1p/3p4/5p2/P2BP3/1PPKN3/8 b - - 0 31",
+  "3n4/2k3p1/p4r2/1pp4P/5PB1/P6P/1KP5/5R2 w - - 0 32",
+  "4r1k1/5p1p/6pP/2b5/1p3R2/pP2BKP1/P4P2/8 b - - 0 38",
+  "1b6/4k1p1/3p3p/p6P/Bp6/2r1P1P1/4KP2/R7 w - - 0 70",
+  "4k3/2Rb4/3r3p/4p1p1/5p2/7P/4R1P1/6K1 w - - 0 61"
 
 };

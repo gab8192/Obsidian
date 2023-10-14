@@ -47,8 +47,8 @@ namespace {
       while (Threads::searchState == Search::RUNNING)
         sleep(1);
 
-      if (i >= 10) {
-        // Skip the first 10 positions from nps calculation
+      if (i >= 5) {
+        // Skip the first 5 positions from nps calculation
 
         elapsed += Search::lastSearchTimeSpan;
 
