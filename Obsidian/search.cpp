@@ -489,6 +489,9 @@ namespace Search {
       // skip pruning when in check
       goto moves_loop;
     }
+    else if (ss->excludedMove) {
+      eval = ss->staticEval;
+    }
     else {
       if (ttHit)
         ss->staticEval = eval = ttEntry->getStaticEval();
@@ -497,12 +500,12 @@ namespace Search {
 
       if (ttFlag & flagForTT(ttValue > eval))
         ss->staticEval = eval = ttValue;
-
-      if ((ss - 2)->staticEval != VALUE_NONE)
-        improving = ss->staticEval > (ss - 2)->staticEval;
-      else if ((ss - 4)->staticEval != VALUE_NONE)
-        improving = ss->staticEval > (ss - 4)->staticEval;
     }
+
+    if ((ss - 2)->staticEval != VALUE_NONE)
+      improving = ss->staticEval > (ss - 2)->staticEval;
+    else if ((ss - 4)->staticEval != VALUE_NONE)
+      improving = ss->staticEval > (ss - 4)->staticEval;
 
     // depth should always be >= 1 at this point
 
