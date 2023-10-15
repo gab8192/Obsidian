@@ -1,5 +1,6 @@
 #include "search.h"
 #include "evaluate.h"
+#include "history.h"
 #include "movegen.h"
 #include "timeman.h"
 #include "threads.h"
@@ -684,12 +685,13 @@ namespace Search {
     if (bestMove &&
       position.isQuiet(bestMove))
     {
-      int bonus = (bestValue > beta + 150) ? stat_bonus(depth + 1) : stat_bonus(depth);
+      // Butterfly history
 
-      int& history = mainHistory[position.sideToMove][fromTo(bestMove)];
+      int bonus = (bestValue > beta + 110) ? stat_bonus(depth + 1) : stat_bonus(depth);
 
-      history = myClamp(history + bonus, -12000, +12000);
+      addToHistory(mainHistory[position.sideToMove][fromTo(bestMove)], bonus);
 
+      // Killers
       if (bestMove != ss->killers[0]) {
         ss->killers[1] = ss->killers[0];
         ss->killers[0] = bestMove;
