@@ -22,8 +22,8 @@ void positionInit() {
 
 Bitboard Position::attackersTo(Square s, Bitboard occupied) const {
 
-  return  (get_pawns_bb_attacks<BLACK>(s)  & pieces(WHITE, PAWN))
-        | (get_pawns_bb_attacks<WHITE>(s)  & pieces(BLACK, PAWN))
+  return  (get_pawn_attacks(s, BLACK)      & pieces(WHITE, PAWN))
+        | (get_pawn_attacks(s, WHITE)      & pieces(BLACK, PAWN))
         | (get_knight_attacks(s)           & pieces(KNIGHT))
         | (get_rook_attacks(s, occupied)   & pieces(ROOK, QUEEN))
         | (get_bishop_attacks(s, occupied) & pieces(BISHOP, QUEEN))
@@ -479,7 +479,7 @@ std::ostream& operator<<(std::ostream& stream, Position& pos) {
   return stream;
 }
 
-bool Position::see_ge(Move m, Bitboard& occupied, Value threshold) const {
+bool Position::see_ge(Move m, Value threshold) const {
 
   // Only deal with normal moves, assume others pass a simple SEE
   if (getMoveType(m) != MT_NORMAL)
@@ -495,13 +495,16 @@ bool Position::see_ge(Move m, Bitboard& occupied, Value threshold) const {
   if (swap <= 0)
     return true;
 
-  occupied = pieces() ^ from ^ to; // xoring to is important for pinned piece logic
+  //assert(color_of(board[from]) == sideToMove);
+
+  Bitboard occupied = pieces() ^ from ^ to; // xoring to is important for pinned piece logic
   Color stm = sideToMove;
   Bitboard attackers = attackersTo(to, occupied);
   Bitboard stmAttackers, bb;
   int res = 1;
 
   while (true) {
+
     stm = ~stm;
     attackers &= occupied;
 
@@ -512,7 +515,7 @@ bool Position::see_ge(Move m, Bitboard& occupied, Value threshold) const {
     // Don't allow pinned pieces to attack as long as there are
     // pinners on their original square.
     if (pinners[~stm] & occupied) {
-      stmAttackers &= ~ blockersForKing[stm];
+      stmAttackers &= ~blockersForKing[stm];
 
       if (!stmAttackers)
         break;
@@ -522,54 +525,57 @@ bool Position::see_ge(Move m, Bitboard& occupied, Value threshold) const {
 
     // Locate and remove the next least valuable attacker, and add to
     // the bitboard 'attackers' any X-ray attackers behind it.
-    if ((bb = stmAttackers & pieces(PAWN))) {
+    if ((bb = stmAttackers & pieces(PAWN)))
+    {
       if ((swap = PieceValue[PAWN] - swap) < res)
         break;
       occupied ^= getLsb_bb(bb);
+
       attackers |= get_bishop_attacks(to, occupied) & pieces(BISHOP, QUEEN);
     }
 
-    else if ((bb = stmAttackers & pieces(KNIGHT))) {
+    else if ((bb = stmAttackers & pieces(KNIGHT)))
+    {
       if ((swap = PieceValue[KNIGHT] - swap) < res)
         break;
       occupied ^= getLsb_bb(bb);
     }
 
-    else if ((bb = stmAttackers & pieces(BISHOP))) {
+    else if ((bb = stmAttackers & pieces(BISHOP)))
+    {
       if ((swap = PieceValue[BISHOP] - swap) < res)
         break;
       occupied ^= getLsb_bb(bb);
+
       attackers |= get_bishop_attacks(to, occupied) & pieces(BISHOP, QUEEN);
     }
 
-    else if ((bb = stmAttackers & pieces(ROOK))) {
+    else if ((bb = stmAttackers & pieces(ROOK)))
+    {
       if ((swap = PieceValue[ROOK] - swap) < res)
         break;
       occupied ^= getLsb_bb(bb);
+
       attackers |= get_rook_attacks(to, occupied) & pieces(ROOK, QUEEN);
     }
 
-    else if ((bb = stmAttackers & pieces(QUEEN))) {
+    else if ((bb = stmAttackers & pieces(QUEEN)))
+    {
       if ((swap = PieceValue[QUEEN] - swap) < res)
         break;
       occupied ^= getLsb_bb(bb);
 
-      attackers |=  (get_bishop_attacks(to, occupied) & pieces(BISHOP, QUEEN))
-                  | (get_rook_attacks(to, occupied)  &  pieces(ROOK, QUEEN));
+      attackers |= (get_bishop_attacks(to, occupied) & pieces(BISHOP, QUEEN))
+                 | (get_rook_attacks(to, occupied) & pieces(ROOK, QUEEN));
     }
 
     else // KING
-         // If we "capture" with the king but opponent still has attackers,
+         // If we "capture" with the king but the opponent still has attackers,
          // reverse the result.
       return (attackers & ~pieces(stm)) ? res ^ 1 : res;
   }
 
   return bool(res);
-}
-
-bool Position::see_ge(Move m, Value threshold) const {
-  Bitboard occupied;
-  return see_ge(m, occupied, threshold);
 }
 
 void Position::updateAccumulator(NNUE::Accumulator* acc) {

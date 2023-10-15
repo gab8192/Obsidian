@@ -159,8 +159,6 @@ struct alignas(32) Position {
 
   void doMove(Move move, NNUE::Accumulator* accumulator);
 
-  bool see_ge(Move m, Bitboard& occupied, Value threshold) const;
-
   bool see_ge(Move m, Value threshold) const;
 
   void setToFen(const string& fen, NNUE::Accumulator* accumulator);

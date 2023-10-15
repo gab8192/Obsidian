@@ -364,9 +364,11 @@ namespace Search {
 
       foundLegalMoves = true;
 
-      if (!generateAllMoves) {
-        if (!position.see_ge(move, Value(-95)))
-          continue;
+      if (bestValue > VALUE_TB_LOSS_IN_MAX_PLY) {
+        if (!generateAllMoves) {
+          if (!position.see_ge(move, Value(-50)))
+            continue;
+        }
       }
 
       playMove(move, ss);
@@ -585,7 +587,7 @@ namespace Search {
         }
 
         if (capture) {
-          if (!position.see_ge(move, Value(-260 * depth)))
+          if (!position.see_ge(move, Value(-110 * depth)))
             continue;
         }
       }

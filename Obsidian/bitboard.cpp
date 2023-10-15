@@ -69,7 +69,7 @@ void printBitboard(Bitboard bitboard)
   for (Rank y = RANK_8; y >= RANK_1; --y)
   {
     // print rank
-    cout << "  " << (y + 1) << " \n";
+    cout << "  " << (y + 1) << " ";
 
     // loop over board files
     for (File x = FILE_A; x < FILE_NB; ++x)
