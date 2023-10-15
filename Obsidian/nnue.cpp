@@ -13,27 +13,35 @@ using namespace std;
 
 namespace NNUE {
 
-#ifdef USE_AVX2
+#if defined(USE_AVX512)
+
+  using Vec = __m512i;
+
+  inline Vec vecAddEpi16(Vec x, Vec y) {
+    return _mm512_add_epi16(x, y);
+  }
+
+  inline Vec vecSubEpi16(Vec x, Vec y) {
+    return _mm512_sub_epi16(x, y);
+  }
+
+  inline int vecHadd(Vec vec) {
+    return _mm512_reduce_add_epi32(vec);
+  }
+
+#elif defined(USE_AVX2)
 
   using Vec = __m256i;
-  constexpr int WeightsPerVec = sizeof(Vec) / sizeof(weight_t);
 
-#else
+  inline Vec vecAddEpi16(Vec x, Vec y) {
+    return _mm256_add_epi16(x, y);
+  }
 
-#endif
+  inline Vec vecSubEpi16(Vec x, Vec y) {
+    return _mm256_sub_epi16(x, y);
+  }
 
-  int FeatureIndexTable[COLOR_NB][PIECE_NB][SQUARE_NB];
-
-  struct {
-    weight_t FeatureWeights[FeatureDimensions * TransformedFeatureDimensions];
-    weight_t FeatureBiases[TransformedFeatureDimensions];
-    weight_t OutputWeights[2 * TransformedFeatureDimensions];
-    weight_t OutputBias;
-  } Content;
-
-#ifdef USE_AVX2
-
-  int vecHadd(Vec vec) {
+  inline int vecHadd(Vec vec) {
     __m128i xmm0;
     __m128i xmm1;
 
@@ -60,6 +68,31 @@ namespace NNUE {
     return _mm_cvtsi128_si32(xmm0);
   }
 
+#else
+
+  using Vec = weight_t;
+
+  inline Vec vecAddEpi16(Vec x, Vec y) {
+    return x + y;
+  }
+
+  inline Vec vecSubEpi16(Vec x, Vec y) {
+    return x - y;
+  }
+
+#endif
+
+  constexpr int WeightsPerVec = sizeof(Vec) / sizeof(weight_t);
+
+  alignas(SimdAlign) int FeatureIndexTable[COLOR_NB][PIECE_NB][SQUARE_NB];
+
+  struct {
+    alignas(SimdAlign) weight_t FeatureWeights[FeatureDimensions * TransformedFeatureDimensions];
+    alignas(SimdAlign) weight_t FeatureBiases[TransformedFeatureDimensions];
+    alignas(SimdAlign) weight_t OutputWeights[2 * TransformedFeatureDimensions];
+                       weight_t OutputBias;
+  } Content;
+
   template <int InputSize>
   inline void addToAll(weight_t* input, int offset)
   {
@@ -69,7 +102,7 @@ namespace NNUE {
     Vec* weightsVec = (Vec*)Content.FeatureWeights;
 
     for (int i = 0; i < InputSize / WeightsPerVec; ++i) {
-      inputVec[i] = _mm256_add_epi16(inputVec[i], weightsVec[offset + i]);
+      inputVec[i] = vecAddEpi16(inputVec[i], weightsVec[offset + i]);
     }
   }
 
@@ -82,7 +115,7 @@ namespace NNUE {
     Vec* weightsVec = (Vec*)Content.FeatureWeights;
 
     for (int i = 0; i < InputSize / WeightsPerVec; ++i) {
-      inputVec[i] = _mm256_sub_epi16(inputVec[i], weightsVec[offset + i]);
+      inputVec[i] = vecSubEpi16(inputVec[i], weightsVec[offset + i]);
     }
   }
 
@@ -95,30 +128,10 @@ namespace NNUE {
     Vec* weightsVec = (Vec*)Content.FeatureWeights;
 
     for (int i = 0; i < InputSize / WeightsPerVec; ++i) {
-      inputVec[i] = _mm256_sub_epi16(_mm256_add_epi16(inputVec[i], weightsVec[addOff + i]), weightsVec[subtractOff + i]);
+      inputVec[i] = vecSubEpi16(vecAddEpi16(inputVec[i], weightsVec[addOff + i]), weightsVec[subtractOff + i]);
     }
   }
-#else
-  template <int InputSize>
-  inline void addToAll(weight_t* input, int offset)
-  {
-    for (int i = 0; i < InputSize; ++i)
-      input[i] += Content.FeatureWeights[offset + i];
-  }
 
-  template <int InputSize>
-  inline void subtractFromAll(weight_t* input, int offset)
-  {
-    for (int i = 0; i < InputSize; ++i)
-      input[i] -= Content.FeatureWeights[offset + i];
-  }
-
-  template <int InputSize>
-  inline void addAndSubtractFromAll(weight_t* input, int addOff, int subtractOff) {
-    for (int i = 0; i < InputSize; ++i)
-      input[i] += Content.FeatureWeights[addOff + i] - Content.FeatureWeights[subtractOff + i];
-  }
-#endif // USE_AVX2
 
   void Accumulator::reset() {
     memcpy(white, Content.FeatureBiases, sizeof(Content.FeatureBiases));
@@ -126,29 +139,23 @@ namespace NNUE {
   }
 
   void Accumulator::activateFeature(Square sq, Piece pc) {
-    addToAll<TransformedFeatureDimensions>(white,
-      TransformedFeatureDimensions * FeatureIndexTable[WHITE][pc][sq]);
+    addToAll<TransformedFeatureDimensions>(white, FeatureIndexTable[WHITE][pc][sq]);
 
-    addToAll<TransformedFeatureDimensions>(black,
-      TransformedFeatureDimensions * FeatureIndexTable[BLACK][pc][sq]);
+    addToAll<TransformedFeatureDimensions>(black, FeatureIndexTable[BLACK][pc][sq]);
   }
 
   void Accumulator::deactivateFeature(Square sq, Piece pc) {
-    subtractFromAll<TransformedFeatureDimensions>(white,
-      TransformedFeatureDimensions * FeatureIndexTable[WHITE][pc][sq]);
+    subtractFromAll<TransformedFeatureDimensions>(white, FeatureIndexTable[WHITE][pc][sq]);
 
-    subtractFromAll<TransformedFeatureDimensions>(black,
-      TransformedFeatureDimensions * FeatureIndexTable[BLACK][pc][sq]);
+    subtractFromAll<TransformedFeatureDimensions>(black, FeatureIndexTable[BLACK][pc][sq]);
   }
 
   void Accumulator::moveFeature(Square from, Square to, Piece pc) {
     addAndSubtractFromAll<TransformedFeatureDimensions>(white,
-      TransformedFeatureDimensions * FeatureIndexTable[WHITE][pc][to],
-      TransformedFeatureDimensions * FeatureIndexTable[WHITE][pc][from]);
+      FeatureIndexTable[WHITE][pc][to], FeatureIndexTable[WHITE][pc][from]);
 
     addAndSubtractFromAll<TransformedFeatureDimensions>(black,
-      TransformedFeatureDimensions * FeatureIndexTable[BLACK][pc][to],
-      TransformedFeatureDimensions * FeatureIndexTable[BLACK][pc][from]);
+      FeatureIndexTable[BLACK][pc][to], FeatureIndexTable[BLACK][pc][from]);
   }
 
   void load() {
@@ -177,6 +184,9 @@ namespace NNUE {
 
           FeatureIndexTable[~color][piece][sq] =
             SQUARE_NB * (pt + 5) + relative_square(~color, sq);
+
+          FeatureIndexTable[color][piece][sq] *= TransformedFeatureDimensions;
+          FeatureIndexTable[~color][piece][sq] *= TransformedFeatureDimensions;
         }
       }
     }
@@ -206,7 +216,35 @@ namespace NNUE {
 
     int sum = Content.OutputBias;
 
-#ifdef USE_AVX2
+#if defined(USE_AVX512)
+
+    const Vec reluClipMin = _mm512_setzero_si512();
+    const Vec reluClipMax = _mm512_set1_epi16(255);
+
+    Vec* stmAccVec = (Vec*)stmAccumulator;
+    Vec* oppAccVec = (Vec*)oppAccumulator;
+    Vec* stmWeightsVec = (Vec*)Content.OutputWeights;
+    Vec* oppWeightsVec = (Vec*)&Content.OutputWeights[TransformedFeatureDimensions];
+
+    Vec sumVec = _mm512_setzero_si512();
+
+    for (int i = 0; i < TransformedFeatureDimensions / WeightsPerVec; ++i) {
+
+      { // Side to move
+        Vec crelu = _mm512_min_epi16(_mm512_max_epi16(stmAccVec[i], reluClipMin), reluClipMax);
+        Vec stmProduct = _mm512_madd_epi16(crelu, stmWeightsVec[i]);
+        sumVec = _mm512_add_epi32(sumVec, stmProduct);
+      }
+      { // Non side to move
+        Vec crelu = _mm512_min_epi16(_mm512_max_epi16(oppAccVec[i], reluClipMin), reluClipMax);
+        Vec oppProduct = _mm512_madd_epi16(crelu, oppWeightsVec[i]);
+        sumVec = _mm512_add_epi32(sumVec, oppProduct);
+      }
+    }
+
+    sum += vecHadd(sumVec);
+
+#elif defined(USE_AVX2)
 
     const Vec reluClipMin = _mm256_setzero_si256();
     const Vec reluClipMax = _mm256_set1_epi16(255);
