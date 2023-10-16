@@ -567,7 +567,11 @@ namespace Search {
     }
 
     bool foundLegalMove = false;
+
     int playedMoves = 0;
+    int quietCount = 0;
+
+    bool skipQuiets = false;
 
     for (int i = 0; i < moves.size(); i++) {
       Move move = nextBestMove(moves, i);
@@ -576,6 +580,11 @@ namespace Search {
         continue;
 
       if (!position.isLegal(move))
+        continue;
+
+      bool isQuiet = position.isQuiet(move);
+
+      if (isQuiet && skipQuiets)
         continue;
 
       foundLegalMove = true;
@@ -653,6 +662,14 @@ namespace Search {
       cancelMove();
 
       playedMoves++;
+
+      if (isQuiet) {
+        quietCount++;
+
+        int threshold = (3 * depth * depth + 9) / (2 - improving);
+        if (quietCount > threshold)
+          skipQuiets = true;
+      }
 
       if (rootNode)
         rootMoves.scores[rootMoves.indexOf(move)] = value;
