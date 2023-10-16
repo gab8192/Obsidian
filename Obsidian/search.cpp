@@ -198,60 +198,56 @@ namespace Search {
     return position.board[sq];
   }
 
+  //        TT move:  MAX
+  // Good promotion:  400K
+  //   Good capture:  300K
+  //        Killers:  200K
+  // Dumb promotion: -100K
+  //    Bad capture: -200K
+
+  constexpr int mvv_lva(int captured, int attacker) {
+    return PieceValue[captured] * 100 - PieceValue[attacker];
+  }
+
+  constexpr int promotionScores[] = {
+    0, 0, 400000, -100001, -100000, 400001
+  };
+
   void scoreMoves(MoveList& moves, Move ttMove, SearchInfo* ss) {
-    Move killer0 = ss->killers[0], killer1 = ss->killers[1];
+    Move killer0 = ss->killers[0],
+      killer1 = ss->killers[1];
 
     for (int i = 0; i < moves.size(); i++) {
       int& moveScore = moves.scores[i];
 
-      Move m = moves[i];
-      if (m == ttMove) {
-        moveScore = INT_MAX;
-        continue;
-      }
-
-      // init it to 0
+      // initial value
       moveScore = 0;
 
-      if (position.isQuiet(m)) {
-        moveScore += mainHistory[position.sideToMove][fromTo(m)] / 200;
+      Move move = moves[i];
 
-        if (m == killer0)
-          moveScore += 40;
+      MoveType mt = getMoveType(move);
 
-        if (m == killer1)
-          moveScore += 20;
+      Piece moved = pieceOn(getMoveSrc(move));
+      Piece captured = pieceOn(getMoveDest(move));
+
+      if (move == ttMove)
+        moveScore = INT_MAX;
+      else if (mt == MT_PROMOTION)
+        moveScore = promotionScores[getPromoType(move)];
+      else if (mt == MT_EN_PASSANT)
+        moveScore = 300000 + mvv_lva(PAWN, PAWN);
+      else if (captured) {
+        if (position.see_ge(move, VALUE_DRAW))
+          moveScore = 300000 + mvv_lva(captured, moved);
+        else
+          moveScore = -200000 + mvv_lva(captured, moved);
       }
-
-      switch (getMoveType(m)) {
-      case MT_NORMAL: {
-
-        const Piece capturedPc = pieceOn(getMoveDest(m));
-        // mvv
-        if (capturedPc != NO_PIECE)
-          moveScore += PieceValue[capturedPc];
-
-        break;
-      }
-      case MT_CASTLING: {
-        moveScore += 50;
-        break;
-      }
-      case MT_EN_PASSANT: {
-        moveScore += 70;
-        break;
-      }
-      case MT_PROMOTION: {
-        const Piece capturedPc = pieceOn(getMoveDest(m));
-
-        moveScore += PieceValue[getPromoType(m)];
-
-        if (capturedPc != NO_PIECE)
-          moveScore += PieceValue[capturedPc];
-
-        break;
-      }
-      }
+      else if (move == killer0)
+        moveScore = 200001;
+      else if (move == killer1)
+        moveScore = 200000;
+      else
+        moveScore = mainHistory[position.sideToMove][fromTo(move)];
     }
   }
 
@@ -597,7 +593,7 @@ namespace Search {
         }
 
         if (capture) {
-          if (!position.see_ge(move, Value(-110 * depth)))
+          if (!position.see_ge(move, Value(-140 * depth)))
             continue;
         }
       }
