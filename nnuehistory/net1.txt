@@ -1,3 +1,0 @@
-Positions: 50M (from little_guinea_pig)
-L1: 64
-Epochs: 45
