@@ -586,13 +586,10 @@ namespace Search {
       foundLegalMove = true;
 
       if (!rootNode
-        && bestValue > VALUE_TB_LOSS_IN_MAX_PLY) {
-        bool capture = false;
-        if (getMoveType(move) == MT_NORMAL) {
-          capture = pieceOn(getMoveDest(move)) != NO_PIECE;
-        }
+        && bestValue > VALUE_TB_LOSS_IN_MAX_PLY)
+      {
 
-        if (capture) {
+        if (pieceOn(getMoveDest(move))) {
           if (!position.see_ge(move, Value(-140 * depth)))
             continue;
         }
