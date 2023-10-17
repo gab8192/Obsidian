@@ -210,7 +210,7 @@ namespace Search {
   }
 
   constexpr int promotionScores[] = {
-    0, 0, 400000, -100001, -100000, 400001
+    0, 0, 400000, -100001, -100000, 410000
   };
 
   void scoreMoves(MoveList& moves, Move ttMove, SearchInfo* ss) {
@@ -233,7 +233,7 @@ namespace Search {
       if (move == ttMove)
         moveScore = INT_MAX;
       else if (mt == MT_PROMOTION)
-        moveScore = promotionScores[getPromoType(move)];
+        moveScore = promotionScores[getPromoType(move)] + PieceValue[captured];
       else if (mt == MT_EN_PASSANT)
         moveScore = 300000 + mvv_lva(PAWN, PAWN);
       else if (captured) {
