@@ -580,14 +580,21 @@ namespace Search {
 
       bool isQuiet = position.isQuiet(move);
 
-      if (isQuiet && skipQuiets)
-        continue;
+      if (isQuiet) {
+        quietCount++;
+
+        if (skipQuiets)
+          continue;
+      }
 
       foundLegalMove = true;
 
       if (!rootNode
+        && position.hasNonPawns(us)
         && bestValue > VALUE_TB_LOSS_IN_MAX_PLY)
       {
+        if (quietCount > (3 * depth * depth + 9) / (2 - improving))
+          skipQuiets = true;
 
         if (pieceOn(getMoveDest(move))) {
           if (!position.see_ge(move, Value(-140 * depth)))
@@ -655,14 +662,6 @@ namespace Search {
       cancelMove();
 
       playedMoves++;
-
-      if (isQuiet) {
-        quietCount++;
-
-        int threshold = (3 * depth * depth + 9) / (2 - improving);
-        if (quietCount > threshold)
-          skipQuiets = true;
-      }
 
       if (rootNode)
         rootMoves.scores[rootMoves.indexOf(move)] = value;
