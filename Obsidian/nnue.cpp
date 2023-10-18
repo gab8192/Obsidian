@@ -281,7 +281,7 @@ namespace NNUE {
 
 #endif // USE_AVX2
 
-    return Value(sum / 40);
+    return Value((sum * NetworkScale) / NetworkQ);
   }
 
 }

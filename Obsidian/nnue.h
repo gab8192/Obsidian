@@ -25,6 +25,9 @@ namespace NNUE {
   constexpr int FeatureDimensions = 768;
   constexpr int TransformedFeatureDimensions = 384;
 
+  constexpr int NetworkScale = 400;
+  constexpr int NetworkQ = 255 * 64;
+
   struct Accumulator {
     alignas(SimdAlign) weight_t white[TransformedFeatureDimensions];
     alignas(SimdAlign) weight_t black[TransformedFeatureDimensions];
