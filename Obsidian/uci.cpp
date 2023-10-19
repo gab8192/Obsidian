@@ -24,43 +24,6 @@ namespace {
   // Initial position
   const char* StartFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-  void bench() {
-    constexpr int posCount = sizeof(TestFENs) / sizeof(char*);
-
-    uint64_t totalNodes = 0;
-
-    searchLimits = Search::Limits();
-    searchLimits.depth = 13;
-
-    clock_t elapsed = 0;
-
-    Search::printingEnabled = false;
-
-    for (int i = 0; i < posCount; i++) {
-      Search::position.setToFen(TestFENs[i], &Search::accumulatorStack[0]);
-      seenPositions.clear();
-      seenPositions.push_back(Search::position.key);
-      Search::clear();
-
-      Threads::searchState = Search::RUNNING;
-
-      while (Threads::searchState == Search::RUNNING)
-        sleep(1);
-
-      if (i >= 5) {
-        // Skip the first 5 positions from nps calculation
-
-        elapsed += Search::lastSearchTimeSpan;
-
-        totalNodes += Search::nodesSearched;
-      }
-    }
-
-    Search::printingEnabled = true;
-
-    cout << totalNodes << " nodes " << (totalNodes * 1000 / elapsed) << " nps" << endl;
-  }
-
   void position(Position& pos, istringstream& is) {
     seenPositions.clear();
 
@@ -90,6 +53,44 @@ namespace {
       pos.doMove(m, &Search::accumulatorStack[0]);
       seenPositions.push_back(pos.key);
     }
+  }
+
+  void bench() {
+    constexpr int posCount = sizeof(BenchPositions) / sizeof(char*);
+
+    uint64_t totalNodes = 0;
+
+    searchLimits = Search::Limits();
+    searchLimits.depth = 13;
+
+    clock_t elapsed = 0;
+
+    Search::printingEnabled = false;
+
+    for (int i = 0; i < posCount; i++) {
+
+      istringstream posStr(BenchPositions[i]);
+      position(Search::position, posStr);
+
+      Search::clear();
+
+      Threads::searchState = Search::RUNNING;
+
+      while (Threads::searchState == Search::RUNNING)
+        sleep(1);
+
+      if (i >= 5) {
+        // Skip the first 5 positions from nps calculation
+
+        elapsed += Search::lastSearchTimeSpan;
+
+        totalNodes += Search::nodesSearched;
+      }
+    }
+
+    Search::printingEnabled = true;
+
+    cout << totalNodes << " nodes " << (totalNodes * 1000 / elapsed) << " nps" << endl;
   }
 
   // setoption() is called when the engine receives the "setoption" UCI command.
