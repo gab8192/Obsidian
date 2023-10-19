@@ -62,6 +62,8 @@ namespace Search {
 
   int mainHistory[COLOR_NB][SQUARE_NB * SQUARE_NB];
 
+  Move counterMoveHistory[PIECE_NB][SQUARE_NB];
+
   inline int fromTo(Move m) {
     return getMoveSrc(m) * SQUARE_NB + getMoveDest(m);
   }
@@ -71,6 +73,8 @@ namespace Search {
     TT::clear();
 
     memset(mainHistory, 0, sizeof(mainHistory));
+
+    memset(counterMoveHistory, 0, sizeof(counterMoveHistory));
   }
 
   // Called one at engine initialization
@@ -202,6 +206,7 @@ namespace Search {
   // Good promotion:  400K
   //   Good capture:  300K
   //        Killers:  200K
+  //   Counter-move:  100K
   // Dumb promotion: -100K
   //    Bad capture: -200K
 
@@ -216,6 +221,14 @@ namespace Search {
   void scoreMoves(MoveList& moves, Move ttMove, SearchInfo* ss) {
     Move killer0 = ss->killers[0],
       killer1 = ss->killers[1];
+
+    Move counterMove = MOVE_NONE;
+
+    Move prevMove = (ss-1)->playedMove;
+    if (prevMove) {
+      Square prevSq = getMoveDest(prevMove);
+      counterMove = counterMoveHistory[pieceOn(prevSq)][prevSq];
+    }
 
     for (int i = 0; i < moves.size(); i++) {
       int& moveScore = moves.scores[i];
@@ -246,6 +259,8 @@ namespace Search {
         moveScore = 200001;
       else if (move == killer1)
         moveScore = 200000;
+      else if (move == counterMove)
+        moveScore = 100000;
       else
         moveScore = mainHistory[position.sideToMove][fromTo(move)];
     }
@@ -691,7 +706,7 @@ namespace Search {
     }
 
     // Update histories
-    if (bestMove &&
+    if (bestValue >= beta &&
       position.isQuiet(bestMove))
     {
       // Butterfly history
@@ -699,6 +714,12 @@ namespace Search {
       int bonus = (bestValue > beta + 110) ? stat_bonus(depth + 1) : stat_bonus(depth);
 
       addToHistory(mainHistory[position.sideToMove][fromTo(bestMove)], bonus);
+
+      Move prevMove = (ss - 1)->playedMove;
+      if (prevMove) {
+        Square prevSq = getMoveDest(prevMove);
+        counterMoveHistory[pieceOn(prevSq)][prevSq] = bestMove;
+      }
 
       // Killers
       if (bestMove != ss->killers[0]) {
