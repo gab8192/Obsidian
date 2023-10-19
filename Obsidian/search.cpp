@@ -292,9 +292,9 @@ namespace Search {
 
   // Should not be called from Root node
   bool is2FoldRepetition() {
+
     if (position.halfMoveClock < 4)
       return false;
-
 
     for (int i = ply - 2; i >= 0; i -= 2) {
       if (position.key == posStack[i].key)
@@ -302,7 +302,7 @@ namespace Search {
     }
 
     // Start at last-1 because posStack[0] = seenPositions[last]
-    for (int i = seenPositions.size() - 2; i >= 0; --i) {
+    for (int i = seenPositions.size() + (ply&1) - 3; i >= 0; i -= 2) {
       if (position.key == seenPositions[i])
         return true;
     }
