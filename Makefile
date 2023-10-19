@@ -12,16 +12,25 @@ FLAGS = -s -std=c++17 -flto
 
 DEFINITIONS = -DNDEBUG -D_CONSOLE
 
+NATIVE = false
+
 ifeq ($(build),)
 	build = avx2
+	NATIVE = true
 endif
 
 ifeq ($(build), avx512)
-    ARCH = -DUSE_AVX512 -march=skylake-avx512
+	DEFINITIONS += -DUSE_AVX512
+    ARCH = -march=skylake-avx512
 endif
 
 ifeq ($(build), avx2)
-	ARCH = -DUSE_AVX2 -march=haswell
+	DEFINITIONS += -DUSE_AVX2
+	ARCH = -march=haswell
+endif
+
+ifeq ($(NATIVE), true)
+	ARCH = -march=native
 endif
 
 make: $(FILES)
