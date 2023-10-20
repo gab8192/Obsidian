@@ -860,7 +860,8 @@ namespace Search {
           }
           else if (score >= beta) {
             beta = (Value)myMin(VALUE_INFINITE, beta + windowSize);
-            ++failedHighCnt;
+
+            failedHighCnt = std::min(11, failedHighCnt + 1);
           }
           else
             break;
