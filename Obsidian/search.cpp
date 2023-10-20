@@ -335,19 +335,19 @@ namespace Search {
     }
 
     Move bestMove = MOVE_NONE;
-    Value bestValue, eval;
+    Value bestValue;
     const Value oldAlpha = alpha;
 
     if (position.checkers) {
       bestValue = -VALUE_INFINITE;
-      eval = VALUE_NONE;
+      ss->staticEval = VALUE_NONE;
     }
     else {
 
       if (ttHit)
-        bestValue = eval = ttEntry->getStaticEval();
+        bestValue = ss->staticEval = ttEntry->getStaticEval();
       else
-        bestValue = eval = Eval::evaluate();
+        bestValue = ss->staticEval = Eval::evaluate();
 
       if (ttFlag & flagForTT(ttValue > bestValue)) {
         bestValue = ttValue;
@@ -414,7 +414,7 @@ namespace Search {
     else
       flag = (alpha > oldAlpha ? TT::FLAG_EXACT : TT::FLAG_UPPER);
 
-    ttEntry->store(position.key, flag, 0, bestMove, bestValue, eval);
+    ttEntry->store(position.key, flag, 0, bestMove, bestValue, ss->staticEval);
 
     return bestValue;
   }
