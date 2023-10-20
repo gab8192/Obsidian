@@ -623,7 +623,6 @@ namespace Search {
         && ply < 2 * rootDepth
         && depth >= 6
         && !excludedMove
-        && ttHit
         && move == ttMove
         && abs(ttValue) < VALUE_TB_WIN_IN_MAX_PLY
         && ttFlag & TT::FLAG_LOWER
