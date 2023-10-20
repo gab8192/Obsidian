@@ -686,13 +686,14 @@ namespace Search {
         if (bestValue > alpha) {
           bestMove = move;
 
+          if (PvNode)
+            updatePV(ss, bestMove);
+
           // Always true in NonPV nodes
           if (bestValue >= beta)
             break;
 
           alpha = bestValue;
-
-          updatePV(ss, bestMove);
         }
       }
     }
