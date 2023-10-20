@@ -480,7 +480,7 @@ namespace Search {
     Move bestMove = MOVE_NONE;
     Value bestValue = -VALUE_INFINITE;
 
-    if (position.checkers)
+    if (position.checkers && !rootNode)
       depth = myMax(1, depth + 1);
 
     if (!PvNode
