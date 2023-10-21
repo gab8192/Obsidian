@@ -26,12 +26,12 @@ namespace Eval {
       Value strongV = evaluateEndgame(pos, strongSide);
 
       v = (strongSide == pos.sideToMove ? strongV : -strongV);
-
-      v = Value(v * (200 - pos.halfMoveClock) / 200);
     }
     else {
       v = NNUE::evaluate(Search::currentAccumulator(), pos.sideToMove);
     }
+
+    v = Value(v * (200 - pos.halfMoveClock) / 200);
 
     return v;
   }
