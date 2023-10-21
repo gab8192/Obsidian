@@ -105,15 +105,15 @@ constexpr bool more_than_one(Bitboard bb) {
 }
 
 inline int edge_distance(File f) {
-  return myMin(f, File(FILE_H - f));
+  return std::min(f, File(FILE_H - f));
 }
 
 inline int edge_distance(Rank r) {
-  return myMin(r, Rank(RANK_8 - r));
+  return std::min(r, Rank(RANK_8 - r));
 }
 
 inline int edge_distance(Square sqr) {
-  return myMin(edge_distance(file_of(sqr)), edge_distance(rank_of(sqr)));
+  return std::min(edge_distance(file_of(sqr)), edge_distance(rank_of(sqr)));
 }
 
 inline Square flip_rank(Square s) { // Swap A1 <-> A8

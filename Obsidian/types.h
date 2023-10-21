@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <chrono>
 #include <cstdint>
 #include <cstring>
@@ -197,15 +198,6 @@ enum Piece : char {
 
   PIECE_NB = 16
 };
-
-
-inline int myClamp(int a, int min, int max) { return a > max ? max : (a < min ? min : a); }
-inline int myMax(int a, int b) { return a > b ? a : b; }
-inline int myMin(int a, int b) { return a < b ? a : b; }
-
-inline double myClamp(double a, double min, double max) { return a > max ? max : (a < min ? min : a); }
-inline double myMax(double a, double b) { return a > b ? a : b; }
-inline double myMin(double a, double b) { return a < b ? a : b; }
 
 // These defines are copied from stockfish types.h
 

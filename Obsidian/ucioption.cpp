@@ -2,7 +2,6 @@
 #include "search.h"
 #include "tt.h"
 
-#include <algorithm>
 #include <cassert>
 #include <ostream>
 #include <sstream>

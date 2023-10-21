@@ -2,7 +2,6 @@
 #include "endgame.h"
 #include "search.h"
 
-#include <algorithm>
 #include <iostream>
 
 using namespace Search;

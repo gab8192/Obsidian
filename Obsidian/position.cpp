@@ -397,7 +397,7 @@ void Position::setToFen(const string& fen, NNUE::Accumulator* accumulator) {
     idx++;
     gamePly = readNumberTillSpace(fen, idx);
   }
-  gamePly = myMax(2 * (gamePly - 1), 0) + (sideToMove == BLACK);
+  gamePly = std::max(2 * (gamePly - 1), 0) + (sideToMove == BLACK);
 
   updateAttacksToKings();
   updateKey();

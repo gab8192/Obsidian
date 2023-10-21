@@ -457,8 +457,8 @@ namespace Search {
         return makeDrawValue();
 
       // mate distance pruning
-      alpha = (Value)myMax(alpha, ply - VALUE_MATE);
-      beta = (Value)myMin(beta, VALUE_MATE - ply - 1);
+      alpha = std::max(alpha, Value(ply - VALUE_MATE));
+      beta = std::min(beta, VALUE_MATE - ply - 1);
       if (alpha >= beta)
         return alpha;
     }
@@ -481,7 +481,7 @@ namespace Search {
     Value bestValue = -VALUE_INFINITE;
 
     if (position.checkers && !rootNode)
-      depth = myMax(1, depth + 1);
+      depth = std::max(1, depth + 1);
 
     if (!PvNode
       && !excludedMove
@@ -546,7 +546,7 @@ namespace Search {
       && position.hasNonPawns(position.sideToMove)
       && beta > VALUE_TB_LOSS_IN_MAX_PLY) {
 
-      int R = myMin(int(eval - beta) / 200, 3) + depth / 3 + 4;
+      int R = std::min((eval - beta) / 200, 3) + depth / 3 + 4;
 
       playNullMove(ss);
       Value nullValue = -negaMax<NonPV>(-beta, -beta + 1, depth - R, !cutNode, ss + 1);
@@ -657,7 +657,7 @@ namespace Search {
         R += cutNode;
 
         // Do the clamp to avoid a qsearch or an extension in the child search
-        int reducedDepth = myClamp(newDepth - R, 1, newDepth + 1);
+        int reducedDepth = std::clamp(newDepth - R, 1, newDepth + 1);
 
         value = -negaMax<NonPV>(-alpha - 1, -alpha, reducedDepth, true, ss + 1);
 
@@ -837,7 +837,7 @@ namespace Search {
         int failedHighCnt = 0;
         while (true) {
 
-          int adjustedDepth = myMax(1, rootDepth - failedHighCnt);
+          int adjustedDepth = std::max(1, rootDepth - failedHighCnt);
 
           score = negaMax<Root>(alpha, beta, adjustedDepth, false, ss);
 
@@ -854,12 +854,12 @@ namespace Search {
 
           if (score <= alpha) {
             beta = Value((alpha + beta) / 2);
-            alpha = (Value)myMax(-VALUE_INFINITE, alpha - windowSize);
+            alpha = (Value)std::max(-VALUE_INFINITE, alpha - windowSize);
 
             failedHighCnt = 0;
           }
           else if (score >= beta) {
-            beta = (Value)myMin(VALUE_INFINITE, beta + windowSize);
+            beta = (Value)std::min(VALUE_INFINITE, beta + windowSize);
 
             failedHighCnt = std::min(11, failedHighCnt + 1);
           }

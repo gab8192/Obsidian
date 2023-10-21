@@ -93,10 +93,10 @@ void printBitboard(Bitboard bitboard)
 
 Bitboard mask_king_attacks(Square sqr) {
   Bitboard attacks = 0;
-  File xLeft = (File)myMax(file_of(sqr) - 1, 0);
-  File xRight = (File)myMin(file_of(sqr) + 1, 7);
-  Rank yTop = (Rank)myMax(rank_of(sqr) - 1, 0);
-  Rank yBottom = (Rank)myMin(rank_of(sqr) + 1, 7);
+  File xLeft   = (File) std::max<int>(file_of(sqr) - 1, 0);
+  File xRight  = (File) std::min<int>(file_of(sqr) + 1, 7);
+  Rank yTop    = (Rank) std::max<int>(rank_of(sqr) - 1, 0);
+  Rank yBottom = (Rank) std::min<int>(rank_of(sqr) + 1, 7);
 
   for (Rank y = yTop; y <= yBottom; ++y) {
     for (File x = xLeft; x <= xRight; ++x) {
@@ -277,7 +277,7 @@ void bitboardsInit() {
     for (Square s2 = SQ_A1; s2 < SQUARE_NB; ++s2) {
       FileDistance[s1][s2] = abs(file_of(s1) - file_of(s2));
       RankDistance[s1][s2] = abs(rank_of(s1) - rank_of(s2));
-      SquareDistance[s1][s2] = myMax(FileDistance[s1][s2], RankDistance[s1][s2]);
+      SquareDistance[s1][s2] = std::max(FileDistance[s1][s2], RankDistance[s1][s2]);
     }
   }
 

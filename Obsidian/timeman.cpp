@@ -2,7 +2,6 @@
 #include "search.h"
 #include "uci.h"
 
-#include <algorithm>
 #include <cfloat>
 #include <cmath>
 
