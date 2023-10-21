@@ -236,6 +236,67 @@ namespace Search {
     0, 0, 400000, -100001, -100000, 410000
   };
 
+  int getHistoryScore(Move move, SearchInfo* ss) {
+    int moveScore = mainHistory[position.sideToMove][fromTo(move)];
+
+    if ((ss - 1)->playedMove)
+      moveScore += (ss - 1)->contHistory()[pieceTo(move)];
+    if ((ss - 2)->playedMove)
+      moveScore += (ss - 2)->contHistory()[pieceTo(move)];
+
+    return moveScore;
+  }
+
+  void updateHistories(int depth, Move bestMove, Value bestValue, Value beta, Move* quietMoves, int quietCount, SearchInfo* ss) {
+
+    int bonus = (bestValue > beta + 110) ? stat_bonus(depth + 1) : stat_bonus(depth);
+
+    /*
+    * Butterfly history
+    */
+    addToHistory(mainHistory[position.sideToMove][fromTo(bestMove)], bonus);
+
+    /*
+    * Continuation history
+    */
+    if ((ss - 1)->playedMove)
+      addToHistory((ss - 1)->contHistory()[pieceTo(bestMove)], bonus);
+    if ((ss - 2)->playedMove)
+      addToHistory((ss - 2)->contHistory()[pieceTo(bestMove)], bonus);
+
+    /*
+    * Decrease score of other quiet moves
+    */
+    for (int i = 0; i < quietCount; i++) {
+      Move otherMove = quietMoves[i];
+      if (otherMove == bestMove)
+        continue;
+
+      if ((ss - 1)->playedMove)
+        addToHistory((ss - 1)->contHistory()[pieceTo(otherMove)], -bonus);
+      if ((ss - 2)->playedMove)
+        addToHistory((ss - 2)->contHistory()[pieceTo(otherMove)], -bonus);
+
+      addToHistory(mainHistory[position.sideToMove][fromTo(otherMove)], -bonus);
+    }
+
+    /*
+    * Counter move history
+    */
+    if ((ss - 1)->playedMove) {
+      Square prevSq = getMoveDest((ss - 1)->playedMove);
+      counterMoveHistory[pieceOn(prevSq)][prevSq] = bestMove;
+    }
+
+    /*
+    * Killers
+    */
+    if (bestMove != ss->killers[0]) {
+      ss->killers[1] = ss->killers[0];
+      ss->killers[0] = bestMove;
+    }
+  }
+
   void scoreMoves(MoveList& moves, Move ttMove, SearchInfo* ss) {
     Move killer0 = ss->killers[0],
       killer1 = ss->killers[1];
@@ -279,14 +340,8 @@ namespace Search {
         moveScore = 200000;
       else if (move == counterMove)
         moveScore = 100000;
-      else {
-        moveScore = mainHistory[position.sideToMove][fromTo(move)];
-
-        if ((ss - 1)->playedMove)
-          moveScore += (ss - 1)->contHistory()[pieceTo(move)];
-        if ((ss - 2)->playedMove)
-          moveScore += (ss - 2)->contHistory()[pieceTo(move)];
-      }
+      else
+        moveScore = getHistoryScore(move, ss);
     }
   }
 
@@ -736,42 +791,7 @@ namespace Search {
     if (bestValue >= beta &&
       position.isQuiet(bestMove))
     {
-      int bonus = (bestValue > beta + 110) ? stat_bonus(depth + 1) : stat_bonus(depth);
-
-      // Butterfly history
-      addToHistory(mainHistory[position.sideToMove][fromTo(bestMove)], bonus);
-
-      // Continuation history
-      if ((ss - 1)->playedMove)
-        addToHistory((ss - 1)->contHistory()[pieceTo(bestMove)], bonus);
-      if ((ss - 2)->playedMove)
-        addToHistory((ss - 2)->contHistory()[pieceTo(bestMove)], bonus);
-
-      // Decrease score of other quiet moves
-      for (int i = 0; i < quietCount; i++) {
-        Move otherMove = quietMoves[i];
-        if (otherMove == bestMove)
-          continue;
-
-        if ((ss - 1)->playedMove)
-          addToHistory((ss - 1)->contHistory()[pieceTo(otherMove)], -bonus);
-        if ((ss - 2)->playedMove)
-          addToHistory((ss - 2)->contHistory()[pieceTo(otherMove)], -bonus);
-
-        addToHistory(mainHistory[position.sideToMove][fromTo(otherMove)], -bonus);
-      }
-
-      // Counter-move history
-      if ((ss - 1)->playedMove) {
-        Square prevSq = getMoveDest((ss - 1)->playedMove);
-        counterMoveHistory[pieceOn(prevSq)][prevSq] = bestMove;
-      }
-
-      // Killers
-      if (bestMove != ss->killers[0]) {
-        ss->killers[1] = ss->killers[0];
-        ss->killers[0] = bestMove;
-      }
+      updateHistories(depth, bestMove, bestValue, beta, quietMoves, quietCount, ss);
     }
 
     // Store to TT
