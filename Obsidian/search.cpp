@@ -35,6 +35,12 @@ namespace Search {
     int pvLength;
 
     Move excludedMove;
+
+    PieceToHistory* mContHistory;
+
+    PieceToHistory& contHistory() {
+      return *mContHistory;
+    }
   };
 
   Color rootColor;
@@ -60,21 +66,30 @@ namespace Search {
 
   int lmrTable[MAX_PLY][MAX_MOVES];
 
-  int mainHistory[COLOR_NB][SQUARE_NB * SQUARE_NB];
+  FromToHistory mainHistory;
+
+  ContinuationHistory contHistory;
 
   Move counterMoveHistory[PIECE_NB][SQUARE_NB];
 
-  inline int fromTo(Move m) {
+  Piece pieceOn(Square sq) {
+    return position.board[sq];
+  }
+
+  int fromTo(Move m) {
     return getMoveSrc(m) * SQUARE_NB + getMoveDest(m);
+  }
+
+  int pieceTo(Move m) {
+    return pieceOn(getMoveSrc(m)) * SQUARE_NB + getMoveDest(m);
   }
 
   void clear() {
 
     TT::clear();
-
     memset(mainHistory, 0, sizeof(mainHistory));
-
     memset(counterMoveHistory, 0, sizeof(counterMoveHistory));
+    memset(contHistory, 0, sizeof(contHistory));
   }
 
   // Called one at engine initialization
@@ -178,7 +193,9 @@ namespace Search {
     if ((nodesSearched % 32768) == 0)
       checkTime();
 
+    ss->mContHistory = &contHistory[0];
     ss->playedMove = MOVE_NONE;
+
     pushPosition();
     position.doNullMove();
   }
@@ -188,7 +205,9 @@ namespace Search {
     if ((nodesSearched % 32768) == 0)
       checkTime();
 
+    ss->mContHistory = &contHistory[pieceTo(move)];
     ss->playedMove = move;
+
     pushPosition();
     position.doMove(move, &accumulatorStack[ply]);
   }
@@ -199,10 +218,6 @@ namespace Search {
 
   int stat_bonus(int d) {
     return std::min(2 * d * d + 16 * d, 1000);
-  }
-
-  Piece pieceOn(Square sq) {
-    return position.board[sq];
   }
 
   //        TT move:  MAX
@@ -264,8 +279,14 @@ namespace Search {
         moveScore = 200000;
       else if (move == counterMove)
         moveScore = 100000;
-      else
+      else {
         moveScore = mainHistory[position.sideToMove][fromTo(move)];
+
+        if ((ss - 1)->playedMove)
+          moveScore += (ss - 1)->contHistory()[pieceTo(move)];
+        if ((ss - 2)->playedMove)
+          moveScore += (ss - 2)->contHistory()[pieceTo(move)];
+      }
     }
   }
 
@@ -583,6 +604,8 @@ namespace Search {
     bool foundLegalMove = false;
 
     int playedMoves = 0;
+
+    Move quietMoves[64];
     int quietCount = 0;
 
     bool skipQuiets = false;
@@ -599,7 +622,8 @@ namespace Search {
       bool isQuiet = position.isQuiet(move);
 
       if (isQuiet) {
-        quietCount++;
+        if (quietCount < 64)
+          quietMoves[quietCount++] = move;
 
         if (skipQuiets)
           continue;
@@ -712,15 +736,31 @@ namespace Search {
     if (bestValue >= beta &&
       position.isQuiet(bestMove))
     {
-      // Butterfly history
-
       int bonus = (bestValue > beta + 110) ? stat_bonus(depth + 1) : stat_bonus(depth);
 
+      // Butterfly history
       addToHistory(mainHistory[position.sideToMove][fromTo(bestMove)], bonus);
 
-      Move prevMove = (ss - 1)->playedMove;
-      if (prevMove) {
-        Square prevSq = getMoveDest(prevMove);
+      // Continuation history
+      if ((ss - 1)->playedMove)
+        addToHistory((ss - 1)->contHistory()[pieceTo(bestMove)], bonus);
+      if ((ss - 2)->playedMove)
+        addToHistory((ss - 2)->contHistory()[pieceTo(bestMove)], bonus);
+
+      for (int i = 0; i < quietCount; i++) {
+        Move otherMove = quietMoves[i];
+        if (otherMove == bestMove)
+          continue;
+
+        if ((ss - 1)->playedMove)
+          addToHistory((ss - 1)->contHistory()[pieceTo(otherMove)], -bonus);
+        if ((ss - 2)->playedMove)
+          addToHistory((ss - 2)->contHistory()[pieceTo(otherMove)], -bonus);
+      }
+
+      // Counter-move history
+      if ((ss - 1)->playedMove) {
+        Square prevSq = getMoveDest((ss - 1)->playedMove);
         counterMoveHistory[pieceOn(prevSq)][prevSq] = bestMove;
       }
 
