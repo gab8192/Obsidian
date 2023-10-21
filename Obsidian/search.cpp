@@ -747,6 +747,7 @@ namespace Search {
       if ((ss - 2)->playedMove)
         addToHistory((ss - 2)->contHistory()[pieceTo(bestMove)], bonus);
 
+      // Decrease score of other quiet moves
       for (int i = 0; i < quietCount; i++) {
         Move otherMove = quietMoves[i];
         if (otherMove == bestMove)
@@ -756,6 +757,8 @@ namespace Search {
           addToHistory((ss - 1)->contHistory()[pieceTo(otherMove)], -bonus);
         if ((ss - 2)->playedMove)
           addToHistory((ss - 2)->contHistory()[pieceTo(otherMove)], -bonus);
+
+        addToHistory(mainHistory[position.sideToMove][fromTo(otherMove)], -bonus);
       }
 
       // Counter-move history
@@ -813,12 +816,6 @@ namespace Search {
 
     if (searchLimits.hasTimeLimit())
       optimumTime = TimeMan::calcOptimumTime(searchLimits, position.sideToMove);
-
-    for (int c = WHITE; c <= BLACK; c++) {
-      for (int i = 0; i < 4096; i++) {
-        mainHistory[c][i] /= 5;
-      }
-    }
 
     ply = 0;
 
