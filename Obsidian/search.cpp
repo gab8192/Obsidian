@@ -156,18 +156,21 @@ namespace Search {
     return timeMillis() - searchLimits.startTime;
   }
 
-  void checkTime() {
-    if (!searchLimits.hasTimeLimit())
-      return;
-
+  bool usedMostOfTime() {
     // never use more than 70~80 % of our time
     double d = 0.7;
     if (searchLimits.inc[rootColor])
       d += 0.1;
 
-    if (elapsedTime() >= d * searchLimits.time[rootColor] - 10) {
+    return elapsedTime() >= (d * searchLimits.time[rootColor] - 10);
+  }
+
+  void checkTime() {
+    if (!searchLimits.hasTimeLimit())
+      return;
+
+    if (usedMostOfTime())
       searchState = STOP_PENDING;
-    }
   }
 
   inline void playNullMove(SearchInfo* ss) {
@@ -898,7 +901,7 @@ namespace Search {
       }
 
       if (bestMove == iterDeepening[rootDepth - 1].bestMove)
-        searchStability = std::min(searchStability + 1, 10);
+        searchStability = std::min(searchStability + 1, 8);
       else
         searchStability = 0;
 
@@ -915,7 +918,10 @@ namespace Search {
           goto bestMoveDecided;
         }
 
-        double optScale = 1.0 - 0.05 * searchStability;
+        if (usedMostOfTime())
+          goto bestMoveDecided;
+
+        double optScale = 1.1 - 0.05 * searchStability;
 
         if (elapsed > optScale * optimumTime)
           goto bestMoveDecided;
