@@ -743,6 +743,10 @@ namespace Search {
 
         R += cutNode;
 
+        // history pruning
+        if (moveScore > -50000 && moveScore < 50000)
+          R -= std::clamp(moveScore / 8000, -2, 2);
+
         // Do the clamp to avoid a qsearch or an extension in the child search
         int reducedDepth = std::clamp(newDepth - R, 1, newDepth + 1);
 
