@@ -345,7 +345,7 @@ namespace Search {
     }
   }
 
-  Move nextBestMove(MoveList& moveList, int scannedMoves) {
+  Move nextBestMove(MoveList& moveList, int scannedMoves, int* moveScore) {
     int bestMoveI = scannedMoves;
 
     int bestMoveValue = moveList.scores[bestMoveI];
@@ -358,6 +358,8 @@ namespace Search {
         bestMoveI = i;
       }
     }
+
+    (*moveScore) = bestMoveValue;
 
     Move result = moveList[bestMoveI];
     moveList.moves[bestMoveI] = moveList.moves[scannedMoves];
@@ -449,7 +451,9 @@ namespace Search {
     bool foundLegalMoves = false;
 
     for (int i = 0; i < moves.size(); i++) {
-      Move move = nextBestMove(moves, i);
+      int moveScore;
+      Move move = nextBestMove(moves, i, &moveScore);
+
       if (!position.isLegal(move))
         continue;
 
@@ -666,7 +670,8 @@ namespace Search {
     bool skipQuiets = false;
 
     for (int i = 0; i < moves.size(); i++) {
-      Move move = nextBestMove(moves, i);
+      int moveScore;
+      Move move = nextBestMove(moves, i, &moveScore);
 
       if (move == excludedMove)
         continue;
