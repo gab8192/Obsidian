@@ -51,6 +51,11 @@ namespace {
     while (is >> token && (m = UCI::to_move(pos, token)) != MOVE_NONE)
     {
       pos.doMove(m, &Search::accumulatorStack[0]);
+
+      // If this move reset the half move clock, we can ignore and forget all the previous position
+      if (pos.halfMoveClock == 0)
+        seenPositions.clear();
+
       seenPositions.push_back(pos.key);
     }
   }
