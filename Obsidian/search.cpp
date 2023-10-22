@@ -217,7 +217,7 @@ namespace Search {
   }
 
   int stat_bonus(int d) {
-    return std::min(2 * d * d + 16 * d, 1000);
+    return std::min(2 * d * d + 64 * d, 1200);
   }
 
   //        TT move:  MAX
