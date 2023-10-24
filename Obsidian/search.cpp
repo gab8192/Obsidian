@@ -863,6 +863,8 @@ namespace Search {
       searchStack[i].killers[1] = MOVE_NONE;
 
       searchStack[i].excludedMove = MOVE_NONE;
+
+      searchStack[i].playedMove = MOVE_NONE;
     }
 
     SearchInfo* ss = &searchStack[SsOffset];
