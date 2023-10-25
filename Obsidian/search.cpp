@@ -491,13 +491,9 @@ namespace Search {
     if (position.checkers && !foundLegalMoves)
       return Value(ply - VALUE_MATE);
 
-    TT::Flag flag;
-    if (bestValue >= beta)
-      flag = TT::FLAG_LOWER;
-    else
-      flag = (alpha > oldAlpha ? TT::FLAG_EXACT : TT::FLAG_UPPER);
-
-    ttEntry->store(position.key, flag, 0, bestMove, bestValue, ss->staticEval);
+    ttEntry->store(position.key,
+      bestValue >= beta ? TT::FLAG_LOWER : TT::FLAG_UPPER,
+      0, bestMove, bestValue, ss->staticEval);
 
     return bestValue;
   }

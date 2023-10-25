@@ -21,7 +21,8 @@ namespace TT {
         return;
 
       if (!matches(_key)
-        || _depth >= this->depth) {
+        || _depth >= this->depth
+        || _flag == FLAG_EXACT) {
 
         if (!matches(_key) || _move)
           this->move = _move;
