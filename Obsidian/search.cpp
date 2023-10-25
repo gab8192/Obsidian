@@ -428,7 +428,7 @@ namespace Search {
       if (ttHit)
         bestValue = ss->staticEval = ttEntry->getStaticEval();
       else
-        bestValue = ss->staticEval = Eval::evaluate();
+        bestValue = ss->staticEval = Eval::evaluate(position);
 
       if (ttFlag & flagForTT(ttValue > bestValue)) {
         bestValue = ttValue;
@@ -593,7 +593,7 @@ namespace Search {
       if (ttHit)
         ss->staticEval = eval = ttEntry->getStaticEval();
       else
-        ss->staticEval = eval = Eval::evaluate();
+        ss->staticEval = eval = Eval::evaluate(position);
 
       if (ttFlag & flagForTT(ttValue > eval))
         ss->staticEval = eval = ttValue;

@@ -273,7 +273,7 @@ void UCI::loop(int argc, char* argv[]) {
     else if (token == "isready")    cout << "readyok" << endl;
     else if (token == "d")        cout << Search::position << endl;
     else if (token == "eval") {
-      Value eval = Eval::evaluate();
+      Value eval = Eval::evaluate(Search::position);
       if (Search::position.sideToMove == BLACK)
         eval = -eval;
       cout << "Evaluation: " << UCI::to_cp(eval) << endl;

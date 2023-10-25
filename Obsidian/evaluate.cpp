@@ -9,9 +9,7 @@ using namespace std;
 
 namespace Eval {
 
-  Value evaluate() {
-
-    Position& pos = Search::position;
+  Value evaluate(Position& pos) {
 
     const bool whiteOnlyKing = pos.pieces(WHITE) == pos.pieces(WHITE, KING);
     const bool blackOnlyKing = pos.pieces(BLACK) == pos.pieces(BLACK, KING);

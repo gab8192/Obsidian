@@ -34,24 +34,24 @@ namespace TT {
       }
     }
 
-    inline bool matches(Key key) {
+    inline bool matches(Key key) const {
       return this->keyHi32 == (key >> 32);
     }
 
-    inline Value getStaticEval() {
+    inline Value getStaticEval() const {
       return Value(staticEval);
     }
 
-    inline int getDepth() {
+    inline int getDepth() const {
       return depth;
     }
-    inline Flag getFlag() {
+    inline Flag getFlag() const {
       return flag;
     }
-    inline Move getMove() {
+    inline Move getMove() const {
       return Move(move);
     }
-    inline Value getValue() {
+    inline Value getValue() const {
       return Value(value);
     }
 

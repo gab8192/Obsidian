@@ -1,9 +1,9 @@
 #pragma once
 
-#include "types.h"
+#include "position.h"
 
 namespace Eval {
 
   /// <returns> A value relative to the side to move </returns>
-  Value evaluate();
+  Value evaluate(Position& pos);
 }
