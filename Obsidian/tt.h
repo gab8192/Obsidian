@@ -23,7 +23,7 @@ namespace TT {
       if (!matches(_key)
         || _depth >= this->depth) {
 
-        if (!matches(_key) || _move || !this->move)
+        if (!matches(_key) || _move)
           this->move = _move;
 
         this->keyHi32 = (_key >> 32);
