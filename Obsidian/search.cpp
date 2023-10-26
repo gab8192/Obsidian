@@ -817,12 +817,14 @@ namespace Search {
 
     ostringstream output;
 
-    for (int i = 0; i < ss->pvLength; i++) {
+    output << UCI::move(ss->pv[0]);
+
+    for (int i = 1; i < ss->pvLength; i++) {
       Move move = ss->pv[i];
       if (!move)
         break;
 
-      output << UCI::move(move) << ' ';
+      output << ' ' << UCI::move(move);
     }
 
     return output.str();
