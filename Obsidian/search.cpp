@@ -329,7 +329,7 @@ namespace Search {
       else if (mt == MT_EN_PASSANT)
         moveScore = 300000 + mvv_lva(PAWN, PAWN);
       else if (captured) {
-        if (position.see_ge(move, VALUE_DRAW))
+        if (position.see_ge(move, Value(-50)))
           moveScore = 300000 + mvv_lva(captured, moved);
         else
           moveScore = -200000 + mvv_lva(captured, moved);
@@ -417,7 +417,6 @@ namespace Search {
 
     Move bestMove = MOVE_NONE;
     Value bestValue;
-    const Value oldAlpha = alpha;
 
     if (position.checkers) {
       bestValue = -VALUE_INFINITE;
@@ -461,8 +460,8 @@ namespace Search {
 
       if (bestValue > VALUE_TB_LOSS_IN_MAX_PLY) {
         if (!generateAllMoves) {
-          if (!position.see_ge(move, Value(-50)))
-            continue;
+          if (moveScore < -50000)
+            break;
         }
       }
 
