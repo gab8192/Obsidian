@@ -43,5 +43,5 @@ namespace NNUE {
 
   void load();
 
-  Value evaluate(Accumulator* accumulator, Color sideToMove);
+  Value evaluate(Accumulator& accumulator, Color sideToMove);
 }

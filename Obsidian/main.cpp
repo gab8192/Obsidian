@@ -21,7 +21,7 @@ int main(int argc, char** argv)
 
   Search::searchInit();
 
-  Threads::searchState = Search::STOPPED;
+  Threads::searchState = Search::IDLE;
 
   UCI::init(Options);
 

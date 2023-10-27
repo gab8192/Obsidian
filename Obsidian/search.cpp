@@ -107,8 +107,8 @@ namespace Search {
     clear();
   }
 
-  NNUE::Accumulator* currentAccumulator() {
-    return &accumulatorStack[ply];
+  NNUE::Accumulator& currentAccumulator() {
+    return accumulatorStack[ply];
   }
 
   inline void pushPosition() {
@@ -427,7 +427,7 @@ namespace Search {
       if (ttHit)
         bestValue = ss->staticEval = ttEntry->getStaticEval();
       else
-        bestValue = ss->staticEval = Eval::evaluate(position);
+        bestValue = ss->staticEval = Eval::evaluate(position, currentAccumulator());
 
       if (ttFlag & flagForTT(ttValue > bestValue)) {
         bestValue = ttValue;
@@ -588,7 +588,7 @@ namespace Search {
       if (ttHit)
         ss->staticEval = eval = ttEntry->getStaticEval();
       else
-        ss->staticEval = eval = Eval::evaluate(position);
+        ss->staticEval = eval = Eval::evaluate(position, currentAccumulator());
 
       if (ttFlag & flagForTT(ttValue > eval))
         ss->staticEval = eval = ttValue;
@@ -1001,7 +1001,7 @@ namespace Search {
     if (printingEnabled)
       std::cout << "bestmove " << UCI::move(bestMove) << endl;
 
-    Threads::searchState = STOPPED;
+    Threads::searchState = IDLE;
   }
 
   void* idleLoop(void*) {

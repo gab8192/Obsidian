@@ -120,77 +120,6 @@ namespace {
       cout << "No such option: " << name << endl;
   }
 
-  Move calcBestMove(int depth) {
-    // Setup search options
-    searchLimits = Search::Limits();
-    searchLimits.startTime = timeMillis();
-    searchLimits.depth = depth;
-
-    // Do search
-    Threads::searchState = Search::RUNNING;
-    while (Threads::searchState == Search::RUNNING) sleep(1);
-
-    return Search::lastBestMove;
-  }
-
-  bool anyLegalMove() {
-    Position& pos = Search::position;
-
-    MoveList moves;
-    getPseudoLegalMoves(pos, &moves);
-
-    for (const auto& m : moves)
-      if (pos.isLegal(m))
-        return true;
-
-    return false;
-  }
-
-  void plan(istringstream& is) {
-    Position& pos = Search::position;
-
-    int moves, depth;
-
-    is >> moves;
-    is >> depth;
-
-    string oldFen = pos.toFenString();
-
-    Search::printingEnabled = false;
-
-    for (int i = 0; i < moves; i++) {
-      Move ourBestMove = calcBestMove(depth);
-
-      // Print the best move and play it
-      cout << UCI::move(ourBestMove) << " ";
-      pos.doMove(ourBestMove, Search::accumulatorStack);
-
-      if (!anyLegalMove()) {
-        cout << "#";
-        break;
-      }
-
-      // Flip the side to move, but if the opponent is in check then play his move
-      if (pos.checkers) {
-        seenPositions.push_back(pos.key);
-        pos.doMove(calcBestMove(depth), Search::accumulatorStack);
-      }
-      else {
-        pos.doNullMove();
-      }
-      seenPositions.push_back(pos.key);
-    }
-
-    Search::printingEnabled = true;
-
-    cout << endl;
-
-    pos.setToFen(oldFen, Search::accumulatorStack);
-    seenPositions.clear();
-    seenPositions.push_back(pos.key);
-  }
-
-
   // go() is called when the engine receives the "go" UCI command. The function
   // sets the thinking time and other parameters from the input string, then starts
   // with a search.
@@ -266,14 +195,15 @@ void UCI::loop(int argc, char* argv[]) {
     }
     else if (token == "bench")      bench();
     else if (token == "setoption")  setoption(is);
-    else if (token == "plan")       plan(is);
     else if (token == "go")         go(is);
     else if (token == "position")   position(Search::position, is);
     else if (token == "ucinewgame") Search::clear();
     else if (token == "isready")    cout << "readyok" << endl;
     else if (token == "d")        cout << Search::position << endl;
     else if (token == "eval") {
-      Value eval = Eval::evaluate(Search::position);
+      NNUE::Accumulator accumulator;
+      Search::position.updateAccumulator(&accumulator);
+      Value eval = Eval::evaluate(Search::position, accumulator);
       if (Search::position.sideToMove == BLACK)
         eval = -eval;
       cout << "Evaluation: " << UCI::to_cp(eval) << endl;

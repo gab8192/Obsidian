@@ -200,18 +200,18 @@ namespace NNUE {
     return x;
   }
 
-  Value evaluate(Accumulator* accumulator, Color sideToMove) {
+  Value evaluate(Accumulator& accumulator, Color sideToMove) {
 
     weight_t* stmAccumulator;
     weight_t* oppAccumulator;
 
     if (sideToMove == WHITE) {
-      stmAccumulator = accumulator->white;
-      oppAccumulator = accumulator->black;
+      stmAccumulator = accumulator.white;
+      oppAccumulator = accumulator.black;
     }
     else {
-      stmAccumulator = accumulator->black;
-      oppAccumulator = accumulator->white;
+      stmAccumulator = accumulator.black;
+      oppAccumulator = accumulator.white;
     }
 
     int sum = Content.OutputBias;

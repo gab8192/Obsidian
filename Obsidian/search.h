@@ -15,7 +15,7 @@ namespace Search {
   extern uint64_t nodesSearched;
 
   enum State {
-    STOPPED, RUNNING, STOP_PENDING
+    IDLE, RUNNING, STOP_PENDING
   };
 
   struct Limits {
@@ -35,16 +35,12 @@ namespace Search {
     }
   };
 
-  NNUE::Accumulator* currentAccumulator();
-
   template<bool root>
   int perft(int depth);
 
   void searchInit();
 
   void clear();
-
-  void startSearch();
 
   void* idleLoop(void*);
 }

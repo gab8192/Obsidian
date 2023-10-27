@@ -1,15 +1,13 @@
 #include "evaluate.h"
 #include "endgame.h"
-#include "search.h"
 
 #include <iostream>
 
-using namespace Search;
 using namespace std;
 
 namespace Eval {
 
-  Value evaluate(Position& pos) {
+  Value evaluate(Position& pos, NNUE::Accumulator& accumulator) {
 
     const bool whiteOnlyKing = pos.pieces(WHITE) == pos.pieces(WHITE, KING);
     const bool blackOnlyKing = pos.pieces(BLACK) == pos.pieces(BLACK, KING);
@@ -26,7 +24,7 @@ namespace Eval {
       v = (strongSide == pos.sideToMove ? strongV : -strongV);
     }
     else {
-      v = NNUE::evaluate(Search::currentAccumulator(), pos.sideToMove);
+      v = NNUE::evaluate(accumulator, pos.sideToMove);
     }
 
     v = Value(v * (200 - pos.halfMoveClock) / 200);
