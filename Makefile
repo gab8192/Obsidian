@@ -8,7 +8,7 @@ FILES = Obsidian/*.cpp
 
 OPTIMIZE = -O3 -fno-stack-protector -fno-math-errno -funroll-loops -fno-exceptions
 
-FLAGS = -s -std=c++17 -flto
+FLAGS = -s -pthread -std=c++17 -flto
 
 DEFINITIONS = -DNDEBUG -D_CONSOLE
 
