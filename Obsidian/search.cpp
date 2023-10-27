@@ -591,7 +591,7 @@ namespace Search {
         ss->staticEval = eval = Eval::evaluate(position, currentAccumulator());
 
       if (ttFlag & flagForTT(ttValue > eval))
-        ss->staticEval = eval = ttValue;
+        eval = ttValue;
     }
 
     if ((ss - 2)->staticEval != VALUE_NONE)
