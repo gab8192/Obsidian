@@ -636,8 +636,8 @@ namespace Search {
     }
 
     // IIR
-    if (cutNode && depth >= 4 && !ttMove)
-      depth -= 2;
+    if ((PvNode || cutNode) && depth >= 4 && !ttMove)
+      depth --;
 
   moves_loop:
 
