@@ -690,7 +690,7 @@ namespace Search {
         && position.hasNonPawns(us)
         && bestValue > VALUE_TB_LOSS_IN_MAX_PLY)
       {
-        if (quietCount > (2 * depth * depth + 9) / (2 - improving))
+        if (quietCount > (2 * depth * depth + 7) / (2 - improving))
           skipQuiets = true;
 
         if (pieceOn(getMoveDest(move))) {
