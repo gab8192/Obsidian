@@ -492,7 +492,7 @@ namespace Search {
 
     ttEntry->store(position.key,
       bestValue >= beta ? TT::FLAG_LOWER : TT::FLAG_UPPER,
-      0, bestMove, bestValue, ss->staticEval);
+      0, bestMove, bestValue, ss->staticEval, false);
 
     return bestValue;
   }
@@ -806,7 +806,7 @@ namespace Search {
       else
         flag = (PvNode && bestMove) ? TT::FLAG_EXACT : TT::FLAG_UPPER;
 
-      ttEntry->store(position.key, flag, depth, bestMove, bestValue, ss->staticEval);
+      ttEntry->store(position.key, flag, depth, bestMove, bestValue, ss->staticEval, PvNode);
     }
 
     return bestValue;

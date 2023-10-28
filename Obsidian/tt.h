@@ -16,12 +16,12 @@ namespace TT {
 #pragma pack(1)
   struct Entry {
 
-    inline void store(Key _key, Flag _flag, int _depth, Move _move, Value _value, Value _eval) {
+    inline void store(Key _key, Flag _flag, int _depth, Move _move, Value _value, Value _eval, bool isPV) {
       if (abs(_value) >= VALUE_TB_WIN_IN_MAX_PLY)
         return;
 
       if (!matches(_key)
-        || _depth >= this->depth
+        || _depth + 4 + 2*isPV >= this->depth
         || _flag == FLAG_EXACT) {
 
         if (!matches(_key) || _move)
