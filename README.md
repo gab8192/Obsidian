@@ -15,5 +15,6 @@ Trivial endgames are evaluated with a special function.
 
 
 ### Credits
+* To Witek902, for letting me in his OpenBench instance and allowing me to use a lot of hardware for my tests
 * The UCI structure and the Static Exchange Evaluation (SEE) are stockfish-like
 * The NNUE of obsidian is trained with https://github.com/jw1912/bullet

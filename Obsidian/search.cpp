@@ -697,6 +697,12 @@ namespace Search {
           if (!position.see_ge(move, Value(-140 * depth)))
             continue;
         }
+
+        if (isQuiet) {
+          // Futility pruning (~8 Elo)
+          if (depth <= 8 && !wasInCheck && eval + 180 + 120 * depth <= alpha)
+            skipQuiets = true;
+        }
       }
 
       int extension = 0;
