@@ -6,6 +6,7 @@
 #include "nnue.h"
 #include "search.h"
 #include "threads.h"
+#include "tuning.h"
 
 #include <cassert>
 #include <cmath>
@@ -114,6 +115,15 @@ namespace {
     while (is >> token)
       value += (value.empty() ? "" : " ") + token;
 
+    if constexpr (doTuning) {
+      EngineParam* param = findParam(name);
+      if (param) {
+        param->value = std::stoi(value);
+        Search::initLmrTable();
+        return;
+      }
+    }
+
     if (Options.count(name))
       Options[name] = value;
     else
@@ -190,8 +200,9 @@ void UCI::loop(int argc, char* argv[]) {
     else if (token == "uci") {
       cout << "id name Obsidian " << engineVersion
         << "\nid author gabe"
-        << "\n" << Options
-        << "\nuciok" << endl;
+        << Options
+        << "\n" << paramsToUci()
+        << "uciok" << endl;
     }
     else if (token == "bench")      bench();
     else if (token == "setoption")  setoption(is);
@@ -200,6 +211,7 @@ void UCI::loop(int argc, char* argv[]) {
     else if (token == "ucinewgame") Search::clear();
     else if (token == "isready")    cout << "readyok" << endl;
     else if (token == "d")        cout << Search::position << endl;
+    else if (token == "tune")     cout << paramsToSpsaInput();
     else if (token == "eval") {
       NNUE::Accumulator accumulator;
       Search::position.updateAccumulator(&accumulator);

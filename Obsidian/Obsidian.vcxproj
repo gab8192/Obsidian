@@ -145,6 +145,7 @@
     <ClCompile Include="threads.cpp" />
     <ClCompile Include="timeman.cpp" />
     <ClCompile Include="tt.cpp" />
+    <ClCompile Include="tuning.cpp" />
     <ClCompile Include="uci.cpp" />
     <ClCompile Include="ucioption.cpp" />
   </ItemGroup>
@@ -163,6 +164,7 @@
     <ClInclude Include="threads.h" />
     <ClInclude Include="timeman.h" />
     <ClInclude Include="tt.h" />
+    <ClInclude Include="tuning.h" />
     <ClInclude Include="types.h" />
     <ClInclude Include="uci.h" />
     <ClInclude Include="zobrist.h" />

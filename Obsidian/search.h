@@ -38,6 +38,8 @@ namespace Search {
   template<bool root>
   int perft(int depth);
 
+  void initLmrTable();
+
   void searchInit();
 
   void clear();

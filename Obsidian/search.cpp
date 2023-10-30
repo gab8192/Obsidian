@@ -5,6 +5,7 @@
 #include "timeman.h"
 #include "threads.h"
 #include "tt.h"
+#include "tuning.h"
 #include "uci.h"
 
 #include <climits>
@@ -43,6 +44,37 @@ namespace Search {
     }
   };
 
+  DEFINE_PARAM(LmrBase, 25, -75, 125);
+  DEFINE_PARAM(LmrDiv, 225, 150, 300);
+
+  DEFINE_PARAM(StatBonusQuad, 2, 0, 16);
+  DEFINE_PARAM(StatBonusLinear, 64, 16, 256);
+  DEFINE_PARAM(StatBonusMax, 1200, 800, 2400);
+  DEFINE_PARAM(StatBonusBoostAt, 110, 50, 300);
+
+  DEFINE_PARAM(RazoringDepthMul, 400, 400, 800);
+
+  DEFINE_PARAM(RfpDepthMul, 120, 60, 180);
+
+  DEFINE_PARAM(NmpBase, 4, 3, 5);
+  DEFINE_PARAM(NmpDepthDiv, 3, 3, 5);
+  DEFINE_PARAM(NmpEvalDiv, 200, 100, 400);
+  DEFINE_PARAM(NmpEvalDivMin, 3, 2, 6);
+
+  DEFINE_PARAM(LmpBase, 7, 3, 9);
+  DEFINE_PARAM(LmpQuad, 2, 1, 3);
+
+  DEFINE_PARAM(PvsSeeMargin, -140, -300, -90);
+
+  DEFINE_PARAM(FutilityBase, 180, 80, 300);
+  DEFINE_PARAM(FutilityDepthMul, 120, 80, 300);
+
+  DEFINE_PARAM(LmrHistoryDiv, 8000, 4000, 12000);
+
+  DEFINE_PARAM(AspWindowStartDepth, 4, 4, 8);
+  DEFINE_PARAM(AspWindowStartDelta, 10, 10, 20);
+  DEFINE_PARAM(AspFailHighReductionMax, 11, 6, 11);
+  
   Color rootColor;
 
   Move lastBestMove;
@@ -92,17 +124,24 @@ namespace Search {
     memset(contHistory, 0, sizeof(contHistory));
   }
 
-  // Called one at engine initialization
-  void searchInit() {
-
+  void initLmrTable() {
     // avoid log(0) because it's negative infinity
     lmrTable[0][0] = 0;
 
+    double dBase = LmrBase / 100.0;
+    double dDiv = LmrDiv / 100.0;
+
     for (int i = 1; i < MAX_PLY; i++) {
       for (int m = 1; m < MAX_MOVES; m++) {
-        lmrTable[i][m] = 0.25 + log(i) * log(m) / 2.25;
+        lmrTable[i][m] = dBase + log(i) * log(m) / dDiv;
       }
     }
+  }
+
+  // Called one at engine initialization
+  void searchInit() {
+
+    initLmrTable();
 
     clear();
   }
@@ -217,7 +256,7 @@ namespace Search {
   }
 
   int stat_bonus(int d) {
-    return std::min(2 * d * d + 64 * d, 1200);
+    return std::min(StatBonusQuad * d * d + StatBonusLinear * d, (int)StatBonusMax);
   }
 
   //        TT move:  MAX
@@ -249,7 +288,7 @@ namespace Search {
 
   void updateHistories(int depth, Move bestMove, Value bestValue, Value beta, Move* quietMoves, int quietCount, SearchInfo* ss) {
 
-    int bonus = (bestValue > beta + 110) ? stat_bonus(depth + 1) : stat_bonus(depth);
+    int bonus = (bestValue > beta + StatBonusBoostAt) ? stat_bonus(depth + 1) : stat_bonus(depth);
 
     /*
     * Butterfly history
@@ -602,7 +641,7 @@ namespace Search {
     // depth should always be >= 1 at this point
 
     // Razoring
-    if (eval < alpha - 400 * depth) {
+    if (eval < alpha - RazoringDepthMul * depth) {
       Value value = qsearch<NonPV>(alpha-1, alpha, ss);
       if (value < alpha)
         return value;
@@ -613,7 +652,7 @@ namespace Search {
       && depth < 9
       && abs(eval) < VALUE_TB_WIN_IN_MAX_PLY
       && eval >= beta
-      && eval + 120 * improving - 140 * depth >= beta)
+      && eval - RfpDepthMul * (depth - improving) >= beta)
       return eval;
 
     // Null move pruning
@@ -624,7 +663,7 @@ namespace Search {
       && position.hasNonPawns(position.sideToMove)
       && beta > VALUE_TB_LOSS_IN_MAX_PLY) {
 
-      int R = std::min((eval - beta) / 200, 3) + depth / 3 + 4;
+      int R = std::min((eval - beta) / NmpEvalDiv, (int)NmpEvalDivMin) + depth / NmpDepthDiv + NmpBase;
 
       playNullMove(ss);
       Value nullValue = -negaMax<NonPV>(-beta, -beta + 1, depth - R, !cutNode, ss + 1);
@@ -690,17 +729,17 @@ namespace Search {
         && position.hasNonPawns(us)
         && bestValue > VALUE_TB_LOSS_IN_MAX_PLY)
       {
-        if (quietCount > (2 * depth * depth + 7) / (2 - improving))
+        if (quietCount > (LmpQuad * depth * depth + LmpBase) / (2 - improving))
           skipQuiets = true;
 
         if (pieceOn(getMoveDest(move))) {
-          if (!position.see_ge(move, Value(-140 * depth)))
+          if (!position.see_ge(move, Value(PvsSeeMargin * depth)))
             continue;
         }
 
         if (isQuiet) {
           // Futility pruning (~8 Elo)
-          if (depth <= 8 && !wasInCheck && eval + 180 + 120 * depth <= alpha)
+          if (depth <= 8 && !wasInCheck && eval + FutilityBase + FutilityDepthMul * depth <= alpha)
             skipQuiets = true;
         }
       }
@@ -746,7 +785,7 @@ namespace Search {
 
         // history pruning
         if (moveScore > -50000 && moveScore < 50000)
-          R -= std::clamp(moveScore / 8000, -2, 2);
+          R -= std::clamp(moveScore / LmrHistoryDiv, -2, 2);
 
         // Do the clamp to avoid a qsearch or an extension in the child search
         int reducedDepth = std::clamp(newDepth - R, 1, newDepth + 1);
@@ -903,8 +942,8 @@ namespace Search {
       selDepth = 0;
 
       Value score;
-      if (rootDepth >= 4) {
-        int windowSize = 10;
+      if (rootDepth >= AspWindowStartDepth) {
+        int windowSize = AspWindowStartDelta;
         Value alpha = iterDeepening[rootDepth - 1].score - windowSize;
         Value beta = iterDeepening[rootDepth - 1].score + windowSize;
 
@@ -935,7 +974,7 @@ namespace Search {
           else if (score >= beta) {
             beta = (Value)std::min(VALUE_INFINITE, beta + windowSize);
 
-            failedHighCnt = std::min(11, failedHighCnt + 1);
+            failedHighCnt = std::min((int)AspFailHighReductionMax, failedHighCnt + 1);
           }
           else
             break;
