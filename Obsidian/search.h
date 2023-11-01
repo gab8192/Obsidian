@@ -6,9 +6,6 @@
 
 namespace Search {
 
-  extern Position position;
-  extern NNUE::Accumulator accumulatorStack[MAX_PLY];
-
   extern Move lastBestMove;
   extern clock_t lastSearchTimeSpan;
   extern bool printingEnabled;
@@ -24,6 +21,8 @@ namespace Search {
     int movestogo, depth;
     int64_t nodes;
 
+    Position position;
+
     Limits() {
       time[WHITE] = time[BLACK] = inc[WHITE] = inc[BLACK] = movetime = 0;
       movestogo = depth = 0;
@@ -36,7 +35,7 @@ namespace Search {
   };
 
   template<bool root>
-  int perft(int depth);
+  int64_t perft(int depth);
 
   void initLmrTable();
 

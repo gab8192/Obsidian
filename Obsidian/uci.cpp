@@ -44,14 +44,14 @@ namespace {
     else
       return;
 
-    pos.setToFen(fen, &Search::accumulatorStack[0]);
+    pos.setToFen(fen);
 
     seenPositions.push_back(pos.key);
 
     // Parse the move list, if any
     while (is >> token && (m = UCI::to_move(pos, token)) != MOVE_NONE)
     {
-      pos.doMove(m, &Search::accumulatorStack[0]);
+      pos.doMove(m);
 
       // If this move reset the half move clock, we can ignore and forget all the previous position
       if (pos.halfMoveClock == 0)
@@ -76,14 +76,15 @@ namespace {
     for (int i = 0; i < posCount; i++) {
 
       istringstream posStr(BenchPositions[i]);
-      position(Search::position, posStr);
+      position(searchLimits.position, posStr);
 
       Search::clear();
 
+      // Start search
       Threads::searchState = Search::RUNNING;
 
-      while (Threads::searchState == Search::RUNNING)
-        sleep(1);
+      // And wait for it to finish..
+      Threads::waitForSearch();
 
       if (i >= 5) {
         // Skip the first 5 positions from nps calculation
@@ -134,12 +135,15 @@ namespace {
   // sets the thinking time and other parameters from the input string, then starts
   // with a search.
 
-  void go(istringstream& is) {
+  void go(Position& pos, istringstream& is) {
+
+    Threads::waitForSearch();
 
     string token;
 
     searchLimits = Search::Limits();
     searchLimits.startTime = timeMillis();
+    searchLimits.position = pos;
 
     int perftPlies = 0;
 
@@ -156,7 +160,7 @@ namespace {
 
     if (perftPlies) {
       clock_t begin = timeMillis();
-      int nodes = Search::perft<true>(perftPlies);
+      int64_t nodes = Search::perft<true>(perftPlies);
       clock_t took = timeMillis() - begin;
 
       std::cout << "nodes: " << nodes << std::endl;
@@ -175,7 +179,9 @@ void UCI::loop(int argc, char* argv[]) {
 
   string token, cmd;
 
-  Search::position.setToFen(StartFEN, &Search::accumulatorStack[0]);
+  Position pos;
+
+  pos.setToFen(StartFEN);
 
   for (int i = 1; i < argc; ++i)
     cmd += std::string(argv[i]) + " ";
@@ -206,22 +212,20 @@ void UCI::loop(int argc, char* argv[]) {
     }
     else if (token == "bench")      bench();
     else if (token == "setoption")  setoption(is);
-    else if (token == "go")         go(is);
-    else if (token == "position")   position(Search::position, is);
+    else if (token == "go")         go(pos, is);
+    else if (token == "position")   position(pos, is);
     else if (token == "ucinewgame") Search::clear();
     else if (token == "isready")    cout << "readyok" << endl;
-    else if (token == "d")        cout << Search::position << endl;
+    else if (token == "d")        cout << pos << endl;
     else if (token == "tune")     cout << paramsToSpsaInput();
     else if (token == "eval") {
-      NNUE::Accumulator accumulator;
-      Search::position.updateAccumulator(&accumulator);
-      Value eval = Eval::evaluate(Search::position, accumulator);
-      if (Search::position.sideToMove == BLACK)
+      Value eval = Eval::evaluate(pos);
+      if (pos.sideToMove == BLACK)
         eval = -eval;
       cout << "Evaluation: " << UCI::to_cp(eval) << endl;
     }
     else if (!token.empty() && token[0] != '#')
-      cout << "Unknown command: '" << cmd << "'. Type help for more information." << endl;
+      cout << "Unknown command: '" << cmd << "'." << endl;
 
   } while (token != "quit" && argc == 1); // The command-line arguments are one-shot
 }

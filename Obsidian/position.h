@@ -30,10 +30,10 @@ struct alignas(32) Position {
   Bitboard blockersForKing[COLOR_NB];
   Bitboard pinners[COLOR_NB];
 
-  /// <summary>
-  /// What pieces of the opponent are attacking the king of the side to move
-  /// </summary>
+  // What pieces of the opponent are attacking the king of the side to move
   Bitboard checkers;
+
+  NNUE::Accumulator accumulator;
 
   inline Bitboard pieces(PieceType pt) const {
     return byPieceBB[pt];
@@ -102,34 +102,34 @@ struct alignas(32) Position {
   /// Assmue there is a piece in the given square.
   /// Call this if you already know what piece was there
   /// </summary>
-  inline void removePiece(Square sq, Piece pc, NNUE::Accumulator* acc) {
+  inline void removePiece(Square sq, Piece pc) {
     key ^= RANDOM_ARRAY[64 * HASH_PIECE[pc] + sq];
 
     board[sq] = NO_PIECE;
     byColorBB[colorOf(pc)] ^= sq;
     byPieceBB[ptypeOf(pc)] ^= sq;
 
-    acc->deactivateFeature(sq, pc);
+    accumulator.deactivateFeature(sq, pc);
   }
 
   /// <summary>
   /// Assmue there is not any piece in the given square
   /// </summary>
-  inline void putPiece(Square sq, Piece pc, NNUE::Accumulator* acc) {
+  inline void putPiece(Square sq, Piece pc) {
     key ^= RANDOM_ARRAY[64 * HASH_PIECE[pc] + sq];
 
     board[sq] = pc;
     byColorBB[colorOf(pc)] ^= sq;
     byPieceBB[ptypeOf(pc)] ^= sq;
 
-    acc->activateFeature(sq, pc);
+    accumulator.activateFeature(sq, pc);
   }
 
   /// <summary>
   /// Assmue there is not any piece in the destination square
   /// Call this if you already know what piece was there
   /// </summary>
-  inline void movePiece(Square from, Square to, Piece pc, NNUE::Accumulator* acc) {
+  inline void movePiece(Square from, Square to, Piece pc) {
 
     const int c0 = 64 * HASH_PIECE[pc];
     key ^= RANDOM_ARRAY[c0 + from] ^ RANDOM_ARRAY[c0 + to];
@@ -140,7 +140,7 @@ struct alignas(32) Position {
     byColorBB[colorOf(pc)] ^= fromTo;
     byPieceBB[ptypeOf(pc)] ^= fromTo;
 
-    acc->moveFeature(from, to, pc);
+    accumulator.moveFeature(from, to, pc);
   }
 
   inline bool isQuiet(Move move) {
@@ -157,15 +157,15 @@ struct alignas(32) Position {
 
   void doNullMove();
 
-  void doMove(Move move, NNUE::Accumulator* accumulator);
+  void doMove(Move move);
 
   bool see_ge(Move m, Value threshold) const;
 
-  void setToFen(const string& fen, NNUE::Accumulator* accumulator);
+  void setToFen(const string& fen);
 
   string toFenString() const;
 
-  void updateAccumulator(NNUE::Accumulator* accumulator);
+  void updateAccumulator();
 };
 
 std::ostream& operator<<(std::ostream& stream, Position& sqr);

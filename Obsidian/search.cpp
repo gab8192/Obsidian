@@ -89,8 +89,6 @@ namespace Search {
 
   int ply = 0;
 
-  NNUE::Accumulator accumulatorStack[MAX_PLY];
-
   Position posStack[MAX_PLY];
 
   Position position;
@@ -146,26 +144,20 @@ namespace Search {
     clear();
   }
 
-  NNUE::Accumulator& currentAccumulator() {
-    return accumulatorStack[ply];
-  }
-
-  inline void pushPosition() {
+  void pushPosition() {
     memcpy(&posStack[ply], &position, sizeof(Position));
-
-    memcpy(&accumulatorStack[ply + 1], &accumulatorStack[ply], sizeof(NNUE::Accumulator));
 
     ply++;
   }
 
-  inline void popPosition() {
+  void popPosition() {
     ply--;
 
     memcpy(&position, &posStack[ply], sizeof(Position));
   }
 
   template<bool root>
-  int perft(int depth) {
+  int64_t perft(int depth) {
     MoveList moves;
     getPseudoLegalMoves(position, &moves);
 
@@ -180,15 +172,15 @@ namespace Search {
       return n;
     }
 
-    int n = 0;
+    int64_t n = 0;
     for (int i = 0; i < moves.size(); i++) {
       if (!position.isLegal(moves[i]))
         continue;
 
       pushPosition();
-      position.doMove(moves[i], &accumulatorStack[0]);
+      position.doMove(moves[i]);
 
-      int thisNodes = perft<false>(depth - 1);
+      int64_t thisNodes = perft<false>(depth - 1);
       if constexpr (root)
         cout << UCI::move(moves[i]) << " -> " << thisNodes << endl;
 
@@ -199,14 +191,14 @@ namespace Search {
     return n;
   }
 
-  template int perft<false>(int);
-  template int perft<true>(int);
+  template int64_t perft<false>(int);
+  template int64_t perft<true>(int);
 
   enum NodeType {
     Root, PV, NonPV
   };
 
-  inline clock_t elapsedTime() {
+  clock_t elapsedTime() {
     return timeMillis() - searchLimits.startTime;
   }
 
@@ -227,7 +219,7 @@ namespace Search {
       searchState = STOP_PENDING;
   }
 
-  inline void playNullMove(SearchInfo* ss) {
+  void playNullMove(SearchInfo* ss) {
     nodesSearched++;
     if ((nodesSearched % 32768) == 0)
       checkTime();
@@ -239,7 +231,7 @@ namespace Search {
     position.doNullMove();
   }
 
-  inline void playMove(Move move, SearchInfo* ss) {
+  void playMove(Move move, SearchInfo* ss) {
     nodesSearched++;
     if ((nodesSearched % 32768) == 0)
       checkTime();
@@ -248,10 +240,10 @@ namespace Search {
     ss->playedMove = move;
 
     pushPosition();
-    position.doMove(move, &accumulatorStack[ply]);
+    position.doMove(move);
   }
 
-  inline void cancelMove() {
+  void cancelMove() {
     popPosition();
   }
 
@@ -406,7 +398,7 @@ namespace Search {
     return result;
   }
 
-  inline TT::Flag flagForTT(bool failsHigh) {
+  TT::Flag flagForTT(bool failsHigh) {
     return failsHigh ? TT::FLAG_LOWER : TT::FLAG_UPPER;
   }
 
@@ -430,7 +422,7 @@ namespace Search {
     return false;
   }
 
-  inline Value makeDrawValue() {
+  Value makeDrawValue() {
     return Value(int(nodesSearched % 3ULL) - 1);
   }
 
@@ -466,7 +458,7 @@ namespace Search {
       if (ttHit)
         bestValue = ss->staticEval = ttEntry->getStaticEval();
       else
-        bestValue = ss->staticEval = Eval::evaluate(position, currentAccumulator());
+        bestValue = ss->staticEval = Eval::evaluate(position);
 
       if (ttFlag & flagForTT(ttValue > bestValue)) {
         bestValue = ttValue;
@@ -536,7 +528,7 @@ namespace Search {
     return bestValue;
   }
 
-  inline void updatePV(SearchInfo* ss, Move move) {
+  void updatePV(SearchInfo* ss, Move move) {
     // set the move in the pv
     ss->pv[ply] = move;
 
@@ -627,7 +619,7 @@ namespace Search {
       if (ttHit)
         ss->staticEval = eval = ttEntry->getStaticEval();
       else
-        ss->staticEval = eval = Eval::evaluate(position, currentAccumulator());
+        ss->staticEval = eval = Eval::evaluate(position);
 
       if (ttFlag & flagForTT(ttValue > eval))
         eval = ttValue;
@@ -783,7 +775,7 @@ namespace Search {
 
         R += cutNode;
 
-        // history pruning
+        // reduce or extend depending on history of this quiet move
         if (moveScore > -50000 && moveScore < 50000)
           R -= std::clamp(moveScore / LmrHistoryDiv, -2, 2);
 
@@ -880,6 +872,8 @@ namespace Search {
   SearchInfo searchStack[MAX_PLY + SsOffset];
 
   void startSearch() {
+
+    position = searchLimits.position;
 
     Move bestMove;
 
