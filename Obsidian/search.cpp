@@ -376,6 +376,23 @@ namespace Search {
     }
   }
 
+  Move peekBestMove(MoveList& moveList) {
+    int bestMoveI = 0;
+
+    int bestMoveValue = moveList.scores[bestMoveI];
+
+    int size = moveList.size();
+    for (int i = 0 + 1; i < size; i++) {
+      int thisValue = moveList.scores[i];
+      if (thisValue > bestMoveValue) {
+        bestMoveValue = thisValue;
+        bestMoveI = i;
+      }
+    }
+
+    return moveList[bestMoveI];
+  }
+
   Move nextBestMove(MoveList& moveList, int scannedMoves, int* moveScore) {
     int bestMoveI = scannedMoves;
 
@@ -579,12 +596,11 @@ namespace Search {
     TT::Flag ttFlag = ttHit ? ttEntry->getFlag() : TT::NO_FLAG;
     Value ttValue = ttHit ? ttEntry->getValue() : VALUE_NONE;
     Move ttMove = ttHit ? ttEntry->getMove() : MOVE_NONE;
-    bool ttMoveNoisy = ttMove && !position.isQuiet(ttMove);
 
-    if (rootNode) {
-      if (!ttMove)
-        ttMove = rootMoves[0];
-    }
+    if (rootNode && !ttMove)
+      ttMove = peekBestMove(rootMoves);
+
+    bool ttMoveNoisy = ttMove && !position.isQuiet(ttMove);
 
     Value eval;
     Move bestMove = MOVE_NONE;
