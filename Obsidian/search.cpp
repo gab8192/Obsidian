@@ -757,6 +757,8 @@ namespace Search {
           extension = 1;
         else if (singularBeta >= beta)
           return singularBeta;
+        else if (ttValue >= beta)
+          extension = -1 + PvNode;
       }
 
       playMove(move, ss);
