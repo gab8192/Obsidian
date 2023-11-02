@@ -10,7 +10,7 @@
 */
 
 constexpr Move createMove(Square src, Square dest, MoveType moveType, int extra = 0) {
-  return Move( src | (dest << 6) | (moveType << 12) | (extra << 14) );
+  return Move(src | (dest << 6) | (moveType << 12) | (extra << 14));
 }
 
 inline Move createPromoMove(Square src, Square dest, PieceType promoType) {
@@ -67,30 +67,30 @@ struct MoveList {
   }
 
   inline void add(Move move) {
-	moves[head++] = move;
+    moves[head++] = move;
   }
 
   inline int indexOf(Move move) const {
-	for (int i = 0; i < size(); i++) {
-	  if (moves[i] == move)
-		return i;
-	}
-	return -1;
+    for (int i = 0; i < size(); i++) {
+      if (moves[i] == move)
+        return i;
+    }
+    return -1;
   }
 
   inline int size() const {
-	return head;
+    return head;
   }
 
   inline Move operator[](int index) const {
-	return moves[index];
+    return moves[index];
   }
 
   inline const Move* begin() const {
-	return & moves[0];
+    return &moves[0];
   }
 
   inline const Move* end() const {
-	return &moves[head];
+    return &moves[head];
   }
 };
