@@ -579,6 +579,7 @@ namespace Search {
     TT::Flag ttFlag = ttHit ? ttEntry->getFlag() : TT::NO_FLAG;
     Value ttValue = ttHit ? ttEntry->getValue() : VALUE_NONE;
     Move ttMove = ttHit ? ttEntry->getMove() : MOVE_NONE;
+    bool ttMoveNoisy = ttMove && !position.isQuiet(ttMove);
 
     if (rootNode) {
       if (!ttMove)
@@ -755,9 +756,9 @@ namespace Search {
         
         if (seValue < singularBeta)
           extension = 1;
-        else if (singularBeta >= beta)
+        else if (singularBeta >= beta) // Multicut
           return singularBeta;
-        else if (ttValue >= beta)
+        else if (ttValue >= beta) // Negative extension (~18 Elo)
           extension = -1 + PvNode;
       }
 
@@ -777,7 +778,10 @@ namespace Search {
 
         R += cutNode;
 
-        // reduce or extend depending on history of this quiet move
+        // Reduce more if ttmove was noisy (~6 Elo)
+        R += ttMoveNoisy;
+
+        // Reduce or extend depending on history of this quiet move (~12 Elo)
         if (moveScore > -50000 && moveScore < 50000)
           R -= std::clamp(moveScore / LmrHistoryDiv, -2, 2);
 
