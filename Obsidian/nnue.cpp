@@ -192,12 +192,10 @@ namespace NNUE {
     }
   }
 
-  inline int clippedRelu(weight_t x) {
-    if (x < 0)
-      return 0;
-    if (x > 255)
-      return 255;
-    return x;
+  inline int SCRelu(weight_t x) {
+    int16_t clipped = std::clamp<int16_t>(x, 0, 255);
+    int wide = clipped;
+    return wide * wide;
   }
 
   Value evaluate(Accumulator& accumulator, Color sideToMove) {
@@ -214,74 +212,16 @@ namespace NNUE {
       oppAccumulator = accumulator.white;
     }
 
-    int sum = Content.OutputBias;
-
-#if defined(USE_AVX512)
-
-    const Vec reluClipMin = _mm512_setzero_si512();
-    const Vec reluClipMax = _mm512_set1_epi16(255);
-
-    Vec* stmAccVec = (Vec*)stmAccumulator;
-    Vec* oppAccVec = (Vec*)oppAccumulator;
-    Vec* stmWeightsVec = (Vec*)Content.OutputWeights;
-    Vec* oppWeightsVec = (Vec*)&Content.OutputWeights[TransformedFeatureDimensions];
-
-    Vec sumVec = _mm512_setzero_si512();
-
-    for (int i = 0; i < TransformedFeatureDimensions / WeightsPerVec; ++i) {
-
-      { // Side to move
-        Vec crelu = _mm512_min_epi16(_mm512_max_epi16(stmAccVec[i], reluClipMin), reluClipMax);
-        Vec stmProduct = _mm512_madd_epi16(crelu, stmWeightsVec[i]);
-        sumVec = _mm512_add_epi32(sumVec, stmProduct);
-      }
-      { // Non side to move
-        Vec crelu = _mm512_min_epi16(_mm512_max_epi16(oppAccVec[i], reluClipMin), reluClipMax);
-        Vec oppProduct = _mm512_madd_epi16(crelu, oppWeightsVec[i]);
-        sumVec = _mm512_add_epi32(sumVec, oppProduct);
-      }
-    }
-
-    sum += vecHadd(sumVec);
-
-#elif defined(USE_AVX2)
-
-    const Vec reluClipMin = _mm256_setzero_si256();
-    const Vec reluClipMax = _mm256_set1_epi16(255);
-
-    Vec* stmAccVec = (Vec*)stmAccumulator;
-    Vec* oppAccVec = (Vec*)oppAccumulator;
-    Vec* stmWeightsVec = (Vec*)Content.OutputWeights;
-    Vec* oppWeightsVec = (Vec*)&Content.OutputWeights[TransformedFeatureDimensions];
-
-    Vec sumVec = _mm256_setzero_si256();
-
-    for (int i = 0; i < TransformedFeatureDimensions / WeightsPerVec; ++i) {
-
-      { // Side to move
-        Vec crelu = _mm256_min_epi16(_mm256_max_epi16(stmAccVec[i], reluClipMin), reluClipMax);
-        Vec stmProduct = _mm256_madd_epi16(crelu, stmWeightsVec[i]);
-        sumVec = _mm256_add_epi32(sumVec, stmProduct);
-      }
-      { // Non side to move
-        Vec crelu = _mm256_min_epi16(_mm256_max_epi16(oppAccVec[i], reluClipMin), reluClipMax);
-        Vec oppProduct = _mm256_madd_epi16(crelu, oppWeightsVec[i]);
-        sumVec = _mm256_add_epi32(sumVec, oppProduct);
-      }
-    }
-
-    sum += vecHadd(sumVec);
-
-#else
+    int sum = 0;
 
     for (int i = 0; i < TransformedFeatureDimensions; ++i) {
-      sum += clippedRelu(stmAccumulator[i]) * Content.OutputWeights[i];
-      sum += clippedRelu(oppAccumulator[i]) * Content.OutputWeights[TransformedFeatureDimensions + i];
+      sum += SCRelu(stmAccumulator[i]) * Content.OutputWeights[i];
+      sum += SCRelu(oppAccumulator[i]) * Content.OutputWeights[TransformedFeatureDimensions + i];
     }
 
-#endif // USE_AVX2
+    int unsquared = sum / 255 + Content.OutputBias;
 
-    return Value((sum * NetworkScale) / NetworkQ);
+    return Value((unsquared * NetworkScale) / NetworkQ);
   }
 
 }

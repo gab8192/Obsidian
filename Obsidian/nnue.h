@@ -2,7 +2,7 @@
 
 #include "types.h"
 
-#define EvalFile "net4.nnue"
+#define EvalFile "net5-epoch5.bin"
 
 namespace NNUE {
 
@@ -23,7 +23,7 @@ namespace NNUE {
   using weight_t = int16_t;
 
   constexpr int FeatureDimensions = 768;
-  constexpr int TransformedFeatureDimensions = 384;
+  constexpr int TransformedFeatureDimensions = 1024;
 
   constexpr int NetworkScale = 400;
   constexpr int NetworkQ = 255 * 64;
