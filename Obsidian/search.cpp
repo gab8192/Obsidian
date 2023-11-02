@@ -772,14 +772,6 @@ namespace Search {
       if (!wasInCheck && depth >= 3 && playedMoves > (1 + 2 * PvNode)) {
         int R = lmrTable[depth][playedMoves + 1];
 
-        R -= improving;
-
-        R -= PvNode;
-
-        R += cutNode;
-
-        R += isQuiet;
-
         if (isQuiet) {
           // Reduce more if ttmove was noisy (~6 Elo)
           R += ttMoveNoisy;
@@ -788,6 +780,15 @@ namespace Search {
           if (moveScore > -50000 && moveScore < 50000)
             R -= std::clamp(moveScore / LmrHistoryDiv, -2, 2);
         }
+        else {
+          R /= 2;
+        }
+
+        R += !improving;
+
+        R -= PvNode;
+
+        R += cutNode;
 
         // Do the clamp to avoid a qsearch or an extension in the child search
         int reducedDepth = std::clamp(newDepth - R, 1, newDepth + 1);
