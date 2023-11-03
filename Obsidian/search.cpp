@@ -91,6 +91,8 @@ namespace Search {
 
   Position posStack[MAX_PLY];
 
+  NNUE::Accumulator accumulatorStack[MAX_PLY];
+
   Position position;
   MoveList rootMoves;
 
@@ -146,6 +148,7 @@ namespace Search {
 
   void pushPosition() {
     memcpy(&posStack[ply], &position, sizeof(Position));
+    memcpy(&accumulatorStack[ply + 1], &accumulatorStack[ply], sizeof(NNUE::Accumulator));
 
     ply++;
   }
@@ -178,7 +181,7 @@ namespace Search {
         continue;
 
       pushPosition();
-      position.doMove(moves[i]);
+      position.doMove(moves[i], accumulatorStack[ply]);
 
       int64_t thisNodes = perft<false>(depth - 1);
       if constexpr (root)
@@ -240,7 +243,7 @@ namespace Search {
     ss->playedMove = move;
 
     pushPosition();
-    position.doMove(move);
+    position.doMove(move, accumulatorStack[ply]);
   }
 
   void cancelMove() {
@@ -475,7 +478,7 @@ namespace Search {
       if (ttHit)
         bestValue = ss->staticEval = ttEntry->getStaticEval();
       else
-        bestValue = ss->staticEval = Eval::evaluate(position);
+        bestValue = ss->staticEval = Eval::evaluate(position, accumulatorStack[ply]);
 
       if (ttFlag & flagForTT(ttValue > bestValue)) {
         bestValue = ttValue;
@@ -636,7 +639,7 @@ namespace Search {
       if (ttHit)
         ss->staticEval = eval = ttEntry->getStaticEval();
       else
-        ss->staticEval = eval = Eval::evaluate(position);
+        ss->staticEval = eval = Eval::evaluate(position, accumulatorStack[ply]);
 
       if (ttFlag & flagForTT(ttValue > eval))
         eval = ttValue;
@@ -901,6 +904,7 @@ namespace Search {
   void startSearch() {
 
     position = searchLimits.position;
+    position.updateAccumulator(accumulatorStack[0]);
 
     Move bestMove;
 

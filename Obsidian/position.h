@@ -33,8 +33,6 @@ struct alignas(32) Position {
   // What pieces of the opponent are attacking the king of the side to move
   Bitboard checkers;
 
-  NNUE::Accumulator accumulator;
-
   inline Bitboard pieces(PieceType pt) const {
     return byPieceBB[pt];
   }
@@ -102,34 +100,34 @@ struct alignas(32) Position {
   /// Assmue there is a piece in the given square.
   /// Call this if you already know what piece was there
   /// </summary>
-  inline void removePiece(Square sq, Piece pc) {
+  inline void removePiece(Square sq, Piece pc, NNUE::Accumulator& acc) {
     key ^= RANDOM_ARRAY[64 * HASH_PIECE[pc] + sq];
 
     board[sq] = NO_PIECE;
     byColorBB[colorOf(pc)] ^= sq;
     byPieceBB[ptypeOf(pc)] ^= sq;
 
-    accumulator.deactivateFeature(sq, pc);
+    acc.deactivateFeature(sq, pc);
   }
 
   /// <summary>
   /// Assmue there is not any piece in the given square
   /// </summary>
-  inline void putPiece(Square sq, Piece pc) {
+  inline void putPiece(Square sq, Piece pc, NNUE::Accumulator& acc) {
     key ^= RANDOM_ARRAY[64 * HASH_PIECE[pc] + sq];
 
     board[sq] = pc;
     byColorBB[colorOf(pc)] ^= sq;
     byPieceBB[ptypeOf(pc)] ^= sq;
 
-    accumulator.activateFeature(sq, pc);
+    acc.activateFeature(sq, pc);
   }
 
   /// <summary>
   /// Assmue there is not any piece in the destination square
   /// Call this if you already know what piece was there
   /// </summary>
-  inline void movePiece(Square from, Square to, Piece pc) {
+  inline void movePiece(Square from, Square to, Piece pc, NNUE::Accumulator& acc) {
 
     const int c0 = 64 * HASH_PIECE[pc];
     key ^= RANDOM_ARRAY[c0 + from] ^ RANDOM_ARRAY[c0 + to];
@@ -140,7 +138,7 @@ struct alignas(32) Position {
     byColorBB[colorOf(pc)] ^= fromTo;
     byPieceBB[ptypeOf(pc)] ^= fromTo;
 
-    accumulator.moveFeature(from, to, pc);
+    acc.moveFeature(from, to, pc);
   }
 
   inline bool isQuiet(Move move) {
@@ -157,15 +155,15 @@ struct alignas(32) Position {
 
   void doNullMove();
 
-  void doMove(Move move);
+  void doMove(Move move, NNUE::Accumulator& acc);
 
   bool see_ge(Move m, Value threshold) const;
 
-  void setToFen(const string& fen);
+  void setToFen(const string& fen, NNUE::Accumulator& acc);
 
   string toFenString() const;
 
-  void updateAccumulator();
+  void updateAccumulator(NNUE::Accumulator& acc);
 };
 
 std::ostream& operator<<(std::ostream& stream, Position& sqr);

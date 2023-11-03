@@ -25,7 +25,7 @@ namespace {
   // Initial position
   const char* StartFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-  void position(Position& pos, istringstream& is) {
+  void position(Position& pos, NNUE::Accumulator& acc, istringstream& is) {
     seenPositions.clear();
 
     Move m;
@@ -44,14 +44,14 @@ namespace {
     else
       return;
 
-    pos.setToFen(fen);
+    pos.setToFen(fen, acc);
 
     seenPositions.push_back(pos.key);
 
     // Parse the move list, if any
     while (is >> token && (m = UCI::to_move(pos, token)) != MOVE_NONE)
     {
-      pos.doMove(m);
+      pos.doMove(m, acc);
 
       // If this move reset the half move clock, we can ignore and forget all the previous position
       if (pos.halfMoveClock == 0)
@@ -73,10 +73,12 @@ namespace {
 
     Search::printingEnabled = false;
 
+    NNUE::Accumulator tempAccumulator;
+
     for (int i = 0; i < posCount; i++) {
 
       istringstream posStr(BenchPositions[i]);
-      position(searchLimits.position, posStr);
+      position(searchLimits.position, tempAccumulator, posStr);
 
       Search::clear();
 
@@ -179,9 +181,10 @@ void UCI::loop(int argc, char* argv[]) {
 
   string token, cmd;
 
+  NNUE::Accumulator tempAccumulator;
   Position pos;
 
-  pos.setToFen(StartFEN);
+  pos.setToFen(StartFEN, tempAccumulator);
 
   for (int i = 1; i < argc; ++i)
     cmd += std::string(argv[i]) + " ";
@@ -213,13 +216,13 @@ void UCI::loop(int argc, char* argv[]) {
     else if (token == "bench")      bench();
     else if (token == "setoption")  setoption(is);
     else if (token == "go")         go(pos, is);
-    else if (token == "position")   position(pos, is);
+    else if (token == "position")   position(pos, tempAccumulator, is);
     else if (token == "ucinewgame") Search::clear();
     else if (token == "isready")    cout << "readyok" << endl;
     else if (token == "d")        cout << pos << endl;
     else if (token == "tune")     cout << paramsToSpsaInput();
     else if (token == "eval") {
-      Value eval = Eval::evaluate(pos);
+      Value eval = Eval::evaluate(pos, tempAccumulator);
       if (pos.sideToMove == BLACK)
         eval = -eval;
       cout << "Evaluation: " << UCI::to_cp(eval) << endl;
