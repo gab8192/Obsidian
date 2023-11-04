@@ -2,7 +2,7 @@
 
 #include "types.h"
 
-#define EvalFile "net5-epoch5.bin"
+#define EvalFile "net5-epoch10.bin"
 
 namespace NNUE {
 
