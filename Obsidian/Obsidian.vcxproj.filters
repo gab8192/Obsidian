@@ -54,6 +54,9 @@
     <ClCompile Include="nnue.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="tuning.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="types.h">
@@ -105,6 +108,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="history.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tuning.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="simd.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,24 +1,13 @@
 #pragma once
 
+#include "simd.h"
 #include "types.h"
 
 #define EvalFile "net5-epoch10.bin"
 
+using namespace SIMD;
+
 namespace NNUE {
-
-#if defined(USE_AVX512)
-
-  constexpr int SimdAlign = 64;
-
-#elif defined(USE_AVX2)
-
-  constexpr int SimdAlign = 32;
-
-#else
-
-  constexpr int SimdAlign = 8;
-
-#endif
 
   using weight_t = int16_t;
 
@@ -29,8 +18,8 @@ namespace NNUE {
   constexpr int NetworkQ = 255 * 64;
 
   struct Accumulator {
-    alignas(SimdAlign) weight_t white[TransformedFeatureDimensions];
-    alignas(SimdAlign) weight_t black[TransformedFeatureDimensions];
+    alignas(Alignment) weight_t white[TransformedFeatureDimensions];
+    alignas(Alignment) weight_t black[TransformedFeatureDimensions];
 
     void reset();
 

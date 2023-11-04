@@ -13,84 +13,15 @@ using namespace std;
 
 namespace NNUE {
 
-#if defined(USE_AVX512)
+  constexpr int WeightsPerVec = sizeof(SIMD::Vec) / sizeof(weight_t);
 
-  using Vec = __m512i;
-
-  inline Vec vecAddEpi16(Vec x, Vec y) {
-    return _mm512_add_epi16(x, y);
-  }
-
-  inline Vec vecSubEpi16(Vec x, Vec y) {
-    return _mm512_sub_epi16(x, y);
-  }
-
-  inline int vecHadd(Vec vec) {
-    return _mm512_reduce_add_epi32(vec);
-  }
-
-#elif defined(USE_AVX2)
-
-  using Vec = __m256i;
-
-  inline Vec vecAddEpi16(Vec x, Vec y) {
-    return _mm256_add_epi16(x, y);
-  }
-
-  inline Vec vecSubEpi16(Vec x, Vec y) {
-    return _mm256_sub_epi16(x, y);
-  }
-
-  inline int vecHadd(Vec vec) {
-    __m128i xmm0;
-    __m128i xmm1;
-
-    // Get the lower and upper half of the register:
-    xmm0 = _mm256_castsi256_si128(vec);
-    xmm1 = _mm256_extracti128_si256(vec, 1);
-
-    // Add the lower and upper half vertically:
-    xmm0 = _mm_add_epi32(xmm0, xmm1);
-
-    // Get the upper half of the result:
-    xmm1 = _mm_unpackhi_epi64(xmm0, xmm0);
-
-    // Add the lower and upper half vertically:
-    xmm0 = _mm_add_epi32(xmm0, xmm1);
-
-    // Shuffle the result so that the lower 32-bits are directly above the second-lower 32-bits:
-    xmm1 = _mm_shuffle_epi32(xmm0, _MM_SHUFFLE(2, 3, 0, 1));
-
-    // Add the lower 32-bits to the second-lower 32-bits vertically:
-    xmm0 = _mm_add_epi32(xmm0, xmm1);
-
-    // Cast the result to the 32-bit integer type and return it:
-    return _mm_cvtsi128_si32(xmm0);
-  }
-
-#else
-
-  using Vec = weight_t;
-
-  inline Vec vecAddEpi16(Vec x, Vec y) {
-    return x + y;
-  }
-
-  inline Vec vecSubEpi16(Vec x, Vec y) {
-    return x - y;
-  }
-
-#endif
-
-  constexpr int WeightsPerVec = sizeof(Vec) / sizeof(weight_t);
-
-  alignas(SimdAlign) int FeatureIndexTable[COLOR_NB][PIECE_NB][SQUARE_NB];
+  alignas(SIMD::Alignment) int FeatureIndexTable[COLOR_NB][PIECE_NB][SQUARE_NB];
 
   struct {
-    alignas(SimdAlign) weight_t FeatureWeights[FeatureDimensions * TransformedFeatureDimensions];
-    alignas(SimdAlign) weight_t FeatureBiases[TransformedFeatureDimensions];
-    alignas(SimdAlign) weight_t OutputWeights[2 * TransformedFeatureDimensions];
-                       weight_t OutputBias;
+    alignas(SIMD::Alignment) weight_t FeatureWeights[FeatureDimensions * TransformedFeatureDimensions];
+    alignas(SIMD::Alignment) weight_t FeatureBiases[TransformedFeatureDimensions];
+    alignas(SIMD::Alignment) weight_t OutputWeights[2 * TransformedFeatureDimensions];
+                             weight_t OutputBias;
   } Content;
 
   template <int InputSize>
@@ -102,7 +33,7 @@ namespace NNUE {
     Vec* weightsVec = (Vec*)Content.FeatureWeights;
 
     for (int i = 0; i < InputSize / WeightsPerVec; ++i) {
-      inputVec[i] = vecAddEpi16(inputVec[i], weightsVec[offset + i]);
+      inputVec[i] = addEpi16(inputVec[i], weightsVec[offset + i]);
     }
   }
 
@@ -115,7 +46,7 @@ namespace NNUE {
     Vec* weightsVec = (Vec*)Content.FeatureWeights;
 
     for (int i = 0; i < InputSize / WeightsPerVec; ++i) {
-      inputVec[i] = vecSubEpi16(inputVec[i], weightsVec[offset + i]);
+      inputVec[i] = subEpi16(inputVec[i], weightsVec[offset + i]);
     }
   }
 
@@ -128,7 +59,7 @@ namespace NNUE {
     Vec* weightsVec = (Vec*)Content.FeatureWeights;
 
     for (int i = 0; i < InputSize / WeightsPerVec; ++i) {
-      inputVec[i] = vecSubEpi16(vecAddEpi16(inputVec[i], weightsVec[addOff + i]), weightsVec[subtractOff + i]);
+      inputVec[i] = subEpi16(addEpi16(inputVec[i], weightsVec[addOff + i]), weightsVec[subtractOff + i]);
     }
   }
 

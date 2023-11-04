@@ -161,6 +161,7 @@
     <ClInclude Include="nnue.h" />
     <ClInclude Include="position.h" />
     <ClInclude Include="search.h" />
+    <ClInclude Include="simd.h" />
     <ClInclude Include="threads.h" />
     <ClInclude Include="timeman.h" />
     <ClInclude Include="tt.h" />
