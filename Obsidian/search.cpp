@@ -452,15 +452,18 @@ namespace Search {
 
     const Color us = position.sideToMove, them = ~us;
 
+    // detect draw
     if (position.halfMoveClock >= 100)
       return makeDrawValue();
 
+    // Probe TT
     bool ttHit;
     TT::Entry* ttEntry = TT::probe(position.key, ttHit);
     TT::Flag ttFlag = ttHit ? ttEntry->getFlag() : TT::NO_FLAG;
     Value ttValue = ttHit ? ttEntry->getValue() : VALUE_NONE;
     Move ttMove = ttHit ? ttEntry->getMove() : MOVE_NONE;
 
+    // In non PV nodes, if tt depth and bound allow it, return ttValue
     if (!PvNode) {
       if (ttFlag & flagForTT(ttValue >= beta))
         return ttValue;
@@ -469,7 +472,10 @@ namespace Search {
     Move bestMove = MOVE_NONE;
     Value bestValue;
 
+    // Do the static evaluation
+
     if (position.checkers) {
+      // When in check avoid evaluating
       bestValue = -VALUE_INFINITE;
       ss->staticEval = VALUE_NONE;
     }
@@ -480,6 +486,7 @@ namespace Search {
       else
         bestValue = ss->staticEval = Eval::evaluate(position, accumulatorStack[ply]);
 
+      // When tt bound allows it, use ttValue as a better standing pat
       if (ttFlag & flagForTT(ttValue > bestValue)) {
         bestValue = ttValue;
       }
@@ -489,6 +496,9 @@ namespace Search {
       if (bestValue > alpha)
         alpha = bestValue;
     }
+
+    // Generate moves and score them
+
     bool generateAllMoves = position.checkers;
     MoveList moves;
     if (generateAllMoves)
@@ -500,6 +510,8 @@ namespace Search {
 
     bool foundLegalMoves = false;
 
+    // Visit moves
+
     for (int i = 0; i < moves.size(); i++) {
       int moveScore;
       Move move = nextBestMove(moves, i, &moveScore);
@@ -509,6 +521,7 @@ namespace Search {
 
       foundLegalMoves = true;
 
+      // If we are not in check, prevent qsearch from visiting bad captures and under-promotions
       if (bestValue > VALUE_TB_LOSS_IN_MAX_PLY) {
         if (!generateAllMoves) {
           if (moveScore < -50000)
@@ -532,7 +545,6 @@ namespace Search {
           if (bestValue >= beta)
             break;
 
-          // This is never reached on a NonPV node
           alpha = bestValue;
         }
       }
@@ -582,6 +594,7 @@ namespace Search {
     (ss + 1)->killers[1] = MOVE_NONE;
 
     if (!rootNode) {
+      // detect draw
       if (is2FoldRepetition() || position.halfMoveClock >= 100)
         return makeDrawValue();
 
@@ -594,12 +607,14 @@ namespace Search {
 
     Move excludedMove = ss->excludedMove;
 
+    // Probe TT
     bool ttHit;
     TT::Entry* ttEntry = TT::probe(position.key, ttHit);
     TT::Flag ttFlag = ttHit ? ttEntry->getFlag() : TT::NO_FLAG;
     Value ttValue = ttHit ? ttEntry->getValue() : VALUE_NONE;
     Move ttMove = ttHit ? ttEntry->getMove() : MOVE_NONE;
 
+    // Make sure there is a ttMove in rootNode
     if (rootNode && !ttMove)
       ttMove = peekBestMove(rootMoves);
 
@@ -609,30 +624,34 @@ namespace Search {
     Move bestMove = MOVE_NONE;
     Value bestValue = -VALUE_INFINITE;
 
+    // If we are in check, increment the depth and avoid entering a qsearch
     if (position.checkers && !rootNode)
       depth = std::max(1, depth + 1);
 
+    // In non PV nodes, if tt depth and bound allow it, return ttValue
     if (!PvNode
       && !excludedMove
-      && ttEntry->getDepth() >= depth) {
-
+      && ttEntry->getDepth() >= depth) 
+    {
       if (ttFlag & flagForTT(ttValue >= beta))
         return ttValue;
     }
 
+    // Enter qsearch when depth is 0
     if (depth <= 0)
       return qsearch<PvNode ? PV : NonPV>(alpha, beta, ss);
 
     bool improving = false;
 
-    // Static evaluation of the position
-    if (position.checkers) {
-      ss->staticEval = eval = VALUE_NONE;
+    // Do the static evaluation
 
-      // skip pruning when in check
+    if (position.checkers) {
+      // When in check avoid evaluating and skip pruning
+      ss->staticEval = eval = VALUE_NONE;
       goto moves_loop;
     }
     else if (ss->excludedMove) {
+      // We have already evaluated the position in the node which invoked this singular search
       eval = ss->staticEval;
     }
     else {
@@ -641,25 +660,27 @@ namespace Search {
       else
         ss->staticEval = eval = Eval::evaluate(position, accumulatorStack[ply]);
 
+      // When tt bound allows it, use ttValue as a better evaluation
       if (ttFlag & flagForTT(ttValue > eval))
         eval = ttValue;
     }
 
+    // Calculate whether the evaluation here is worse or better than it was 2 plies ago
     if ((ss - 2)->staticEval != VALUE_NONE)
       improving = ss->staticEval > (ss - 2)->staticEval;
     else if ((ss - 4)->staticEval != VALUE_NONE)
       improving = ss->staticEval > (ss - 4)->staticEval;
 
-    // depth should always be >= 1 at this point
-
-    // Razoring
+    // Razoring. When evaluation is far below alpha, we could probably only catch up with a capture,
+    // thus do a qsearch. If the qsearch still can't hit alpha, cut off
     if (eval < alpha - RazoringDepthMul * depth) {
       Value value = qsearch<NonPV>(alpha-1, alpha, ss);
       if (value < alpha)
         return value;
     }
 
-    // Reverse futility pruning
+    // Reverse futility pruning. When evaluation is far above beta, the opponent is unlikely
+    // to catch up, thus cut off
     if (!PvNode
       && depth < 9
       && abs(eval) < VALUE_TB_WIN_IN_MAX_PLY
@@ -667,7 +688,8 @@ namespace Search {
       && eval - RfpDepthMul * (depth - improving) >= beta)
       return eval;
 
-    // Null move pruning
+    // Null move pruning. When our evaluation is above beta, we give the opponent
+    // a free move, and if he still can't catch up, cut off
     if (!PvNode
       && !excludedMove
       && (ss - 1)->playedMove != MOVE_NONE
@@ -686,11 +708,13 @@ namespace Search {
       }
     }
 
-    // IIR
+    // IIR. Decrement the depth if we expect this search to have bad move ordering
     if ((PvNode || cutNode) && depth >= 4 && !ttMove)
       depth --;
 
   moves_loop:
+
+    // Generate moves and score them
 
     const bool wasInCheck = position.checkers;
 
@@ -714,6 +738,8 @@ namespace Search {
     int quietCount = 0;
 
     bool skipQuiets = false;
+    
+    // Visit moves
 
     for (int i = 0; i < moves.size(); i++) {
       int moveScore;
@@ -741,16 +767,19 @@ namespace Search {
         && position.hasNonPawns(us)
         && bestValue > VALUE_TB_LOSS_IN_MAX_PLY)
       {
+        // Late move pruning. At low depths, only visit a few quiet moves
         if (quietCount > (LmpQuad * depth * depth + LmpBase) / (2 - improving))
           skipQuiets = true;
 
+        // If this is a capture, do SEE (Static Exchange Evalution) pruning
         if (pieceOn(getMoveDest(move))) {
           if (!position.see_ge(move, Value(PvsSeeMargin * depth)))
             continue;
         }
 
         if (isQuiet) {
-          // Futility pruning (~8 Elo)
+          // Futility pruning (~8 Elo). If our evaluation is far below alpha,
+          // only visit the first quiet move
           if (depth <= 8 && !wasInCheck && eval + FutilityBase + FutilityDepthMul * depth <= alpha)
             skipQuiets = true;
         }
@@ -758,6 +787,7 @@ namespace Search {
 
       int extension = 0;
       
+      // Singular extension
       if ( !rootNode
         && ply < 2 * rootDepth
         && depth >= 6
@@ -786,6 +816,8 @@ namespace Search {
       int newDepth = depth + extension - 1;
 
       Value value;
+
+      // Late move reductions. Search at a reduced depth, moves that are late in the move list
 
       bool needFullSearch;
       if (!wasInCheck && depth >= 3 && playedMoves > (1 + 2 * PvNode)) {
