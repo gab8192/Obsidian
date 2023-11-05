@@ -30,7 +30,7 @@ namespace Search {
     Value staticEval;
     Move playedMove;
 
-    Move killers[2];
+    Move killer;
 
     Move pv[MAX_PLY];
     int pvLength;
@@ -323,17 +323,13 @@ namespace Search {
     }
 
     /*
-    * Killers
+    * Killer move
     */
-    if (bestMove != ss->killers[0]) {
-      ss->killers[1] = ss->killers[0];
-      ss->killers[0] = bestMove;
-    }
+    ss->killer = bestMove;
   }
 
   void scoreMoves(MoveList& moves, Move ttMove, SearchInfo* ss) {
-    Move killer0 = ss->killers[0],
-      killer1 = ss->killers[1];
+    Move killer = ss->killer;
 
     Move counterMove = MOVE_NONE;
 
@@ -368,9 +364,7 @@ namespace Search {
         else
           moveScore = -200000 + mvv_lva(captured, moved);
       }
-      else if (move == killer0)
-        moveScore = 200001;
-      else if (move == killer1)
+      else if (move == killer)
         moveScore = 200000;
       else if (move == counterMove)
         moveScore = 100000;
@@ -590,8 +584,7 @@ namespace Search {
     if (searchState == STOP_PENDING)
       return makeDrawValue();
 
-    (ss + 1)->killers[0] = MOVE_NONE;
-    (ss + 1)->killers[1] = MOVE_NONE;
+    (ss + 1)->killer = MOVE_NONE;
 
     if (!rootNode) {
       // detect draw
@@ -958,8 +951,7 @@ namespace Search {
 
       searchStack[i].pvLength = 0;
 
-      searchStack[i].killers[0] = MOVE_NONE;
-      searchStack[i].killers[1] = MOVE_NONE;
+      searchStack[i].killer = MOVE_NONE;
 
       searchStack[i].excludedMove = MOVE_NONE;
 
