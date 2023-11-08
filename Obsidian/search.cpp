@@ -206,26 +206,33 @@ namespace Search {
   }
 
   bool usedMostOfTime() {
-    // never use more than 70~80 % of our time
-    double d = 0.7;
-    if (searchLimits.inc[rootColor])
-      d += 0.1;
+    if (searchLimits.movetime) {
 
-    return elapsedTime() >= (d * searchLimits.time[rootColor] - 10);
-  }
+      clock_t timeLimit = searchLimits.movetime;
 
-  void checkTime() {
-    if (!searchLimits.hasTimeLimit())
-      return;
+      return elapsedTime() >= (timeLimit - 100);
+    }
+    else if (searchLimits.hasTimeLimit()) {
 
-    if (usedMostOfTime())
-      searchState = STOP_PENDING;
+      clock_t timeLimit = searchLimits.time[rootColor];
+
+      // never use more than 70~80 % of our time
+      double d = 0.7;
+      if (searchLimits.inc[rootColor])
+        d += 0.1;
+
+      return elapsedTime() >= (d * timeLimit - 10);
+    }
+    return false;
   }
 
   void playNullMove(SearchInfo* ss) {
     nodesSearched++;
+
+    // Check time
     if ((nodesSearched % 32768) == 0)
-      checkTime();
+      if (usedMostOfTime())
+        searchState = STOP_PENDING;
 
     ss->mContHistory = &contHistory[0];
     ss->playedMove = MOVE_NONE;
@@ -236,8 +243,11 @@ namespace Search {
 
   void playMove(Move move, SearchInfo* ss) {
     nodesSearched++;
+
+    // Check time
     if ((nodesSearched % 32768) == 0)
-      checkTime();
+      if (usedMostOfTime())
+        searchState = STOP_PENDING;
 
     ss->mContHistory = &contHistory[pieceTo(move)];
     ss->playedMove = move;
@@ -1069,6 +1079,12 @@ namespace Search {
       // because we may have overlooked a way out of checkmate due to pruning
       if (score >= VALUE_MATE_IN_MAX_PLY)
         goto bestMoveDecided;
+
+      // When playing in movetime mode, stop if we've used 75% time of movetime,
+      // because we will probably not hit the next depth in time
+      if (searchLimits.movetime)
+        if (elapsedTime() >= (searchLimits.movetime * 3) / 4)
+          goto bestMoveDecided;
 
       if (searchLimits.hasTimeLimit() && rootDepth >= 4) {
 
