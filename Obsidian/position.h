@@ -157,7 +157,7 @@ struct alignas(32) Position {
 
   void doMove(Move move, NNUE::Accumulator& acc);
 
-  bool see_ge(Move m, Value threshold) const;
+  bool see_ge(Move m, Score threshold) const;
 
   void setToFen(const string& fen, NNUE::Accumulator& acc);
 

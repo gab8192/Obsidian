@@ -15,7 +15,7 @@ namespace Search {
     IDLE, RUNNING, STOP_PENDING
   };
 
-  struct Limits {
+  struct Settings {
 
     clock_t time[COLOR_NB], inc[COLOR_NB], movetime, startTime;
     int movestogo, depth;
@@ -23,7 +23,7 @@ namespace Search {
 
     Position position;
 
-    Limits() {
+    Settings() {
       time[WHITE] = time[BLACK] = inc[WHITE] = inc[BLACK] = movetime = 0;
       movestogo = depth = 0;
       nodes = 0;

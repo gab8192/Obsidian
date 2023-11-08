@@ -16,8 +16,8 @@ namespace TT {
 #pragma pack(1)
   struct Entry {
 
-    inline void store(Key _key, Flag _flag, int _depth, Move _move, Value _value, Value _eval, bool isPV) {
-      if (abs(_value) >= VALUE_TB_WIN_IN_MAX_PLY)
+    inline void store(Key _key, Flag _flag, int _depth, Move _move, Score _value, Score _eval, bool isPV) {
+      if (abs(_value) >= TB_WIN_IN_MAX_PLY)
         return;
 
       if (!matches(_key)
@@ -39,8 +39,8 @@ namespace TT {
       return this->keyHi32 == (key >> 32);
     }
 
-    inline Value getStaticEval() const {
-      return Value(staticEval);
+    inline Score getStaticEval() const {
+      return Score(staticEval);
     }
 
     inline int getDepth() const {
@@ -52,8 +52,8 @@ namespace TT {
     inline Move getMove() const {
       return Move(move);
     }
-    inline Value getValue() const {
-      return Value(value);
+    inline Score getScore() const {
+      return Score(value);
     }
 
     inline void clear() {
@@ -61,8 +61,8 @@ namespace TT {
       depth = -1;
       flag = NO_FLAG;
       move = MOVE_NONE;
-      value = VALUE_NONE;
-      staticEval = VALUE_NONE;
+      value = SCORE_NONE;
+      staticEval = SCORE_NONE;
     }
 
   private:

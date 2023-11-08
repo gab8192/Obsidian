@@ -50,8 +50,8 @@ namespace UCI {
 
   void init(OptionsMap&);
   void loop(int argc, char* argv[]);
-  int to_cp(Value v);
-  std::string value(Value v);
+  int to_cp(Score v);
+  std::string score(Score v);
   std::string square(Square s);
   std::string move(Move m);
   Move to_move(const Position& pos, std::string& str);

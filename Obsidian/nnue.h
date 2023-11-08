@@ -32,5 +32,5 @@ namespace NNUE {
 
   void load();
 
-  Value evaluate(Accumulator& accumulator, Color sideToMove);
+  Score evaluate(Accumulator& accumulator, Color sideToMove);
 }

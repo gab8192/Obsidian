@@ -21,13 +21,13 @@ using namespace Threads;
 namespace Search {
 
   struct SearchLoopInfo {
-    Value score;
+    Score score;
     Move bestMove;
     int selDepth;
   };
 
   struct SearchInfo {
-    Value staticEval;
+    Score staticEval;
     Move playedMove;
 
     Move killer;
@@ -202,23 +202,23 @@ namespace Search {
   };
 
   clock_t elapsedTime() {
-    return timeMillis() - searchLimits.startTime;
+    return timeMillis() - searchSettings.startTime;
   }
 
   bool usedMostOfTime() {
-    if (searchLimits.movetime) {
+    if (searchSettings.movetime) {
 
-      clock_t timeLimit = searchLimits.movetime;
+      clock_t timeLimit = searchSettings.movetime;
 
       return elapsedTime() >= (timeLimit - 100);
     }
-    else if (searchLimits.hasTimeLimit()) {
+    else if (searchSettings.hasTimeLimit()) {
 
-      clock_t timeLimit = searchLimits.time[rootColor];
+      clock_t timeLimit = searchSettings.time[rootColor];
 
       // never use more than 70~80 % of our time
       double d = 0.7;
-      if (searchLimits.inc[rootColor])
+      if (searchSettings.inc[rootColor])
         d += 0.1;
 
       return elapsedTime() >= (d * timeLimit - 10);
@@ -291,9 +291,9 @@ namespace Search {
     return moveScore;
   }
 
-  void updateHistories(int depth, Move bestMove, Value bestValue, Value beta, Move* quietMoves, int quietCount, SearchInfo* ss) {
+  void updateHistories(int depth, Move bestMove, Score bestScore, Score beta, Move* quietMoves, int quietCount, SearchInfo* ss) {
 
-    int bonus = (bestValue > beta + StatBonusBoostAt) ? stat_bonus(depth + 1) : stat_bonus(depth);
+    int bonus = (bestScore > beta + StatBonusBoostAt) ? stat_bonus(depth + 1) : stat_bonus(depth);
 
     /*
     * Butterfly history
@@ -352,7 +352,7 @@ namespace Search {
     for (int i = 0; i < moves.size(); i++) {
       int& moveScore = moves.scores[i];
 
-      // initial value
+      // initial score
       moveScore = 0;
 
       Move move = moves[i];
@@ -369,7 +369,7 @@ namespace Search {
       else if (mt == MT_EN_PASSANT)
         moveScore = 300000 + mvv_lva(PAWN, PAWN);
       else if (captured) {
-        if (position.see_ge(move, Value(-50)))
+        if (position.see_ge(move, Score(-50)))
           moveScore = 300000 + mvv_lva(captured, moved);
         else
           moveScore = -200000 + mvv_lva(captured, moved);
@@ -386,13 +386,13 @@ namespace Search {
   Move peekBestMove(MoveList& moveList) {
     int bestMoveI = 0;
 
-    int bestMoveValue = moveList.scores[bestMoveI];
+    int bestMoveScore = moveList.scores[bestMoveI];
 
     int size = moveList.size();
     for (int i = 0 + 1; i < size; i++) {
-      int thisValue = moveList.scores[i];
-      if (thisValue > bestMoveValue) {
-        bestMoveValue = thisValue;
+      int thisScore = moveList.scores[i];
+      if (thisScore > bestMoveScore) {
+        bestMoveScore = thisScore;
         bestMoveI = i;
       }
     }
@@ -403,18 +403,18 @@ namespace Search {
   Move nextBestMove(MoveList& moveList, int scannedMoves, int* moveScore) {
     int bestMoveI = scannedMoves;
 
-    int bestMoveValue = moveList.scores[bestMoveI];
+    int bestMoveScore = moveList.scores[bestMoveI];
 
     int size = moveList.size();
     for (int i = scannedMoves + 1; i < size; i++) {
-      int thisValue = moveList.scores[i];
-      if (thisValue > bestMoveValue) {
-        bestMoveValue = thisValue;
+      int thisScore = moveList.scores[i];
+      if (thisScore > bestMoveScore) {
+        bestMoveScore = thisScore;
         bestMoveI = i;
       }
     }
 
-    (*moveScore) = bestMoveValue;
+    (*moveScore) = bestMoveScore;
 
     Move result = moveList[bestMoveI];
     moveList.moves[bestMoveI] = moveList.moves[scannedMoves];
@@ -446,59 +446,59 @@ namespace Search {
     return false;
   }
 
-  Value makeDrawValue() {
-    return Value(int(nodesSearched % 3ULL) - 1);
+  Score makeDrawScore() {
+    return Score(int(nodesSearched % 3ULL) - 1);
   }
 
   template<NodeType nodeType>
-  Value qsearch(Value alpha, Value beta, SearchInfo* ss) {
+  Score qsearch(Score alpha, Score beta, SearchInfo* ss) {
     constexpr bool PvNode = nodeType != NonPV;
 
     const Color us = position.sideToMove, them = ~us;
 
     // detect draw
     if (position.halfMoveClock >= 100)
-      return makeDrawValue();
+      return makeDrawScore();
 
     // Probe TT
     bool ttHit;
     TT::Entry* ttEntry = TT::probe(position.key, ttHit);
     TT::Flag ttFlag = ttHit ? ttEntry->getFlag() : TT::NO_FLAG;
-    Value ttValue = ttHit ? ttEntry->getValue() : VALUE_NONE;
+    Score ttScore = ttHit ? ttEntry->getScore() : SCORE_NONE;
     Move ttMove = ttHit ? ttEntry->getMove() : MOVE_NONE;
 
-    // In non PV nodes, if tt depth and bound allow it, return ttValue
+    // In non PV nodes, if tt depth and bound allow it, return ttScore
     if (!PvNode) {
-      if (ttFlag & flagForTT(ttValue >= beta))
-        return ttValue;
+      if (ttFlag & flagForTT(ttScore >= beta))
+        return ttScore;
     }
 
     Move bestMove = MOVE_NONE;
-    Value bestValue;
+    Score bestScore;
 
     // Do the static evaluation
 
     if (position.checkers) {
       // When in check avoid evaluating
-      bestValue = -VALUE_INFINITE;
-      ss->staticEval = VALUE_NONE;
+      bestScore = -SCORE_INFINITE;
+      ss->staticEval = SCORE_NONE;
     }
     else {
 
       if (ttHit)
-        bestValue = ss->staticEval = ttEntry->getStaticEval();
+        bestScore = ss->staticEval = ttEntry->getStaticEval();
       else
-        bestValue = ss->staticEval = Eval::evaluate(position, accumulatorStack[ply]);
+        bestScore = ss->staticEval = Eval::evaluate(position, accumulatorStack[ply]);
 
-      // When tt bound allows it, use ttValue as a better standing pat
-      if (ttFlag & flagForTT(ttValue > bestValue)) {
-        bestValue = ttValue;
+      // When tt bound allows it, use ttScore as a better standing pat
+      if (ttFlag & flagForTT(ttScore > bestScore)) {
+        bestScore = ttScore;
       }
 
-      if (bestValue >= beta)
-        return bestValue;
-      if (bestValue > alpha)
-        alpha = bestValue;
+      if (bestScore >= beta)
+        return bestScore;
+      if (bestScore > alpha)
+        alpha = bestScore;
     }
 
     // Generate moves and score them
@@ -526,7 +526,7 @@ namespace Search {
       foundLegalMoves = true;
 
       // If we are not in check, prevent qsearch from visiting bad captures and under-promotions
-      if (bestValue > VALUE_TB_LOSS_IN_MAX_PLY) {
+      if (bestScore > TB_LOSS_IN_MAX_PLY) {
         if (!generateAllMoves) {
           if (moveScore < -50000)
             break;
@@ -535,33 +535,33 @@ namespace Search {
 
       playMove(move, ss);
 
-      Value value = -qsearch<nodeType>(-beta, -alpha, ss + 1);
+      Score score = -qsearch<nodeType>(-beta, -alpha, ss + 1);
 
       cancelMove();
 
-      if (value > bestValue) {
-        bestValue = value;
+      if (score > bestScore) {
+        bestScore = score;
 
-        if (bestValue > alpha) {
+        if (bestScore > alpha) {
           bestMove = move;
 
           // Always true in NonPV nodes
-          if (bestValue >= beta)
+          if (bestScore >= beta)
             break;
 
-          alpha = bestValue;
+          alpha = bestScore;
         }
       }
     }
 
     if (position.checkers && !foundLegalMoves)
-      return Value(ply - VALUE_MATE);
+      return Score(ply - CHECKMATE);
 
     ttEntry->store(position.key,
-      bestValue >= beta ? TT::FLAG_LOWER : TT::FLAG_UPPER,
-      0, bestMove, bestValue, ss->staticEval, false);
+      bestScore >= beta ? TT::FLAG_LOWER : TT::FLAG_UPPER,
+      0, bestMove, bestScore, ss->staticEval, false);
 
-    return bestValue;
+    return bestScore;
   }
 
   void updatePV(SearchInfo* ss, Move move) {
@@ -577,7 +577,7 @@ namespace Search {
   }
 
   template<NodeType nodeType>
-  Value negaMax(Value alpha, Value beta, int depth, bool cutNode, SearchInfo* ss) {
+  Score negaMax(Score alpha, Score beta, int depth, bool cutNode, SearchInfo* ss) {
     constexpr bool PvNode = nodeType != NonPV;
     constexpr bool rootNode = nodeType == Root;
 
@@ -592,18 +592,18 @@ namespace Search {
     }
 
     if (searchState == STOP_PENDING)
-      return makeDrawValue();
+      return makeDrawScore();
 
     (ss + 1)->killer = MOVE_NONE;
 
     if (!rootNode) {
       // detect draw
       if (is2FoldRepetition() || position.halfMoveClock >= 100)
-        return makeDrawValue();
+        return makeDrawScore();
 
       // mate distance pruning
-      alpha = std::max(alpha, Value(ply - VALUE_MATE));
-      beta = std::min(beta, VALUE_MATE - ply - 1);
+      alpha = std::max(alpha, Score(ply - CHECKMATE));
+      beta = std::min(beta, CHECKMATE - ply - 1);
       if (alpha >= beta)
         return alpha;
     }
@@ -614,7 +614,7 @@ namespace Search {
     bool ttHit;
     TT::Entry* ttEntry = TT::probe(position.key, ttHit);
     TT::Flag ttFlag = ttHit ? ttEntry->getFlag() : TT::NO_FLAG;
-    Value ttValue = ttHit ? ttEntry->getValue() : VALUE_NONE;
+    Score ttScore = ttHit ? ttEntry->getScore() : SCORE_NONE;
     Move ttMove = ttHit ? ttEntry->getMove() : MOVE_NONE;
 
     // Make sure there is a ttMove in rootNode
@@ -623,21 +623,21 @@ namespace Search {
 
     bool ttMoveNoisy = ttMove && !position.isQuiet(ttMove);
 
-    Value eval;
+    Score eval;
     Move bestMove = MOVE_NONE;
-    Value bestValue = -VALUE_INFINITE;
+    Score bestScore = -SCORE_INFINITE;
 
     // If we are in check, increment the depth and avoid entering a qsearch
     if (position.checkers && !rootNode)
       depth = std::max(1, depth + 1);
 
-    // In non PV nodes, if tt depth and bound allow it, return ttValue
+    // In non PV nodes, if tt depth and bound allow it, return ttScore
     if (!PvNode
       && !excludedMove
       && ttEntry->getDepth() >= depth) 
     {
-      if (ttFlag & flagForTT(ttValue >= beta))
-        return ttValue;
+      if (ttFlag & flagForTT(ttScore >= beta))
+        return ttScore;
     }
 
     // Enter qsearch when depth is 0
@@ -650,7 +650,7 @@ namespace Search {
 
     if (position.checkers) {
       // When in check avoid evaluating and skip pruning
-      ss->staticEval = eval = VALUE_NONE;
+      ss->staticEval = eval = SCORE_NONE;
       goto moves_loop;
     }
     else if (ss->excludedMove) {
@@ -663,30 +663,30 @@ namespace Search {
       else
         ss->staticEval = eval = Eval::evaluate(position, accumulatorStack[ply]);
 
-      // When tt bound allows it, use ttValue as a better evaluation
-      if (ttFlag & flagForTT(ttValue > eval))
-        eval = ttValue;
+      // When tt bound allows it, use ttScore as a better evaluation
+      if (ttFlag & flagForTT(ttScore > eval))
+        eval = ttScore;
     }
 
     // Calculate whether the evaluation here is worse or better than it was 2 plies ago
-    if ((ss - 2)->staticEval != VALUE_NONE)
+    if ((ss - 2)->staticEval != SCORE_NONE)
       improving = ss->staticEval > (ss - 2)->staticEval;
-    else if ((ss - 4)->staticEval != VALUE_NONE)
+    else if ((ss - 4)->staticEval != SCORE_NONE)
       improving = ss->staticEval > (ss - 4)->staticEval;
 
     // Razoring. When evaluation is far below alpha, we could probably only catch up with a capture,
     // thus do a qsearch. If the qsearch still can't hit alpha, cut off
     if (eval < alpha - RazoringDepthMul * depth) {
-      Value value = qsearch<NonPV>(alpha-1, alpha, ss);
-      if (value < alpha)
-        return value;
+      Score score = qsearch<NonPV>(alpha-1, alpha, ss);
+      if (score < alpha)
+        return score;
     }
 
     // Reverse futility pruning. When evaluation is far above beta, the opponent is unlikely
     // to catch up, thus cut off
     if (!PvNode
       && depth < 9
-      && abs(eval) < VALUE_TB_WIN_IN_MAX_PLY
+      && abs(eval) < TB_WIN_IN_MAX_PLY
       && eval >= beta
       && eval - RfpDepthMul * (depth - improving) >= beta)
       return eval;
@@ -698,17 +698,16 @@ namespace Search {
       && (ss - 1)->playedMove != MOVE_NONE
       && eval >= beta
       && position.hasNonPawns(position.sideToMove)
-      && beta > VALUE_TB_LOSS_IN_MAX_PLY) {
+      && beta > TB_LOSS_IN_MAX_PLY) {
 
       int R = std::min((eval - beta) / NmpEvalDiv, (int)NmpEvalDivMin) + depth / NmpDepthDiv + NmpBase;
 
       playNullMove(ss);
-      Value nullValue = -negaMax<NonPV>(-beta, -beta + 1, depth - R, !cutNode, ss + 1);
+      Score score = -negaMax<NonPV>(-beta, -beta + 1, depth - R, !cutNode, ss + 1);
       cancelMove();
 
-      if (nullValue >= beta && abs(nullValue) < VALUE_TB_WIN_IN_MAX_PLY) {
-        return nullValue;
-      }
+      if (score >= beta && abs(score) < TB_WIN_IN_MAX_PLY)
+        return score;
     }
 
     // IIR. Decrement the depth if we expect this search to have bad move ordering
@@ -726,7 +725,7 @@ namespace Search {
       moves = rootMoves;
 
       for (int i = 0; i < rootMoves.size(); i++)
-        rootMoves.scores[i] = -VALUE_INFINITE;
+        rootMoves.scores[i] = -SCORE_INFINITE;
     }
     else {
       getPseudoLegalMoves(position, &moves);
@@ -768,7 +767,7 @@ namespace Search {
 
       if (!rootNode
         && position.hasNonPawns(us)
-        && bestValue > VALUE_TB_LOSS_IN_MAX_PLY)
+        && bestScore > TB_LOSS_IN_MAX_PLY)
       {
         // Late move pruning. At low depths, only visit a few quiet moves
         if (quietCount > (LmpQuad * depth * depth + LmpBase) / (2 - improving))
@@ -776,7 +775,7 @@ namespace Search {
 
         // If this is a capture, do SEE (Static Exchange Evalution) pruning
         if (pieceOn(getMoveDest(move))) {
-          if (!position.see_ge(move, Value(PvsSeeMargin * depth)))
+          if (!position.see_ge(move, Score(PvsSeeMargin * depth)))
             continue;
         }
 
@@ -796,21 +795,21 @@ namespace Search {
         && depth >= 6
         && !excludedMove
         && move == ttMove
-        && abs(ttValue) < VALUE_TB_WIN_IN_MAX_PLY
+        && abs(ttScore) < TB_WIN_IN_MAX_PLY
         && ttFlag & TT::FLAG_LOWER
         && ttEntry->getDepth() >= depth - 3) 
       {
-        Value singularBeta = ttValue - depth;
+        Score singularBeta = ttScore - depth;
         
         ss->excludedMove = move;
-        Value seValue = negaMax<NonPV>(singularBeta - 1, singularBeta, (depth - 1) / 2, cutNode, ss);
+        Score seScore = negaMax<NonPV>(singularBeta - 1, singularBeta, (depth - 1) / 2, cutNode, ss);
         ss->excludedMove = MOVE_NONE;
         
-        if (seValue < singularBeta)
+        if (seScore < singularBeta)
           extension = 1;
         else if (singularBeta >= beta) // Multicut
           return singularBeta;
-        else if (ttValue >= beta) // Negative extension (~18 Elo)
+        else if (ttScore >= beta) // Negative extension (~18 Elo)
           extension = -1 + PvNode;
       }
 
@@ -818,7 +817,7 @@ namespace Search {
 
       int newDepth = depth + extension - 1;
 
-      Value value;
+      Score score;
 
       // Late move reductions. Search at a reduced depth, moves that are late in the move list
 
@@ -847,41 +846,41 @@ namespace Search {
         // Do the clamp to avoid a qsearch or an extension in the child search
         int reducedDepth = std::clamp(newDepth - R, 1, newDepth + 1);
 
-        value = -negaMax<NonPV>(-alpha - 1, -alpha, reducedDepth, true, ss + 1);
+        score = -negaMax<NonPV>(-alpha - 1, -alpha, reducedDepth, true, ss + 1);
 
-        needFullSearch = value > alpha && reducedDepth < newDepth;
+        needFullSearch = score > alpha && reducedDepth < newDepth;
       }
       else
         needFullSearch = !PvNode || playedMoves >= 1;
 
 
       if (needFullSearch)
-        value = -negaMax<NonPV>(-alpha - 1, -alpha, newDepth, !cutNode, ss + 1);
+        score = -negaMax<NonPV>(-alpha - 1, -alpha, newDepth, !cutNode, ss + 1);
 
-      if (PvNode && (playedMoves == 0 || value > alpha))
-        value = -negaMax<PV>(-beta, -alpha, newDepth, false, ss + 1);
+      if (PvNode && (playedMoves == 0 || score > alpha))
+        score = -negaMax<PV>(-beta, -alpha, newDepth, false, ss + 1);
 
       cancelMove();
 
       playedMoves++;
 
       if (rootNode)
-        rootMoves.scores[rootMoves.indexOf(move)] = value;
+        rootMoves.scores[rootMoves.indexOf(move)] = score;
 
-      if (value > bestValue) {
-        bestValue = value;
+      if (score > bestScore) {
+        bestScore = score;
 
-        if (bestValue > alpha) {
+        if (bestScore > alpha) {
           bestMove = move;
 
           if (PvNode)
             updatePV(ss, bestMove);
 
           // Always true in NonPV nodes
-          if (bestValue >= beta)
+          if (bestScore >= beta)
             break;
 
-          alpha = bestValue;
+          alpha = bestScore;
         }
       }
     }
@@ -890,28 +889,28 @@ namespace Search {
       if (excludedMove) 
         return alpha;
 
-      return position.checkers ? Value(ply - VALUE_MATE) : VALUE_DRAW;
+      return position.checkers ? Score(ply - CHECKMATE) : DRAW;
     }
 
     // Update histories
-    if (bestValue >= beta &&
+    if (bestScore >= beta &&
       position.isQuiet(bestMove))
     {
-      updateHistories(depth, bestMove, bestValue, beta, quietMoves, quietCount, ss);
+      updateHistories(depth, bestMove, bestScore, beta, quietMoves, quietCount, ss);
     }
 
     // Store to TT
     if (!excludedMove) {
       TT::Flag flag;
-      if (bestValue >= beta)
+      if (bestScore >= beta)
         flag = TT::FLAG_LOWER;
       else
         flag = (PvNode && bestMove) ? TT::FLAG_EXACT : TT::FLAG_UPPER;
 
-      ttEntry->store(position.key, flag, depth, bestMove, bestValue, ss->staticEval, PvNode);
+      ttEntry->store(position.key, flag, depth, bestMove, bestScore, ss->staticEval, PvNode);
     }
 
-    return bestValue;
+    return bestScore;
   }
 
 
@@ -938,15 +937,15 @@ namespace Search {
 
   void startSearch() {
 
-    position = searchLimits.position;
+    position = searchSettings.position;
     position.updateAccumulator(accumulatorStack[0]);
 
     Move bestMove;
 
     clock_t optimumTime;
 
-    if (searchLimits.hasTimeLimit())
-      optimumTime = TimeMan::calcOptimumTime(searchLimits, position.sideToMove);
+    if (searchSettings.hasTimeLimit())
+      optimumTime = TimeMan::calcOptimumTime(searchSettings, position.sideToMove);
 
     ply = 0;
 
@@ -957,7 +956,7 @@ namespace Search {
     SearchLoopInfo iterDeepening[MAX_PLY];
 
     for (int i = 0; i < MAX_PLY + SsOffset; i++) {
-      searchStack[i].staticEval = VALUE_NONE;
+      searchStack[i].staticEval = SCORE_NONE;
 
       searchStack[i].pvLength = 0;
 
@@ -970,8 +969,8 @@ namespace Search {
 
     SearchInfo* ss = &searchStack[SsOffset];
 
-    if (searchLimits.depth == 0)
-      searchLimits.depth = MAX_PLY;
+    if (searchSettings.depth == 0)
+      searchSettings.depth = MAX_PLY;
 
     // Setup root moves
     rootMoves = MoveList();
@@ -993,18 +992,18 @@ namespace Search {
 
     int searchStability = 0;
 
-    for (rootDepth = 1; rootDepth <= searchLimits.depth; rootDepth++) {
+    for (rootDepth = 1; rootDepth <= searchSettings.depth; rootDepth++) {
 
-      if (searchLimits.nodes && nodesSearched >= searchLimits.nodes)
+      if (searchSettings.nodes && nodesSearched >= searchSettings.nodes)
         break;
 
       selDepth = 0;
 
-      Value score;
+      Score score;
       if (rootDepth >= AspWindowStartDepth) {
         int windowSize = AspWindowStartDelta;
-        Value alpha = iterDeepening[rootDepth - 1].score - windowSize;
-        Value beta = iterDeepening[rootDepth - 1].score + windowSize;
+        Score alpha = iterDeepening[rootDepth - 1].score - windowSize;
+        Score beta = iterDeepening[rootDepth - 1].score + windowSize;
 
         int failedHighCnt = 0;
         while (true) {
@@ -1016,22 +1015,22 @@ namespace Search {
           if (Threads::searchState == STOP_PENDING)
             goto bestMoveDecided;
 
-          if (searchLimits.nodes && nodesSearched >= searchLimits.nodes)
+          if (searchSettings.nodes && nodesSearched >= searchSettings.nodes)
             break; // only break, in order to print info about the partial search we've done
 
-          if (score >= VALUE_MATE_IN_MAX_PLY) {
-            beta = VALUE_INFINITE;
+          if (score >= CHECKMATE_IN_MAX_PLY) {
+            beta = SCORE_INFINITE;
             failedHighCnt = 0;
           }
 
           if (score <= alpha) {
-            beta = Value((alpha + beta) / 2);
-            alpha = (Value)std::max(-VALUE_INFINITE, alpha - windowSize);
+            beta = Score((alpha + beta) / 2);
+            alpha = (Score)std::max(-SCORE_INFINITE, alpha - windowSize);
 
             failedHighCnt = 0;
           }
           else if (score >= beta) {
-            beta = (Value)std::min(VALUE_INFINITE, beta + windowSize);
+            beta = (Score)std::min(SCORE_INFINITE, beta + windowSize);
 
             failedHighCnt = std::min((int)AspFailHighReductionMax, failedHighCnt + 1);
           }
@@ -1042,7 +1041,7 @@ namespace Search {
         }
       }
       else {
-        score = negaMax<Root>(-VALUE_INFINITE, VALUE_INFINITE, rootDepth, false, ss);
+        score = negaMax<Root>(-SCORE_INFINITE, SCORE_INFINITE, rootDepth, false, ss);
       }
 
       // It's super important to not update the best move if the search was abruptly stopped
@@ -1061,7 +1060,7 @@ namespace Search {
           << "info"
           << " depth " << rootDepth
           << " seldepth " << selDepth
-          << " score " << UCI::value(score)
+          << " score " << UCI::score(score)
           << " nodes " << nodesSearched
           << " nps " << (nodesSearched * 1000ULL) / std::max(int(elapsed), 1)
           << " time " << elapsed
@@ -1077,16 +1076,16 @@ namespace Search {
       // Stop searching if we can deliver a forced checkmate.
       // No need to stop if we are getting checkmated, instead keep searching,
       // because we may have overlooked a way out of checkmate due to pruning
-      if (score >= VALUE_MATE_IN_MAX_PLY)
+      if (score >= CHECKMATE_IN_MAX_PLY)
         goto bestMoveDecided;
 
       // When playing in movetime mode, stop if we've used 75% time of movetime,
       // because we will probably not hit the next depth in time
-      if (searchLimits.movetime)
-        if (elapsedTime() >= (searchLimits.movetime * 3) / 4)
+      if (searchSettings.movetime)
+        if (elapsedTime() >= (searchSettings.movetime * 3) / 4)
           goto bestMoveDecided;
 
-      if (searchLimits.hasTimeLimit() && rootDepth >= 4) {
+      if (searchSettings.hasTimeLimit() && rootDepth >= 4) {
 
         // If the position is a dead draw, stop searching
         if (rootDepth >= 40 && abs(score) < 5) {

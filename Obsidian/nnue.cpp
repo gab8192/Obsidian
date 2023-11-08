@@ -129,7 +129,7 @@ namespace NNUE {
     return wide * wide;
   }
 
-  Value evaluate(Accumulator& accumulator, Color sideToMove) {
+  Score evaluate(Accumulator& accumulator, Color sideToMove) {
 
     weight_t* stmAccumulator;
     weight_t* oppAccumulator;
@@ -152,7 +152,7 @@ namespace NNUE {
 
     int unsquared = sum / 255 + Content.OutputBias;
 
-    return Value((unsquared * NetworkScale) / NetworkQ);
+    return Score((unsquared * NetworkScale) / NetworkQ);
   }
 
 }

@@ -10,7 +10,7 @@ namespace Eval {
   /// Evaluate a position where one of the players has only the king
   /// </summary>
   /// <returns> A value relative to the strong side </returns>
-  Value evaluateEndgame(Position& pos, Color strongSide) {
+  Score evaluateEndgame(Position& pos, Color strongSide) {
     Bitboard strongSidePieces = pos.pieces(strongSide) ^ pos.pieces(strongSide, KING);
     const Square strongKing = pos.kingSquare(strongSide);
     const Square weakKing = pos.kingSquare(~strongSide);
@@ -18,7 +18,7 @@ namespace Eval {
     // Only knights
     if (strongSidePieces == pos.pieces(KNIGHT)
       && BitCount(strongSidePieces) < 3)
-      return VALUE_DRAW;
+      return DRAW;
 
     // Only bishops
     if (strongSidePieces == pos.pieces(BISHOP)) {
@@ -28,10 +28,10 @@ namespace Eval {
         // good, we have bishop of both colors
       }
       else
-        return VALUE_DRAW;
+        return DRAW;
     }
 
-    Value value = Value(2000);
+    Score value = Score(2000);
 
     {
       Bitboard sspIter = strongSidePieces;

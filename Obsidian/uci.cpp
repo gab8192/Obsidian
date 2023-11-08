@@ -66,8 +66,8 @@ namespace {
 
     uint64_t totalNodes = 0;
 
-    searchLimits = Search::Limits();
-    searchLimits.depth = 13;
+    searchSettings = Search::Settings();
+    searchSettings.depth = 13;
 
     clock_t elapsed = 0;
 
@@ -78,7 +78,7 @@ namespace {
     for (int i = 0; i < posCount; i++) {
 
       istringstream posStr(BenchPositions[i]);
-      position(searchLimits.position, tempAccumulator, posStr);
+      position(searchSettings.position, tempAccumulator, posStr);
 
       Search::clear();
 
@@ -143,21 +143,21 @@ namespace {
 
     string token;
 
-    searchLimits = Search::Limits();
-    searchLimits.startTime = timeMillis();
-    searchLimits.position = pos;
+    searchSettings = Search::Settings();
+    searchSettings.startTime = timeMillis();
+    searchSettings.position = pos;
 
     int perftPlies = 0;
 
     while (is >> token)
-      if (token == "wtime")     is >> searchLimits.time[WHITE];
-      else if (token == "btime")     is >> searchLimits.time[BLACK];
-      else if (token == "winc")      is >> searchLimits.inc[WHITE];
-      else if (token == "binc")      is >> searchLimits.inc[BLACK];
-      else if (token == "movestogo") is >> searchLimits.movestogo;
-      else if (token == "depth")     is >> searchLimits.depth;
-      else if (token == "nodes")     is >> searchLimits.nodes;
-      else if (token == "movetime")  is >> searchLimits.movetime;
+      if (token == "wtime")     is >> searchSettings.time[WHITE];
+      else if (token == "btime")     is >> searchSettings.time[BLACK];
+      else if (token == "winc")      is >> searchSettings.inc[WHITE];
+      else if (token == "binc")      is >> searchSettings.inc[BLACK];
+      else if (token == "movestogo") is >> searchSettings.movestogo;
+      else if (token == "depth")     is >> searchSettings.depth;
+      else if (token == "nodes")     is >> searchSettings.nodes;
+      else if (token == "movetime")  is >> searchSettings.movetime;
       else if (token == "perft")     is >> perftPlies;
 
     if (perftPlies) {
@@ -222,7 +222,7 @@ void UCI::loop(int argc, char* argv[]) {
     else if (token == "d")        cout << pos << endl;
     else if (token == "tune")     cout << paramsToSpsaInput();
     else if (token == "eval") {
-      Value eval = Eval::evaluate(pos, tempAccumulator);
+      Score eval = Eval::evaluate(pos, tempAccumulator);
       if (pos.sideToMove == BLACK)
         eval = -eval;
       cout << "Evaluation: " << UCI::to_cp(eval) << endl;
@@ -236,24 +236,24 @@ void UCI::loop(int argc, char* argv[]) {
 
 /// Turns a Value to an integer centipawn number,
 /// without treatment of mate and similar special scores.
-int UCI::to_cp(Value v) {
+int UCI::to_cp(Score v) {
 
   return 100 * v / 220;
 }
 
-string UCI::value(Value v) {
+string UCI::score(Score v) {
 
-  assert(-VALUE_INFINITE < v && v < VALUE_INFINITE);
+  assert(-SCORE_INFINITE < v && v < SCORE_INFINITE);
 
   stringstream ss;
 
-  if (abs(v) < VALUE_TB_WIN_IN_MAX_PLY)
+  if (abs(v) < TB_WIN_IN_MAX_PLY)
     ss << "cp " << UCI::to_cp(v);
   else {
     if (v > 0)
-      ss << "mate " << (VALUE_MATE - v + 1) / 2;
+      ss << "mate " << (CHECKMATE - v + 1) / 2;
     else
-      ss << "mate " << (-VALUE_MATE - v) / 2;
+      ss << "mate " << (-CHECKMATE - v) / 2;
   }
 
   return ss.str();

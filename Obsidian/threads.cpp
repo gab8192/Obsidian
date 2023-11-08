@@ -3,7 +3,7 @@
 namespace Threads {
 
   volatile Search::State searchState;
-  Search::Limits searchLimits;
+  Search::Settings searchSettings;
 
   void waitForSearch() {
     while (searchState != Search::IDLE)

@@ -479,11 +479,11 @@ std::ostream& operator<<(std::ostream& stream, Position& pos) {
   return stream;
 }
 
-bool Position::see_ge(Move m, Value threshold) const {
+bool Position::see_ge(Move m, Score threshold) const {
 
   // Only deal with normal moves, assume others pass a simple SEE
   if (getMoveType(m) != MT_NORMAL)
-    return VALUE_DRAW >= threshold;
+    return DRAW >= threshold;
 
   Square from = getMoveSrc(m), to = getMoveDest(m);
 

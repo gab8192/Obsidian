@@ -4,5 +4,5 @@
 
 namespace TimeMan {
 
-  clock_t calcOptimumTime(Search::Limits& limits, Color us);
+  clock_t calcOptimumTime(Search::Settings& settings, Color us);
 }
