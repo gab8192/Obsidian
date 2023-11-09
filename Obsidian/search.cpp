@@ -100,6 +100,8 @@ namespace Search {
 
   FromToHistory mainHistory;
 
+  PieceToHistory captureHistory;
+
   ContinuationHistory contHistory;
 
   Move counterMoveHistory[PIECE_NB][SQUARE_NB];
@@ -120,6 +122,7 @@ namespace Search {
 
     TT::clear();
     memset(mainHistory, 0, sizeof(mainHistory));
+    memset(captureHistory, 0, sizeof(captureHistory));
     memset(counterMoveHistory, 0, sizeof(counterMoveHistory));
     memset(contHistory, 0, sizeof(contHistory));
   }
@@ -273,7 +276,7 @@ namespace Search {
   //    Bad capture: -200K
 
   constexpr int mvv_lva(int captured, int attacker) {
-    return PieceValue[captured] * 100 - PieceValue[attacker];
+    return PieceValue[captured] * 64 - PieceValue[attacker];
   }
 
   constexpr int promotionScores[] = {
@@ -369,10 +372,9 @@ namespace Search {
       else if (mt == MT_EN_PASSANT)
         moveScore = 300000 + mvv_lva(PAWN, PAWN);
       else if (captured) {
-        if (position.see_ge(move, Score(-50)))
-          moveScore = 300000 + mvv_lva(captured, moved);
-        else
-          moveScore = -200000 + mvv_lva(captured, moved);
+        moveScore = position.see_ge(move, Score(-50)) ? 300000 : -200000;
+        moveScore += mvv_lva(captured, moved);
+        moveScore += captureHistory[pieceTo(move)];
       }
       else if (move == killer)
         moveScore = 200000;
@@ -736,6 +738,8 @@ namespace Search {
 
     Move quietMoves[64];
     int quietCount = 0;
+    Move captures[64];
+    int captureCount = 0;
 
     bool skipQuiets = false;
     
@@ -759,6 +763,10 @@ namespace Search {
 
         if (skipQuiets)
           continue;
+      }
+      else {
+        if (captureCount < 64)
+          captures[captureCount++] = move;
       }
 
       foundLegalMove = true;
@@ -891,10 +899,24 @@ namespace Search {
     }
 
     // Update histories
-    if (bestScore >= beta &&
-      position.isQuiet(bestMove))
+    if (bestScore >= beta)
     {
-      updateHistories(depth, bestMove, bestScore, beta, quietMoves, quietCount, ss);
+      if (position.isQuiet(bestMove)) 
+      {
+        updateHistories(depth, bestMove, bestScore, beta, quietMoves, quietCount, ss);
+      }
+      else if (pieceOn(getMoveDest(bestMove))) {
+        int bonus = stat_bonus(depth);
+        addToHistory(captureHistory[pieceTo(bestMove)], bonus);
+
+        for (int i = 0; i < captureCount; i++) {
+          Move otherMove = captures[i];
+          if (otherMove == bestMove)
+            continue;
+
+          addToHistory(captureHistory[pieceTo(otherMove)], -bonus);
+        }
+      }
     }
 
     // Store to TT
