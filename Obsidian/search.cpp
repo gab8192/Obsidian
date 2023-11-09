@@ -581,8 +581,6 @@ namespace Search {
     constexpr bool PvNode = nodeType != NonPV;
     constexpr bool rootNode = nodeType == Root;
 
-    const Color us = position.sideToMove, them = ~us;
-
     if (PvNode) {
       // init node
       ss->pvLength = ply;
@@ -766,7 +764,7 @@ namespace Search {
       foundLegalMove = true;
 
       if (!rootNode
-        && position.hasNonPawns(us)
+        && position.hasNonPawns(position.sideToMove)
         && bestScore > TB_LOSS_IN_MAX_PLY)
       {
         // Late move pruning. At low depths, only visit a few quiet moves
