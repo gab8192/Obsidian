@@ -594,8 +594,6 @@ namespace Search {
     if (searchState == STOP_PENDING)
       return makeDrawScore();
 
-    (ss + 1)->killer = MOVE_NONE;
-
     if (!rootNode) {
       // detect draw
       if (is2FoldRepetition() || position.halfMoveClock >= 100)
@@ -607,6 +605,8 @@ namespace Search {
       if (alpha >= beta)
         return alpha;
     }
+
+    (ss + 1)->killer = MOVE_NONE;
 
     Move excludedMove = ss->excludedMove;
 
