@@ -581,6 +581,9 @@ namespace Search {
     constexpr bool PvNode = nodeType != NonPV;
     constexpr bool rootNode = nodeType == Root;
 
+    if (searchState == STOP_PENDING)
+      return makeDrawScore();
+
     if (PvNode) {
       // init node
       ss->pvLength = ply;
@@ -588,9 +591,6 @@ namespace Search {
       if (ply > selDepth)
         selDepth = ply;
     }
-
-    if (searchState == STOP_PENDING)
-      return makeDrawScore();
 
     if (!rootNode) {
       // detect draw
