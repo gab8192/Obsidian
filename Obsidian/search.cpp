@@ -839,6 +839,10 @@ namespace Search {
           // Reduce or extend depending on history of this quiet move (~12 Elo)
           if (moveScore > -50000 && moveScore < 50000)
             R -= std::clamp(moveScore / LmrHistoryDiv, -2, 2);
+
+          // Do less reduction for good quiet moves (~4 Elo)
+          if (moveScore == 200000 || moveScore == 100000)
+            R--;
         }
         else {
           R /= 2;
