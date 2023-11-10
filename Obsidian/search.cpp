@@ -100,7 +100,8 @@ namespace Search {
 
   FromToHistory mainHistory;
 
-  PieceToHistory captureHistory;
+  // captureHistory[pieceTo][captured]
+  int captureHistory[PIECE_NB * SQUARE_NB][PIECE_TYPE_NB];
 
   ContinuationHistory contHistory;
 
@@ -373,8 +374,8 @@ namespace Search {
         moveScore = 300000 + mvv_lva(PAWN, PAWN);
       else if (captured) {
         moveScore = position.see_ge(move, Score(-50)) ? 300000 : -200000;
-        moveScore += mvv_lva(captured, moved);
-        moveScore += captureHistory[pieceTo(move)];
+        moveScore += PieceValue[captured] * 64;
+        moveScore += captureHistory[pieceTo(move)][ptypeOf(captured)];
       }
       else if (move == killer)
         moveScore = 200000;
@@ -907,14 +908,19 @@ namespace Search {
       }
       else if (pieceOn(getMoveDest(bestMove))) {
         int bonus = stat_bonus(depth);
-        addToHistory(captureHistory[pieceTo(bestMove)], bonus);
+
+        {
+          Piece captured = pieceOn(getMoveDest(bestMove));
+          addToHistory(captureHistory[pieceTo(bestMove)][ptypeOf(captured)], bonus);
+        }
 
         for (int i = 0; i < captureCount; i++) {
           Move otherMove = captures[i];
           if (otherMove == bestMove)
             continue;
 
-          addToHistory(captureHistory[pieceTo(otherMove)], -bonus);
+          Piece captured = pieceOn(getMoveDest(otherMove));
+          addToHistory(captureHistory[pieceTo(otherMove)][ptypeOf(captured)], -bonus);
         }
       }
     }

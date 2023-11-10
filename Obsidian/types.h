@@ -172,6 +172,7 @@ constexpr Piece make_piece(Color color, PieceType pt) {
 }
 
 constexpr PieceType ptypeOf(Piece piece) {
+  
   return PieceType(piece & 7);
 }
 
