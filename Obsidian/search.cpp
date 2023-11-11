@@ -607,6 +607,14 @@ namespace Search {
         return alpha;
     }
 
+    // If we are in check, increment the depth and avoid entering a qsearch
+    if (position.checkers && !rootNode)
+      depth = std::max(1, depth + 1);
+
+    // Enter qsearch when depth is 0
+    if (depth <= 0)
+      return qsearch<PvNode ? PV : NonPV>(alpha, beta, ss);
+
     (ss + 1)->killerMove = MOVE_NONE;
 
     Move excludedMove = ss->excludedMove;
@@ -627,14 +635,6 @@ namespace Search {
     Score eval;
     Move bestMove = MOVE_NONE;
     Score bestScore = -SCORE_INFINITE;
-
-    // If we are in check, increment the depth and avoid entering a qsearch
-    if (position.checkers && !rootNode)
-      depth = std::max(1, depth + 1);
-
-    // Enter qsearch when depth is 0
-    if (depth <= 0)
-      return qsearch<PvNode ? PV : NonPV>(alpha, beta, ss);
 
     // In non PV nodes, if tt depth and bound allow it, return ttScore
     if (!PvNode
