@@ -470,7 +470,7 @@ namespace Search {
     Score ttScore = ttHit ? ttEntry->getScore() : SCORE_NONE;
     Move ttMove = ttHit ? ttEntry->getMove() : MOVE_NONE;
 
-    // In non PV nodes, if tt depth and bound allow it, return ttScore
+    // In non PV nodes, if tt bound allows it, return ttScore
     if (!PvNode) {
       if (ttFlag & flagForTT(ttScore >= beta))
         return ttScore;
