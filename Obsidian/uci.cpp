@@ -66,9 +66,6 @@ namespace {
 
     uint64_t totalNodes = 0;
 
-    searchSettings = Search::Settings();
-    searchSettings.depth = 13;
-
     clock_t elapsed = 0;
 
     Search::printingEnabled = false;
@@ -83,6 +80,9 @@ namespace {
       Search::clear();
 
       // Start search
+      searchSettings = Search::Settings();
+      searchSettings.depth = 13;
+      searchSettings.startTime = timeMillis();
       Threads::searchState = Search::RUNNING;
 
       // And wait for it to finish..

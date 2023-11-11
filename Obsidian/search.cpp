@@ -30,7 +30,7 @@ namespace Search {
     Score staticEval;
     Move playedMove;
 
-    Move killer;
+    Move killerMove;
 
     Move pv[MAX_PLY];
     int pvLength;
@@ -339,11 +339,11 @@ namespace Search {
     /*
     * Killer move
     */
-    ss->killer = bestMove;
+    ss->killerMove = bestMove;
   }
 
   void scoreMoves(MoveList& moves, Move ttMove, SearchInfo* ss) {
-    Move killer = ss->killer;
+    Move killer = ss->killerMove;
 
     Move counterMove = MOVE_NONE;
 
@@ -607,7 +607,7 @@ namespace Search {
         return alpha;
     }
 
-    (ss + 1)->killer = MOVE_NONE;
+    (ss + 1)->killerMove = MOVE_NONE;
 
     Move excludedMove = ss->excludedMove;
 
@@ -977,6 +977,8 @@ namespace Search {
     if (searchSettings.hasTimeLimit())
       optimumTime = TimeMan::calcOptimumTime(searchSettings, position.sideToMove);
 
+    int searchStability = 0;
+
     ply = 0;
 
     nodesSearched = 0;
@@ -990,11 +992,9 @@ namespace Search {
 
       searchStack[i].pvLength = 0;
 
-      searchStack[i].killer = MOVE_NONE;
-
+      searchStack[i].killerMove   = MOVE_NONE;
       searchStack[i].excludedMove = MOVE_NONE;
-
-      searchStack[i].playedMove = MOVE_NONE;
+      searchStack[i].playedMove   = MOVE_NONE;
     }
 
     SearchInfo* ss = &searchStack[SsOffset];
@@ -1010,17 +1010,16 @@ namespace Search {
 
       for (int i = 0; i < pseudoRootMoves.size(); i++) {
         Move move = pseudoRootMoves[i];
-        if (!position.isLegal(move))
-          continue;
-
-        rootMoves.add(move);
+        if (position.isLegal(move))
+          rootMoves.add(move);
       }
     }
+    // When we have only 1 legal move, play it instantly
+    if (rootMoves.size() == 1) {
+      bestMove = rootMoves[0];
+      goto bestMoveDecided;
+    }
     scoreMoves(rootMoves, MOVE_NONE, ss);
-
-    clock_t startTime = timeMillis();
-
-    int searchStability = 0;
 
     for (rootDepth = 1; rootDepth <= searchSettings.depth; rootDepth++) {
 
@@ -1135,7 +1134,7 @@ namespace Search {
   bestMoveDecided:
 
     lastBestMove = bestMove;
-    lastSearchTimeSpan = timeMillis() - startTime;
+    lastSearchTimeSpan = elapsedTime();
 
     if (printingEnabled)
       std::cout << "bestmove " << UCI::move(bestMove) << endl;
