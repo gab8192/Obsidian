@@ -450,7 +450,7 @@ namespace Search {
   }
 
   Score makeDrawScore() {
-    return Score(int(nodesSearched % 3ULL) - 1);
+    return Score(int(nodesSearched & 2) - 1);
   }
 
   template<NodeType nodeType>
@@ -632,6 +632,10 @@ namespace Search {
     if (position.checkers && !rootNode)
       depth = std::max(1, depth + 1);
 
+    // Enter qsearch when depth is 0
+    if (depth <= 0)
+      return qsearch<PvNode ? PV : NonPV>(alpha, beta, ss);
+
     // In non PV nodes, if tt depth and bound allow it, return ttScore
     if (!PvNode
       && !excludedMove
@@ -640,10 +644,6 @@ namespace Search {
       if (ttFlag & flagForTT(ttScore >= beta))
         return ttScore;
     }
-
-    // Enter qsearch when depth is 0
-    if (depth <= 0)
-      return qsearch<PvNode ? PV : NonPV>(alpha, beta, ss);
 
     bool improving = false;
 
