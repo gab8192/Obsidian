@@ -101,58 +101,38 @@ void Position::updateKey() {
 }
 
 bool Position::isLegal(Move move) {
-  if (checkers) {
-    const Square from = getMoveSrc(move);
-    const Square to = getMoveDest(move);
 
-    const Piece movedPc = board[from];
-
-    if (ptypeOf(movedPc) == KING)
-      return !attackersTo(to, ~sideToMove, pieces() ^ from);
-
-    if (getMoveType(move) == MT_EN_PASSANT) {
-      Square capSq = (sideToMove == WHITE ? epSquare - 8 : epSquare + 8);
-      return !slidingAttackersTo(kingSquare(sideToMove), ~sideToMove, pieces() ^ from ^ capSq ^ to);
+  if (getMoveType(move) == MT_CASTLING) {
+    switch (getCastlingType(move))
+    {
+    case WHITE_OO: return !attackersTo(SQ_F1, BLACK) && !attackersTo(SQ_G1, BLACK);
+    case WHITE_OOO: return !attackersTo(SQ_D1, BLACK) && !attackersTo(SQ_C1, BLACK);
+    case BLACK_OO: return !attackersTo(SQ_F8, WHITE) && !attackersTo(SQ_G8, WHITE);
+    case BLACK_OOO: return !attackersTo(SQ_D8, WHITE) && !attackersTo(SQ_C8, WHITE);
     }
-
-    if (ptypeOf(movedPc) == PAWN)
-      return ! (blockersForKing[sideToMove] & from);
-
-    return true;
   }
-  else {
 
-    if (getMoveType(move) == MT_CASTLING) {
-      switch (getCastlingType(move)) 
-      {
-      case WHITE_OO: return !attackersTo(SQ_F1, BLACK) && !attackersTo(SQ_G1, BLACK);
-      case WHITE_OOO: return !attackersTo(SQ_D1, BLACK) && !attackersTo(SQ_C1, BLACK);
-      case BLACK_OO: return !attackersTo(SQ_F8, WHITE) && !attackersTo(SQ_G8, WHITE);
-      case BLACK_OOO: return !attackersTo(SQ_D8, WHITE) && !attackersTo(SQ_C8, WHITE);
-      }
-    }
+  const Square from = getMoveSrc(move);
+  const Square to = getMoveDest(move);
+  const Piece movedPc = board[from];
 
-    const Square from = getMoveSrc(move);
-    const Square to = getMoveDest(move);
+  if (ptypeOf(movedPc) == KING)
+    return !attackersTo(to, ~sideToMove, pieces() ^ from);
 
-    const Piece movedPc = board[from];
-
-    if (ptypeOf(movedPc) == KING)
-      return !attackersTo(to, ~sideToMove, pieces() ^ from);
-
+  if (!checkers) {
     if (LineBB[from][to] & kingSquare(sideToMove))
       return true;
-
-    if (getMoveType(move) == MT_EN_PASSANT) {
-      Square capSq = (sideToMove == WHITE ? epSquare - 8 : epSquare + 8);
-      return !slidingAttackersTo(kingSquare(sideToMove), ~sideToMove, pieces() ^ from ^ capSq ^ to);
-    }
-
-    if (ptypeOf(movedPc) == PAWN)
-      return !(blockersForKing[sideToMove] & from);
-
-    return true;
   }
+
+  if (getMoveType(move) == MT_EN_PASSANT) {
+    Square capSq = (sideToMove == WHITE ? epSquare - 8 : epSquare + 8);
+    return !slidingAttackersTo(kingSquare(sideToMove), ~sideToMove, pieces() ^ from ^ capSq ^ to);
+  }
+
+  if (ptypeOf(movedPc) == PAWN)
+    return !(blockersForKing[sideToMove] & from);
+
+  return true;
 }
 
 void Position::doNullMove() {

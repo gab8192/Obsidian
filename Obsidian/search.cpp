@@ -165,6 +165,10 @@ namespace Search {
 
   template<bool root>
   int64_t perft(int depth) {
+
+    if (root)
+      position = searchSettings.position;
+
     MoveList moves;
     getPseudoLegalMoves(position, &moves);
 
