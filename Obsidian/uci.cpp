@@ -72,16 +72,17 @@ namespace {
 
     NNUE::Accumulator tempAccumulator;
 
-    for (int i = 0; i < posCount; i++) {
-
+    for (int i = 0; i < posCount; i++) 
+    {
+      searchSettings = Search::Settings();
+      searchSettings.depth = 13;
+      
       istringstream posStr(BenchPositions[i]);
       position(searchSettings.position, tempAccumulator, posStr);
 
       Search::clear();
 
       // Start search
-      searchSettings = Search::Settings();
-      searchSettings.depth = 13;
       searchSettings.startTime = timeMillis();
       Threads::searchState = Search::RUNNING;
 

@@ -47,8 +47,6 @@ namespace SIMD {
     return x - y;
   }
 
-  inline void copyMemory(Vec dest, Vec src) {
-
 #endif
 
 }
