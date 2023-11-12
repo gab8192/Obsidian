@@ -833,7 +833,7 @@ namespace Search {
       // Late move reductions. Search at a reduced depth, moves that are late in the move list
 
       bool needFullSearch;
-      if (!wasInCheck && depth >= 3 && playedMoves > (1 + 2 * PvNode)) {
+      if (depth >= 3 && playedMoves > (1 + 2 * PvNode)) {
         int R;
 
         if (isQuiet) {
@@ -858,6 +858,9 @@ namespace Search {
           if (moveScore < 0)
             R++;
         }
+
+        if (position.checkers)
+          R --;
 
         R -= PvNode;
 
