@@ -839,6 +839,8 @@ namespace Search {
         if (isQuiet) {
           R = lmrTable[depth][playedMoves + 1];
 
+          R += !improving;
+
           // Reduce more if ttmove was noisy (~6 Elo)
           R += ttMoveNoisy;
 
@@ -856,8 +858,6 @@ namespace Search {
           if (moveScore < 0)
             R++;
         }
-
-        R += !improving;
 
         R -= PvNode;
 
