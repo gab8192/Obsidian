@@ -834,9 +834,11 @@ namespace Search {
 
       bool needFullSearch;
       if (!wasInCheck && depth >= 3 && playedMoves > (1 + 2 * PvNode)) {
-        int R = lmrTable[depth][playedMoves + 1];
+        int R;
 
         if (isQuiet) {
+          R = lmrTable[depth][playedMoves + 1];
+
           // Reduce more if ttmove was noisy (~6 Elo)
           R += ttMoveNoisy;
 
@@ -849,7 +851,10 @@ namespace Search {
             R--;
         }
         else {
-          R /= 2;
+          R = 0;
+
+          if (moveScore < 0)
+            R++;
         }
 
         R += !improving;
