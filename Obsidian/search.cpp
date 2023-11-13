@@ -269,10 +269,6 @@ namespace Search {
   // Dumb promotion: -100K
   //    Bad capture: -200K
 
-  constexpr int mvv_lva(int captured, int attacker) {
-    return PieceValue[captured] * 64 - PieceValue[attacker];
-  }
-
   constexpr int promotionScores[] = {
     0, 0, 400000, -100001, -100000, 410000
   };
@@ -365,7 +361,7 @@ namespace Search {
       else if (mt == MT_PROMOTION)
         moveScore = promotionScores[getPromoType(move)] + PieceValue[captured];
       else if (mt == MT_EN_PASSANT)
-        moveScore = 300000 + mvv_lva(PAWN, PAWN);
+        moveScore = 300000 + PieceValue[PAWN] * 64;
       else if (captured) {
         moveScore = pos.see_ge(move, Score(-50)) ? 300000 : -200000;
         moveScore += PieceValue[captured] * 64;
