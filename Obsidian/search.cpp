@@ -89,11 +89,10 @@ namespace Search {
 
   int ply = 0;
 
-  Position posStack[MAX_PLY];
+  Key keyStack[MAX_PLY];
 
   NNUE::Accumulator accumulatorStack[MAX_PLY];
 
-  Position position;
   MoveList rootMoves;
 
   int lmrTable[MAX_PLY][MAX_MOVES];
@@ -107,16 +106,12 @@ namespace Search {
 
   Move counterMoveHistory[PIECE_NB][SQUARE_NB];
 
-  Piece pieceOn(Square sq) {
-    return position.board[sq];
-  }
-
   int fromTo(Move m) {
     return getMoveSrc(m) * SQUARE_NB + getMoveDest(m);
   }
 
-  int pieceTo(Move m) {
-    return pieceOn(getMoveSrc(m)) * SQUARE_NB + getMoveDest(m);
+  int pieceTo(Position& pos, Move m) {
+    return pos.board[getMoveSrc(m)] * SQUARE_NB + getMoveDest(m);
   }
 
   void clear() {
@@ -150,8 +145,8 @@ namespace Search {
     clear();
   }
 
-  void pushPosition() {
-    memcpy(&posStack[ply], &position, sizeof(Position));
+  void pushPosition(Position& pos) {
+    keyStack[ply] = pos.key;
     memcpy(&accumulatorStack[ply + 1], &accumulatorStack[ply], sizeof(NNUE::Accumulator));
 
     ply++;
@@ -159,15 +154,10 @@ namespace Search {
 
   void popPosition() {
     ply--;
-
-    memcpy(&position, &posStack[ply], sizeof(Position));
   }
 
   template<bool root>
-  int64_t perft(int depth) {
-
-    if (root)
-      position = searchSettings.position;
+  int64_t perft(Position& position, int depth) {
 
     MoveList moves;
     getPseudoLegalMoves(position, &moves);
@@ -188,22 +178,21 @@ namespace Search {
       if (!position.isLegal(moves[i]))
         continue;
 
-      pushPosition();
-      position.doMove(moves[i], accumulatorStack[ply]);
+      Position newPos = position;
 
-      int64_t thisNodes = perft<false>(depth - 1);
+      newPos.doMove(moves[i], accumulatorStack[ply]);
+
+      int64_t thisNodes = perft<false>(newPos, depth - 1);
       if constexpr (root)
         cout << UCI::move(moves[i]) << " -> " << thisNodes << endl;
-
-      popPosition();
 
       n += thisNodes;
     }
     return n;
   }
 
-  template int64_t perft<false>(int);
-  template int64_t perft<true>(int);
+  template int64_t perft<false>(Position&, int);
+  template int64_t perft<true>(Position&, int);
 
   enum NodeType {
     Root, PV, NonPV
@@ -234,7 +223,7 @@ namespace Search {
     return false;
   }
 
-  void playNullMove(SearchInfo* ss) {
+  void playNullMove(Position& pos, SearchInfo* ss) {
     nodesSearched++;
 
     // Check time
@@ -245,11 +234,11 @@ namespace Search {
     ss->mContHistory = &contHistory[0];
     ss->playedMove = MOVE_NONE;
 
-    pushPosition();
-    position.doNullMove();
+    pushPosition(pos);
+    pos.doNullMove();
   }
 
-  void playMove(Move move, SearchInfo* ss) {
+  void playMove(Position& pos, Move move, SearchInfo* ss) {
     nodesSearched++;
 
     // Check time
@@ -257,11 +246,11 @@ namespace Search {
       if (usedMostOfTime())
         searchState = STOP_PENDING;
 
-    ss->mContHistory = &contHistory[pieceTo(move)];
+    ss->mContHistory = &contHistory[pieceTo(pos, move)];
     ss->playedMove = move;
 
-    pushPosition();
-    position.doMove(move, accumulatorStack[ply]);
+    pushPosition(pos);
+    pos.doMove(move, accumulatorStack[ply]);
   }
 
   void cancelMove() {
@@ -288,33 +277,34 @@ namespace Search {
     0, 0, 400000, -100001, -100000, 410000
   };
 
-  int getHistoryScore(Move move, SearchInfo* ss) {
-    int moveScore = mainHistory[position.sideToMove][fromTo(move)];
+  int getHistoryScore(Position& pos, Move move, SearchInfo* ss) {
+    int moveScore = mainHistory[pos.sideToMove][fromTo(move)];
 
     if ((ss - 1)->playedMove)
-      moveScore += (ss - 1)->contHistory()[pieceTo(move)];
+      moveScore += (ss - 1)->contHistory()[pieceTo(pos, move)];
     if ((ss - 2)->playedMove)
-      moveScore += (ss - 2)->contHistory()[pieceTo(move)];
+      moveScore += (ss - 2)->contHistory()[pieceTo(pos, move)];
 
     return moveScore;
   }
 
-  void updateHistories(int depth, Move bestMove, Score bestScore, Score beta, Move* quietMoves, int quietCount, SearchInfo* ss) {
+  void updateHistories(Position& pos, int depth, Move bestMove, Score bestScore,
+                       Score beta, Move* quietMoves, int quietCount, SearchInfo* ss) {
 
     int bonus = (bestScore > beta + StatBonusBoostAt) ? stat_bonus(depth + 1) : stat_bonus(depth);
 
     /*
     * Butterfly history
     */
-    addToHistory(mainHistory[position.sideToMove][fromTo(bestMove)], bonus);
+    addToHistory(mainHistory[pos.sideToMove][fromTo(bestMove)], bonus);
 
     /*
     * Continuation history
     */
     if ((ss - 1)->playedMove)
-      addToHistory((ss - 1)->contHistory()[pieceTo(bestMove)], bonus);
+      addToHistory((ss - 1)->contHistory()[pieceTo(pos, bestMove)], bonus);
     if ((ss - 2)->playedMove)
-      addToHistory((ss - 2)->contHistory()[pieceTo(bestMove)], bonus);
+      addToHistory((ss - 2)->contHistory()[pieceTo(pos, bestMove)], bonus);
 
     /*
     * Decrease score of other quiet moves
@@ -325,11 +315,11 @@ namespace Search {
         continue;
 
       if ((ss - 1)->playedMove)
-        addToHistory((ss - 1)->contHistory()[pieceTo(otherMove)], -bonus);
+        addToHistory((ss - 1)->contHistory()[pieceTo(pos, otherMove)], -bonus);
       if ((ss - 2)->playedMove)
-        addToHistory((ss - 2)->contHistory()[pieceTo(otherMove)], -bonus);
+        addToHistory((ss - 2)->contHistory()[pieceTo(pos, otherMove)], -bonus);
 
-      addToHistory(mainHistory[position.sideToMove][fromTo(otherMove)], -bonus);
+      addToHistory(mainHistory[pos.sideToMove][fromTo(otherMove)], -bonus);
     }
 
     /*
@@ -337,7 +327,7 @@ namespace Search {
     */
     if ((ss - 1)->playedMove) {
       Square prevSq = getMoveDest((ss - 1)->playedMove);
-      counterMoveHistory[pieceOn(prevSq)][prevSq] = bestMove;
+      counterMoveHistory[pos.board[prevSq]][prevSq] = bestMove;
     }
 
     /*
@@ -346,7 +336,7 @@ namespace Search {
     ss->killerMove = bestMove;
   }
 
-  void scoreMoves(MoveList& moves, Move ttMove, SearchInfo* ss) {
+  void scoreMoves(Position& pos, MoveList& moves, Move ttMove, SearchInfo* ss) {
     Move killer = ss->killerMove;
 
     Move counterMove = MOVE_NONE;
@@ -354,7 +344,7 @@ namespace Search {
     Move prevMove = (ss-1)->playedMove;
     if (prevMove) {
       Square prevSq = getMoveDest(prevMove);
-      counterMove = counterMoveHistory[pieceOn(prevSq)][prevSq];
+      counterMove = counterMoveHistory[pos.board[prevSq]][prevSq];
     }
 
     for (int i = 0; i < moves.size(); i++) {
@@ -367,8 +357,8 @@ namespace Search {
 
       MoveType mt = getMoveType(move);
 
-      Piece moved = pieceOn(getMoveSrc(move));
-      Piece captured = pieceOn(getMoveDest(move));
+      Piece moved = pos.board[getMoveSrc(move)];
+      Piece captured = pos.board[getMoveDest(move)];
 
       if (move == ttMove)
         moveScore = INT_MAX;
@@ -377,16 +367,16 @@ namespace Search {
       else if (mt == MT_EN_PASSANT)
         moveScore = 300000 + mvv_lva(PAWN, PAWN);
       else if (captured) {
-        moveScore = position.see_ge(move, Score(-50)) ? 300000 : -200000;
+        moveScore = pos.see_ge(move, Score(-50)) ? 300000 : -200000;
         moveScore += PieceValue[captured] * 64;
-        moveScore += captureHistory[pieceTo(move)][ptypeOf(captured)];
+        moveScore += captureHistory[pieceTo(pos, move)][ptypeOf(captured)];
       }
       else if (move == killer)
         moveScore = 200000;
       else if (move == counterMove)
         moveScore = 100000;
       else
-        moveScore = getHistoryScore(move, ss);
+        moveScore = getHistoryScore(pos, move, ss);
     }
   }
 
@@ -434,19 +424,19 @@ namespace Search {
   }
 
   // Should not be called from Root node
-  bool is2FoldRepetition() {
+  bool is2FoldRepetition(Position& pos) {
 
-    if (position.halfMoveClock < 4)
+    if (pos.halfMoveClock < 4)
       return false;
 
     for (int i = ply - 2; i >= 0; i -= 2) {
-      if (position.key == posStack[i].key)
+      if (pos.key == keyStack[i])
         return true;
     }
 
     // Start at last-1 because posStack[0] = seenPositions[last]
     for (int i = seenPositions.size() + (ply&1) - 3; i >= 0; i -= 2) {
-      if (position.key == seenPositions[i])
+      if (pos.key == seenPositions[i])
         return true;
     }
 
@@ -458,7 +448,7 @@ namespace Search {
   }
 
   template<NodeType nodeType>
-  Score qsearch(Score alpha, Score beta, SearchInfo* ss) {
+  Score qsearch(Position& position, Score alpha, Score beta, SearchInfo* ss) {
     constexpr bool PvNode = nodeType != NonPV;
 
     const Color us = position.sideToMove, them = ~us;
@@ -517,7 +507,7 @@ namespace Search {
     else
       getAggressiveMoves(position, &moves);
 
-    scoreMoves(moves, ttMove, ss);
+    scoreMoves(position, moves, ttMove, ss);
 
     bool foundLegalMoves = false;
 
@@ -540,9 +530,11 @@ namespace Search {
         }
       }
 
-      playMove(move, ss);
+      Position newPos = position;
 
-      Score score = -qsearch<nodeType>(-beta, -alpha, ss + 1);
+      playMove(newPos, move, ss);
+
+      Score score = -qsearch<nodeType>(newPos, -beta, -alpha, ss + 1);
 
       cancelMove();
 
@@ -584,7 +576,7 @@ namespace Search {
   }
 
   template<NodeType nodeType>
-  Score negaMax(Score alpha, Score beta, int depth, bool cutNode, SearchInfo* ss) {
+  Score negaMax(Position& position, Score alpha, Score beta, int depth, bool cutNode, SearchInfo* ss) {
     constexpr bool PvNode = nodeType != NonPV;
     constexpr bool rootNode = nodeType == Root;
 
@@ -601,7 +593,7 @@ namespace Search {
 
     if (!rootNode) {
       // detect draw
-      if (is2FoldRepetition() || position.halfMoveClock >= 100)
+      if (is2FoldRepetition(position) || position.halfMoveClock >= 100)
         return makeDrawScore();
 
       // mate distance pruning
@@ -617,7 +609,7 @@ namespace Search {
 
     // Enter qsearch when depth is 0
     if (depth <= 0)
-      return qsearch<PvNode ? PV : NonPV>(alpha, beta, ss);
+      return qsearch<PvNode ? PV : NonPV>(position, alpha, beta, ss);
 
     (ss + 1)->killerMove = MOVE_NONE;
 
@@ -682,7 +674,7 @@ namespace Search {
     // Razoring. When evaluation is far below alpha, we could probably only catch up with a capture,
     // thus do a qsearch. If the qsearch still can't hit alpha, cut off
     if (eval < alpha - RazoringDepthMul * depth) {
-      Score score = qsearch<NonPV>(alpha-1, alpha, ss);
+      Score score = qsearch<NonPV>(position, alpha-1, alpha, ss);
       if (score < alpha)
         return score;
     }
@@ -707,8 +699,9 @@ namespace Search {
 
       int R = std::min((eval - beta) / NmpEvalDiv, (int)NmpEvalDivMin) + depth / NmpDepthDiv + NmpBase;
 
-      playNullMove(ss);
-      Score score = -negaMax<NonPV>(-beta, -beta + 1, depth - R, !cutNode, ss + 1);
+      Position newPos = position;
+      playNullMove(newPos, ss);
+      Score score = -negaMax<NonPV>(newPos, -beta, -beta + 1, depth - R, !cutNode, ss + 1);
       cancelMove();
 
       if (score >= beta && abs(score) < TB_WIN_IN_MAX_PLY)
@@ -734,7 +727,7 @@ namespace Search {
     }
     else {
       getPseudoLegalMoves(position, &moves);
-      scoreMoves(moves, ttMove, ss);
+      scoreMoves(position, moves, ttMove, ss);
     }
 
     bool foundLegalMove = false;
@@ -785,7 +778,7 @@ namespace Search {
           skipQuiets = true;
 
         // If this is a capture, do SEE (Static Exchange Evalution) pruning
-        if (pieceOn(getMoveDest(move))) {
+        if (position.board[getMoveDest(move)]) {
           if (!position.see_ge(move, Score(PvsSeeMargin * depth)))
             continue;
         }
@@ -813,7 +806,7 @@ namespace Search {
         Score singularBeta = ttScore - depth;
         
         ss->excludedMove = move;
-        Score seScore = negaMax<NonPV>(singularBeta - 1, singularBeta, (depth - 1) / 2, cutNode, ss);
+        Score seScore = negaMax<NonPV>(position, singularBeta - 1, singularBeta, (depth - 1) / 2, cutNode, ss);
         ss->excludedMove = MOVE_NONE;
         
         if (seScore < singularBeta)
@@ -824,7 +817,9 @@ namespace Search {
           extension = -1 + PvNode;
       }
 
-      playMove(move, ss);
+      Position newPos = position;
+
+      playMove(newPos, move, ss);
 
       int newDepth = depth + extension - 1;
 
@@ -859,7 +854,7 @@ namespace Search {
             R++;
         }
 
-        if (position.checkers)
+        if (newPos.checkers)
           R --;
 
         R -= PvNode;
@@ -869,7 +864,7 @@ namespace Search {
         // Do the clamp to avoid a qsearch or an extension in the child search
         int reducedDepth = std::clamp(newDepth - R, 1, newDepth + 1);
 
-        score = -negaMax<NonPV>(-alpha - 1, -alpha, reducedDepth, true, ss + 1);
+        score = -negaMax<NonPV>(newPos, -alpha - 1, -alpha, reducedDepth, true, ss + 1);
 
         needFullSearch = score > alpha && reducedDepth < newDepth;
       }
@@ -878,10 +873,10 @@ namespace Search {
 
 
       if (needFullSearch)
-        score = -negaMax<NonPV>(-alpha - 1, -alpha, newDepth, !cutNode, ss + 1);
+        score = -negaMax<NonPV>(newPos, -alpha - 1, -alpha, newDepth, !cutNode, ss + 1);
 
       if (PvNode && (playedMoves == 0 || score > alpha))
-        score = -negaMax<PV>(-beta, -alpha, newDepth, false, ss + 1);
+        score = -negaMax<PV>(newPos, -beta, -alpha, newDepth, false, ss + 1);
 
       cancelMove();
 
@@ -920,14 +915,14 @@ namespace Search {
     {
       if (position.isQuiet(bestMove)) 
       {
-        updateHistories(depth, bestMove, bestScore, beta, quietMoves, quietCount, ss);
+        updateHistories(position, depth, bestMove, bestScore, beta, quietMoves, quietCount, ss);
       }
-      else if (pieceOn(getMoveDest(bestMove))) {
+      else if (position.board[getMoveDest(bestMove)]) {
         int bonus = stat_bonus(depth);
 
         {
-          Piece captured = pieceOn(getMoveDest(bestMove));
-          addToHistory(captureHistory[pieceTo(bestMove)][ptypeOf(captured)], bonus);
+          Piece captured = position.board[getMoveDest(bestMove)];
+          addToHistory(captureHistory[pieceTo(position, bestMove)][ptypeOf(captured)], bonus);
         }
 
         for (int i = 0; i < captureCount; i++) {
@@ -935,8 +930,8 @@ namespace Search {
           if (otherMove == bestMove)
             continue;
 
-          Piece captured = pieceOn(getMoveDest(otherMove));
-          addToHistory(captureHistory[pieceTo(otherMove)][ptypeOf(captured)], -bonus);
+          Piece captured = position.board[getMoveDest(otherMove)];
+          addToHistory(captureHistory[pieceTo(position, otherMove)][ptypeOf(captured)], -bonus);
         }
       }
     }
@@ -978,16 +973,16 @@ namespace Search {
   SearchInfo searchStack[MAX_PLY + SsOffset];
 
   void startSearch() {
-
-    position = searchSettings.position;
-    position.updateAccumulator(accumulatorStack[0]);
+    
+    Position rootPos = searchSettings.position;
+    rootPos.updateAccumulator(accumulatorStack[0]);
 
     Move bestMove;
 
     clock_t optimumTime;
 
     if (searchSettings.hasTimeLimit())
-      optimumTime = TimeMan::calcOptimumTime(searchSettings, position.sideToMove);
+      optimumTime = TimeMan::calcOptimumTime(searchSettings, rootPos.sideToMove);
 
     int searchStability = 0;
 
@@ -995,7 +990,7 @@ namespace Search {
 
     nodesSearched = 0;
 
-    rootColor = position.sideToMove;
+    rootColor = rootPos.sideToMove;
 
     SearchLoopInfo iterDeepening[MAX_PLY];
 
@@ -1018,11 +1013,11 @@ namespace Search {
     rootMoves = MoveList();
     {
       MoveList pseudoRootMoves;
-      getPseudoLegalMoves(position, &pseudoRootMoves);
+      getPseudoLegalMoves(rootPos, &pseudoRootMoves);
 
       for (int i = 0; i < pseudoRootMoves.size(); i++) {
         Move move = pseudoRootMoves[i];
-        if (position.isLegal(move))
+        if (rootPos.isLegal(move))
           rootMoves.add(move);
       }
     }
@@ -1031,7 +1026,7 @@ namespace Search {
       bestMove = rootMoves[0];
       goto bestMoveDecided;
     }
-    scoreMoves(rootMoves, MOVE_NONE, ss);
+    scoreMoves(rootPos, rootMoves, MOVE_NONE, ss);
 
     for (rootDepth = 1; rootDepth <= searchSettings.depth; rootDepth++) {
 
@@ -1051,7 +1046,7 @@ namespace Search {
 
           int adjustedDepth = std::max(1, rootDepth - failedHighCnt);
 
-          score = negaMax<Root>(alpha, beta, adjustedDepth, false, ss);
+          score = negaMax<Root>(rootPos, alpha, beta, adjustedDepth, false, ss);
 
           if (Threads::searchState == STOP_PENDING)
             goto bestMoveDecided;
@@ -1082,7 +1077,7 @@ namespace Search {
         }
       }
       else {
-        score = negaMax<Root>(-SCORE_INFINITE, SCORE_INFINITE, rootDepth, false, ss);
+        score = negaMax<Root>(rootPos, -SCORE_INFINITE, SCORE_INFINITE, rootDepth, false, ss);
       }
 
       // It's super important to not update the best move if the search was abruptly stopped

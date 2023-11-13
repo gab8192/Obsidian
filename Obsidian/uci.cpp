@@ -163,7 +163,7 @@ namespace {
 
     if (perftPlies) {
       clock_t begin = timeMillis();
-      int64_t nodes = Search::perft<true>(perftPlies);
+      int64_t nodes = Search::perft<true>(pos, perftPlies);
       clock_t took = timeMillis() - begin;
 
       std::cout << "nodes: " << nodes << std::endl;

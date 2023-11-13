@@ -35,7 +35,7 @@ namespace Search {
   };
 
   template<bool root>
-  int64_t perft(int depth);
+  int64_t perft(Position& pos, int depth);
 
   void initLmrTable();
 
