@@ -48,8 +48,8 @@ namespace Search {
   DEFINE_PARAM(LmrDiv, 224, 150, 300);
 
   DEFINE_PARAM(StatBonusQuad, 3, 0, 16);
-  DEFINE_PARAM(StatBonusLinear, 93, 16, 256);
-  DEFINE_PARAM(StatBonusMax, 1200, 800, 2400);
+  DEFINE_PARAM(StatBonusLinear, 103, 16, 256);
+  DEFINE_PARAM(StatBonusMax, 1196, 800, 2400);
   DEFINE_PARAM(StatBonusBoostAt, 122, 50, 300);
 
   DEFINE_PARAM(RazoringDepthMul, 406, 400, 800);
@@ -69,7 +69,7 @@ namespace Search {
   DEFINE_PARAM(FutilityBase, 174, 80, 300);
   DEFINE_PARAM(FutilityDepthMul, 118, 80, 300);
 
-  DEFINE_PARAM(LmrHistoryDiv, 7399, 4000, 12000);
+  DEFINE_PARAM(LmrHistoryDiv, 9492, 4000, 20000);
 
   DEFINE_PARAM(AspWindowStartDepth, 5, 4, 8);
   DEFINE_PARAM(AspWindowStartDelta, 10, 10, 20);
@@ -280,6 +280,8 @@ namespace Search {
       moveScore += (ss - 1)->contHistory()[pieceTo(pos, move)];
     if ((ss - 2)->playedMove)
       moveScore += (ss - 2)->contHistory()[pieceTo(pos, move)];
+    if ((ss - 4)->playedMove)
+      moveScore += (ss - 4)->contHistory()[pieceTo(pos, move)];
 
     return moveScore;
   }
@@ -301,6 +303,8 @@ namespace Search {
       addToHistory((ss - 1)->contHistory()[pieceTo(pos, bestMove)], bonus);
     if ((ss - 2)->playedMove)
       addToHistory((ss - 2)->contHistory()[pieceTo(pos, bestMove)], bonus);
+    if ((ss - 4)->playedMove)
+      addToHistory((ss - 4)->contHistory()[pieceTo(pos, bestMove)], bonus);
 
     /*
     * Decrease score of other quiet moves
@@ -314,6 +318,8 @@ namespace Search {
         addToHistory((ss - 1)->contHistory()[pieceTo(pos, otherMove)], -bonus);
       if ((ss - 2)->playedMove)
         addToHistory((ss - 2)->contHistory()[pieceTo(pos, otherMove)], -bonus);
+      if ((ss - 4)->playedMove)
+        addToHistory((ss - 4)->contHistory()[pieceTo(pos, otherMove)], -bonus);
 
       addToHistory(mainHistory[pos.sideToMove][fromTo(otherMove)], -bonus);
     }
@@ -835,13 +841,12 @@ namespace Search {
           // Reduce more if ttmove was noisy (~6 Elo)
           R += ttMoveNoisy;
 
-          // Reduce or extend depending on history of this quiet move (~12 Elo)
-          if (moveScore > -50000 && moveScore < 50000)
-            R -= std::clamp(moveScore / LmrHistoryDiv, -2, 2);
-
-          // Do less reduction for good quiet moves (~4 Elo)
+          // Do less reduction for killer and counter move (~4 Elo)
           if (moveScore == 200000 || moveScore == 100000)
             R--;
+          // Reduce or extend depending on history of this quiet move (~12 Elo)
+          else 
+            R -= std::clamp(moveScore / LmrHistoryDiv, -2, 2);
         }
         else {
           R = 0;
