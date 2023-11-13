@@ -775,6 +775,9 @@ namespace Search {
         && position.hasNonPawns(position.sideToMove)
         && bestScore > TB_LOSS_IN_MAX_PLY)
       {
+        int lmrRed = lmrTable[depth][playedMoves + 1] - PvNode + cutNode + !improving;
+        int lmrDepth = depth - lmrRed;
+
         // Late move pruning. At low depths, only visit a few quiet moves
         if (quietCount > (LmpQuad * depth * depth + LmpBase) / (2 - improving))
           skipQuiets = true;
@@ -788,7 +791,7 @@ namespace Search {
         if (isQuiet) {
           // Futility pruning (~8 Elo). If our evaluation is far below alpha,
           // only visit the first quiet move
-          if (depth <= 8 && !wasInCheck && eval + FutilityBase + FutilityDepthMul * depth <= alpha)
+          if (lmrDepth <= 8 && !wasInCheck && eval + FutilityBase + FutilityDepthMul * lmrDepth <= alpha)
             skipQuiets = true;
         }
       }
