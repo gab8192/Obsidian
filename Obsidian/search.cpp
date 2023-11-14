@@ -613,8 +613,6 @@ namespace Search {
     if (depth <= 0)
       return qsearch<PvNode ? PV : NonPV>(position, alpha, beta, ss);
 
-    (ss + 1)->killerMove = MOVE_NONE;
-
     Move excludedMove = ss->excludedMove;
 
     // Probe TT
@@ -642,6 +640,8 @@ namespace Search {
       if (ttFlag & flagForTT(ttScore >= beta))
         return ttScore;
     }
+
+    (ss + 1)->killerMove = MOVE_NONE;
 
     bool improving = false;
 
