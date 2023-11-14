@@ -25,6 +25,14 @@ namespace TT {
     clear();
   }
 
+  void prefetch(Key key) {
+#if defined(_MSC_VER)
+    _mm_prefetch((char*)&entries[key % entryCount], _MM_HINT_T0);
+#else
+    __builtin_prefetch(&entries[key % entryCount]);
+#endif
+  }
+
   Entry* probe(Key key, bool& hit) {
     Entry* entry = &entries[key % entryCount];
     hit = entry->matches(key);

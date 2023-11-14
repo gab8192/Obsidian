@@ -291,6 +291,65 @@ void Position::doMove(Move move, NNUE::Accumulator& acc) {
   }
 }
 
+/// Only works for MT_NORMAL moves
+Key Position::keyAfter(Move move) const {
+
+  Key newKey = key;
+
+  const Color us = sideToMove, them = ~us;
+
+  if (epSquare != SQ_NONE)
+    newKey ^= RANDOM_ARRAY[772 + file_of(epSquare)];
+
+  CastlingRights newCastlingRights = castlingRights;
+
+  const Square from = getMoveSrc(move);
+  const Square to = getMoveDest(move);
+
+  const Piece movedPc = board[from];
+  const Piece capturedPc = board[to];
+
+  if (capturedPc != NO_PIECE) {
+
+    newKey ^= RANDOM_ARRAY[64 * HASH_PIECE[capturedPc] + to];
+
+    if (ptypeOf(capturedPc) == ROOK)
+      newCastlingRights &= ROOK_SQR_TO_CR[to];
+  }
+
+  const int c0 = 64 * HASH_PIECE[movedPc];
+  newKey ^= RANDOM_ARRAY[c0 + from] ^ RANDOM_ARRAY[c0 + to];
+
+  switch (ptypeOf(movedPc)) {
+  case PAWN: {
+
+    if (to == from + 16)      // black can take en passant
+      newKey ^= RANDOM_ARRAY[772 + file_of(from + 8)];
+    
+    else if (to == from - 16) // white can take en passant
+      newKey ^= RANDOM_ARRAY[772 + file_of(from - 8)];
+    
+    break;
+  }
+  case ROOK: {
+    newCastlingRights &= ROOK_SQR_TO_CR[from];
+    break;
+  }
+  case KING: {
+    if (us == WHITE) newCastlingRights &= ~WHITE_CASTLING;
+    else             newCastlingRights &= ~BLACK_CASTLING;
+    break;
+  }
+  }
+
+  newKey ^= RANDOM_ARRAY[780];
+
+  if (newCastlingRights != castlingRights)
+    newKey ^= HASH_CASTLING[castlingRights] ^ HASH_CASTLING[newCastlingRights];
+
+  return newKey;
+}
+
 int readNumberTillSpace(const std::string& str, int& i) {
   int num = 0;
   while (str[i] && str[i] != ' ') {

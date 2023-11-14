@@ -241,6 +241,10 @@ namespace Search {
   void playMove(Position& pos, Move move, SearchInfo* ss) {
     nodesSearched++;
 
+    // Prefetch the TT entry
+    if (getMoveType(move) == MT_NORMAL)
+      TT::prefetch(pos.keyAfter(move));
+
     // Check time
     if ((nodesSearched % 32768) == 0)
       if (usedMostOfTime())
@@ -250,6 +254,7 @@ namespace Search {
     ss->playedMove = move;
 
     pushPosition(pos);
+
     pos.doMove(move, accumulatorStack[ply]);
   }
 

@@ -80,5 +80,7 @@ namespace TT {
 
   void resize(size_t megaBytes);
 
+  void prefetch(Key key);
+
   Entry* probe(Key key, bool& hit);
 }
