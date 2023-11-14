@@ -920,6 +920,15 @@ namespace Search {
       if (position.isQuiet(bestMove)) 
       {
         updateHistories(position, depth, bestMove, bestScore, beta, quietMoves, quietCount, ss);
+		
+        int bonus = stat_bonus(depth);
+
+        for (int i = 0; i < captureCount; i++) {
+          Move otherMove = captures[i];
+
+          Piece captured = position.board[getMoveDest(otherMove)];
+          addToHistory(captureHistory[pieceTo(position, otherMove)][ptypeOf(captured)], -bonus);
+        }
       }
       else if (position.board[getMoveDest(bestMove)]) {
         int bonus = stat_bonus(depth);
