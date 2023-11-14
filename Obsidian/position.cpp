@@ -167,7 +167,7 @@ void Position::doMove(Move move, NNUE::Accumulator& acc) {
 
   halfMoveClock++;
 
-  CastlingRights oldCastlingRights = castlingRights;
+  CastlingRights newCastlingRights = castlingRights;
 
   const MoveType moveType = getMoveType(move);
 
@@ -185,7 +185,7 @@ void Position::doMove(Move move, NNUE::Accumulator& acc) {
       removePiece(to, capturedPc, acc);
 
       if (ptypeOf(capturedPc) == ROOK)
-        castlingRights &= ROOK_SQR_TO_CR[to];
+        newCastlingRights &= ROOK_SQR_TO_CR[to];
     }
 
     movePiece(from, to, movedPc, acc);
@@ -205,12 +205,12 @@ void Position::doMove(Move move, NNUE::Accumulator& acc) {
       break;
     }
     case ROOK: {
-      castlingRights &= ROOK_SQR_TO_CR[from];
+      newCastlingRights &= ROOK_SQR_TO_CR[from];
       break;
     }
     case KING: {
-      if (us == WHITE) castlingRights &= ~WHITE_CASTLING;
-      else             castlingRights &= ~BLACK_CASTLING;
+      if (us == WHITE) newCastlingRights &= ~WHITE_CASTLING;
+      else             newCastlingRights &= ~BLACK_CASTLING;
       break;
     }
     }
@@ -227,13 +227,13 @@ void Position::doMove(Move move, NNUE::Accumulator& acc) {
       movePiece(kingSrc, kingDest, W_KING, acc);
       movePiece(rookSrc, rookDest, W_ROOK, acc);
 
-      castlingRights &= ~WHITE_CASTLING;
+      newCastlingRights &= ~WHITE_CASTLING;
     }
     else {
       movePiece(kingSrc, kingDest, B_KING, acc);
       movePiece(rookSrc, rookDest, B_ROOK, acc);
 
-      castlingRights &= ~BLACK_CASTLING;
+      newCastlingRights &= ~BLACK_CASTLING;
     }
 
     break;
@@ -268,8 +268,9 @@ void Position::doMove(Move move, NNUE::Accumulator& acc) {
 
     if (capturedPc != NO_PIECE) {
       removePiece(to, capturedPc, acc);
+
       if (ptypeOf(capturedPc) == ROOK)
-        castlingRights &= ROOK_SQR_TO_CR[to];
+        newCastlingRights &= ROOK_SQR_TO_CR[to];
     }
 
     removePiece(from, board[from], acc);
@@ -284,8 +285,10 @@ void Position::doMove(Move move, NNUE::Accumulator& acc) {
 
   updateAttacksToKings();
 
-  if (castlingRights != oldCastlingRights)
-    key ^= HASH_CASTLING[oldCastlingRights] ^ HASH_CASTLING[castlingRights];
+  if (newCastlingRights != castlingRights) {
+    key ^= HASH_CASTLING[castlingRights] ^ HASH_CASTLING[newCastlingRights];
+    castlingRights = newCastlingRights;
+  }
 }
 
 int readNumberTillSpace(const std::string& str, int& i) {
