@@ -707,8 +707,8 @@ namespace Search {
       Score score = -negaMax<NonPV>(newPos, -beta, -beta + 1, depth - R, !cutNode, ss + 1);
       cancelMove();
 
-      if (score >= beta && abs(score) < TB_WIN_IN_MAX_PLY)
-        return score;
+      if (score >= beta)
+        return score < TB_WIN_IN_MAX_PLY ? score : beta;
     }
 
     // IIR. Decrement the depth if we expect this search to have bad move ordering
