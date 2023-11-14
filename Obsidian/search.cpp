@@ -675,7 +675,8 @@ namespace Search {
 
     // Razoring. When evaluation is far below alpha, we could probably only catch up with a capture,
     // thus do a qsearch. If the qsearch still can't hit alpha, cut off
-    if (eval < alpha - RazoringDepthMul * depth) {
+    if (!PvNode
+      && eval < alpha - RazoringDepthMul * depth) {
       Score score = qsearch<NonPV>(position, alpha-1, alpha, ss);
       if (score < alpha)
         return score;
