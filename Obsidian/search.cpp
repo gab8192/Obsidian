@@ -782,20 +782,22 @@ namespace Search {
         && position.hasNonPawns(position.sideToMove)
         && bestScore > TB_LOSS_IN_MAX_PLY)
       {
-        int lmrRed = lmrTable[depth][playedMoves + 1] - PvNode + cutNode + !improving;
-        int lmrDepth = depth - lmrRed;
-
-        // Late move pruning. At low depths, only visit a few quiet moves
-        if (quietCount > (LmpQuad * depth * depth + LmpBase) / (2 - improving))
-          skipQuiets = true;
 
         // If this is a capture, do SEE (Static Exchange Evalution) pruning
         if (position.board[getMoveDest(move)]) {
           if (!position.see_ge(move, Score(PvsSeeMargin * depth)))
             continue;
         }
+        //            (skip the whole thing if skipQuiets was already triggered)
+        if (isQuiet && !skipQuiets) {
 
-        if (isQuiet) {
+          int lmrRed = lmrTable[depth][playedMoves + 1] - PvNode + cutNode + !improving;
+          int lmrDepth = depth - lmrRed;
+
+          // Late move pruning. At low depths, only visit a few quiet moves
+          if (quietCount > (LmpQuad * depth * depth + LmpBase) / (2 - improving))
+            skipQuiets = true;
+
           // Futility pruning (~8 Elo). If our evaluation is far below alpha,
           // only visit the first quiet move
           if (lmrDepth <= 8 && !wasInCheck && eval + FutilityBase + FutilityDepthMul * lmrDepth <= alpha)
