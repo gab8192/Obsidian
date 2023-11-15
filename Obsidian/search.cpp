@@ -66,10 +66,11 @@ namespace Search {
 
   DEFINE_PARAM(PvsSeeMargin, -123, -300, -90);
 
-  DEFINE_PARAM(FutilityBase, 174, 80, 300);
-  DEFINE_PARAM(FutilityDepthMul, 118, 80, 300);
+  DEFINE_PARAM(FpBase, 174, 50, 350);
+  DEFINE_PARAM(FpMaxDepth, 8, 0, 30);
+  DEFINE_PARAM(FpDepthMul, 118, 50, 350);
 
-  DEFINE_PARAM(LmrHistoryDiv, 9492, 4000, 20000);
+  DEFINE_PARAM(LmrHistoryDiv, 9492, 4000, 16000);
 
   DEFINE_PARAM(AspWindowStartDepth, 5, 4, 8);
   DEFINE_PARAM(AspWindowStartDelta, 10, 10, 20);
@@ -800,7 +801,7 @@ namespace Search {
 
           // Futility pruning (~8 Elo). If our evaluation is far below alpha,
           // only visit the first quiet move
-          if (lmrDepth <= 8 && !wasInCheck && eval + FutilityBase + FutilityDepthMul * lmrDepth <= alpha)
+          if (lmrDepth <= FpMaxDepth && !wasInCheck && eval + FpBase + FpDepthMul * lmrDepth <= alpha)
             skipQuiets = true;
         }
       }
