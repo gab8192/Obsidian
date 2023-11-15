@@ -137,7 +137,7 @@ namespace Search {
     }
   }
 
-  // Called one at engine initialization
+  // Called once at engine initialization
   void searchInit() {
 
     initLmrTable();
@@ -291,6 +291,17 @@ namespace Search {
     return moveScore;
   }
 
+  void addToContHistory(Position& pos, int bonus, Move move, SearchInfo* ss) {
+    int moved = pieceTo(pos, move);
+
+    if ((ss - 1)->playedMove)
+      addToHistory((ss - 1)->contHistory()[moved], bonus);
+    if ((ss - 2)->playedMove)              
+      addToHistory((ss - 2)->contHistory()[moved], bonus);
+    if ((ss - 4)->playedMove)              
+      addToHistory((ss - 4)->contHistory()[moved], bonus);
+  }
+
   void updateHistories(Position& pos, int depth, Move bestMove, Score bestScore,
                        Score beta, Move* quietMoves, int quietCount, SearchInfo* ss) {
 
@@ -304,12 +315,7 @@ namespace Search {
     /*
     * Continuation history
     */
-    if ((ss - 1)->playedMove)
-      addToHistory((ss - 1)->contHistory()[pieceTo(pos, bestMove)], bonus);
-    if ((ss - 2)->playedMove)
-      addToHistory((ss - 2)->contHistory()[pieceTo(pos, bestMove)], bonus);
-    if ((ss - 4)->playedMove)
-      addToHistory((ss - 4)->contHistory()[pieceTo(pos, bestMove)], bonus);
+    addToContHistory(pos, bonus, bestMove, ss);
 
     /*
     * Decrease score of other quiet moves
@@ -319,12 +325,7 @@ namespace Search {
       if (otherMove == bestMove)
         continue;
 
-      if ((ss - 1)->playedMove)
-        addToHistory((ss - 1)->contHistory()[pieceTo(pos, otherMove)], -bonus);
-      if ((ss - 2)->playedMove)
-        addToHistory((ss - 2)->contHistory()[pieceTo(pos, otherMove)], -bonus);
-      if ((ss - 4)->playedMove)
-        addToHistory((ss - 4)->contHistory()[pieceTo(pos, otherMove)], -bonus);
+      addToContHistory(pos, -bonus, otherMove, ss);
 
       addToHistory(mainHistory[pos.sideToMove][fromTo(otherMove)], -bonus);
     }
@@ -839,6 +840,7 @@ namespace Search {
       // Late move reductions. Search at a reduced depth, moves that are late in the move list
 
       bool needFullSearch;
+
       if (depth >= 3 && playedMoves > (1 + 2 * PvNode)) {
         int R;
 
