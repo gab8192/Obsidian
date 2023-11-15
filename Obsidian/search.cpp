@@ -923,35 +923,26 @@ namespace Search {
     // Update histories
     if (bestScore >= beta)
     {
+      int bonus = stat_bonus(depth);
+
       if (position.isQuiet(bestMove)) 
       {
         updateHistories(position, depth, bestMove, bestScore, beta, quietMoves, quietCount, ss);
-		
-        int bonus = stat_bonus(depth);
-
-        for (int i = 0; i < captureCount; i++) {
-          Move otherMove = captures[i];
-
-          Piece captured = position.board[getMoveDest(otherMove)];
-          addToHistory(captureHistory[pieceTo(position, otherMove)][ptypeOf(captured)], -bonus);
-        }
       }
       else if (position.board[getMoveDest(bestMove)]) {
         int bonus = stat_bonus(depth);
 
-        {
-          Piece captured = position.board[getMoveDest(bestMove)];
-          addToHistory(captureHistory[pieceTo(position, bestMove)][ptypeOf(captured)], bonus);
-        }
+        Piece captured = position.board[getMoveDest(bestMove)];
+        addToHistory(captureHistory[pieceTo(position, bestMove)][ptypeOf(captured)], bonus);
+      }
 
-        for (int i = 0; i < captureCount; i++) {
-          Move otherMove = captures[i];
-          if (otherMove == bestMove)
-            continue;
+      for (int i = 0; i < captureCount; i++) {
+        Move otherMove = captures[i];
+        if (otherMove == bestMove)
+          continue;
 
-          Piece captured = position.board[getMoveDest(otherMove)];
-          addToHistory(captureHistory[pieceTo(position, otherMove)][ptypeOf(captured)], -bonus);
-        }
+        Piece captured = position.board[getMoveDest(otherMove)];
+        addToHistory(captureHistory[pieceTo(position, otherMove)][ptypeOf(captured)], -bonus);
       }
     }
 
