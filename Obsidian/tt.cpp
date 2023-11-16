@@ -25,16 +25,21 @@ namespace TT {
     clear();
   }
 
+  uint64_t index(Key key) {
+    using uint128 = unsigned __int128;
+    return (uint128(key) * uint128(entryCount)) >> 64;
+  }
+
   void prefetch(Key key) {
 #if defined(_MSC_VER)
-    _mm_prefetch((char*)&entries[key % entryCount], _MM_HINT_T0);
+    _mm_prefetch((char*)&entries[index(key)], _MM_HINT_T0);
 #else
-    __builtin_prefetch(&entries[key % entryCount]);
+    __builtin_prefetch(&entries[index(key)]);
 #endif
   }
 
   Entry* probe(Key key, bool& hit) {
-    Entry* entry = &entries[key % entryCount];
+    Entry* entry = &entries[index(key)];
     hit = entry->matches(key);
     return entry;
   }
