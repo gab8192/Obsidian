@@ -50,9 +50,9 @@ namespace Search {
   DEFINE_PARAM(LmrDiv, 224, 150, 300);
 
   DEFINE_PARAM(StatBonusQuad, 3, 0, 16);
-  DEFINE_PARAM(StatBonusLinear, 103, 16, 256);
-  DEFINE_PARAM(StatBonusMax, 1196, 800, 2400);
-  DEFINE_PARAM(StatBonusBoostAt, 122, 50, 300);
+  DEFINE_PARAM(StatBonusLinear, 112, 16, 256);
+  DEFINE_PARAM(StatBonusMax, 1213, 800, 2400);
+  DEFINE_PARAM(StatBonusBoostAt, 130, 50, 300);
 
   DEFINE_PARAM(RazoringDepthMul, 406, 400, 800);
 
@@ -72,7 +72,7 @@ namespace Search {
   DEFINE_PARAM(FpMaxDepth, 8, 0, 30);
   DEFINE_PARAM(FpDepthMul, 118, 50, 350);
 
-  DEFINE_PARAM(LmrHistoryDiv, 9492, 4000, 16000);
+  DEFINE_PARAM(LmrHistoryDiv, 9828, 4000, 16000);
 
   DEFINE_PARAM(AspWindowStartDepth, 5, 4, 8);
   DEFINE_PARAM(AspWindowStartDelta, 10, 10, 20);
@@ -234,7 +234,7 @@ namespace Search {
       if (usedMostOfTime())
         searchState = STOP_PENDING;
 
-    ss->mContHistory = &contHistory[0];
+    ss->mContHistory = &contHistory[false][0];
     ss->playedMove = MOVE_NONE;
 
     pushPosition(pos);
@@ -253,7 +253,8 @@ namespace Search {
       if (usedMostOfTime())
         searchState = STOP_PENDING;
 
-    ss->mContHistory = &contHistory[pieceTo(pos, move)];
+    bool isCap = pos.board[getMoveDest(move)] != NO_PIECE;
+    ss->mContHistory = &contHistory[isCap][pieceTo(pos, move)];
     ss->playedMove = move;
 
     pushPosition(pos);
