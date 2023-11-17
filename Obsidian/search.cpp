@@ -35,6 +35,8 @@ namespace Search {
     Move pv[MAX_PLY];
     int pvLength;
 
+    int doubleExt;
+
     Move excludedMove;
 
     PieceToHistory* mContHistory;
@@ -648,7 +650,9 @@ namespace Search {
         return ttScore;
     }
 
+    
     (ss + 1)->killerMove = MOVE_NONE;
+    ss->doubleExt = (ss - 1)->doubleExt;
 
     bool improving = false;
 
@@ -824,8 +828,14 @@ namespace Search {
         Score seScore = negaMax<NonPV>(position, singularBeta - 1, singularBeta, (depth - 1) / 2, cutNode, ss);
         ss->excludedMove = MOVE_NONE;
         
-        if (seScore < singularBeta)
+        if (seScore < singularBeta) {
           extension = 1;
+          // Extend even more if s. value is smaller than s. beta by some margin
+          if (!PvNode && ss->doubleExt <= 5 && seScore < singularBeta - 17) {
+            extension = 2;
+            ss->doubleExt = (ss - 1)->doubleExt + 1;
+          }
+        }
         else if (singularBeta >= beta) // Multicut
           return singularBeta;
         else if (ttScore >= beta) // Negative extension (~18 Elo)
@@ -1017,6 +1027,8 @@ namespace Search {
       searchStack[i].killerMove   = MOVE_NONE;
       searchStack[i].excludedMove = MOVE_NONE;
       searchStack[i].playedMove   = MOVE_NONE;
+
+      searchStack[i].doubleExt = 0;
     }
 
     SearchInfo* ss = &searchStack[SsOffset];
