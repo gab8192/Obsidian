@@ -58,21 +58,25 @@ inline CastlingRights getCastlingType(Move move) {
   return CastlingRights(1 << getMoveExtra(move));
 }
 
+struct MoveScored {
+  Move move;
+  int score;
+};
+
 struct MoveList {
-  Move moves[MAX_MOVES];
-  int scores[MAX_MOVES];
+  MoveScored moves[MAX_MOVES];
   int head;
 
   MoveList() : head(0) {
   }
 
   inline void add(Move move) {
-    moves[head++] = move;
+    moves[head++].move = move;
   }
 
   inline int indexOf(Move move) const {
     for (int i = 0; i < size(); i++) {
-      if (moves[i] == move)
+      if (moves[i].move == move)
         return i;
     }
     return -1;
@@ -82,15 +86,15 @@ struct MoveList {
     return head;
   }
 
-  inline Move operator[](int index) const {
+  inline MoveScored& operator[](int index) {
     return moves[index];
   }
 
-  inline const Move* begin() const {
+  inline const MoveScored* begin() const {
     return &moves[0];
   }
 
-  inline const Move* end() const {
+  inline const MoveScored* end() const {
     return &moves[head];
   }
 };

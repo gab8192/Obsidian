@@ -287,8 +287,8 @@ Move UCI::to_move(const Position& pos, string& str) {
   getPseudoLegalMoves(pos, &moves);
 
   for (const auto& m : moves)
-    if (str == UCI::move(m))
-      return m;
+    if (str == UCI::move(m.move))
+      return m.move;
 
   return MOVE_NONE;
 }

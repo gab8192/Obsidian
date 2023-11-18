@@ -154,7 +154,7 @@ namespace Search {
     if (depth == 1) {
       int n = 0;
       for (int i = 0; i < moves.size(); i++) {
-        if (!position.isLegal(moves[i]))
+        if (!position.isLegal(moves[i].move))
           continue;
 
         n++;
@@ -164,16 +164,18 @@ namespace Search {
 
     int64_t n = 0;
     for (int i = 0; i < moves.size(); i++) {
-      if (!position.isLegal(moves[i]))
+      Move move = moves[i].move;
+
+      if (!position.isLegal(move))
         continue;
 
       Position newPos = position;
 
-      newPos.doMove(moves[i], accumulatorStack[ply]);
+      newPos.doMove(move, accumulatorStack[ply]);
 
       int64_t thisNodes = perft<false>(newPos, depth - 1);
       if constexpr (root)
-        cout << UCI::move(moves[i]) << " -> " << thisNodes << endl;
+        cout << UCI::move(move) << " -> " << thisNodes << endl;
 
       n += thisNodes;
     }
@@ -351,12 +353,12 @@ namespace Search {
     }
 
     for (int i = 0; i < moves.size(); i++) {
-      int& moveScore = moves.scores[i];
+      int& moveScore = moves[i].score;
 
       // initial score
       moveScore = 0;
 
-      Move move = moves[i];
+      Move move = moves[i].move;
 
       MoveType mt = getMoveType(move);
 
@@ -386,28 +388,28 @@ namespace Search {
   Move peekBestMove(MoveList& moveList) {
     int bestMoveI = 0;
 
-    int bestMoveScore = moveList.scores[bestMoveI];
+    int bestMoveScore = moveList[bestMoveI].score;
 
     int size = moveList.size();
     for (int i = 0 + 1; i < size; i++) {
-      int thisScore = moveList.scores[i];
+      int thisScore = moveList[i].score;
       if (thisScore > bestMoveScore) {
         bestMoveScore = thisScore;
         bestMoveI = i;
       }
     }
 
-    return moveList[bestMoveI];
+    return moveList[bestMoveI].move;
   }
 
   Move nextBestMove(MoveList& moveList, int scannedMoves, int* moveScore) {
     int bestMoveI = scannedMoves;
 
-    int bestMoveScore = moveList.scores[bestMoveI];
+    int bestMoveScore = moveList[bestMoveI].score;
 
     int size = moveList.size();
     for (int i = scannedMoves + 1; i < size; i++) {
-      int thisScore = moveList.scores[i];
+      int thisScore = moveList[i].score;
       if (thisScore > bestMoveScore) {
         bestMoveScore = thisScore;
         bestMoveI = i;
@@ -416,9 +418,8 @@ namespace Search {
 
     (*moveScore) = bestMoveScore;
 
-    Move result = moveList[bestMoveI];
-    moveList.moves[bestMoveI] = moveList.moves[scannedMoves];
-    moveList.scores[bestMoveI] = moveList.scores[scannedMoves];
+    Move result = moveList[bestMoveI].move;
+    moveList[bestMoveI] = moveList[scannedMoves];
     return result;
   }
 
@@ -725,7 +726,7 @@ namespace Search {
       moves = rootMoves;
 
       for (int i = 0; i < rootMoves.size(); i++)
-        rootMoves.scores[i] = -SCORE_INFINITE;
+        rootMoves[i].score = -SCORE_INFINITE;
     }
     else {
       getPseudoLegalMoves(position, &moves);
@@ -896,7 +897,7 @@ namespace Search {
       playedMoves++;
 
       if (rootNode)
-        rootMoves.scores[rootMoves.indexOf(move)] = score;
+        rootMoves[rootMoves.indexOf(move)].score = score;
 
       if (score > bestScore) {
         bestScore = score;
@@ -1031,14 +1032,14 @@ namespace Search {
       getPseudoLegalMoves(rootPos, &pseudoRootMoves);
 
       for (int i = 0; i < pseudoRootMoves.size(); i++) {
-        Move move = pseudoRootMoves[i];
+        Move move = pseudoRootMoves[i].move;
         if (rootPos.isLegal(move))
           rootMoves.add(move);
       }
     }
     // When we have only 1 legal move, play it instantly
     if (rootMoves.size() == 1) {
-      bestMove = rootMoves[0];
+      bestMove = rootMoves[0].move;
       goto bestMoveDecided;
     }
     scoreMoves(rootPos, rootMoves, MOVE_NONE, ss);
