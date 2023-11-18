@@ -464,7 +464,7 @@ namespace Search {
     bool ttHit;
     TT::Entry* ttEntry = TT::probe(position.key, ttHit);
     TT::Flag ttFlag = ttHit ? ttEntry->getFlag() : TT::NO_FLAG;
-    Score ttScore = ttHit ? ttEntry->getScore() : SCORE_NONE;
+    Score ttScore = ttHit ? ttEntry->getScore(ply) : SCORE_NONE;
     Move ttMove = ttHit ? ttEntry->getMove() : MOVE_NONE;
 
     // In non PV nodes, if tt bound allows it, return ttScore
@@ -561,7 +561,7 @@ namespace Search {
 
     ttEntry->store(position.key,
       bestScore >= beta ? TT::FLAG_LOWER : TT::FLAG_UPPER,
-      0, bestMove, bestScore, ss->staticEval, false);
+      0, bestMove, bestScore, ss->staticEval, false, ply);
 
     return bestScore;
   }
@@ -616,7 +616,7 @@ namespace Search {
     bool ttHit;
     TT::Entry* ttEntry = TT::probe(position.key, ttHit);
     TT::Flag ttFlag = ttHit ? ttEntry->getFlag() : TT::NO_FLAG;
-    Score ttScore = ttHit ? ttEntry->getScore() : SCORE_NONE;
+    Score ttScore = ttHit ? ttEntry->getScore(ply) : SCORE_NONE;
     Move ttMove = ttHit ? ttEntry->getMove() : MOVE_NONE;
 
     // Make sure there is a ttMove in rootNode
@@ -957,7 +957,7 @@ namespace Search {
       else
         flag = (PvNode && bestMove) ? TT::FLAG_EXACT : TT::FLAG_UPPER;
 
-      ttEntry->store(position.key, flag, depth, bestMove, bestScore, ss->staticEval, PvNode);
+      ttEntry->store(position.key, flag, depth, bestMove, bestScore, ss->staticEval, PvNode, ply);
     }
 
     return bestScore;

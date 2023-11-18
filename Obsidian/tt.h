@@ -16,9 +16,11 @@ namespace TT {
 #pragma pack(1)
   struct Entry {
 
-    inline void store(Key _key, Flag _flag, int _depth, Move _move, Score _value, Score _eval, bool isPV) {
-      if (abs(_value) >= TB_WIN_IN_MAX_PLY)
-        return;
+    inline void store(Key _key, Flag _flag, int _depth, Move _move, Score _value, Score _eval, bool isPV, int ply) {
+      if (_value >= TB_WIN_IN_MAX_PLY)
+        _value += ply;
+      else if (value <= TB_LOSS_IN_MAX_PLY)
+        _value -= ply;
 
       if (!matches(_key)
         || _depth + 4 + 2*isPV >= this->depth
@@ -52,7 +54,15 @@ namespace TT {
     inline Move getMove() const {
       return Move(move);
     }
-    inline Score getScore() const {
+    inline Score getScore(int ply) const {
+      if (value == SCORE_NONE)
+        return SCORE_NONE;
+
+      if (value >= TB_WIN_IN_MAX_PLY)
+        return Score( value - ply );
+      if (value <= TB_LOSS_IN_MAX_PLY)
+        return Score(value + ply);
+
       return Score(value);
     }
 
