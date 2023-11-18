@@ -145,17 +145,6 @@ namespace Search {
     clear();
   }
 
-  void pushPosition(Position& pos) {
-    keyStack[ply] = pos.key;
-    memcpy(&accumulatorStack[ply + 1], &accumulatorStack[ply], sizeof(NNUE::Accumulator));
-
-    ply++;
-  }
-
-  void popPosition() {
-    ply--;
-  }
-
   template<bool root>
   int64_t perft(Position& position, int depth) {
 
@@ -233,8 +222,11 @@ namespace Search {
 
     ss->mContHistory = &contHistory[false][0];
     ss->playedMove = MOVE_NONE;
+    keyStack[ply] = pos.key;
 
-    pushPosition(pos);
+    memcpy(&accumulatorStack[ply + 1], &accumulatorStack[ply], sizeof(NNUE::Accumulator));
+
+    ply++;
     pos.doNullMove();
   }
 
@@ -253,14 +245,16 @@ namespace Search {
     bool isCap = pos.board[getMoveDest(move)] != NO_PIECE;
     ss->mContHistory = &contHistory[isCap][pieceTo(pos, move)];
     ss->playedMove = move;
+    keyStack[ply] = pos.key;
 
-    pushPosition(pos);
+    memcpy(&accumulatorStack[ply + 1], &accumulatorStack[ply], sizeof(NNUE::Accumulator));
 
+    ply++;
     pos.doMove(move, accumulatorStack[ply]);
   }
 
   void cancelMove() {
-    popPosition();
+    ply--;
   }
 
   int stat_bonus(int d) {
