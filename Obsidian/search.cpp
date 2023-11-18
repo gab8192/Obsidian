@@ -831,6 +831,8 @@ namespace Search {
           extension = -1 + PvNode;
       }
 
+      int oldNodesCount = nodesSearched;
+
       Position newPos = position;
 
       playMove(newPos, move, ss);
@@ -896,8 +898,11 @@ namespace Search {
 
       playedMoves++;
 
-      if (rootNode)
-        rootMoves[rootMoves.indexOf(move)].score = score;
+      if (rootNode) {
+        int idx = rootMoves.indexOf(move);
+        rootMoves[idx].score = score;
+        rootMoves[idx].nodes += nodesSearched - oldNodesCount;
+      }
 
       if (score > bestScore) {
         bestScore = score;
@@ -986,6 +991,11 @@ namespace Search {
 
   SearchInfo searchStack[MAX_PLY + SsOffset];
 
+  DEFINE_PARAM(tm0, 168, 0, 400);
+  DEFINE_PARAM(tm1, 56, 0, 200);
+  DEFINE_PARAM(tm2, 127, 0, 300);
+  DEFINE_PARAM(tm3, 3, 0, 40);
+
   void startSearch() {
     
     Position rootPos = searchSettings.position;
@@ -1048,6 +1058,9 @@ namespace Search {
 
       if (searchSettings.nodes && nodesSearched >= searchSettings.nodes)
         break;
+
+      for (int i = 0; i < rootMoves.size(); i++)
+        rootMoves[i].nodes = 0;
 
       Score score;
       if (rootDepth >= AspWindowStartDepth) {
@@ -1143,9 +1156,17 @@ namespace Search {
         if (usedMostOfTime())
           goto bestMoveDecided;
 
-        double optScale = 1.1 - 0.05 * searchStability;
+        int idNodes = 0;
+        for (int i = 0; i < rootMoves.size(); i++)
+          idNodes += rootMoves[i].nodes;
 
-        if (elapsed > optScale * optimumTime)
+        int bmNodes = rootMoves[rootMoves.indexOf(bestMove)].nodes;
+        double notBestNodes = 1.0 - (bmNodes / double(idNodes));
+        double nodesFactor = notBestNodes * (tm0/100.0) + (tm1/100.0);
+
+        double stabilityFactor = (tm2/100.0) - (tm3/100.0) * searchStability;
+
+        if (elapsed > stabilityFactor * nodesFactor * optimumTime)
           goto bestMoveDecided;
       }
     }

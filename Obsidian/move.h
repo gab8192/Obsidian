@@ -61,6 +61,7 @@ inline CastlingRights getCastlingType(Move move) {
 struct MoveScored {
   Move move;
   int score;
+  int nodes;
 };
 
 struct MoveList {
