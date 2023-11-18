@@ -23,7 +23,6 @@ namespace Search {
   struct SearchLoopInfo {
     Score score;
     Move bestMove;
-    int selDepth;
   };
 
   struct SearchInfo {
@@ -85,8 +84,6 @@ namespace Search {
   bool printingEnabled = true;
 
   uint64_t nodesSearched;
-
-  int selDepth;
 
   int rootDepth;
 
@@ -595,13 +592,9 @@ namespace Search {
     if (searchState == STOP_PENDING)
       return makeDrawScore();
 
-    if (PvNode) {
-      // init node
+    // init node
+    if (PvNode)
       ss->pvLength = ply;
-
-      if (ply > selDepth)
-        selDepth = ply;
-    }
 
     if (!rootNode) {
       // detect draw
@@ -1061,8 +1054,6 @@ namespace Search {
       if (searchSettings.nodes && nodesSearched >= searchSettings.nodes)
         break;
 
-      selDepth = 0;
-
       Score score;
       if (rootDepth >= AspWindowStartDepth) {
         int windowSize = AspWindowStartDelta;
@@ -1112,7 +1103,6 @@ namespace Search {
       if (Threads::searchState == STOP_PENDING)
         goto bestMoveDecided;
 
-      iterDeepening[rootDepth].selDepth = selDepth;
       iterDeepening[rootDepth].score = score;
       iterDeepening[rootDepth].bestMove = bestMove = ss->pv[0];
 
@@ -1123,7 +1113,6 @@ namespace Search {
         infoStr
           << "info"
           << " depth " << rootDepth
-          << " seldepth " << selDepth
           << " score " << UCI::score(score)
           << " nodes " << nodesSearched
           << " nps " << (nodesSearched * 1000ULL) / std::max(int(elapsed), 1)
