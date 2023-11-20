@@ -1,9 +1,7 @@
 #pragma once
 
-#include "bitboard.h"
 #include "move.h"
 #include "position.h"
-#include "types.h"
 
 /*
 * All legal moves, plus ones that could make the side to move fall in check

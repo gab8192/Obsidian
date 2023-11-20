@@ -97,14 +97,13 @@ namespace Search {
 
   int lmrTable[MAX_PLY][MAX_MOVES];
 
-  FromToHistory mainHistory;
+  MainHistory mainHistory;
 
-  // captureHistory[pieceTo][captured]
-  int captureHistory[PIECE_NB * SQUARE_NB][PIECE_TYPE_NB];
+  CaptureHistory captureHistory;
 
   ContinuationHistory contHistory;
 
-  Move counterMoveHistory[PIECE_NB][SQUARE_NB];
+  CounterMoveHistory counterMoveHistory;
 
   int fromTo(Move m) {
     return getMoveSrc(m) * SQUARE_NB + getMoveDest(m);
@@ -332,7 +331,7 @@ namespace Search {
     */
     if ((ss - 1)->playedMove) {
       Square prevSq = getMoveDest((ss - 1)->playedMove);
-      counterMoveHistory[pos.board[prevSq]][prevSq] = bestMove;
+      counterMoveHistory[pos.board[prevSq] * SQUARE_NB + prevSq] = bestMove;
     }
 
     /*
@@ -349,7 +348,7 @@ namespace Search {
     Move prevMove = (ss-1)->playedMove;
     if (prevMove) {
       Square prevSq = getMoveDest(prevMove);
-      counterMove = counterMoveHistory[pos.board[prevSq]][prevSq];
+      counterMove = counterMoveHistory[pos.board[prevSq] * SQUARE_NB + prevSq];
     }
 
     for (int i = 0; i < moves.size(); i++) {
