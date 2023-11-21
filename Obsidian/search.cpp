@@ -780,7 +780,7 @@ namespace Search {
         if (isQuiet && !skipQuiets) {
 
           int lmrRed = lmrTable[depth][playedMoves + 1] - PvNode + cutNode + !improving;
-          int lmrDepth = depth - lmrRed;
+          int lmrDepth = std::max(0, depth - lmrRed);
 
           // Late move pruning. At low depths, only visit a few quiet moves
           if (quietCount > (LmpQuad * depth * depth + LmpBase) / (2 - improving))
