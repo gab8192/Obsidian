@@ -275,16 +275,11 @@ namespace Search {
   };
 
   int getHistoryScore(Position& pos, Move move, SearchInfo* ss) {
-    int moveScore = mainHistory[pos.sideToMove][fromTo(move)];
 
-    if ((ss - 1)->playedMove)
-      moveScore += (ss - 1)->contHistory()[pieceTo(pos, move)];
-    if ((ss - 2)->playedMove)
-      moveScore += (ss - 2)->contHistory()[pieceTo(pos, move)];
-    if ((ss - 4)->playedMove)
-      moveScore += (ss - 4)->contHistory()[pieceTo(pos, move)];
-
-    return moveScore;
+    return    mainHistory[pos.sideToMove][fromTo(move)]
+            + (ss - 1)->contHistory()[pieceTo(pos, move)]
+            + (ss - 2)->contHistory()[pieceTo(pos, move)]
+            + (ss - 4)->contHistory()[pieceTo(pos, move)];
   }
 
   void addToContHistory(Position& pos, int bonus, Move move, SearchInfo* ss) {
@@ -1025,6 +1020,8 @@ namespace Search {
       searchStack[i].killerMove   = MOVE_NONE;
       searchStack[i].excludedMove = MOVE_NONE;
       searchStack[i].playedMove   = MOVE_NONE;
+
+      searchStack[i].mContHistory = &contHistory[false][0];
 
       searchStack[i].doubleExt = 0;
     }
