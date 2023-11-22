@@ -65,7 +65,8 @@ namespace Search {
   DEFINE_PARAM(LmpBase, 7, 3, 9);
   DEFINE_PARAM(LmpQuad, 1, 1, 3);
 
-  DEFINE_PARAM(PvsSeeMargin, -123, -300, -90);
+  DEFINE_PARAM(PvsQuietSeeMargin, -87, -300, 0);
+  DEFINE_PARAM(PvsCapSeeMargin, -123, -300, 0);
 
   DEFINE_PARAM(FpBase, 174, 50, 350);
   DEFINE_PARAM(FpMaxDepth, 8, 0, 30);
@@ -772,10 +773,9 @@ namespace Search {
       {
 
         // If this is a capture, do SEE (Static Exchange Evalution) pruning
-        if (position.board[getMoveDest(move)]) {
-          if (!position.see_ge(move, Score(PvsSeeMargin * depth)))
-            continue;
-        }
+        int seeMargin = depth * (isQuiet ? PvsQuietSeeMargin : PvsCapSeeMargin);
+        if (!position.see_ge(move, Score(seeMargin)))
+          continue;
         //            (skip the whole thing if skipQuiets was already triggered)
         if (isQuiet && !skipQuiets) {
 
