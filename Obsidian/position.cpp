@@ -185,12 +185,16 @@ void Position::doMove(Move move, NNUE::Accumulator& acc) {
       halfMoveClock = 0;
 
       removePiece(to, capturedPc, acc, updateAcc);
+      if (!updateAcc)
+        acc.deactivateFeatureSingle(to, capturedPc, them, kingSquare(them));
 
       if (ptypeOf(capturedPc) == ROOK)
         newCastlingRights &= ROOK_SQR_TO_CR[to];
     }
 
     movePiece(from, to, movedPc, acc, updateAcc);
+    if (!updateAcc)
+      acc.moveFeatureSingle(from, to, movedPc, them, kingSquare(them));
 
     switch (ptypeOf(movedPc)) {
     case PAWN: {
@@ -213,7 +217,7 @@ void Position::doMove(Move move, NNUE::Accumulator& acc) {
     case KING: {
       if (us == WHITE) newCastlingRights &= ~WHITE_CASTLING;
       else             newCastlingRights &= ~BLACK_CASTLING;
-      updateAccumulator(acc);
+      updateAccumulator(acc, us);
       break;
     }
     }
@@ -226,20 +230,17 @@ void Position::doMove(Move move, NNUE::Accumulator& acc) {
     const Square kingSrc = cd->kingSrc, kingDest = cd->kingDest,
                  rookSrc = cd->rookSrc, rookDest = cd->rookDest;
 
-    if (us == WHITE) {
-      movePiece(kingSrc, kingDest, W_KING, acc, false);
-      movePiece(rookSrc, rookDest, W_ROOK, acc, false);
+    const Piece ourKing = make_piece(us, KING), ourRook = make_piece(us, ROOK);
 
-      newCastlingRights &= ~WHITE_CASTLING;
-    }
-    else {
-      movePiece(kingSrc, kingDest, B_KING, acc, false);
-      movePiece(rookSrc, rookDest, B_ROOK, acc, false);
+    newCastlingRights &= ~ (us == WHITE ? WHITE_CASTLING : BLACK_CASTLING);
 
-      newCastlingRights &= ~BLACK_CASTLING;
-    }
+    movePiece(kingSrc, kingDest, ourKing, acc, false);
+    acc.moveFeatureSingle(kingSrc, kingDest, ourKing, them, kingSquare(them));
 
-    updateAccumulator(acc);
+    movePiece(rookSrc, rookDest, ourRook, acc, false);
+    acc.moveFeatureSingle(rookSrc, rookDest, ourRook, them, kingSquare(them));
+
+    updateAccumulator(acc, us);
 
     break;
   }
@@ -626,7 +627,8 @@ bool Position::see_ge(Move m, Score threshold) const {
 }
 
 void Position::updateAccumulator(NNUE::Accumulator& acc) {
-  acc.reset();
+  acc.reset(WHITE);
+  acc.reset(BLACK);
 
   Square wKing = kingSquare(WHITE), bKing = kingSquare(BLACK);
 
@@ -634,5 +636,17 @@ void Position::updateAccumulator(NNUE::Accumulator& acc) {
   while (b0) {
     Square sq = popLsb(b0);
     acc.activateFeature(sq, board[sq], wKing, bKing);
+  }
+}
+
+void Position::updateAccumulator(NNUE::Accumulator& acc, Color color) {
+  acc.reset(color);
+
+  Square king = kingSquare(color);
+
+  Bitboard b0 = pieces();
+  while (b0) {
+    Square sq = popLsb(b0);
+    acc.activateFeatureSingle(sq, board[sq], color, king);
   }
 }

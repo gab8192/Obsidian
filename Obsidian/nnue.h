@@ -31,16 +31,21 @@ namespace NNUE {
   constexpr int KingBucketsNB = 3;
 
   struct Accumulator {
-    alignas(Alignment) weight_t white[TransformedFeatureDimensions];
-    alignas(Alignment) weight_t black[TransformedFeatureDimensions];
+    alignas(Alignment) weight_t accs[COLOR_NB][TransformedFeatureDimensions];
 
-    void reset();
+    void reset(Color color);
 
     void activateFeature(Square sq, Piece pc, Square wKing, Square bKing);
 
+    void activateFeatureSingle(Square sq, Piece pc, Color color, Square king);
+
     void deactivateFeature(Square sq, Piece pc, Square wKing, Square bKing);
 
+    void deactivateFeatureSingle(Square sq, Piece pc, Color color, Square king);
+
     void moveFeature(Square from, Square to, Piece pc, Square wKing, Square bKing);
+
+    void moveFeatureSingle(Square from, Square to, Piece pc, Color color, Square king);
   };
 
   void load();

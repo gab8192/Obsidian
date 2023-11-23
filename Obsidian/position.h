@@ -169,6 +169,8 @@ struct alignas(32) Position {
   string toFenString() const;
 
   void updateAccumulator(NNUE::Accumulator& acc);
+
+  void updateAccumulator(NNUE::Accumulator& acc, Color color);
 };
 
 std::ostream& operator<<(std::ostream& stream, Position& sqr);

@@ -64,26 +64,39 @@ namespace NNUE {
   }
 
 
-  void Accumulator::reset() {
-    memcpy(white, Content.FeatureBiases, sizeof(Content.FeatureBiases));
-    memcpy(black, Content.FeatureBiases, sizeof(Content.FeatureBiases));
+  void Accumulator::reset(Color color) {
+    memcpy(accs[color], Content.FeatureBiases, sizeof(Content.FeatureBiases));
   }
 
   void Accumulator::activateFeature(Square sq, Piece pc, Square wKing, Square bKing) {
-    addToAll<TransformedFeatureDimensions>(white, FeatureIndexTable[WHITE][pc][sq][wKing]);
-    addToAll<TransformedFeatureDimensions>(black, FeatureIndexTable[BLACK][pc][sq][bKing]);
+    addToAll<TransformedFeatureDimensions>(accs[WHITE], FeatureIndexTable[WHITE][pc][sq][wKing]);
+    addToAll<TransformedFeatureDimensions>(accs[BLACK], FeatureIndexTable[BLACK][pc][sq][bKing]);
   }
 
+  void Accumulator::activateFeatureSingle(Square sq, Piece pc, Color color, Square king) {
+    addToAll<TransformedFeatureDimensions>(accs[color], FeatureIndexTable[color][pc][sq][king]);
+  }
+
+
   void Accumulator::deactivateFeature(Square sq, Piece pc, Square wKing, Square bKing) {
-    subtractFromAll<TransformedFeatureDimensions>(white, FeatureIndexTable[WHITE][pc][sq][wKing]);
-    subtractFromAll<TransformedFeatureDimensions>(black, FeatureIndexTable[BLACK][pc][sq][bKing]);
+    subtractFromAll<TransformedFeatureDimensions>(accs[WHITE], FeatureIndexTable[WHITE][pc][sq][wKing]);
+    subtractFromAll<TransformedFeatureDimensions>(accs[BLACK], FeatureIndexTable[BLACK][pc][sq][bKing]);
+  }
+
+  void Accumulator::deactivateFeatureSingle(Square sq, Piece pc, Color color, Square king) {
+    subtractFromAll<TransformedFeatureDimensions>(accs[color], FeatureIndexTable[color][pc][sq][king]);
   }
 
   void Accumulator::moveFeature(Square from, Square to, Piece pc, Square wKing, Square bKing) {
-    addAndSubtractFromAll<TransformedFeatureDimensions>(white,
+    addAndSubtractFromAll<TransformedFeatureDimensions>(accs[WHITE],
       FeatureIndexTable[WHITE][pc][to][wKing], FeatureIndexTable[WHITE][pc][from][wKing]);
-    addAndSubtractFromAll<TransformedFeatureDimensions>(black,
+    addAndSubtractFromAll<TransformedFeatureDimensions>(accs[BLACK],
       FeatureIndexTable[BLACK][pc][to][bKing], FeatureIndexTable[BLACK][pc][from][bKing]);
+  }
+
+  void Accumulator::moveFeatureSingle(Square from, Square to, Piece pc, Color color, Square king) {
+    addAndSubtractFromAll<TransformedFeatureDimensions>(accs[color],
+      FeatureIndexTable[color][pc][to][king], FeatureIndexTable[color][pc][from][king]);
   }
 
   void load() {
@@ -134,17 +147,8 @@ namespace NNUE {
 
   Score evaluate(Accumulator& accumulator, Color sideToMove) {
 
-    weight_t* stmAccumulator;
-    weight_t* oppAccumulator;
-
-    if (sideToMove == WHITE) {
-      stmAccumulator = accumulator.white;
-      oppAccumulator = accumulator.black;
-    }
-    else {
-      stmAccumulator = accumulator.black;
-      oppAccumulator = accumulator.white;
-    }
+    weight_t* stmAccumulator = accumulator.accs[sideToMove];
+    weight_t* oppAccumulator = accumulator.accs[~sideToMove];
 
     int sum = 0;
 
