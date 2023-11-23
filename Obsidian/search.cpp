@@ -772,11 +772,13 @@ namespace Search {
         && bestScore > TB_LOSS_IN_MAX_PLY)
       {
 
-        // If this is a capture, do SEE (Static Exchange Evalution) pruning
-        int seeMargin = depth * (isQuiet ? PvsQuietSeeMargin : PvsCapSeeMargin);
-        if (!position.see_ge(move, Score(seeMargin)))
-          continue;
-        //            (skip the whole thing if skipQuiets was already triggered)
+        // SEE (Static Exchange Evalution) pruning
+        if (moveScore <= 200000) {
+          int seeMargin = depth * (isQuiet ? PvsQuietSeeMargin : PvsCapSeeMargin);
+          if (!position.see_ge(move, Score(seeMargin)))
+            continue;
+        }
+
         if (isQuiet && !skipQuiets) {
 
           int lmrRed = lmrTable[depth][playedMoves + 1] - PvNode + cutNode + !improving;
@@ -828,7 +830,6 @@ namespace Search {
       int oldNodesCount = nodesSearched;
 
       Position newPos = position;
-
       playMove(newPos, move, ss);
 
       int newDepth = depth + extension - 1;
