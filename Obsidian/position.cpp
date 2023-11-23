@@ -179,16 +179,18 @@ void Position::doMove(Move move, NNUE::Accumulator& acc) {
     const Piece movedPc = board[from];
     const Piece capturedPc = board[to];
 
+    bool updateAcc = ptypeOf(movedPc) != KING;
+
     if (capturedPc != NO_PIECE) {
       halfMoveClock = 0;
 
-      removePiece(to, capturedPc, acc);
+      removePiece(to, capturedPc, acc, updateAcc);
 
       if (ptypeOf(capturedPc) == ROOK)
         newCastlingRights &= ROOK_SQR_TO_CR[to];
     }
 
-    movePiece(from, to, movedPc, acc);
+    movePiece(from, to, movedPc, acc, updateAcc);
 
     switch (ptypeOf(movedPc)) {
     case PAWN: {
@@ -211,6 +213,7 @@ void Position::doMove(Move move, NNUE::Accumulator& acc) {
     case KING: {
       if (us == WHITE) newCastlingRights &= ~WHITE_CASTLING;
       else             newCastlingRights &= ~BLACK_CASTLING;
+      updateAccumulator(acc);
       break;
     }
     }
@@ -224,17 +227,19 @@ void Position::doMove(Move move, NNUE::Accumulator& acc) {
                  rookSrc = cd->rookSrc, rookDest = cd->rookDest;
 
     if (us == WHITE) {
-      movePiece(kingSrc, kingDest, W_KING, acc);
-      movePiece(rookSrc, rookDest, W_ROOK, acc);
+      movePiece(kingSrc, kingDest, W_KING, acc, false);
+      movePiece(rookSrc, rookDest, W_ROOK, acc, false);
 
       newCastlingRights &= ~WHITE_CASTLING;
     }
     else {
-      movePiece(kingSrc, kingDest, B_KING, acc);
-      movePiece(rookSrc, rookDest, B_ROOK, acc);
+      movePiece(kingSrc, kingDest, B_KING, acc, false);
+      movePiece(rookSrc, rookDest, B_ROOK, acc, false);
 
       newCastlingRights &= ~BLACK_CASTLING;
     }
+
+    updateAccumulator(acc);
 
     break;
   }
@@ -246,13 +251,13 @@ void Position::doMove(Move move, NNUE::Accumulator& acc) {
 
     if (us == WHITE) {
 
-      removePiece(to - 8, B_PAWN, acc);
-      movePiece(from, to, W_PAWN, acc);
+      removePiece(to - 8, B_PAWN, acc, true);
+      movePiece(from, to, W_PAWN, acc, true);
     }
     else {
 
-      removePiece(to + 8, W_PAWN, acc);
-      movePiece(from, to, B_PAWN, acc);
+      removePiece(to + 8, W_PAWN, acc, true);
+      movePiece(from, to, B_PAWN, acc, true);
     }
 
     break;
@@ -267,14 +272,14 @@ void Position::doMove(Move move, NNUE::Accumulator& acc) {
     const Piece promoteToPc = make_piece(us, getPromoType(move));
 
     if (capturedPc != NO_PIECE) {
-      removePiece(to, capturedPc, acc);
+      removePiece(to, capturedPc, acc, true);
 
       if (ptypeOf(capturedPc) == ROOK)
         newCastlingRights &= ROOK_SQR_TO_CR[to];
     }
 
-    removePiece(from, board[from], acc);
-    putPiece(to, promoteToPc, acc);
+    removePiece(from, board[from], acc, true);
+    putPiece(to, promoteToPc, acc, true);
 
     break;
   }
@@ -623,9 +628,11 @@ bool Position::see_ge(Move m, Score threshold) const {
 void Position::updateAccumulator(NNUE::Accumulator& acc) {
   acc.reset();
 
+  Square wKing = kingSquare(WHITE), bKing = kingSquare(BLACK);
+
   Bitboard b0 = pieces();
   while (b0) {
     Square sq = popLsb(b0);
-    acc.activateFeature(sq, board[sq]);
+    acc.activateFeature(sq, board[sq], wKing, bKing);
   }
 }

@@ -15,14 +15,28 @@ namespace NNUE {
 
   constexpr int WeightsPerVec = sizeof(SIMD::Vec) / sizeof(weight_t);
 
-  alignas(SIMD::Alignment) int FeatureIndexTable[COLOR_NB][PIECE_NB][SQUARE_NB];
-
   struct {
-    alignas(SIMD::Alignment) weight_t FeatureWeights[FeatureDimensions * TransformedFeatureDimensions];
+    alignas(SIMD::Alignment) weight_t FeatureWeights[FeatureDimensions * KingBucketsNB * TransformedFeatureDimensions];
     alignas(SIMD::Alignment) weight_t FeatureBiases[TransformedFeatureDimensions];
     alignas(SIMD::Alignment) weight_t OutputWeights[2 * TransformedFeatureDimensions];
                              weight_t OutputBias;
   } Content;
+
+  int featureIndex(Color stm, Piece pc, Square sq, Square king) {
+
+    PieceType pcType = ptypeOf(pc);
+    Color pcColor = colorOf(pc);
+
+    int result;
+    if (pcColor == stm)
+      result = SQUARE_NB * (pcType - 1) + relative_square(stm, sq);
+    else
+      result = SQUARE_NB * (pcType + 5) + relative_square(stm, sq);
+
+    result += FeatureDimensions * KingBuckets[relative_square(stm, king)];
+
+    return result * TransformedFeatureDimensions;
+  }
 
   template <int InputSize>
   inline void addToAll(weight_t* input, int offset)
@@ -69,24 +83,21 @@ namespace NNUE {
     memcpy(black, Content.FeatureBiases, sizeof(Content.FeatureBiases));
   }
 
-  void Accumulator::activateFeature(Square sq, Piece pc) {
-    addToAll<TransformedFeatureDimensions>(white, FeatureIndexTable[WHITE][pc][sq]);
-
-    addToAll<TransformedFeatureDimensions>(black, FeatureIndexTable[BLACK][pc][sq]);
+  void Accumulator::activateFeature(Square sq, Piece pc, Square wKing, Square bKing) {
+    addToAll<TransformedFeatureDimensions>(white, featureIndex(WHITE, pc, sq, wKing));
+    addToAll<TransformedFeatureDimensions>(black, featureIndex(BLACK, pc, sq, bKing));
   }
 
-  void Accumulator::deactivateFeature(Square sq, Piece pc) {
-    subtractFromAll<TransformedFeatureDimensions>(white, FeatureIndexTable[WHITE][pc][sq]);
-
-    subtractFromAll<TransformedFeatureDimensions>(black, FeatureIndexTable[BLACK][pc][sq]);
+  void Accumulator::deactivateFeature(Square sq, Piece pc, Square wKing, Square bKing) {
+    subtractFromAll<TransformedFeatureDimensions>(white, featureIndex(WHITE, pc, sq, wKing));
+    subtractFromAll<TransformedFeatureDimensions>(black, featureIndex(BLACK, pc, sq, bKing));
   }
 
-  void Accumulator::moveFeature(Square from, Square to, Piece pc) {
+  void Accumulator::moveFeature(Square from, Square to, Piece pc, Square wKing, Square bKing) {
     addAndSubtractFromAll<TransformedFeatureDimensions>(white,
-      FeatureIndexTable[WHITE][pc][to], FeatureIndexTable[WHITE][pc][from]);
-
+      featureIndex(WHITE, pc, to, wKing), featureIndex(WHITE, pc, from, wKing));
     addAndSubtractFromAll<TransformedFeatureDimensions>(black,
-      FeatureIndexTable[BLACK][pc][to], FeatureIndexTable[BLACK][pc][from]);
+      featureIndex(BLACK, pc, to, bKing), featureIndex(BLACK, pc, from, bKing));
   }
 
   void load() {
@@ -102,25 +113,6 @@ namespace NNUE {
 #else
     memcpy(&Content, gEmbeddedNNUEData, sizeof(Content));
 #endif // _MSC_VER	
-
-    // Cache feature indexes
-    for (int c = 0; c <= 1; ++c) {
-      for (int pt = PAWN; pt <= KING; ++pt) {
-        for (Square sq = SQ_A1; sq < SQUARE_NB; ++sq) {
-          Color color = Color(c);
-          Piece piece = make_piece(color, PieceType(pt));
-
-          FeatureIndexTable[color][piece][sq] =
-            SQUARE_NB * (pt - 1) + relative_square(color, sq);
-
-          FeatureIndexTable[~color][piece][sq] =
-            SQUARE_NB * (pt + 5) + relative_square(~color, sq);
-
-          FeatureIndexTable[color][piece][sq] *= TransformedFeatureDimensions;
-          FeatureIndexTable[~color][piece][sq] *= TransformedFeatureDimensions;
-        }
-      }
-    }
   }
 
   inline int SCRelu(weight_t x) {
