@@ -100,34 +100,35 @@ struct alignas(32) Position {
   /// Assmue there is a piece in the given square.
   /// Call this if you already know what piece was there
   /// </summary>
-  inline void removePiece(Square sq, Piece pc, NNUE::Accumulator& acc) {
+  inline void removePiece(Square sq, Piece pc, NNUE::Accumulator& acc, bool updateAcc) {
     key ^= RANDOM_ARRAY[64 * HASH_PIECE[pc] + sq];
 
     board[sq] = NO_PIECE;
     byColorBB[colorOf(pc)] ^= sq;
     byPieceBB[ptypeOf(pc)] ^= sq;
 
-    acc.deactivateFeature(sq, pc);
+    if (updateAcc)
+      acc.deactivateFeature(sq, pc, kingSquare(WHITE), kingSquare(BLACK));
   }
 
   /// <summary>
   /// Assmue there is not any piece in the given square
   /// </summary>
-  inline void putPiece(Square sq, Piece pc, NNUE::Accumulator& acc) {
+  inline void putPiece(Square sq, Piece pc, NNUE::Accumulator& acc, bool updateAcc) {
     key ^= RANDOM_ARRAY[64 * HASH_PIECE[pc] + sq];
 
     board[sq] = pc;
     byColorBB[colorOf(pc)] ^= sq;
     byPieceBB[ptypeOf(pc)] ^= sq;
 
-    acc.activateFeature(sq, pc);
+    if (updateAcc)
+      acc.activateFeature(sq, pc, kingSquare(WHITE), kingSquare(BLACK));
   }
 
   /// <summary>
   /// Assmue there is not any piece in the destination square
   /// Call this if you already know what piece was there
-  /// </summary>
-  inline void movePiece(Square from, Square to, Piece pc, NNUE::Accumulator& acc) {
+  inline void movePiece(Square from, Square to, Piece pc, NNUE::Accumulator& acc, bool updateAcc) {
 
     const int c0 = 64 * HASH_PIECE[pc];
     key ^= RANDOM_ARRAY[c0 + from] ^ RANDOM_ARRAY[c0 + to];
@@ -138,7 +139,8 @@ struct alignas(32) Position {
     byColorBB[colorOf(pc)] ^= fromTo;
     byPieceBB[ptypeOf(pc)] ^= fromTo;
 
-    acc.moveFeature(from, to, pc);
+    if (updateAcc)
+      acc.moveFeature(from, to, pc, kingSquare(WHITE), kingSquare(BLACK));
   }
 
   inline bool isQuiet(Move move) {
@@ -167,6 +169,8 @@ struct alignas(32) Position {
   string toFenString() const;
 
   void updateAccumulator(NNUE::Accumulator& acc);
+
+  void updateAccumulator(NNUE::Accumulator& acc, Color color);
 };
 
 std::ostream& operator<<(std::ostream& stream, Position& sqr);
