@@ -80,7 +80,7 @@ namespace TT {
     int16_t staticEval;
     Flag flag;
     uint8_t depth;
-    int16_t move;
+    uint16_t move;
     int16_t value;
   };
 #pragma pack()
