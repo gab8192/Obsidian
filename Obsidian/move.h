@@ -91,6 +91,10 @@ struct MoveList {
     return moves[index];
   }
 
+  inline void remove(int index) {
+    moves[index] = moves[--head];
+  }
+
   inline const MoveScored* begin() const {
     return &moves[0];
   }

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "types.h"
+
 // [color][from to]
 using MainHistory  = int[COLOR_NB][SQUARE_NB * SQUARE_NB];
 

@@ -1,7 +1,7 @@
 #include "search.h"
 #include "evaluate.h"
 #include "history.h"
-#include "movegen.h"
+#include "movepick.h"
 #include "timeman.h"
 #include "threads.h"
 #include "tt.h"
@@ -186,7 +186,7 @@ namespace Search {
   template int64_t perft<true>(Position&, int);
 
   enum NodeType {
-    Root, PV, NonPV
+    PV, NonPV
   };
 
   clock_t elapsedTime() {
@@ -504,7 +504,7 @@ namespace Search {
     if (generateAllMoves)
       getPseudoLegalMoves(position, &moves);
     else
-      getAggressiveMoves(position, &moves);
+      getStageMoves(position, false, &moves);
 
     scoreMoves(position, moves, ttMove, ss);
 
@@ -577,7 +577,6 @@ namespace Search {
   template<NodeType nodeType>
   Score negaMax(Position& position, Score alpha, Score beta, int depth, bool cutNode, SearchInfo* ss) {
     constexpr bool PvNode = nodeType != NonPV;
-    constexpr bool rootNode = nodeType == Root;
 
     if (searchState == STOP_PENDING)
       return makeDrawScore();
@@ -586,20 +585,18 @@ namespace Search {
     if (PvNode)
       ss->pvLength = ply;
 
-    if (!rootNode) {
-      // detect draw
-      if (is2FoldRepetition(position) || position.halfMoveClock >= 100)
-        return makeDrawScore();
+    // detect draw
+    if (is2FoldRepetition(position) || position.halfMoveClock >= 100)
+      return makeDrawScore();
 
-      // mate distance pruning
-      alpha = std::max(alpha, Score(ply - CHECKMATE));
-      beta = std::min(beta, CHECKMATE - ply - 1);
-      if (alpha >= beta)
-        return alpha;
-    }
+    // mate distance pruning
+    alpha = std::max(alpha, Score(ply - CHECKMATE));
+    beta = std::min(beta, CHECKMATE - ply - 1);
+    if (alpha >= beta)
+      return alpha;
 
     // If we are in check, increment the depth and avoid entering a qsearch
-    if (position.checkers && !rootNode)
+    if (position.checkers)
       depth = std::max(1, depth + 1);
 
     // Enter qsearch when depth is 0
@@ -614,10 +611,6 @@ namespace Search {
     TT::Flag ttFlag = ttHit ? ttEntry->getFlag() : TT::NO_FLAG;
     Score ttScore = ttHit ? ttEntry->getScore(ply) : SCORE_NONE;
     Move ttMove = ttHit ? ttEntry->getMove() : MOVE_NONE;
-
-    // Make sure there is a ttMove in rootNode
-    if (rootNode && !ttMove)
-      ttMove = peekBestMove(rootMoves);
 
     bool ttMoveNoisy = ttMove && !position.isQuiet(ttMove);
 
@@ -634,7 +627,6 @@ namespace Search {
         return ttScore;
     }
 
-    
     (ss + 1)->killerMove = MOVE_NONE;
     ss->doubleExt = (ss - 1)->doubleExt;
 
@@ -716,18 +708,6 @@ namespace Search {
 
     const bool wasInCheck = position.checkers;
 
-    MoveList moves;
-    if (rootNode) {
-      moves = rootMoves;
-
-      for (int i = 0; i < rootMoves.size(); i++)
-        rootMoves[i].score = -SCORE_INFINITE;
-    }
-    else {
-      getPseudoLegalMoves(position, &moves);
-      scoreMoves(position, moves, ttMove, ss);
-    }
-
     bool foundLegalMove = false;
 
     int playedMoves = 0;
@@ -737,13 +717,27 @@ namespace Search {
     Move captures[64];
     int captureCount = 0;
 
+    Move counterMove = MOVE_NONE;
+    if ((ss - 1)->playedMove) {
+      Square prevSq = getMoveDest((ss - 1)->playedMove);
+      counterMove = counterMoveHistory[position.board[prevSq] * SQUARE_NB + prevSq];
+    }
+
+    MovePicker movePicker(position,
+      ttMove, ss->killerMove, counterMove,
+      &mainHistory, &captureHistory,
+      (ss - 1)->mContHistory,
+      (ss - 2)->mContHistory,
+      (ss - 4)->mContHistory);
+
     bool skipQuiets = false;
     
     // Visit moves
 
-    for (int i = 0; i < moves.size(); i++) {
-      int moveScore;
-      Move move = nextBestMove(moves, i, &moveScore);
+    Move move;
+    MpStage moveStage;
+
+    while (move = movePicker.nextMove(& moveStage)) {
 
       if (move == excludedMove)
         continue;
@@ -767,13 +761,11 @@ namespace Search {
 
       foundLegalMove = true;
 
-      if (!rootNode
-        && position.hasNonPawns(position.sideToMove)
+      if ( position.hasNonPawns(position.sideToMove)
         && bestScore > TB_LOSS_IN_MAX_PLY)
       {
-
         // SEE (Static Exchange Evalution) pruning
-        if (moveScore <= 200000) {
+        if (moveStage > GOOD_CAPTURES) {
           int seeMargin = depth * (isQuiet ? PvsQuietSeeMargin : PvsCapSeeMargin);
           if (!position.see_ge(move, Score(seeMargin)))
             continue;
@@ -798,8 +790,7 @@ namespace Search {
       int extension = 0;
       
       // Singular extension
-      if ( !rootNode
-        && ply < 2 * rootDepth
+      if ( ply < 2 * rootDepth
         && depth >= 6
         && !excludedMove
         && move == ttMove
@@ -852,16 +843,16 @@ namespace Search {
           R += ttMoveNoisy;
 
           // Do less reduction for killer and counter move (~4 Elo)
-          if (moveScore == 200000 || moveScore == 100000)
+          if (moveStage == KILLER || moveStage == COUNTER)
             R--;
           // Reduce or extend depending on history of this quiet move (~12 Elo)
           else 
-            R -= std::clamp(moveScore / LmrHistoryDiv, -2, 2);
+            R -= std::clamp(getHistoryScore(position, move, ss) / LmrHistoryDiv, -2, 2);
         }
         else {
           R = 0;
 
-          if (moveScore < 0)
+          if (moveStage > QUIETS)
             R++;
         }
 
@@ -892,12 +883,6 @@ namespace Search {
       cancelMove();
 
       playedMoves++;
-
-      if (rootNode) {
-        int idx = rootMoves.indexOf(move);
-        rootMoves[idx].score = score;
-        rootMoves[idx].nodes += nodesSearched - oldNodesCount;
-      }
 
       if (score > bestScore) {
         bestScore = score;
@@ -964,6 +949,235 @@ namespace Search {
     return bestScore;
   }
 
+  Score rootNegaMax(Position& position, Score alpha, Score beta, int depth, SearchInfo* ss) {
+
+    if (searchState == STOP_PENDING)
+      return makeDrawScore();
+
+    // init node
+    ss->pvLength = ply;
+
+    Move excludedMove = ss->excludedMove;
+
+    // Probe TT
+    bool ttHit;
+    TT::Entry* ttEntry = TT::probe(position.key, ttHit);
+    TT::Flag ttFlag = ttHit ? ttEntry->getFlag() : TT::NO_FLAG;
+    Score ttScore = ttHit ? ttEntry->getScore(ply) : SCORE_NONE;
+    Move ttMove = ttHit ? ttEntry->getMove() : MOVE_NONE;
+
+    // Make sure there is a ttMove in rootNode
+    if (!ttMove)
+      ttMove = peekBestMove(rootMoves);
+
+    bool ttMoveNoisy = ttMove && !position.isQuiet(ttMove);
+
+    Score eval;
+    Move bestMove = MOVE_NONE;
+    Score bestScore = -SCORE_INFINITE;
+
+    (ss + 1)->killerMove = MOVE_NONE;
+    ss->doubleExt = (ss - 1)->doubleExt;
+
+    // Do the static evaluation
+
+    if (position.checkers) {
+      // When in check avoid evaluating and skip pruning
+      ss->staticEval = eval = SCORE_NONE;
+      goto moves_loop;
+    }
+    else if (ss->excludedMove) {
+      // We have already evaluated the position in the node which invoked this singular search
+      eval = ss->staticEval;
+    }
+    else {
+      if (ttHit)
+        ss->staticEval = eval = ttEntry->getStaticEval();
+      else
+        ss->staticEval = eval = Eval::evaluate(position, accumulatorStack[ply]);
+
+      // When tt bound allows it, use ttScore as a better evaluation
+      if (ttFlag & flagForTT(ttScore > eval))
+        eval = ttScore;
+    }
+
+  moves_loop:
+
+    // Generate moves and score them
+
+    const bool wasInCheck = position.checkers;
+
+    MoveList moves = rootMoves;
+    for (int i = 0; i < rootMoves.size(); i++)
+      rootMoves[i].score = -SCORE_INFINITE;
+
+    bool foundLegalMove = false;
+
+    int playedMoves = 0;
+
+    Move quietMoves[64];
+    int quietCount = 0;
+    Move captures[64];
+    int captureCount = 0;
+
+    // Visit moves
+
+    for (int i = 0; i < moves.size(); i++) {
+      int moveScore;
+      Move move = nextBestMove(moves, i, &moveScore);
+
+      if (move == excludedMove)
+        continue;
+
+      if (!position.isLegal(move))
+        continue;
+
+      bool isQuiet = position.isQuiet(move);
+
+      if (isQuiet) {
+        if (quietCount < 64)
+          quietMoves[quietCount++] = move;
+      }
+      else {
+        if (captureCount < 64)
+          captures[captureCount++] = move;
+      }
+
+      foundLegalMove = true;
+
+      int oldNodesCount = nodesSearched;
+
+      Position newPos = position;
+      playMove(newPos, move, ss);
+
+      int newDepth = depth - 1;
+
+      Score score;
+
+      // Late move reductions. Search at a reduced depth, moves that are late in the move list
+
+      bool needFullSearch;
+
+      if (depth >= 3 && playedMoves > 3) {
+        int R;
+
+        if (isQuiet) {
+          R = lmrTable[depth][playedMoves + 1];
+
+          R++;
+
+          // Reduce more if ttmove was noisy (~6 Elo)
+          R += ttMoveNoisy;
+
+          // Do less reduction for killer and counter move (~4 Elo)
+          if (moveScore == 200000 || moveScore == 100000)
+            R--;
+          // Reduce or extend depending on history of this quiet move (~12 Elo)
+          else
+            R -= std::clamp(moveScore / LmrHistoryDiv, -2, 2);
+        }
+        else {
+          R = 0;
+
+          if (moveScore < 0)
+            R++;
+        }
+
+        if (newPos.checkers)
+          R--;
+
+        R--;
+
+        // Do the clamp to avoid a qsearch or an extension in the child search
+        int reducedDepth = std::clamp(newDepth - R, 1, newDepth + 1);
+
+        score = -negaMax<NonPV>(newPos, -alpha - 1, -alpha, reducedDepth, true, ss + 1);
+
+        needFullSearch = score > alpha && reducedDepth < newDepth;
+      }
+      else
+        needFullSearch = playedMoves >= 1;
+
+
+      if (needFullSearch)
+        score = -negaMax<NonPV>(newPos, -alpha - 1, -alpha, newDepth, true, ss + 1);
+
+      if (playedMoves == 0 || score > alpha)
+        score = -negaMax<PV>(newPos, -beta, -alpha, newDepth, false, ss + 1);
+
+      cancelMove();
+
+      playedMoves++;
+
+      {
+        int idx = rootMoves.indexOf(move);
+        rootMoves[idx].score = score;
+        rootMoves[idx].nodes += nodesSearched - oldNodesCount;
+      }
+
+      if (score > bestScore) {
+        bestScore = score;
+
+        if (bestScore > alpha) {
+          bestMove = move;
+
+          updatePV(ss, bestMove);
+
+          // Always true in NonPV nodes
+          if (bestScore >= beta)
+            break;
+
+          alpha = bestScore;
+        }
+      }
+    }
+
+    if (!foundLegalMove) {
+      if (excludedMove)
+        return alpha;
+
+      return position.checkers ? Score(ply - CHECKMATE) : DRAW;
+    }
+
+    // Update histories
+    if (bestScore >= beta)
+    {
+      int bonus = stat_bonus(depth);
+
+      if (position.isQuiet(bestMove))
+      {
+        updateHistories(position, depth, bestMove, bestScore, beta, quietMoves, quietCount, ss);
+      }
+      else if (position.board[getMoveDest(bestMove)]) {
+        int bonus = stat_bonus(depth);
+
+        Piece captured = position.board[getMoveDest(bestMove)];
+        addToHistory(captureHistory[pieceTo(position, bestMove)][ptypeOf(captured)], bonus);
+      }
+
+      for (int i = 0; i < captureCount; i++) {
+        Move otherMove = captures[i];
+        if (otherMove == bestMove)
+          continue;
+
+        Piece captured = position.board[getMoveDest(otherMove)];
+        addToHistory(captureHistory[pieceTo(position, otherMove)][ptypeOf(captured)], -bonus);
+      }
+    }
+
+    // Store to TT
+    if (!excludedMove) {
+      TT::Flag flag;
+      if (bestScore >= beta)
+        flag = TT::FLAG_LOWER;
+      else
+        flag = bestMove ? TT::FLAG_EXACT : TT::FLAG_UPPER;
+
+      ttEntry->store(position.key, flag, depth, bestMove, bestScore, ss->staticEval, true, ply);
+    }
+
+    return bestScore;
+  }
 
   std::string getPvString(SearchInfo* ss) {
 
@@ -1070,7 +1284,7 @@ namespace Search {
 
           int adjustedDepth = std::max(1, rootDepth - failedHighCnt);
 
-          score = negaMax<Root>(rootPos, alpha, beta, adjustedDepth, false, ss);
+          score = rootNegaMax(rootPos, alpha, beta, adjustedDepth, ss);
 
           if (Threads::searchState == STOP_PENDING)
             goto bestMoveDecided;
@@ -1101,7 +1315,7 @@ namespace Search {
         }
       }
       else {
-        score = negaMax<Root>(rootPos, -SCORE_INFINITE, SCORE_INFINITE, rootDepth, false, ss);
+        score = rootNegaMax(rootPos, -SCORE_INFINITE, SCORE_INFINITE, rootDepth, ss);
       }
 
       // It's super important to not update the best move if the search was abruptly stopped

@@ -139,6 +139,7 @@
     <ClCompile Include="evaluate.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="movegen.cpp" />
+    <ClCompile Include="movepick.cpp" />
     <ClCompile Include="nnue.cpp" />
     <ClCompile Include="position.cpp" />
     <ClCompile Include="search.cpp" />
@@ -158,6 +159,7 @@
     <ClInclude Include="incbin.h" />
     <ClInclude Include="move.h" />
     <ClInclude Include="movegen.h" />
+    <ClInclude Include="movepick.h" />
     <ClInclude Include="nnue.h" />
     <ClInclude Include="position.h" />
     <ClInclude Include="search.h" />
