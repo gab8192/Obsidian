@@ -310,7 +310,7 @@ namespace Search {
     ss->killerMove = bestMove;
   }
 
-  void scoreMoves(Position& pos, MoveList& moves, Move ttMove, SearchInfo* ss) {
+  void scoreRootMoves(Position& pos, MoveList& moves, Move ttMove, SearchInfo* ss) {
 
     for (int i = 0; i < moves.size(); i++) {
       int& moveScore = moves[i].score;
@@ -916,8 +916,6 @@ namespace Search {
     // init node
     ss->pvLength = ply;
 
-    Move excludedMove = ss->excludedMove;
-
     // Probe TT
     bool ttHit;
     TT::Entry* ttEntry = TT::probe(position.key, ttHit);
@@ -931,7 +929,7 @@ namespace Search {
     else
       ttMove = ttHit ? ttEntry->getMove() : MOVE_NONE;
 
-    scoreMoves(position, rootMoves, ttMove, ss);
+    scoreRootMoves(position, rootMoves, ttMove, ss);
 
     bool ttMoveNoisy = ttMove && !position.isQuiet(ttMove);
 
@@ -986,9 +984,6 @@ namespace Search {
     for (int i = 0; i < moves.size(); i++) {
       int moveScore;
       Move move = nextBestMove(moves, i, &moveScore);
-
-      if (move == excludedMove)
-        continue;
 
       if (!position.isLegal(move))
         continue;
@@ -1081,12 +1076,8 @@ namespace Search {
       }
     }
 
-    if (!foundLegalMove) {
-      if (excludedMove)
-        return alpha;
-
+    if (!foundLegalMove)
       return position.checkers ? Score(ply - CHECKMATE) : DRAW;
-    }
 
     // Update histories
     if (bestScore >= beta)
@@ -1115,15 +1106,13 @@ namespace Search {
     }
 
     // Store to TT
-    if (!excludedMove) {
-      TT::Flag flag;
-      if (bestScore >= beta)
-        flag = TT::FLAG_LOWER;
-      else
-        flag = bestMove ? TT::FLAG_EXACT : TT::FLAG_UPPER;
+    TT::Flag flag;
+    if (bestScore >= beta)
+      flag = TT::FLAG_LOWER;
+    else
+      flag = bestMove ? TT::FLAG_EXACT : TT::FLAG_UPPER;
 
-      ttEntry->store(position.key, flag, depth, bestMove, bestScore, ss->staticEval, true, ply);
-    }
+    ttEntry->store(position.key, flag, depth, bestMove, bestScore, ss->staticEval, true, ply);
 
     return bestScore;
   }
