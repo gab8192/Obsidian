@@ -311,15 +311,6 @@ namespace Search {
   }
 
   void scoreMoves(Position& pos, MoveList& moves, Move ttMove, SearchInfo* ss) {
-    Move killer = ss->killerMove;
-
-    Move counterMove = MOVE_NONE;
-
-    Move prevMove = (ss-1)->playedMove;
-    if (prevMove) {
-      Square prevSq = getMoveDest(prevMove);
-      counterMove = counterMoveHistory[pos.board[prevSq] * SQUARE_NB + prevSq];
-    }
 
     for (int i = 0; i < moves.size(); i++) {
       int& moveScore = moves[i].score;
@@ -345,10 +336,6 @@ namespace Search {
         moveScore += PieceValue[captured] * 64;
         moveScore += captureHistory[pieceTo(pos, move)][ptypeOf(captured)];
       }
-      else if (move == killer)
-        moveScore = 200000;
-      else if (move == counterMove)
-        moveScore = 100000;
       else
         moveScore = getHistoryScore(pos, move, ss);
     }
@@ -1046,12 +1033,8 @@ namespace Search {
           // Reduce more if ttmove was noisy (~6 Elo)
           R += ttMoveNoisy;
 
-          // Do less reduction for killer and counter move (~4 Elo)
-          if (moveScore == 200000 || moveScore == 100000)
-            R--;
           // Reduce or extend depending on history of this quiet move (~12 Elo)
-          else
-            R -= std::clamp(moveScore / LmrHistoryDiv, -2, 2);
+          R -= std::clamp(moveScore / LmrHistoryDiv, -2, 2);
         }
         else {
           R = -1;
