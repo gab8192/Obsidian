@@ -1036,8 +1036,6 @@ namespace Search {
         if (isQuiet) {
           R = lmrTable[depth][playedMoves + 1];
 
-          R++;
-
           // Reduce more if ttmove was noisy (~6 Elo)
           R += ttMoveNoisy;
 
@@ -1049,7 +1047,7 @@ namespace Search {
             R -= std::clamp(moveScore / LmrHistoryDiv, -2, 2);
         }
         else {
-          R = 0;
+          R = -1;
 
           if (moveScore < 0)
             R++;
@@ -1057,8 +1055,6 @@ namespace Search {
 
         if (newPos.checkers)
           R--;
-
-        R--;
 
         // Do the clamp to avoid a qsearch or an extension in the child search
         int reducedDepth = std::clamp(newDepth - R, 1, newDepth + 1);
