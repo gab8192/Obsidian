@@ -332,12 +332,12 @@ namespace Search {
       else if (mt == MT_EN_PASSANT)
         moveScore = 300000 + PieceValue[PAWN] * 64;
       else if (captured) {
-        moveScore = pos.see_ge(move, Score(-50)) ? 300000 : -200000;
+        moveScore = pos.see_ge(move, Score(-10)) ? 300000 : -200000;
         moveScore += PieceValue[captured] * 64;
         moveScore += captureHistory[pieceTo(pos, move)][ptypeOf(captured)];
       }
       else
-        moveScore = getHistoryScore(pos, move, ss);
+        moveScore = mainHistory[pos.sideToMove][fromTo(move)];
     }
   }
 
@@ -929,14 +929,9 @@ namespace Search {
     if (depth > 1)
       ttMove = ss->pv[0];
     else
-      ttMove = ttHit ? ttEntry->getMove() : peekBestMove(rootMoves);
+      ttMove = ttHit ? ttEntry->getMove() : MOVE_NONE;
 
-    for (int i = 0; i < rootMoves.size(); i++) {
-      if (rootMoves[i].move == ttMove)
-        rootMoves[i].score = INT_MAX;
-      else
-        rootMoves[i].score = getHistoryScore(position, rootMoves[i].move, ss);
-    }
+    scoreMoves(position, rootMoves, ttMove, ss);
 
     bool ttMoveNoisy = ttMove && !position.isQuiet(ttMove);
 
@@ -1032,9 +1027,6 @@ namespace Search {
 
           // Reduce more if ttmove was noisy (~6 Elo)
           R += ttMoveNoisy;
-
-          // Reduce or extend depending on history of this quiet move (~12 Elo)
-          R -= std::clamp(moveScore / LmrHistoryDiv, -2, 2);
         }
         else {
           R = -1;
@@ -1220,7 +1212,6 @@ namespace Search {
       bestMove = rootMoves[0].move;
       goto bestMoveDecided;
     }
-    scoreMoves(rootPos, rootMoves, MOVE_NONE, ss);
 
     for (rootDepth = 1; rootDepth <= searchSettings.depth; rootDepth++) {
 
