@@ -1024,7 +1024,7 @@ namespace Search {
           R += ttMoveNoisy;
         }
         else {
-          R = -1;
+          R = 0;
 
           if (moveScore < 0)
             R++;
