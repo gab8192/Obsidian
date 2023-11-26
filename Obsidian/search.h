@@ -1,5 +1,6 @@
 #pragma once
 
+#include "history.h"
 #include "nnue.h"
 #include "position.h"
 #include "types.h"
@@ -31,6 +32,31 @@ namespace Search {
 
     inline bool hasTimeLimit() const {
       return time[WHITE] || time[BLACK];
+    }
+  };
+
+  struct SearchLoopInfo {
+    Score score;
+    Move bestMove;
+  };
+
+  struct SearchInfo {
+    Score staticEval;
+    Move playedMove;
+
+    Move killerMove;
+
+    Move pv[MAX_PLY];
+    int pvLength;
+
+    int doubleExt;
+
+    Move excludedMove;
+
+    PieceToHistory* mContHistory;
+
+    PieceToHistory& contHistory() {
+      return *mContHistory;
     }
   };
 

@@ -2,14 +2,14 @@
 #include "uci.h"
 
 MovePicker::MovePicker(
-  Position& _pos,
+  bool _isQsearch, Position& _pos,
   Move _ttMove, Move _killerMove, Move _counterMove,
-  MainHistory* _mainHist, CaptureHistory* _capHist,
-  PieceToHistory* _ch1, PieceToHistory* _ch2, PieceToHistory* _ch4) :
-  pos(_pos),
-  ttMove(_ttMove), killerMove(_killerMove), counterMove(_counterMove),
-  mainHist(*_mainHist), capHist(*_capHist), 
-  contHist1(*_ch1), contHist2(*_ch2), contHist4(*_ch4),
+  MainHistory& _mainHist, CaptureHistory& _capHist,
+  Search::SearchInfo* _ss) :
+  isQsearch(_isQsearch), pos(_pos),
+  ttMove(_ttMove),
+  mainHist(_mainHist), capHist(_capHist), 
+  ss(_ss),
   killerFound(false), counterFound(false), capIndex(0), quietIndex(0)
 {
   this->stage = _ttMove ? TT_MOVE : GEN_CAPTURES;
@@ -81,9 +81,9 @@ void MovePicker::scoreQuiets() {
 
     quiets[i].score =
       mainHist[pos.sideToMove][fromTo(move)]
-      + contHist1[chIndex]
-      + contHist2[chIndex]
-      + contHist4[chIndex];
+      + (ss - 1)->contHistory()[chIndex]
+      + (ss - 2)->contHistory()[chIndex]
+      + (ss - 4)->contHistory()[chIndex];
 
     i++;
   }
@@ -152,6 +152,9 @@ Move MovePicker::nextMove(MpStage* outStage) {
         return move.move;
       }
     }
+
+    if (isQsearch && !pos.checkers)
+      return MOVE_NONE;
 
     ++stage;
     [[fallthrough]];

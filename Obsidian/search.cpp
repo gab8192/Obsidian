@@ -1,6 +1,5 @@
 #include "search.h"
 #include "evaluate.h"
-#include "history.h"
 #include "movepick.h"
 #include "timeman.h"
 #include "threads.h"
@@ -19,31 +18,6 @@
 using namespace Threads;
 
 namespace Search {
-
-  struct SearchLoopInfo {
-    Score score;
-    Move bestMove;
-  };
-
-  struct SearchInfo {
-    Score staticEval;
-    Move playedMove;
-
-    Move killerMove;
-
-    Move pv[MAX_PLY];
-    int pvLength;
-
-    int doubleExt;
-
-    Move excludedMove;
-
-    PieceToHistory* mContHistory;
-
-    PieceToHistory& contHistory() {
-      return *mContHistory;
-    }
-  };
 
   DEFINE_PARAM(LmrBase, 21, -75, 125);
   DEFINE_PARAM(LmrDiv, 224, 150, 300);
@@ -497,36 +471,35 @@ namespace Search {
         alpha = bestScore;
     }
 
-    // Generate moves and score them
+    // Visiting the tt move when it is quiet, and stm is not check, loses ~300 Elo
 
-    bool generateAllMoves = position.checkers;
-    MoveList moves;
-    if (generateAllMoves)
-      getPseudoLegalMoves(position, &moves);
-    else
-      getStageMoves(position, false, &moves);
+    bool visitTTMove = (position.checkers || !position.isQuiet(ttMove));
 
-    scoreMoves(position, moves, ttMove, ss);
+    MovePicker movePicker(
+      true, position,
+      visitTTMove ? ttMove : MOVE_NONE,
+      MOVE_NONE, MOVE_NONE,
+      mainHistory, captureHistory,
+      ss);
 
     bool foundLegalMoves = false;
 
     // Visit moves
 
-    for (int i = 0; i < moves.size(); i++) {
-      int moveScore;
-      Move move = nextBestMove(moves, i, &moveScore);
+    MpStage moveStage;
+    Move move;
+
+    while (move = movePicker.nextMove(&moveStage)) {
 
       if (!position.isLegal(move))
         continue;
 
       foundLegalMoves = true;
 
-      // If we are not in check, prevent qsearch from visiting bad captures and under-promotions
+      // Prevent qsearch from visiting bad captures and under-promotions
       if (bestScore > TB_LOSS_IN_MAX_PLY) {
-        if (!generateAllMoves) {
-          if (moveScore < -50000)
-            break;
-        }
+        if (moveStage > QUIETS)
+          break;
       }
 
       Position newPos = position;
@@ -723,12 +696,11 @@ namespace Search {
       counterMove = counterMoveHistory[position.board[prevSq] * SQUARE_NB + prevSq];
     }
 
-    MovePicker movePicker(position,
+    MovePicker movePicker(
+      false, position,
       ttMove, ss->killerMove, counterMove,
-      &mainHistory, &captureHistory,
-      (ss - 1)->mContHistory,
-      (ss - 2)->mContHistory,
-      (ss - 4)->mContHistory);
+      mainHistory, captureHistory,
+      ss);
 
     bool skipQuiets = false;
     
