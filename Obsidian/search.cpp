@@ -936,11 +936,20 @@ namespace Search {
     TT::Entry* ttEntry = TT::probe(position.key, ttHit);
     TT::Flag ttFlag = ttHit ? ttEntry->getFlag() : TT::NO_FLAG;
     Score ttScore = ttHit ? ttEntry->getScore(ply) : SCORE_NONE;
-    Move ttMove = ttHit ? ttEntry->getMove() : MOVE_NONE;
 
-    // Make sure there is a ttMove in rootNode
-    if (!ttMove)
-      ttMove = peekBestMove(rootMoves);
+    Move ttMove;
+
+    if (depth > 1)
+      ttMove = ss->pv[0];
+    else
+      ttMove = ttHit ? ttEntry->getMove() : peekBestMove(rootMoves);
+
+    for (int i = 0; i < rootMoves.size(); i++) {
+      if (rootMoves[i].move == ttMove)
+        rootMoves[i].score = INT_MAX;
+      else
+        rootMoves[i].score = getHistoryScore(position, rootMoves[i].move, ss);
+    }
 
     bool ttMoveNoisy = ttMove && !position.isQuiet(ttMove);
 
@@ -980,8 +989,6 @@ namespace Search {
     const bool wasInCheck = position.checkers;
 
     MoveList moves = rootMoves;
-    for (int i = 0; i < rootMoves.size(); i++)
-      rootMoves[i].score = -SCORE_INFINITE;
 
     bool foundLegalMove = false;
 
@@ -1079,7 +1086,6 @@ namespace Search {
 
       {
         int idx = rootMoves.indexOf(move);
-        rootMoves[idx].score = score;
         rootMoves[idx].nodes += nodesSearched - oldNodesCount;
       }
 
