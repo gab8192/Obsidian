@@ -36,7 +36,7 @@ namespace Search {
   DEFINE_PARAM(NmpEvalDiv, 200, 100, 400);
   DEFINE_PARAM(NmpEvalDivMin, 3, 2, 6);
 
-  DEFINE_PARAM(LmpBase, 10, 3, 9);
+  DEFINE_PARAM(LmpBase, 11, 3, 9);
   DEFINE_PARAM(LmpQuad, 1, 1, 3);
 
   DEFINE_PARAM(PvsQuietSeeMargin, -87, -300, 0);
