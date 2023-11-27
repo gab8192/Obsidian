@@ -100,6 +100,48 @@ void Position::updateKey() {
   key = newKey;
 }
 
+bool Position::isPseudoLegal(Move move) {
+  const MoveType moveType = getMoveType(move);
+  const Square from = getMoveSrc(move), to = getMoveDest(move);
+  const Piece pc = board[from];
+
+  if ( pc == NO_PIECE || colorOf(pc) != sideToMove)
+    return false;
+
+  if (moveType == MT_CASTLING) {
+    CastlingRights ct = getCastlingType(move);
+    return
+      !checkers
+      && (castlingRights & ct)
+      && !(CASTLING_PATH[ct] & pieces());
+  }
+
+  if (ptypeOf(pc) == PAWN) {
+    if (moveType == MT_EN_PASSANT)
+      return epSquare != SQ_NONE && (get_pawn_attacks(epSquare, ~sideToMove) & from);
+
+    Bitboard toBB = 0;
+
+    if (sideToMove == WHITE) {
+      toBB |= 
+    }
+    else {
+
+    }
+  }
+
+  switch (getMoveType(move))
+  {
+  case MT_NORMAL: {
+    break;
+  }
+  case MT_PROMOTION: {
+    break;
+  }
+  }
+  return false;
+}
+
 bool Position::isLegal(Move move) {
 
   if (getMoveType(move) == MT_CASTLING) {

@@ -8,9 +8,9 @@ enum MpStage {
   TT_MOVE,
   GEN_CAPTURES,
   GOOD_CAPTURES,
-  GEN_QUIETS,
   KILLER,
   COUNTER,
+  GEN_QUIETS,
   QUIETS,
   BAD_CAPTURES,
 
@@ -36,8 +36,6 @@ private:
   Move ttMove;
   Move killerMove;
   Move counterMove;
-
-  bool killerFound, counterFound;
 
   MainHistory& mainHist;
   CaptureHistory& capHist;

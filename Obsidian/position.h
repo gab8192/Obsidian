@@ -151,6 +151,8 @@ struct alignas(32) Position {
     return board[getMoveDest(move)] == NO_PIECE;
   }
 
+  bool isPseudoLegal(Move move);
+
   bool isLegal(Move move);
 
   void doNullMove();
