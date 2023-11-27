@@ -476,7 +476,7 @@ namespace Search {
     MpStage moveStage;
     Move move;
 
-    while (move = movePicker.nextMove(&moveStage)) {
+    while (move = movePicker.nextMove(false, &moveStage)) {
 
       if (!position.isLegal(move))
         continue;
@@ -696,7 +696,7 @@ namespace Search {
     Move move;
     MpStage moveStage;
 
-    while (move = movePicker.nextMove(& moveStage)) {
+    while (move = movePicker.nextMove(skipQuiets, & moveStage)) {
 
       if (move == excludedMove)
         continue;
@@ -709,9 +709,6 @@ namespace Search {
       if (isQuiet) {
         if (quietCount < 64)
           quietMoves[quietCount++] = move;
-
-        if (skipQuiets)
-          continue;
       }
       else {
         if (captureCount < 64)
