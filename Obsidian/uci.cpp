@@ -239,7 +239,7 @@ void UCI::loop(int argc, char* argv[]) {
 /// without treatment of mate and similar special scores.
 int UCI::to_cp(Score v) {
 
-  return 100 * v / 220;
+  return 100 * v / 100;
 }
 
 string UCI::score(Score v) {
