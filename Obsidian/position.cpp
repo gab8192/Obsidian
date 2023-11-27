@@ -103,7 +103,13 @@ void Position::updateKey() {
 bool Position::isLegal(Move move) {
 
   if (getMoveType(move) == MT_CASTLING) {
-    switch (getCastlingType(move))
+
+    const CastlingRights ct = getCastlingType(move);
+
+    if (CASTLING_PATH[ct] & pieces())
+      return false;
+
+    switch (ct)
     {
     case WHITE_OO: return !attackersTo(SQ_F1, BLACK) && !attackersTo(SQ_G1, BLACK);
     case WHITE_OOO: return !attackersTo(SQ_D1, BLACK) && !attackersTo(SQ_C1, BLACK);

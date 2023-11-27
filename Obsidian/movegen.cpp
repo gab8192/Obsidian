@@ -187,28 +187,16 @@ void getPseudoLegalMoves(const Position& pos, MoveList* moveList) {
 
   if (!pos.checkers) {
     if (us == WHITE) {
-      if (pos.castlingRights & WHITE_OO) {
-        if (!(CASTLING_PATH[WHITE_OO] & allPieces)) {
-          moveList->add(createCastlingMove(WHITE_OO));
-        }
-      }
-      if (pos.castlingRights & WHITE_OOO) {
-        if (!(CASTLING_PATH[WHITE_OOO] & allPieces)) {
-          moveList->add(createCastlingMove(WHITE_OOO));
-        }
-      }
+      if (pos.castlingRights & WHITE_OO)
+        moveList->add(createCastlingMove(WHITE_OO));
+      if (pos.castlingRights & WHITE_OOO)
+        moveList->add(createCastlingMove(WHITE_OOO));
     }
     else {
-      if (pos.castlingRights & BLACK_OO) {
-        if (!(CASTLING_PATH[BLACK_OO] & allPieces)) {
-          moveList->add(createCastlingMove(BLACK_OO));
-        }
-      }
-      if (pos.castlingRights & BLACK_OOO) {
-        if (!(CASTLING_PATH[BLACK_OOO] & allPieces)) {
-          moveList->add(createCastlingMove(BLACK_OOO));
-        }
-      }
+      if (pos.castlingRights & BLACK_OO)
+        moveList->add(createCastlingMove(BLACK_OO));
+      if (pos.castlingRights & BLACK_OOO) 
+        moveList->add(createCastlingMove(BLACK_OOO));
     }
   }
 
