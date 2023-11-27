@@ -16,7 +16,7 @@ NATIVE = false
 
 ifeq ($(build),)
 	build = avx2
-	NATIVE = true
+	NATIVE = false
 endif
 
 ifeq ($(build), avx512)
