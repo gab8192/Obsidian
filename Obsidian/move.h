@@ -13,11 +13,11 @@ constexpr Move createMove(Square src, Square dest, MoveType moveType, int extra 
   return Move(src | (dest << 6) | (moveType << 12) | (extra << 14));
 }
 
-inline Move createPromoMove(Square src, Square dest, PieceType promoType) {
+constexpr Move createPromoMove(Square src, Square dest, PieceType promoType) {
   return createMove(src, dest, MT_PROMOTION, promoType - KNIGHT);
 }
 
-inline Move createCastlingMove(CastlingRights type) {
+constexpr Move createCastlingMove(CastlingRights type) {
 
   constexpr Move CastlingMoves[9] = {
     MOVE_NONE,

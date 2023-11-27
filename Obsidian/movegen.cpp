@@ -143,119 +143,77 @@ void getWhitePawnPromotions(const Position& pos, Bitboard targets, MoveList* rec
   }
 }
 
-void getMovesInCheck(const Position& pos, MoveList* moveList) {
-  const Color us = pos.sideToMove, them = ~us;
-
-  const Square ourKing = pos.kingSquare(us);
-  const Bitboard ourPieces = pos.pieces(us);
-
-  if (more_than_one(pos.checkers)) {
-    addNormalMovesToList(ourKing, get_king_attacks(ourKing) & ~ourPieces, moveList);
-    return;
-  }
-
-  const Bitboard pinned = pos.blockersForKing[us] & ourPieces;
-  const Bitboard ourTargets = BetweenBB[ourKing][getLsb(pos.checkers)];
-  const Bitboard theirPieces = pos.pieces(them);
-
-  const Bitboard allPieces = ourPieces | theirPieces;
-
-  if (us == WHITE) {
-    getWhitePawnMoves(pos, ourTargets, moveList);
-    getWhitePawnPromotions(pos, ourTargets, moveList);
-  }
-  else {
-    getBlackPawnMoves(pos, ourTargets, moveList);
-    getBlackPawnPromotions(pos, ourTargets, moveList);
-  }
-
-  Bitboard knights = ourPieces & pos.pieces(KNIGHT) & ~pinned;
-  while (knights) {
-    Square from = popLsb(knights);
-    addNormalMovesToList(from, get_knight_attacks(from) & ourTargets, moveList);
-  }
-
-  Bitboard bishops = ourPieces & pos.pieces(BISHOP, QUEEN);
-  while (bishops) {
-    Square from = popLsb(bishops);
-    Bitboard attacks = get_bishop_attacks(from, allPieces) & ourTargets;
-    if (pinned & from)
-      attacks &= LineBB[ourKing][from];
-    addNormalMovesToList(from, attacks, moveList);
-  }
-
-  Bitboard rooks = ourPieces & pos.pieces(ROOK, QUEEN);
-  while (rooks) {
-    Square from = popLsb(rooks);
-    Bitboard attacks = get_rook_attacks(from, allPieces) & ourTargets;
-    if (pinned & from)
-      attacks &= LineBB[ourKing][from];
-    addNormalMovesToList(from, attacks, moveList);
-  }
-
-  addNormalMovesToList(ourKing, get_king_attacks(ourKing) & ~ourPieces, moveList);
-}
-
 void getPseudoLegalMoves(const Position& pos, MoveList* moveList) {
-  if (pos.checkers) {
-    getMovesInCheck(pos, moveList);
-    return;
-  }
   const Color us = pos.sideToMove, them = ~us;
+
+  const Square ourKing = pos.kingSquare(us);
+
   const Bitboard ourPieces = pos.pieces(us);
   const Bitboard theirPieces = pos.pieces(them);
-
-  const Bitboard pinned = pos.blockersForKing[us] & ourPieces;
-    
-  const Square ourKing = pos.kingSquare(us);
-  const Bitboard ourTargets = ~ourPieces;
-  
   const Bitboard allPieces = ourPieces | theirPieces;
 
+  Bitboard targets = ~ourPieces;
+  Bitboard kingTargets = targets;
+  Bitboard promoTargets = ~ourPieces;
+
+  if (pos.checkers) {
+    if (more_than_one(pos.checkers)) {
+      addNormalMovesToList(ourKing, get_king_attacks(ourKing) & targets, moveList);
+      return;
+    }
+
+    targets &= BetweenBB[ourKing][getLsb(pos.checkers)];
+    promoTargets &= BetweenBB[ourKing][getLsb(pos.checkers)];
+  }
+
+  const Bitboard pinned = pos.blockersForKing[us] & ourPieces;
+
   if (us == WHITE) {
-    getWhitePawnMoves(pos, ourTargets, moveList);
-    getWhitePawnPromotions(pos, ourTargets, moveList);
+    getWhitePawnMoves(pos, targets, moveList);
+    getWhitePawnPromotions(pos, promoTargets, moveList);
   }
   else {
-    getBlackPawnMoves(pos, ourTargets, moveList);
-    getBlackPawnPromotions(pos, ourTargets, moveList);
+    getBlackPawnMoves(pos, targets, moveList);
+    getBlackPawnPromotions(pos, promoTargets, moveList);
+  }
+
+  if (!pos.checkers) {
+    if (us == WHITE) {
+      if (pos.castlingRights & WHITE_OO) {
+        if (!(CASTLING_PATH[WHITE_OO] & allPieces)) {
+          moveList->add(createCastlingMove(WHITE_OO));
+        }
+      }
+      if (pos.castlingRights & WHITE_OOO) {
+        if (!(CASTLING_PATH[WHITE_OOO] & allPieces)) {
+          moveList->add(createCastlingMove(WHITE_OOO));
+        }
+      }
+    }
+    else {
+      if (pos.castlingRights & BLACK_OO) {
+        if (!(CASTLING_PATH[BLACK_OO] & allPieces)) {
+          moveList->add(createCastlingMove(BLACK_OO));
+        }
+      }
+      if (pos.castlingRights & BLACK_OOO) {
+        if (!(CASTLING_PATH[BLACK_OOO] & allPieces)) {
+          moveList->add(createCastlingMove(BLACK_OOO));
+        }
+      }
+    }
   }
 
   Bitboard knights = ourPieces & pos.pieces(KNIGHT) & ~pinned;
   while (knights) {
     Square from = popLsb(knights);
-    addNormalMovesToList(from, get_knight_attacks(from) & ourTargets, moveList);
-  }
-
-  if (us == WHITE) {
-    if (pos.castlingRights & WHITE_OO) {
-      if (!(CASTLING_PATH[WHITE_OO] & allPieces)) {
-        moveList->add(createCastlingMove(WHITE_OO));
-      }
-    }
-    if (pos.castlingRights & WHITE_OOO) {
-      if (!(CASTLING_PATH[WHITE_OOO] & allPieces)) {
-        moveList->add(createCastlingMove(WHITE_OOO));
-      }
-    }
-  }
-  else {
-    if (pos.castlingRights & BLACK_OO) {
-      if (!(CASTLING_PATH[BLACK_OO] & allPieces)) {
-        moveList->add(createCastlingMove(BLACK_OO));
-      }
-    }
-    if (pos.castlingRights & BLACK_OOO) {
-      if (!(CASTLING_PATH[BLACK_OOO] & allPieces)) {
-        moveList->add(createCastlingMove(BLACK_OOO));
-      }
-    }
+    addNormalMovesToList(from, get_knight_attacks(from) & targets, moveList);
   }
 
   Bitboard bishops = ourPieces & pos.pieces(BISHOP, QUEEN);
   while (bishops) {
     Square from = popLsb(bishops);
-    Bitboard attacks = get_bishop_attacks(from, allPieces) & ourTargets;
+    Bitboard attacks = get_bishop_attacks(from, allPieces) & targets;
     if (pinned & from)
       attacks &= LineBB[ourKing][from];
     addNormalMovesToList(from, attacks, moveList);
@@ -264,13 +222,13 @@ void getPseudoLegalMoves(const Position& pos, MoveList* moveList) {
   Bitboard rooks = ourPieces & pos.pieces(ROOK, QUEEN);
   while (rooks) {
     Square from = popLsb(rooks);
-    Bitboard attacks = get_rook_attacks(from, allPieces) & ourTargets;
+    Bitboard attacks = get_rook_attacks(from, allPieces) & targets;
     if (pinned & from)
       attacks &= LineBB[ourKing][from];
     addNormalMovesToList(from, attacks, moveList);
   }
 
-  addNormalMovesToList(ourKing, get_king_attacks(ourKing) & ourTargets, moveList);
+  addNormalMovesToList(ourKing, get_king_attacks(ourKing) & kingTargets, moveList);
 }
 
 void getStageMoves(const Position& pos, bool quiets, MoveList* moveList) {
