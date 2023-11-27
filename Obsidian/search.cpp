@@ -36,7 +36,7 @@ namespace Search {
   DEFINE_PARAM(NmpEvalDiv, 200, 100, 400);
   DEFINE_PARAM(NmpEvalDivMin, 3, 2, 6);
 
-  DEFINE_PARAM(LmpBase, 6, 3, 9);
+  DEFINE_PARAM(LmpBase, 10, 3, 9);
   DEFINE_PARAM(LmpQuad, 1, 1, 3);
 
   DEFINE_PARAM(PvsQuietSeeMargin, -87, -300, 0);
@@ -727,19 +727,22 @@ namespace Search {
             continue;
         }
 
-        if (isQuiet && !skipQuiets) {
-
-          int lmrRed = lmrTable[depth][playedMoves + 1] - PvNode + !improving;
-          int lmrDepth = std::max(0, depth - lmrRed);
+        if (!skipQuiets) {
 
           // Late move pruning. At low depths, only visit a few quiet moves
-          if (quietCount > (LmpQuad * depth * depth + LmpBase) / (2 - improving))
+          if (playedMoves > (LmpQuad * depth * depth + LmpBase) / (2 - improving))
             skipQuiets = true;
 
-          // Futility pruning (~8 Elo). If our evaluation is far below alpha,
-          // only visit the first quiet move
-          if (lmrDepth <= FpMaxDepth && !wasInCheck && eval + FpBase + FpDepthMul * lmrDepth <= alpha)
-            skipQuiets = true;
+          if (isQuiet) {
+
+            int lmrRed = lmrTable[depth][playedMoves + 1] - PvNode + !improving;
+            int lmrDepth = std::max(0, depth - lmrRed);
+
+            // Futility pruning (~8 Elo). If our evaluation is far below alpha,
+            // only visit the first quiet move
+            if (lmrDepth <= FpMaxDepth && !wasInCheck && eval + FpBase + FpDepthMul * lmrDepth <= alpha)
+              skipQuiets = true;
+          }
         }
       }
 
