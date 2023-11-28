@@ -165,7 +165,7 @@ bool Position::isPseudoLegal(Move move) const {
   return get_piece_attacks(ptypeOf(pc), from, pieces()) & to;
 }
 
-bool Position::isLegal(Move move) {
+bool Position::isLegal(Move move) const {
 
   if (getMoveType(move) == MT_CASTLING) {
     switch (getCastlingType(move))
@@ -685,7 +685,7 @@ bool Position::see_ge(Move m, Score threshold) const {
   return bool(res);
 }
 
-void Position::updateAccumulator(NNUE::Accumulator& acc) {
+void Position::updateAccumulator(NNUE::Accumulator& acc) const {
   acc.reset();
 
   Bitboard b0 = pieces();

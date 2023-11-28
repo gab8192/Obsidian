@@ -153,7 +153,7 @@ struct alignas(32) Position {
 
   bool isPseudoLegal(Move move) const;
 
-  bool isLegal(Move move);
+  bool isLegal(Move move) const;
 
   void doNullMove();
 
@@ -168,7 +168,7 @@ struct alignas(32) Position {
 
   string toFenString() const;
 
-  void updateAccumulator(NNUE::Accumulator& acc);
+  void updateAccumulator(NNUE::Accumulator& acc) const;
 };
 
 std::ostream& operator<<(std::ostream& stream, Position& sqr);
