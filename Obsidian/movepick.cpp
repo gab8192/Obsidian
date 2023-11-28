@@ -10,7 +10,7 @@ MovePicker::MovePicker(
   ttMove(_ttMove),
   mainHist(_mainHist), capHist(_capHist), 
   ss(_ss),
-  killerFound(false), counterFound(false), capIndex(0), quietIndex(0)
+  capIndex(0), quietIndex(0)
 {
   this->stage = _ttMove ? TT_MOVE : GEN_CAPTURES;
 
@@ -62,18 +62,8 @@ void MovePicker::scoreQuiets() {
   while (i < quiets.size()) {
     Move move = quiets[i].move;
 
-    if (move == ttMove) {
+    if (move == ttMove || move == killerMove || move == counterMove) {
       quiets.remove(i);
-      continue;
-    }
-    else if (move == killerMove) {
-      quiets.remove(i);
-      killerFound = true;
-      continue;
-    }
-    else if (move == counterMove) {
-      quiets.remove(i);
-      counterFound = true;
       continue;
     }
 
@@ -160,6 +150,32 @@ Move MovePicker::nextMove(bool skipQuiets, MpStage* outStage) {
     ++stage;
     [[fallthrough]];
   }
+  case KILLER:
+  {
+    if (skipQuiets) {
+      stage = BAD_CAPTURES;
+      goto select;
+    }
+    ++stage;
+    if (pos.isQuiet(killerMove) && pos.isPseudoLegal(killerMove)) {
+      *outStage = KILLER;
+      return killerMove;
+    }
+    [[fallthrough]];
+  }
+  case COUNTER:
+  {
+    if (skipQuiets) {
+      stage = BAD_CAPTURES;
+      goto select;
+    }
+    ++stage;
+    if (pos.isQuiet(counterMove) && pos.isPseudoLegal(counterMove)) {
+      *outStage = COUNTER;
+      return counterMove;
+    }
+    [[fallthrough]];
+  }
   case GEN_QUIETS: 
   {
     if (skipQuiets) {
@@ -171,32 +187,6 @@ Move MovePicker::nextMove(bool skipQuiets, MpStage* outStage) {
     scoreQuiets();
 
     ++stage;
-    [[fallthrough]];
-  }
-  case KILLER: 
-  {
-    if (skipQuiets) {
-      stage = BAD_CAPTURES;
-      goto select;
-    }
-    ++stage;
-    if (killerFound) {
-      *outStage = KILLER;
-      return killerMove;
-    }
-    [[fallthrough]];
-  }
-  case COUNTER: 
-  {
-    if (skipQuiets) {
-      stage = BAD_CAPTURES;
-      goto select;
-    }
-    ++stage;
-    if (counterFound) {
-      *outStage = COUNTER;
-      return counterMove;
-    }
     [[fallthrough]];
   }
   case QUIETS: 

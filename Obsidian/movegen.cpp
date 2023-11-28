@@ -101,7 +101,6 @@ void getBlackPawnPromotions(const Position& pos, Bitboard targets, MoveList* rec
   Bitboard captureEast = ((bPawns & ~FILE_HBB) >> 7) & pos.pieces(WHITE) & targets;
   Bitboard captureWest = ((bPawns & ~FILE_ABB) >> 9) & pos.pieces(WHITE) & targets;
 
-  
   while (captureEast) {
     Square dest = popLsb(captureEast);
     addPromotionTypes(dest + 7, dest, receiver);
@@ -128,7 +127,6 @@ void getWhitePawnPromotions(const Position& pos, Bitboard targets, MoveList* rec
   Bitboard captureEast = ((wPawns & ~FILE_HBB) << 9) & pos.pieces(BLACK) & targets;
   Bitboard captureWest = ((wPawns & ~FILE_ABB) << 7) & pos.pieces(BLACK) & targets;
 
-  
   while (captureEast) {
     Square dest = popLsb(captureEast);
     addPromotionTypes(dest - 9, dest, receiver);
@@ -152,9 +150,7 @@ void getPseudoLegalMoves(const Position& pos, MoveList* moveList) {
   const Bitboard theirPieces = pos.pieces(them);
   const Bitboard allPieces = ourPieces | theirPieces;
 
-  Bitboard targets = ~ourPieces;
-  Bitboard kingTargets = targets;
-  Bitboard promoTargets = ~ourPieces;
+  Bitboard targets      = ~ourPieces;
 
   if (pos.checkers) {
     if (more_than_one(pos.checkers)) {
@@ -162,22 +158,19 @@ void getPseudoLegalMoves(const Position& pos, MoveList* moveList) {
       return;
     }
 
-    targets &= BetweenBB[ourKing][getLsb(pos.checkers)];
-    promoTargets &= BetweenBB[ourKing][getLsb(pos.checkers)];
+    targets      &= BetweenBB[ourKing][getLsb(pos.checkers)];
   }
 
   const Bitboard pinned = pos.blockersForKing[us] & ourPieces;
 
   if (us == WHITE) {
     getWhitePawnMoves(pos, targets, moveList);
-    getWhitePawnPromotions(pos, promoTargets, moveList);
+    getWhitePawnPromotions(pos, targets, moveList);
   }
   else {
     getBlackPawnMoves(pos, targets, moveList);
-    getBlackPawnPromotions(pos, promoTargets, moveList);
+    getBlackPawnPromotions(pos, targets, moveList);
   }
-
-  
 
   Bitboard knights = ourPieces & pos.pieces(KNIGHT) & ~pinned;
   while (knights) {
@@ -230,7 +223,7 @@ void getPseudoLegalMoves(const Position& pos, MoveList* moveList) {
     addNormalMovesToList(from, attacks, moveList);
   }
 
-  addNormalMovesToList(ourKing, get_king_attacks(ourKing) & kingTargets, moveList);
+  addNormalMovesToList(ourKing, get_king_attacks(ourKing) & ~ourPieces, moveList);
 }
 
 void getStageMoves(const Position& pos, bool quiets, MoveList* moveList) {

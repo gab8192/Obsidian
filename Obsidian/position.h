@@ -141,7 +141,7 @@ struct alignas(32) Position {
     acc.moveFeature(from, to, pc);
   }
 
-  inline bool isQuiet(Move move) {
+  inline bool isQuiet(Move move) const {
     MoveType mt = getMoveType(move);
     if (mt == MT_PROMOTION || mt == MT_EN_PASSANT)
       return false;
@@ -150,6 +150,8 @@ struct alignas(32) Position {
 
     return board[getMoveDest(move)] == NO_PIECE;
   }
+
+  bool isPseudoLegal(Move move) const;
 
   bool isLegal(Move move);
 
