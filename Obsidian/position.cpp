@@ -113,18 +113,25 @@ bool Position::isPseudoLegal(Move move) const {
   if (pc == NO_PIECE || colorOf(pc) != us)
     return false;
 
+  if (more_than_one(checkers))
+    return ptypeOf(pc) == KING && (get_king_attacks(from) & to & ~pieces(us));
+
   if (moveType == MT_CASTLING) {
     CastlingRights ct = getCastlingType(move);
     return
-      !checkers
-      && (castlingRights & ct)
-      && !(CASTLING_PATH[ct] & allPieces);
+             !checkers
+          && (castlingRights & ct)
+          && !(CASTLING_PATH[ct] & allPieces);
+  }
+  else if (moveType == MT_EN_PASSANT) {
+    return 
+             epSquare != SQ_NONE
+          && ptypeOf(pc) == PAWN
+          && (get_pawn_attacks(epSquare, them) & from);
   }
 
   Bitboard targets = ~pieces(us);
   if (ptypeOf(pc) != KING) {
-    if (more_than_one(checkers))
-      return false;
     if (checkers)
       targets &= BetweenBB[kingSquare(us)][getLsb(checkers)];
     if (blockersForKing[us] & from)
@@ -135,8 +142,6 @@ bool Position::isPseudoLegal(Move move) const {
     return false;
 
   if (ptypeOf(pc) == PAWN) {
-    if (moveType == MT_EN_PASSANT)
-      return epSquare != SQ_NONE && (get_pawn_attacks(epSquare, them) & from);
 
     const Bitboard sqBB = square_bb(from);
     Bitboard legalTo;
