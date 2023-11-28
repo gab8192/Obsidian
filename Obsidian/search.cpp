@@ -856,6 +856,9 @@ namespace Search {
         }
       }
     }
+    
+    if (searchState == STOP_PENDING)
+      return makeDrawScore();
 
     if (!foundLegalMove) {
       if (excludedMove) 
