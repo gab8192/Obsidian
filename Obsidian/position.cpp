@@ -101,11 +101,13 @@ void Position::updateKey() {
 }
 
 bool Position::isPseudoLegal(Move move) {
+  const Color us = sideToMove, them = ~us;
   const MoveType moveType = getMoveType(move);
+  const Bitboard allPieces = pieces();
   const Square from = getMoveSrc(move), to = getMoveDest(move);
   const Piece pc = board[from];
 
-  if ( pc == NO_PIECE || colorOf(pc) != sideToMove)
+  if (pc == NO_PIECE || colorOf(pc) != us)
     return false;
 
   if (moveType == MT_CASTLING) {
@@ -113,33 +115,46 @@ bool Position::isPseudoLegal(Move move) {
     return
       !checkers
       && (castlingRights & ct)
-      && !(CASTLING_PATH[ct] & pieces());
+      && !(CASTLING_PATH[ct] & allPieces);
   }
+
+  Bitboard targets = ~pieces(us);
+  if (ptypeOf(pc) != KING) {
+    if (more_than_one(checkers))
+      return false;
+    if (checkers)
+      targets &= BetweenBB[kingSquare(us)][getLsb(checkers)];
+    if (blockersForKing[us] & from)
+      targets &= LineBB[kingSquare(us)][from];
+  }
+
+  if (!(targets & to))
+    return false;
 
   if (ptypeOf(pc) == PAWN) {
     if (moveType == MT_EN_PASSANT)
-      return epSquare != SQ_NONE && (get_pawn_attacks(epSquare, ~sideToMove) & from);
+      return epSquare != SQ_NONE && (get_pawn_attacks(epSquare, them) & from);
 
-    Bitboard toBB = 0;
+    const Bitboard sqBB = square_bb(from);
+    Bitboard legalTo;
 
-    if (sideToMove == WHITE) {
-      toBB |= 
+    if (us == WHITE) {
+      legalTo = (sqBB << 8) & ~allPieces;
+      legalTo |= ((legalTo & Rank3BB) << 8) & ~allPieces;
+      legalTo |= (((sqBB & ~FILE_HBB) << 9) | ((sqBB & ~FILE_ABB) << 7)) & pieces(BLACK);
     }
     else {
-
+      legalTo = (sqBB >> 8) & ~allPieces;
+      legalTo |= ((legalTo & Rank6BB) >> 8) & ~allPieces;
+      legalTo |= (((sqBB & ~FILE_HBB) >> 7) | ((sqBB & ~FILE_ABB) >> 9)) & pieces(WHITE);
     }
+    if (moveType != MT_PROMOTION)
+      legalTo &= ~(Rank1BB | Rank8BB);
+
+    return legalTo & to;
   }
 
-  switch (getMoveType(move))
-  {
-  case MT_NORMAL: {
-    break;
-  }
-  case MT_PROMOTION: {
-    break;
-  }
-  }
-  return false;
+  return get_piece_attacks(ptypeOf(pc), from, pieces()) & to;
 }
 
 bool Position::isLegal(Move move) {
