@@ -1180,6 +1180,8 @@ namespace Search {
     if (searchSettings.depth == 0)
       searchSettings.depth = MAX_PLY;
 
+    clock_t startTimeForBench = timeMillis();
+
     // Setup root moves
     rootMoves = MoveList();
     {
@@ -1318,7 +1320,7 @@ namespace Search {
   bestMoveDecided:
 
     lastBestMove = bestMove;
-    lastSearchTimeSpan = elapsedTime();
+    lastSearchTimeSpan = timeMillis() - startTimeForBench;
 
     if (printingEnabled)
       std::cout << "bestmove " << UCI::move(bestMove) << endl;
