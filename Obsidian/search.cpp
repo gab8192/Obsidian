@@ -697,7 +697,6 @@ namespace Search {
     MpStage moveStage;
 
     while (move = movePicker.nextMove(skipQuiets, & moveStage)) {
-
       if (move == excludedMove)
         continue;
 

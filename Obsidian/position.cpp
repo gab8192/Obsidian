@@ -100,7 +100,10 @@ void Position::updateKey() {
   key = newKey;
 }
 
-bool Position::isPseudoLegal(Move move) {
+bool Position::isPseudoLegal(Move move) const {
+  if (move == MOVE_NONE)
+    return false;
+
   const Color us = sideToMove, them = ~us;
   const MoveType moveType = getMoveType(move);
   const Bitboard allPieces = pieces();

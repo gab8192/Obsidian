@@ -150,7 +150,7 @@ Move MovePicker::nextMove(bool skipQuiets, MpStage* outStage) {
     ++stage;
     [[fallthrough]];
   }
-  case KILLER: 
+  case KILLER:
   {
     if (skipQuiets) {
       stage = BAD_CAPTURES;
@@ -163,7 +163,7 @@ Move MovePicker::nextMove(bool skipQuiets, MpStage* outStage) {
     }
     [[fallthrough]];
   }
-  case COUNTER: 
+  case COUNTER:
   {
     if (skipQuiets) {
       stage = BAD_CAPTURES;
@@ -176,7 +176,7 @@ Move MovePicker::nextMove(bool skipQuiets, MpStage* outStage) {
     }
     [[fallthrough]];
   }
-  case GEN_QUIETS:
+  case GEN_QUIETS: 
   {
     if (skipQuiets) {
       stage = BAD_CAPTURES;
