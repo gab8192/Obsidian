@@ -1239,6 +1239,7 @@ namespace Search {
         continue;
 
       clock_t elapsed = elapsedTime();
+      clock_t elapsedStrict = timeMillis() - startTimeForBench;
 
       if (!doingBench) {
         ostringstream infoStr;
@@ -1247,7 +1248,7 @@ namespace Search {
           << " depth " << rootDepth
           << " score " << UCI::score(score)
           << " nodes " << Threads::totalNodes()
-          << " nps " << (Threads::totalNodes() * 1000ULL) / std::max(elapsed, 1L)
+          << " nps " << (Threads::totalNodes() * 1000ULL) / std::max(elapsedStrict, 1L)
           << " time " << elapsed
           << " pv " << getPvString(ss);
         cout << infoStr.str() << endl;
@@ -1297,11 +1298,13 @@ namespace Search {
 
   bestMoveDecided:
 
-    lastBestMove = bestMove;
-    lastSearchTimeSpan = timeMillis() - startTimeForBench;
+    if (this == Threads::mainThread()) {
+      lastBestMove = bestMove;
+      lastSearchTimeSpan = timeMillis() - startTimeForBench;
 
-    if (!doingBench)
-      std::cout << "bestmove " << UCI::move(bestMove) << endl;
+      if (!doingBench)
+        std::cout << "bestmove " << UCI::move(bestMove) << endl;
+    }
   }
 
   void SearchThread::idleLoop() {
@@ -1317,7 +1320,8 @@ namespace Search {
 
       this->running = true;
       startSearch();
-      Threads::onSearchComplete();
+      if (this == Threads::mainThread())
+        Threads::onSearchComplete();
       this->running = false;
     }
   }

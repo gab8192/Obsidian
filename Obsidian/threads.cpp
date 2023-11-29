@@ -24,6 +24,9 @@ namespace Threads {
   }
 
   void waitForSearch() {
+    while (searchState != IDLE)
+      sleep(1);
+
     for (int i = 0; i < searchThreads.size(); i++)
       while (searchThreads[i]->isRunning())
         sleep(1);
