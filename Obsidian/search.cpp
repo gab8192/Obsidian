@@ -15,8 +15,6 @@
 #include <immintrin.h>
 #endif
 
-using namespace Threads;
-
 namespace Search {
 
   DEFINE_PARAM(LmrBase, 21, -75, 125);
@@ -95,7 +93,7 @@ namespace Search {
 
   SearchThread::SearchThread() :
     thread(std::thread(&SearchThread::idleLoop, this)),
-    searchState(Search::IDLE), stopThread(false)
+    running(false), stopThread(false)
   {
     resetHistories();
   }
@@ -141,7 +139,7 @@ namespace Search {
   template int64_t perft<true>(Position&, int);
 
   clock_t elapsedTime() {
-    return timeMillis() - searchSettings.startTime;
+    return timeMillis() - Threads::searchSettings.startTime;
   }
 
   int stat_bonus(int d) {
@@ -149,19 +147,19 @@ namespace Search {
   }
 
   bool SearchThread::usedMostOfTime() {
-    if (searchSettings.movetime) {
+    if (Threads::searchSettings.movetime) {
 
-      clock_t timeLimit = searchSettings.movetime;
+      clock_t timeLimit = Threads::searchSettings.movetime;
 
       return elapsedTime() >= (timeLimit - 100);
     }
-    else if (searchSettings.hasTimeLimit()) {
+    else if (Threads::searchSettings.hasTimeLimit()) {
 
-      clock_t timeLimit = searchSettings.time[rootColor];
+      clock_t timeLimit = Threads::searchSettings.time[rootColor];
 
       // never use more than 70~80 % of our time
       double d = 0.7;
-      if (searchSettings.inc[rootColor])
+      if (Threads::searchSettings.inc[rootColor])
         d += 0.1;
 
       return elapsedTime() >= (d * timeLimit - 10);
@@ -173,9 +171,9 @@ namespace Search {
     nodesSearched++;
 
     // Check time
-    if ((nodesSearched % 32768) == 0)
+    if (this == Threads::mainThread() && (nodesSearched % 32768) == 0)
       if (usedMostOfTime())
-        searchState = STOP_PENDING;
+        Threads::stopSearch(false);
 
     ss->mContHistory = &contHistory[false][0];
     ss->playedMove = MOVE_NONE;
@@ -195,9 +193,9 @@ namespace Search {
       TT::prefetch(pos.keyAfter(move));
 
     // Check time
-    if ((nodesSearched % 32768) == 0)
+    if (this == Threads::mainThread() && (nodesSearched % 32768) == 0)
       if (usedMostOfTime())
-        searchState = STOP_PENDING;
+        Threads::stopSearch(false);
 
     bool isCap = pos.board[getMoveDest(move)] != NO_PIECE;
     ss->mContHistory = &contHistory[isCap][pieceTo(pos, move)];
@@ -515,7 +513,7 @@ namespace Search {
   Score SearchThread::negaMax(Position& position, Score alpha, Score beta, int depth, bool cutNode, SearchInfo* ss) {
     constexpr bool PvNode = nodeType != NonPV;
 
-    if (searchState != RUNNING)
+    if (Threads::getSearchState() != RUNNING)
       return makeDrawScore();
 
     // init node
@@ -834,7 +832,7 @@ namespace Search {
       }
     }
     
-    if (searchState != RUNNING)
+    if (Threads::getSearchState() != RUNNING)
       return makeDrawScore();
 
     if (!foundLegalMove) {
@@ -1118,17 +1116,15 @@ namespace Search {
 
   void SearchThread::startSearch() {
 
-    const bool shouldPrint = this == mainThread() && !doingBench;
-    
-    Position rootPos = searchSettings.position;
+    Position rootPos = Threads::searchSettings.position;
     rootPos.updateAccumulator(accumulatorStack[0]);
 
     Move bestMove;
 
     clock_t optimumTime;
 
-    if (searchSettings.hasTimeLimit())
-      optimumTime = TimeMan::calcOptimumTime(searchSettings, rootPos.sideToMove);
+    if (Threads::searchSettings.hasTimeLimit())
+      optimumTime = TimeMan::calcOptimumTime(Threads::searchSettings, rootPos.sideToMove);
 
     int searchStability = 0;
 
@@ -1156,8 +1152,8 @@ namespace Search {
 
     SearchInfo* ss = &searchStack[SsOffset];
 
-    if (searchSettings.depth == 0)
-      searchSettings.depth = MAX_PLY;
+    if (Threads::searchSettings.depth == 0)
+      Threads::searchSettings.depth = MAX_PLY;
 
     clock_t startTimeForBench = timeMillis();
 
@@ -1179,9 +1175,9 @@ namespace Search {
       goto bestMoveDecided;
     }
 
-    for (rootDepth = 1; rootDepth <= searchSettings.depth; rootDepth++) {
+    for (rootDepth = 1; rootDepth <= Threads::searchSettings.depth; rootDepth++) {
 
-      if (searchSettings.nodes && nodesSearched >= searchSettings.nodes)
+      if (Threads::searchSettings.nodes && nodesSearched >= Threads::searchSettings.nodes)
         break;
 
       for (int i = 0; i < rootMoves.size(); i++)
@@ -1200,10 +1196,10 @@ namespace Search {
 
           score = rootNegaMax(rootPos, alpha, beta, adjustedDepth, ss);
 
-          if (searchState != RUNNING)
+          if (Threads::getSearchState() != RUNNING)
             goto bestMoveDecided;
 
-          if (searchSettings.nodes && nodesSearched >= searchSettings.nodes)
+          if (Threads::searchSettings.nodes && nodesSearched >= Threads::searchSettings.nodes)
             break; // only break, in order to print info about the partial search we've done
 
           if (score >= CHECKMATE_IN_MAX_PLY) {
@@ -1233,31 +1229,29 @@ namespace Search {
       }
 
       // It's super important to not update the best move if the search was abruptly stopped
-      if (searchState != RUNNING)
+      if (Threads::getSearchState() != RUNNING)
         goto bestMoveDecided;
 
       iterDeepening[rootDepth].score = score;
       iterDeepening[rootDepth].bestMove = bestMove = ss->pv[0];
 
+      if (this != Threads::mainThread())
+        continue;
+
       clock_t elapsed = elapsedTime();
 
-      if (shouldPrint) {
+      if (!doingBench) {
         ostringstream infoStr;
         infoStr
           << "info"
           << " depth " << rootDepth
           << " score " << UCI::score(score)
-          << " nodes " << totalNodes()
-          << " nps " << (totalNodes() * 1000ULL) / std::max(int(elapsed), 1)
+          << " nodes " << Threads::totalNodes()
+          << " nps " << (Threads::totalNodes() * 1000ULL) / std::max(elapsed, 1L)
           << " time " << elapsed
           << " pv " << getPvString(ss);
         cout << infoStr.str() << endl;
       }
-
-      if (bestMove == iterDeepening[rootDepth - 1].bestMove)
-        searchStability = std::min(searchStability + 1, 8);
-      else
-        searchStability = 0;
 
       // Stop searching if we can deliver a forced checkmate.
       // No need to stop if we are getting checkmated, instead keep searching,
@@ -1267,11 +1261,16 @@ namespace Search {
 
       // When playing in movetime mode, stop if we've used 75% time of movetime,
       // because we will probably not hit the next depth in time
-      if (searchSettings.movetime)
-        if (elapsedTime() >= (searchSettings.movetime * 3) / 4)
+      if (Threads::searchSettings.movetime)
+        if (elapsedTime() >= (Threads::searchSettings.movetime * 3) / 4)
           goto bestMoveDecided;
 
-      if (searchSettings.hasTimeLimit() && rootDepth >= 4) {
+      if (bestMove == iterDeepening[rootDepth - 1].bestMove)
+        searchStability = std::min(searchStability + 1, 8);
+      else
+        searchStability = 0;
+
+      if (Threads::searchSettings.hasTimeLimit() && rootDepth >= 4) {
 
         // If the position is a dead draw, stop searching
         if (rootDepth >= 40 && abs(score) < 5) {
@@ -1301,23 +1300,25 @@ namespace Search {
     lastBestMove = bestMove;
     lastSearchTimeSpan = timeMillis() - startTimeForBench;
 
-    if (shouldPrint)
+    if (!doingBench)
       std::cout << "bestmove " << UCI::move(bestMove) << endl;
-
-    searchState = IDLE;
   }
 
   void SearchThread::idleLoop() {
     while (true) {
 
-      while (searchState != RUNNING) {
+      while (Threads::getSearchState() != RUNNING) {
 
         if (stopThread)
           return;
 
         sleep(1);
       }
+
+      this->running = true;
       startSearch();
+      Threads::onSearchComplete();
+      this->running = false;
     }
   }
 }

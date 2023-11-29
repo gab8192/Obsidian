@@ -14,13 +14,17 @@ namespace Threads {
 
   SearchThread* mainThread();
 
+  State getSearchState();
+
+  void onSearchComplete();
+
   uint64_t totalNodes();
 
   void waitForSearch();
 
   void startSearch();
 
-  void stopSearch();
+  void stopSearch(bool wait = true);
 
   void setThreadCount(int threadCount);
 }

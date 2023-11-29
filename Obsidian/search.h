@@ -12,7 +12,7 @@ namespace Search {
   extern bool doingBench;
 
   enum State {
-    IDLE, RUNNING, STOP_PENDING
+    IDLE, RUNNING, STOPPING
   };
 
   struct Settings {
@@ -67,16 +67,21 @@ namespace Search {
 
   public:
 
-    volatile Search::State searchState;
     volatile bool stopThread;
     std::thread thread;
-
-    void resetHistories();
     uint64_t nodesSearched;
 
     SearchThread();
+
+    void resetHistories();
+
+    inline bool isRunning() {
+      return running;
+    }
     
   private:
+
+    volatile bool running;
     
     Color rootColor;
 
