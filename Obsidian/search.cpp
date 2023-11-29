@@ -1105,10 +1105,6 @@ namespace Search {
     return output.str();
   }
 
-  constexpr int SsOffset = 4;
-
-  SearchInfo searchStack[MAX_PLY + SsOffset];
-
   DEFINE_PARAM(tm0, 168, 0, 400);
   DEFINE_PARAM(tm1, 56, 0, 200);
   DEFINE_PARAM(tm2, 127, 0, 300);

@@ -63,6 +63,10 @@ namespace Search {
     PV, NonPV
   };
 
+  // A sort of header of the search stack, so that plies behind 0 are accessible and
+  // it's easier to determine conthist score, improving, ...
+  constexpr int SsOffset = 4;
+
   class SearchThread {
 
   public:
@@ -91,6 +95,7 @@ namespace Search {
 
     Key keyStack[MAX_PLY];
     NNUE::Accumulator accumulatorStack[MAX_PLY];
+    SearchInfo searchStack[MAX_PLY + SsOffset];
 
     MoveList rootMoves;
 
