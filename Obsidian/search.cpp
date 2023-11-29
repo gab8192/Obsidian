@@ -515,7 +515,7 @@ namespace Search {
   Score SearchThread::negaMax(Position& position, Score alpha, Score beta, int depth, bool cutNode, SearchInfo* ss) {
     constexpr bool PvNode = nodeType != NonPV;
 
-    if (searchState == STOP_PENDING)
+    if (searchState != RUNNING)
       return makeDrawScore();
 
     // init node
@@ -834,7 +834,7 @@ namespace Search {
       }
     }
     
-    if (searchState == STOP_PENDING)
+    if (searchState != RUNNING)
       return makeDrawScore();
 
     if (!foundLegalMove) {
@@ -885,9 +885,6 @@ namespace Search {
   }
 
   Score SearchThread::rootNegaMax(Position& position, Score alpha, Score beta, int depth, SearchInfo* ss) {
-
-    if (searchState == STOP_PENDING)
-      return makeDrawScore();
 
     // init node
     ss->pvLength = ply;
@@ -1203,7 +1200,7 @@ namespace Search {
 
           score = rootNegaMax(rootPos, alpha, beta, adjustedDepth, ss);
 
-          if (searchState == STOP_PENDING)
+          if (searchState != RUNNING)
             goto bestMoveDecided;
 
           if (searchSettings.nodes && nodesSearched >= searchSettings.nodes)
@@ -1236,7 +1233,7 @@ namespace Search {
       }
 
       // It's super important to not update the best move if the search was abruptly stopped
-      if (searchState == STOP_PENDING)
+      if (searchState != RUNNING)
         goto bestMoveDecided;
 
       iterDeepening[rootDepth].score = score;
