@@ -20,12 +20,9 @@ namespace TimeMan {
     clock_t timeLeft = std::max(clock_t(1),
       settings.time[us] + settings.inc[us] * (mtg - 1) - 10 * (2 + mtg));
 
-    double optExtra = std::clamp(1.0 + 12.0 * settings.inc[us] / settings.time[us], 1.0, 1.12);
-
     if (settings.movestogo == 0) {
       optScale = std::min(0.024,
-        0.2 * settings.time[us] / double(timeLeft))
-        * optExtra;
+        0.2 * settings.time[us] / double(timeLeft));
     }
     else {
       optScale = std::min(0.966 / mtg,
