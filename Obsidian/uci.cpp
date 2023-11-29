@@ -6,6 +6,7 @@
 #include "nnue.h"
 #include "search.h"
 #include "threads.h"
+#include "tt.h"
 #include "tuning.h"
 
 #include <cassert>
@@ -61,14 +62,22 @@ namespace {
     }
   }
 
+  void newGame() {
+
+    TT::clear();
+
+    for (SearchThread* st : Threads::searchThreads)
+      st->resetHistories();
+  }
+
   void bench() {
     constexpr int posCount = sizeof(BenchPositions) / sizeof(char*);
 
+    setThreadCount(1);
+
     uint64_t totalNodes = 0;
-
     clock_t elapsed = 0;
-
-    Search::printingEnabled = false;
+    Search::doingBench = true;
 
     NNUE::Accumulator tempAccumulator;
 
@@ -80,11 +89,11 @@ namespace {
       istringstream posStr(BenchPositions[i]);
       position(searchSettings.position, tempAccumulator, posStr);
 
-      Search::clear();
+      newGame();
 
       // Start search
       searchSettings.startTime = timeMillis();
-      Threads::searchState = Search::RUNNING;
+      startSearch();
 
       // And wait for it to finish..
       Threads::waitForSearch();
@@ -94,11 +103,11 @@ namespace {
 
         elapsed += Search::lastSearchTimeSpan;
 
-        totalNodes += Search::nodesSearched;
+        totalNodes += mainThread()->nodesSearched;
       }
     }
 
-    Search::printingEnabled = true;
+    Search::doingBench = true;
 
     cout << totalNodes << " nodes " << (totalNodes * 1000 / elapsed) << " nps" << endl;
   }
@@ -172,7 +181,7 @@ namespace {
       return;
     }
     else {
-      Threads::searchState = Search::RUNNING;
+      Threads::startSearch();
     }
   }
 
@@ -202,9 +211,7 @@ void UCI::loop(int argc, char* argv[]) {
     if (token == "quit"
       || token == "stop") {
 
-      if (searchState == Search::RUNNING) {
-        searchState = Search::STOP_PENDING;
-      }
+      stopSearch();
     }
 
     else if (token == "uci") {
@@ -218,7 +225,7 @@ void UCI::loop(int argc, char* argv[]) {
     else if (token == "setoption")  setoption(is);
     else if (token == "go")         go(pos, is);
     else if (token == "position")   position(pos, tempAccumulator, is);
-    else if (token == "ucinewgame") Search::clear();
+    else if (token == "ucinewgame") newGame();
     else if (token == "isready")    cout << "readyok" << endl;
     else if (token == "d")        cout << pos << endl;
     else if (token == "tune")     cout << paramsToSpsaInput();

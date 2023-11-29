@@ -52,33 +52,11 @@ namespace Search {
   DEFINE_PARAM(AspWindowStartDelta, 10, 10, 20);
   DEFINE_PARAM(AspFailHighReductionMax, 11, 6, 11);
   
-  Color rootColor;
-
   Move lastBestMove;
   clock_t lastSearchTimeSpan;
-  bool printingEnabled = true;
-
-  uint64_t nodesSearched;
-
-  int rootDepth;
-
-  int ply = 0;
-
-  Key keyStack[MAX_PLY];
-
-  NNUE::Accumulator accumulatorStack[MAX_PLY];
-
-  MoveList rootMoves;
+  bool doingBench = false;
 
   int lmrTable[MAX_PLY][MAX_MOVES];
-
-  MainHistory mainHistory;
-
-  CaptureHistory captureHistory;
-
-  ContinuationHistory contHistory;
-
-  CounterMoveHistory counterMoveHistory;
 
   int fromTo(Move m) {
     return getMoveSrc(m) * SQUARE_NB + getMoveDest(m);
@@ -86,15 +64,6 @@ namespace Search {
 
   int pieceTo(Position& pos, Move m) {
     return pos.board[getMoveSrc(m)] * SQUARE_NB + getMoveDest(m);
-  }
-
-  void clear() {
-
-    TT::clear();
-    memset(mainHistory, 0, sizeof(mainHistory));
-    memset(captureHistory, 0, sizeof(captureHistory));
-    memset(counterMoveHistory, 0, sizeof(counterMoveHistory));
-    memset(contHistory, 0, sizeof(contHistory));
   }
 
   void initLmrTable() {
@@ -115,8 +84,20 @@ namespace Search {
   void searchInit() {
 
     initLmrTable();
+  }
 
-    clear();
+  void SearchThread::resetHistories() {
+    memset(mainHistory, 0, sizeof(mainHistory));
+    memset(captureHistory, 0, sizeof(captureHistory));
+    memset(counterMoveHistory, 0, sizeof(counterMoveHistory));
+    memset(contHistory, 0, sizeof(contHistory));
+  }
+
+  SearchThread::SearchThread() :
+    thread(std::thread(&SearchThread::idleLoop, this)),
+    searchState(Search::IDLE), stopThread(false)
+  {
+    resetHistories();
   }
 
   template<bool root>
@@ -144,8 +125,8 @@ namespace Search {
         continue;
 
       Position newPos = position;
-
-      newPos.doMove(move, accumulatorStack[ply]);
+      NNUE::Accumulator fakeAcc;
+      newPos.doMove(move, fakeAcc);
 
       int64_t thisNodes = perft<false>(newPos, depth - 1);
       if constexpr (root)
@@ -159,15 +140,15 @@ namespace Search {
   template int64_t perft<false>(Position&, int);
   template int64_t perft<true>(Position&, int);
 
-  enum NodeType {
-    PV, NonPV
-  };
-
   clock_t elapsedTime() {
     return timeMillis() - searchSettings.startTime;
   }
 
-  bool usedMostOfTime() {
+  int stat_bonus(int d) {
+    return std::min(StatBonusQuad * d * d + StatBonusLinear * d, (int)StatBonusMax);
+  }
+
+  bool SearchThread::usedMostOfTime() {
     if (searchSettings.movetime) {
 
       clock_t timeLimit = searchSettings.movetime;
@@ -188,7 +169,7 @@ namespace Search {
     return false;
   }
 
-  void playNullMove(Position& pos, SearchInfo* ss) {
+  void SearchThread::playNullMove(Position& pos, SearchInfo* ss) {
     nodesSearched++;
 
     // Check time
@@ -206,7 +187,7 @@ namespace Search {
     pos.doNullMove();
   }
 
-  void playMove(Position& pos, Move move, SearchInfo* ss) {
+  void SearchThread::playMove(Position& pos, Move move, SearchInfo* ss) {
     nodesSearched++;
 
     // Prefetch the TT entry
@@ -229,12 +210,8 @@ namespace Search {
     pos.doMove(move, accumulatorStack[ply]);
   }
 
-  void cancelMove() {
+  void SearchThread::cancelMove() {
     ply--;
-  }
-
-  int stat_bonus(int d) {
-    return std::min(StatBonusQuad * d * d + StatBonusLinear * d, (int)StatBonusMax);
   }
 
   //        TT move:  MAX
@@ -249,7 +226,7 @@ namespace Search {
     0, 0, 400000, -100001, -100000, 410000
   };
 
-  int getHistoryScore(Position& pos, Move move, SearchInfo* ss) {
+  int SearchThread::getHistoryScore(Position& pos, Move move, SearchInfo* ss) {
 
     return    mainHistory[pos.sideToMove][fromTo(move)]
             + (ss - 1)->contHistory()[pieceTo(pos, move)]
@@ -268,7 +245,7 @@ namespace Search {
       addToHistory((ss - 4)->contHistory()[moved], bonus);
   }
 
-  void updateHistories(Position& pos, int depth, Move bestMove, Score bestScore,
+  void SearchThread::updateHistories(Position& pos, int depth, Move bestMove, Score bestScore,
                        Score beta, Move* quietMoves, int quietCount, SearchInfo* ss) {
 
     int bonus = (bestScore > beta + StatBonusBoostAt) ? stat_bonus(depth + 1) : stat_bonus(depth);
@@ -310,7 +287,7 @@ namespace Search {
     ss->killerMove = bestMove;
   }
 
-  void scoreRootMoves(Position& pos, MoveList& moves, Move ttMove, SearchInfo* ss) {
+  void SearchThread::scoreRootMoves(Position& pos, MoveList& moves, Move ttMove, SearchInfo* ss) {
 
     for (int i = 0; i < moves.size(); i++) {
       int& moveScore = moves[i].score;
@@ -384,7 +361,7 @@ namespace Search {
   }
 
   // Should not be called from Root node
-  bool is2FoldRepetition(Position& pos) {
+  bool SearchThread::is2FoldRepetition(Position& pos) {
 
     if (pos.halfMoveClock < 4)
       return false;
@@ -403,12 +380,12 @@ namespace Search {
     return false;
   }
 
-  Score makeDrawScore() {
+  Score SearchThread::makeDrawScore() {
     return Score(int(nodesSearched & 2) - 1);
   }
 
   template<NodeType nodeType>
-  Score qsearch(Position& position, Score alpha, Score beta, SearchInfo* ss) {
+  Score SearchThread::qsearch(Position& position, Score alpha, Score beta, SearchInfo* ss) {
     constexpr bool PvNode = nodeType != NonPV;
 
     const Color us = position.sideToMove, them = ~us;
@@ -522,7 +499,7 @@ namespace Search {
     return bestScore;
   }
 
-  void updatePV(SearchInfo* ss, Move move) {
+  void updatePV(SearchInfo* ss, int ply, Move move) {
     // set the move in the pv
     ss->pv[ply] = move;
 
@@ -535,7 +512,7 @@ namespace Search {
   }
 
   template<NodeType nodeType>
-  Score negaMax(Position& position, Score alpha, Score beta, int depth, bool cutNode, SearchInfo* ss) {
+  Score SearchThread::negaMax(Position& position, Score alpha, Score beta, int depth, bool cutNode, SearchInfo* ss) {
     constexpr bool PvNode = nodeType != NonPV;
 
     if (searchState == STOP_PENDING)
@@ -846,7 +823,7 @@ namespace Search {
           bestMove = move;
 
           if (PvNode)
-            updatePV(ss, bestMove);
+            updatePV(ss, ply, bestMove);
 
           // Always true in NonPV nodes
           if (bestScore >= beta)
@@ -907,7 +884,7 @@ namespace Search {
     return bestScore;
   }
 
-  Score rootNegaMax(Position& position, Score alpha, Score beta, int depth, SearchInfo* ss) {
+  Score SearchThread::rootNegaMax(Position& position, Score alpha, Score beta, int depth, SearchInfo* ss) {
 
     if (searchState == STOP_PENDING)
       return makeDrawScore();
@@ -1064,7 +1041,7 @@ namespace Search {
         if (bestScore > alpha) {
           bestMove = move;
 
-          updatePV(ss, bestMove);
+          updatePV(ss, ply, bestMove);
 
           // Always true in NonPV nodes
           if (bestScore >= beta)
@@ -1142,7 +1119,9 @@ namespace Search {
   DEFINE_PARAM(tm2, 127, 0, 300);
   DEFINE_PARAM(tm3, 3, 0, 40);
 
-  void startSearch() {
+  void SearchThread::startSearch() {
+
+    const bool shouldPrint = this == mainThread() && !doingBench;
     
     Position rootPos = searchSettings.position;
     rootPos.updateAccumulator(accumulatorStack[0]);
@@ -1224,7 +1203,7 @@ namespace Search {
 
           score = rootNegaMax(rootPos, alpha, beta, adjustedDepth, ss);
 
-          if (Threads::searchState == STOP_PENDING)
+          if (searchState == STOP_PENDING)
             goto bestMoveDecided;
 
           if (searchSettings.nodes && nodesSearched >= searchSettings.nodes)
@@ -1257,7 +1236,7 @@ namespace Search {
       }
 
       // It's super important to not update the best move if the search was abruptly stopped
-      if (Threads::searchState == STOP_PENDING)
+      if (searchState == STOP_PENDING)
         goto bestMoveDecided;
 
       iterDeepening[rootDepth].score = score;
@@ -1265,14 +1244,14 @@ namespace Search {
 
       clock_t elapsed = elapsedTime();
 
-      if (printingEnabled) {
+      if (shouldPrint) {
         ostringstream infoStr;
         infoStr
           << "info"
           << " depth " << rootDepth
           << " score " << UCI::score(score)
-          << " nodes " << nodesSearched
-          << " nps " << (nodesSearched * 1000ULL) / std::max(int(elapsed), 1)
+          << " nodes " << totalNodes()
+          << " nps " << (totalNodes() * 1000ULL) / std::max(int(elapsed), 1)
           << " time " << elapsed
           << " pv " << getPvString(ss);
         cout << infoStr.str() << endl;
@@ -1325,19 +1304,22 @@ namespace Search {
     lastBestMove = bestMove;
     lastSearchTimeSpan = timeMillis() - startTimeForBench;
 
-    if (printingEnabled)
+    if (shouldPrint)
       std::cout << "bestmove " << UCI::move(bestMove) << endl;
 
-    Threads::searchState = IDLE;
+    searchState = IDLE;
   }
 
-  void* idleLoop(void*) {
+  void SearchThread::idleLoop() {
     while (true) {
 
-      while (Threads::searchState != RUNNING) {
+      while (searchState != RUNNING) {
+
+        if (stopThread)
+          return;
+
         sleep(1);
       }
-
       startSearch();
     }
   }

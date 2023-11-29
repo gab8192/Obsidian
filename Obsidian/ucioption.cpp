@@ -1,5 +1,5 @@
 #include "uci.h"
-#include "search.h"
+#include "threads.h"
 #include "tt.h"
 
 #include <cassert>
@@ -12,8 +12,9 @@ UCI::OptionsMap Options;
 
 namespace UCI {
 
-static void on_clear_hash(const Option&) { Search::clear(); }
-static void on_hash_size(const Option& o) { TT::resize(size_t(o)); }
+void clearHashClicked(const Option&)   { TT::clear(); }
+void      hashChanged(const Option& o) { TT::resize(size_t(o)); }
+void   threadsChanged(const Option& o) { Threads::setThreadCount(int(o)); }
 
 bool CaseInsensitiveLess::operator() (const string& s1, const string& s2) const {
 
@@ -26,9 +27,9 @@ void init(OptionsMap& o) {
 
   constexpr int MaxHashMB = 33554432;
 
-  o["Hash"]                  << Option(64, 1, MaxHashMB, on_hash_size);
-  o["Clear Hash"]            << Option(on_clear_hash);
-  o["Threads"]               << Option(1, 1, 1024);
+  o["Hash"]                  << Option(64, 1, MaxHashMB, hashChanged);
+  o["Clear Hash"]            << Option(clearHashClicked);
+  o["Threads"]               << Option(1, 1, 1024, threadsChanged);
 }
 
 

@@ -21,19 +21,16 @@ int main(int argc, char** argv)
 
   Search::searchInit();
 
-  Threads::searchState = Search::IDLE;
-
   UCI::init(Options);
 
+  Threads::setThreadCount(Options["Threads"]);
   TT::resize(Options["Hash"]);
 
   NNUE::load();
 
-  std::thread searchThread(Search::idleLoop, nullptr);
-
   UCI::loop(argc, argv);
 
-  searchThread.detach();
+  Threads::setThreadCount(0);
 
   return 0;
 }
