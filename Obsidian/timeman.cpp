@@ -12,10 +12,12 @@ namespace TimeMan {
 
     double optScale;
 
+    int overhead = Options["Move Overhead"];
+
     int mtg = settings.movestogo ? std::min(settings.movestogo, 50) : 50;
 
     clock_t timeLeft = std::max(clock_t(1),
-      settings.time[us] + settings.inc[us] * (mtg - 1) - 20 * (2 + mtg));
+      settings.time[us] + settings.inc[us] * (mtg - 1) - overhead * (2 + mtg));
 
     if (settings.movestogo == 0) {
       optScale = std::min(0.025,

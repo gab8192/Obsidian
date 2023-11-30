@@ -158,8 +158,7 @@ namespace Search {
       clock_t timeLimit = Threads::searchSettings.time[rootColor];
 
       // never use more than ~80 % of our time
-
-      return elapsedTime() >= (0.8 * timeLimit - 20);
+      return elapsedTime() >= (0.8 * timeLimit - 50);
     }
     return false;
   }
