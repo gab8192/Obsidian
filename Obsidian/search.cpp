@@ -399,6 +399,9 @@ namespace Search {
     Score ttScore = ttHit ? ttEntry->getScore(ply) : SCORE_NONE;
     Move ttMove = ttHit ? ttEntry->getMove() : MOVE_NONE;
 
+    if (ttMove && !position.isPseudoLegal(ttMove))
+      ttMove = MOVE_NONE;
+
     // In non PV nodes, if tt bound allows it, return ttScore
     if (!PvNode) {
       if (ttFlag & flagForTT(ttScore >= beta))
@@ -546,6 +549,9 @@ namespace Search {
     TT::Flag ttFlag = ttHit ? ttEntry->getFlag() : TT::NO_FLAG;
     Score ttScore = ttHit ? ttEntry->getScore(ply) : SCORE_NONE;
     Move ttMove = ttHit ? ttEntry->getMove() : MOVE_NONE;
+
+    if (ttMove && !position.isPseudoLegal(ttMove))
+      ttMove = MOVE_NONE;
 
     bool ttMoveNoisy = ttMove && !position.isQuiet(ttMove);
 
@@ -899,6 +905,9 @@ namespace Search {
       ttMove = ss->pv[0];
     else
       ttMove = ttHit ? ttEntry->getMove() : MOVE_NONE;
+
+    if (ttMove && !position.isPseudoLegal(ttMove))
+      ttMove = MOVE_NONE;
 
     scoreRootMoves(position, rootMoves, ttMove, ss);
 
