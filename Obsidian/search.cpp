@@ -997,7 +997,7 @@ namespace Search {
           R = lmrTable[depth][playedMoves + 1];
 
           // Reduce more if ttmove was noisy (~6 Elo)
-          R += ttMoveNoisy;
+          //R += ttMoveNoisy;
         }
         else {
           R = -1;
