@@ -1052,6 +1052,9 @@ namespace Search {
       }
     }
 
+    if (Threads::getSearchState() != RUNNING)
+      return makeDrawScore();
+
     if (!foundLegalMove)
       return position.checkers ? Score(ply - CHECKMATE) : DRAW;
 
