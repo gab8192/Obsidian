@@ -41,11 +41,11 @@ namespace Threads {
   }
 
   void stopSearch(bool wait) {
-
-    searchState = STOPPING;
-
-    if (wait)
-      waitForSearch();
+    if (searchState == RUNNING) {
+      searchState = STOPPING;
+      if (wait)
+        waitForSearch();
+    }
   }
 
   void setThreadCount(int threadCount) {
