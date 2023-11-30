@@ -2,11 +2,67 @@
 
 namespace Threads {
 
-  volatile Search::State searchState;
   Search::Settings searchSettings;
 
-  void waitForSearch() {
-    while (searchState != Search::IDLE)
-      sleep(1);
+  std::vector<SearchThread*> searchThreads;
+
+  volatile Search::State searchState;
+
+  SearchThread* mainThread() {
+    return searchThreads[0];
   }
+
+  State getSearchState() {
+    return searchState;
+  }
+
+  uint64_t totalNodes() {
+    uint64_t result = 0;
+    for (int i = 0; i < searchThreads.size(); i++)
+      result += searchThreads[i]->nodesSearched;
+    return result;
+  }
+
+  void waitForSearch() {
+    while (searchState != IDLE)
+      sleep(1);
+
+    for (int i = 0; i < searchThreads.size(); i++)
+      while (searchThreads[i]->isRunning())
+        sleep(1);
+  }
+
+  void onSearchComplete() {
+    searchState = IDLE;
+  }
+
+  void startSearch() {
+    searchState = RUNNING;
+  }
+
+  void stopSearch(bool wait) {
+
+    searchState = STOPPING;
+
+    if (wait)
+      waitForSearch();
+  }
+
+  void setThreadCount(int threadCount) {
+    waitForSearch();
+
+    for (int i = 0; i < searchThreads.size(); i++) {
+      searchThreads[i]->stopThread = true;
+      searchThreads[i]->thread.join();
+      delete searchThreads[i];
+    }
+
+    searchThreads.clear();
+
+    for (int i = 0; i < threadCount; i++) {
+      searchThreads.push_back(new SearchThread());
+    }
+  }
+
+  
 }
