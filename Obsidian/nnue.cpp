@@ -145,9 +145,12 @@ namespace NNUE {
 
     int sum = 0;
 
-    for (int i = 0; i < TransformedFeatureDimensions; ++i) {
-      sum += SCRelu(stmAccumulator[i]) * Content.OutputWeights[i];
-      sum += SCRelu(oppAccumulator[i]) * Content.OutputWeights[TransformedFeatureDimensions + i];
+    for (int i = 0; i < TransformedFeatureDimensions; i += 128) {
+      for (int j = 0; j < 128; j++) {
+        const int idx = i + j;
+        sum += SCRelu(stmAccumulator[idx]) * Content.OutputWeights[idx];
+        sum += SCRelu(oppAccumulator[idx]) * Content.OutputWeights[TransformedFeatureDimensions + idx];
+      }
     }
 
     int unsquared = sum / 255 + Content.OutputBias;
