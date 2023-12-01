@@ -381,10 +381,14 @@ namespace Search {
   template<NodeType nodeType>
   Score SearchThread::qsearch(Position& position, Score alpha, Score beta, SearchInfo* ss) {
     constexpr bool PvNode = nodeType != NonPV;
+    
+    // Quit if we are close to reaching max ply
+    if (ply >= MAX_PLY-4)
+      return position.checkers ? DRAW : Eval::evaluate(position, accumulatorStack[ply]);
 
     const Color us = position.sideToMove, them = ~us;
 
-    // detect draw
+    // Detect draw
     if (position.halfMoveClock >= 100)
       return makeDrawScore();
 
@@ -513,17 +517,21 @@ namespace Search {
     constexpr bool PvNode = nodeType != NonPV;
 
     if (Threads::getSearchState() != RUNNING)
-      return makeDrawScore();
+      return DRAW;
+  
+    // Quit if we are close to reaching max ply
+    if (ply >= MAX_PLY-4)
+      return position.checkers ? DRAW : Eval::evaluate(position, accumulatorStack[ply]);
 
-    // init node
+    // Init node
     if (PvNode)
       ss->pvLength = ply;
 
-    // detect draw
+    // Detect draw
     if (is2FoldRepetition(position) || position.halfMoveClock >= 100)
       return makeDrawScore();
 
-    // mate distance pruning
+    // Mate distance pruning
     alpha = std::max(alpha, Score(ply - CHECKMATE));
     beta = std::min(beta, CHECKMATE - ply - 1);
     if (alpha >= beta)
@@ -835,7 +843,7 @@ namespace Search {
     }
     
     if (Threads::getSearchState() != RUNNING)
-      return makeDrawScore();
+      return DRAW;
 
     if (!foundLegalMove) {
       if (excludedMove) 
@@ -914,7 +922,7 @@ namespace Search {
     Score bestScore = -SCORE_INFINITE;
 
     (ss + 1)->killerMove = MOVE_NONE;
-    ss->doubleExt = (ss - 1)->doubleExt;
+    ss->doubleExt = 0;
 
     // Do the static evaluation
 
@@ -922,10 +930,6 @@ namespace Search {
       // When in check avoid evaluating and skip pruning
       ss->staticEval = eval = SCORE_NONE;
       goto moves_loop;
-    }
-    else if (ss->excludedMove) {
-      // We have already evaluated the position in the node which invoked this singular search
-      eval = ss->staticEval;
     }
     else {
       if (ttHit)
@@ -1050,7 +1054,7 @@ namespace Search {
     }
 
     if (Threads::getSearchState() != RUNNING)
-      return makeDrawScore();
+      return DRAW;
 
     if (!foundLegalMove)
       return position.checkers ? Score(ply - CHECKMATE) : DRAW;
@@ -1154,7 +1158,7 @@ namespace Search {
     SearchInfo* ss = &searchStack[SsOffset];
 
     if (Threads::searchSettings.depth == 0)
-      Threads::searchSettings.depth = MAX_PLY;
+      Threads::searchSettings.depth = MAX_PLY-1;
 
     clock_t startTimeForBench = timeMillis();
 
