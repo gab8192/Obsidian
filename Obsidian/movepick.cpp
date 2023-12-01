@@ -106,7 +106,7 @@ void MovePicker::scoreCaptures() {
       moveScore += promotionScores[getPromoType(move)];
     else if (mt == MT_EN_PASSANT) {}
     else {
-      if (!pos.see_ge(move, Score(-50)))
+      if (!pos.see_ge(move, Score(isQsearch ? -50 : -10)))
         moveScore -= 500000;
       moveScore += capHist[pieceTo(pos, move)][captured];
     }
