@@ -20,6 +20,9 @@ namespace Search {
   DEFINE_PARAM(LmrBase, 21, -75, 125);
   DEFINE_PARAM(LmrDiv, 224, 150, 300);
 
+  DEFINE_PARAM(LmrNoisyBase, 0, -500, 100);
+  DEFINE_PARAM(LmrNoisyDiv, 224, 0, 800);
+
   DEFINE_PARAM(StatBonusQuad, 3, 0, 16);
   DEFINE_PARAM(StatBonusLinear, 112, 16, 256);
   DEFINE_PARAM(StatBonusMax, 1213, 800, 2400);
@@ -54,7 +57,8 @@ namespace Search {
   clock_t lastSearchTimeSpan;
   bool doingBench = false;
 
-  int lmrTable[MAX_PLY][MAX_MOVES];
+  // [isCap][depth][moves]
+  int lmrTable[2][MAX_PLY][MAX_MOVES];
 
   int fromTo(Move m) {
     return getMoveSrc(m) * SQUARE_NB + getMoveDest(m);
@@ -66,14 +70,13 @@ namespace Search {
 
   void initLmrTable() {
     // avoid log(0) because it's negative infinity
-    lmrTable[0][0] = 0;
-
-    double dBase = LmrBase / 100.0;
-    double dDiv = LmrDiv / 100.0;
+    lmrTable[false][0][0] = 0;
+    lmrTable[true][0][0] = 0;
 
     for (int i = 1; i < MAX_PLY; i++) {
       for (int m = 1; m < MAX_MOVES; m++) {
-        lmrTable[i][m] = dBase + log(i) * log(m) / dDiv;
+        lmrTable[false][i][m] = (LmrBase / 100.0) + log(i) * log(m) / (LmrDiv / 100.0);
+        lmrTable[true][i][m] = (LmrNoisyBase / 100.0) + log(i) * log(m) / (LmrNoisyDiv / 100.0);
       }
     }
   }
@@ -713,7 +716,7 @@ namespace Search {
 
         if (isQuiet && !skipQuiets) {
 
-          int lmrRed = lmrTable[depth][playedMoves + 1] - PvNode + !improving;
+          int lmrRed = lmrTable[false][depth][playedMoves + 1] - PvNode + !improving;
           int lmrDepth = std::max(0, depth - lmrRed);
 
           // Late move pruning. At low depths, only visit a few quiet moves
@@ -772,10 +775,10 @@ namespace Search {
       bool needFullSearch;
 
       if (depth >= 3 && playedMoves > (1 + 2 * PvNode)) {
-        int R;
+
+        int R = lmrTable[!isQuiet][depth][playedMoves + 1];
 
         if (isQuiet) {
-          R = lmrTable[depth][playedMoves + 1];
 
           R += !improving;
 
@@ -790,7 +793,6 @@ namespace Search {
             R -= std::clamp(getHistoryScore(position, move, ss) / LmrHistoryDiv, -2, 2);
         }
         else {
-          R = 0;
 
           if (moveStage > QUIETS)
             R++;
@@ -998,7 +1000,7 @@ namespace Search {
         int R;
 
         if (isQuiet) {
-          R = lmrTable[depth][playedMoves + 1];
+          R = lmrTable[false][depth][playedMoves + 1];
         }
         else {
           R = 0;
