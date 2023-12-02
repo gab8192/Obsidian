@@ -550,9 +550,20 @@ namespace Search {
     // Probe TT
     bool ttHit;
     TT::Entry* ttEntry = TT::probe(position.key, ttHit);
-    TT::Flag ttFlag = ttHit ? ttEntry->getFlag() : TT::NO_FLAG;
-    Score ttScore = ttHit ? ttEntry->getScore(ply) : SCORE_NONE;
-    Move ttMove = ttHit ? ttEntry->getMove() : MOVE_NONE;
+
+    TT::Flag ttFlag = TT::NO_FLAG;
+    Score ttScore   = SCORE_NONE;
+    Move ttMove     = MOVE_NONE;
+    int ttDepth     = -1;
+    Score ttStaticEval = SCORE_NONE;
+
+    if (ttHit) {
+      ttFlag = ttEntry->getFlag();
+      ttScore = ttEntry->getScore(ply);
+      ttMove = ttEntry->getMove();
+      ttDepth = ttEntry->getDepth();
+      ttStaticEval = ttEntry->getStaticEval();
+    }
 
     if (ttMove && !position.isPseudoLegal(ttMove))
       ttMove = MOVE_NONE;
@@ -566,7 +577,7 @@ namespace Search {
     // In non PV nodes, if tt depth and bound allow it, return ttScore
     if (!PvNode
       && !excludedMove
-      && ttEntry->getDepth() >= depth) 
+      && ttDepth >= depth) 
     {
       if (ttFlag & flagForTT(ttScore >= beta))
         return ttScore;
@@ -590,7 +601,7 @@ namespace Search {
     }
     else {
       if (ttHit)
-        ss->staticEval = eval = ttEntry->getStaticEval();
+        ss->staticEval = eval = ttStaticEval;
       else
         ss->staticEval = eval = Eval::evaluate(position, accumulatorStack[ply]);
 
@@ -736,7 +747,7 @@ namespace Search {
         && move == ttMove
         && abs(ttScore) < TB_WIN_IN_MAX_PLY
         && ttFlag & TT::FLAG_LOWER
-        && ttEntry->getDepth() >= depth - 3) 
+        && ttDepth >= depth - 3) 
       {
         Score singularBeta = ttScore - depth;
         
@@ -900,8 +911,16 @@ namespace Search {
     // Probe TT
     bool ttHit;
     TT::Entry* ttEntry = TT::probe(position.key, ttHit);
-    TT::Flag ttFlag = ttHit ? ttEntry->getFlag() : TT::NO_FLAG;
-    Score ttScore = ttHit ? ttEntry->getScore(ply) : SCORE_NONE;
+
+    TT::Flag ttFlag = TT::NO_FLAG;
+    Score ttScore = SCORE_NONE;
+    Score ttStaticEval = SCORE_NONE;
+
+    if (ttHit) {
+      ttFlag = ttEntry->getFlag();
+      ttScore = ttEntry->getScore(ply);
+      ttStaticEval = ttEntry->getStaticEval();
+    }
 
     Move ttMove;
 
@@ -933,7 +952,7 @@ namespace Search {
     }
     else {
       if (ttHit)
-        ss->staticEval = eval = ttEntry->getStaticEval();
+        ss->staticEval = eval = ttStaticEval;
       else
         ss->staticEval = eval = Eval::evaluate(position, accumulatorStack[ply]);
 
