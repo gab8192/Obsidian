@@ -77,6 +77,13 @@ void MovePicker::scoreQuiets() {
       continue;
     }
 
+    int chIndex = pieceTo(pos, move);
+    quiets[i].score =
+      mainHist[pos.sideToMove][fromTo(move)]
+      + (ss - 1)->contHistory()[chIndex]
+      + (ss - 2)->contHistory()[chIndex]
+      + (ss - 4)->contHistory()[chIndex];
+
     Square from = getMoveSrc(move), to = getMoveDest(move);
     PieceType pt = ptypeOf(pos.board[from]);
 
@@ -87,13 +94,7 @@ void MovePicker::scoreQuiets() {
       : 0)
       : 0;
 
-    int chIndex = pieceTo(pos, move);
-
-    quiets[i].score +=
-      mainHist[pos.sideToMove][fromTo(move)]
-      + (ss - 1)->contHistory()[chIndex]
-      + (ss - 2)->contHistory()[chIndex]
-      + (ss - 4)->contHistory()[chIndex];
+    
 
     i++;
   }
