@@ -149,6 +149,19 @@ Bitboard mask_pawn_attacks(Color pawnColor, Square sqr) {
   return attacks;
 }
 
+Bitboard get_pawns_bb_attacks(Bitboard bb, Color pawnColor) {
+  if (pawnColor == WHITE) {
+    Bitboard east = (bb & ~FILE_HBB) << 9;
+    Bitboard west = (bb & ~FILE_ABB) << 7;
+    return east | west;
+  }
+  else {
+    Bitboard east = (bb & ~FILE_HBB) >> 7;
+    Bitboard west = (bb & ~FILE_ABB) >> 9;
+    return east | west;
+  }
+}
+
 template<Color PawnColor>
 Bitboard get_pawns_bb_attacks(Bitboard bb) {
   if constexpr (PawnColor == WHITE) {

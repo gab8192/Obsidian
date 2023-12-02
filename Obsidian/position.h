@@ -57,6 +57,18 @@ struct alignas(32) Position {
     return byColorBB[WHITE] | byColorBB[BLACK];
   }
 
+  template<PieceType Pt>
+  inline Bitboard attackedBy(Color c) const {
+
+    Bitboard bb = pieces(c, Pt);
+    Bitboard attacked = 0;
+
+    while (bb)
+      attacked |= get_piece_attacks(Pt, popLsb(bb), pieces());
+
+    return attacked;
+  }
+
   inline Square kingSquare(Color c) const {
     return getLsb(pieces(c, KING));
   }

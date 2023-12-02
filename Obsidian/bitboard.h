@@ -211,6 +211,8 @@ inline Bitboard get_piece_attacks(PieceType pt, Square s, Bitboard occupied) {
   return 0;
 }
 
+Bitboard get_pawns_bb_attacks(Bitboard bb, Color pawnColor);
+
 template<Color PawnColor>
 Bitboard get_pawns_bb_attacks(Bitboard bb);
 

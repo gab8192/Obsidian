@@ -57,6 +57,16 @@ int nextMoveIndex(MoveList& moveList, int scannedMoves) {
 }
 
 void MovePicker::scoreQuiets() {
+  const Color us = pos.sideToMove, them = ~us;
+
+  const Bitboard attackedByPawn = get_pawns_bb_attacks(pos.pieces(them, PAWN), them);
+  const Bitboard attackedByMinor = pos.attackedBy<KNIGHT>(them) | pos.attackedBy<BISHOP>(them) | attackedByPawn;
+  const Bitboard attackedByRook = pos.attackedBy<ROOK>(them) | attackedByMinor;
+
+  const Bitboard attackedPieces = 
+      (pos.pieces(us, QUEEN) & attackedByRook)
+    | (pos.pieces(us, ROOK) & attackedByMinor)
+    | (pos.pieces(us, KNIGHT, BISHOP) & attackedByPawn);
 
   int i = 0;
   while (i < quiets.size()) {
@@ -67,9 +77,19 @@ void MovePicker::scoreQuiets() {
       continue;
     }
 
+    Square from = getMoveSrc(move), to = getMoveDest(move);
+    PieceType pt = ptypeOf(pos.board[from]);
+
+    quiets[i].score += attackedPieces & from ? 
+       (pt == QUEEN && !(to & attackedByRook) ? 50000
+      : pt == ROOK && !(to & attackedByMinor) ? 25000
+      : !(to & attackedByPawn) ? 15000
+      : 0)
+      : 0;
+
     int chIndex = pieceTo(pos, move);
 
-    quiets[i].score =
+    quiets[i].score +=
       mainHist[pos.sideToMove][fromTo(move)]
       + (ss - 1)->contHistory()[chIndex]
       + (ss - 2)->contHistory()[chIndex]
