@@ -560,13 +560,11 @@ namespace Search {
     if (ttHit) {
       ttFlag = ttEntry->getFlag();
       ttScore = ttEntry->getScore(ply);
-      ttMove = ttEntry->getMove();
+      if (!excludedMove && position.isPseudoLegal(ttEntry->getMove()))
+        ttMove = ttEntry->getMove();
       ttDepth = ttEntry->getDepth();
       ttStaticEval = ttEntry->getStaticEval();
     }
-
-    if (ttMove && !position.isPseudoLegal(ttMove))
-      ttMove = MOVE_NONE;
 
     bool ttMoveNoisy = ttMove && !position.isQuiet(ttMove);
 
