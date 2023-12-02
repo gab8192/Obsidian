@@ -242,6 +242,22 @@ namespace Search {
   void SearchThread::updateHistories(Position& pos, int depth, Move bestMove, Score bestScore,
                        Score beta, Move* quietMoves, int quietCount, SearchInfo* ss) {
 
+    /*
+    * Counter move history
+    */
+    if ((ss - 1)->playedMove) {
+      Square prevSq = getMoveDest((ss - 1)->playedMove);
+      counterMoveHistory[pos.board[prevSq] * SQUARE_NB + prevSq] = bestMove;
+    }
+
+    /*
+    * Killer move
+    */
+    ss->killerMove = bestMove;
+
+    if (depth < 2)
+      return;
+
     int bonus = (bestScore > beta + StatBonusBoostAt) ? stat_bonus(depth + 1) : stat_bonus(depth);
 
     /*
@@ -266,19 +282,6 @@ namespace Search {
 
       addToHistory(mainHistory[pos.sideToMove][fromTo(otherMove)], -bonus);
     }
-
-    /*
-    * Counter move history
-    */
-    if ((ss - 1)->playedMove) {
-      Square prevSq = getMoveDest((ss - 1)->playedMove);
-      counterMoveHistory[pos.board[prevSq] * SQUARE_NB + prevSq] = bestMove;
-    }
-
-    /*
-    * Killer move
-    */
-    ss->killerMove = bestMove;
   }
 
   void SearchThread::scoreRootMoves(Position& pos, MoveList& moves, Move ttMove, SearchInfo* ss) {
