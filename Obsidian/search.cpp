@@ -166,11 +166,6 @@ namespace Search {
   void SearchThread::playNullMove(Position& pos, SearchInfo* ss) {
     nodesSearched++;
 
-    // Check time
-    if (this == Threads::mainThread() && (nodesSearched % 32768) == 0)
-      if (usedMostOfTime())
-        Threads::stopSearch(false);
-
     ss->mContHistory = &contHistory[false][0];
     ss->playedMove = MOVE_NONE;
     keyStack[ply] = pos.key;
@@ -187,11 +182,6 @@ namespace Search {
     // Prefetch the TT entry
     if (getMoveType(move) == MT_NORMAL)
       TT::prefetch(pos.keyAfter(move));
-
-    // Check time
-    if (this == Threads::mainThread() && (nodesSearched % 32768) == 0)
-      if (usedMostOfTime())
-        Threads::stopSearch(false);
 
     bool isCap = pos.board[getMoveDest(move)] != NO_PIECE;
     ss->mContHistory = &contHistory[isCap][pieceTo(pos, move)];
@@ -521,23 +511,21 @@ namespace Search {
     if (Threads::getSearchState() != RUNNING)
       return DRAW;
   
-    // Quit if we are close to reaching max ply
-    if (ply >= MAX_PLY-4)
-      return position.checkers ? DRAW : Eval::evaluate(position, accumulatorStack[ply]);
-
     // Init node
     if (PvNode)
       ss->pvLength = ply;
 
+    // Check time
+    if (this == Threads::mainThread() && (nodesSearched % 16384) == 0) {
+      if (usedMostOfTime()) {
+        Threads::stopSearch(false);
+        return DRAW;
+      }
+    }
+
     // Detect draw
     if (is2FoldRepetition(position) || position.halfMoveClock >= 100)
       return makeDrawScore();
-
-    // Mate distance pruning
-    alpha = std::max(alpha, Score(ply - CHECKMATE));
-    beta = std::min(beta, CHECKMATE - ply - 1);
-    if (alpha >= beta)
-      return alpha;
 
     // If we are in check, increment the depth and avoid entering a qsearch
     if (position.checkers)
@@ -546,6 +534,16 @@ namespace Search {
     // Enter qsearch when depth is 0
     if (depth <= 0)
       return qsearch<PvNode ? PV : NonPV>(position, alpha, beta, ss);
+
+    // Quit if we are close to reaching max ply
+    if (ply >= MAX_PLY - 4)
+      return position.checkers ? DRAW : Eval::evaluate(position, accumulatorStack[ply]);
+
+    // Mate distance pruning
+    alpha = std::max(alpha, Score(ply - CHECKMATE));
+    beta = std::min(beta, CHECKMATE - ply - 1);
+    if (alpha >= beta)
+      return alpha;
 
     Move excludedMove = ss->excludedMove;
 
