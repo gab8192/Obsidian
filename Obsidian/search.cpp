@@ -708,7 +708,8 @@ namespace Search {
           int lmrDepth = std::max(0, depth - lmrRed);
 
           // Late move pruning. At low depths, only visit a few quiet moves
-          if (quietCount >= (LmpQuad * depth * depth + LmpBase) / (2 - improving))
+          int uwu = PvNode ? 7 : 3;
+          if (quietCount >= (LmpQuad * depth * depth + uwu) / (2 - improving))
             skipQuiets = true;
 
           // Futility pruning (~8 Elo). If our evaluation is far below alpha,
