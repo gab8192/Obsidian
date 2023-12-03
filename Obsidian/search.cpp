@@ -386,8 +386,6 @@ namespace Search {
     if (ply >= MAX_PLY-4)
       return position.checkers ? DRAW : Eval::evaluate(position, accumulatorStack[ply]);
 
-    const Color us = position.sideToMove, them = ~us;
-
     // Detect draw
     if (position.halfMoveClock >= 100)
       return makeDrawScore();
