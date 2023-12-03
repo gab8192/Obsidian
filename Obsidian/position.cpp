@@ -134,8 +134,6 @@ bool Position::isPseudoLegal(Move move) const {
   if (ptypeOf(pc) != KING) {
     if (checkers)
       targets &= BetweenBB[kingSquare(us)][getLsb(checkers)];
-    if (blockersForKing[us] & from)
-      targets &= LineBB[kingSquare(us)][from];
   }
 
   if (!(targets & to))
@@ -194,10 +192,7 @@ bool Position::isLegal(Move move) const {
     return !slidingAttackersTo(kingSquare(sideToMove), ~sideToMove, pieces() ^ from ^ capSq ^ to);
   }
 
-  if (ptypeOf(movedPc) == PAWN)
-    return !(blockersForKing[sideToMove] & from);
-
-  return true;
+  return !(blockersForKing[sideToMove] & from);
 }
 
 void Position::doNullMove() {
