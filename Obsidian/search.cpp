@@ -713,6 +713,32 @@ namespace Search {
 
       foundLegalMove = true;
 
+      int R;
+
+      if (isQuiet) {
+        R = lmrTable[depth][playedMoves + 1];
+
+        R += !improving;
+
+        // Reduce more if ttmove was noisy (~6 Elo)
+        R += ttMoveNoisy;
+
+        // Do less reduction for killer and counter move (~4 Elo)
+        if (moveStage == KILLER || moveStage == COUNTER)
+          R--;
+        // Reduce or extend depending on history of this quiet move (~12 Elo)
+        else
+          R -= std::clamp(getHistoryScore(position, move, ss) / LmrHistoryDiv, -2, 2);
+      }
+      else {
+        R = 0;
+
+        if (moveStage > QUIETS)
+          R++;
+      }
+
+      R -= PvNode;
+
       if ( position.hasNonPawns(position.sideToMove)
         && bestScore > TB_LOSS_IN_MAX_PLY)
       {
@@ -725,8 +751,7 @@ namespace Search {
 
         if (isQuiet && !skipQuiets) {
 
-          int lmrRed = lmrTable[depth][playedMoves + 1] - PvNode + !improving;
-          int lmrDepth = std::max(0, depth - lmrRed);
+          int lmrDepth = std::max(0, depth - 1 - R);
 
           // Late move pruning. At low depths, only visit a few quiet moves
           if (quietCount >= (LmpQuad * depth * depth + LmpBase) / (2 - improving))
@@ -784,34 +809,9 @@ namespace Search {
       bool needFullSearch;
 
       if (depth >= 3 && playedMoves > (1 + 2 * PvNode)) {
-        int R;
-
-        if (isQuiet) {
-          R = lmrTable[depth][playedMoves + 1];
-
-          R += !improving;
-
-          // Reduce more if ttmove was noisy (~6 Elo)
-          R += ttMoveNoisy;
-
-          // Do less reduction for killer and counter move (~4 Elo)
-          if (moveStage == KILLER || moveStage == COUNTER)
-            R--;
-          // Reduce or extend depending on history of this quiet move (~12 Elo)
-          else 
-            R -= std::clamp(getHistoryScore(position, move, ss) / LmrHistoryDiv, -2, 2);
-        }
-        else {
-          R = 0;
-
-          if (moveStage > QUIETS)
-            R++;
-        }
 
         if (newPos.checkers)
           R --;
-
-        R -= PvNode;
 
         R += cutNode;
 
