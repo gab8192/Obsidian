@@ -497,11 +497,7 @@ namespace Search {
 
     if (Threads::getSearchState() != RUNNING)
       return DRAW;
-  
-    // Init node
-    if (PvNode)
-      ss->pvLength = ply;
-
+    
     // Check time
     if (this == Threads::mainThread() && (nodesSearched % 16384) == 0) {
       if (usedMostOfTime()) {
@@ -509,6 +505,10 @@ namespace Search {
         return DRAW;
       }
     }
+    
+    // Init node
+    if (PvNode)
+      ss->pvLength = ply;
 
     // Detect draw
     if (is2FoldRepetition(pos) || pos.halfMoveClock >= 100)
@@ -803,7 +803,6 @@ namespace Search {
       }
       else
         needFullSearch = !PvNode || playedMoves >= 1;
-
 
       if (needFullSearch)
         score = -negaMax<NonPV>(newPos, -alpha - 1, -alpha, newDepth, !cutNode, ss + 1);
