@@ -12,7 +12,7 @@ MovePicker::MovePicker(
   ss(_ss),
   capIndex(0), quietIndex(0)
 {
-  this->stage = _ttMove ? TT_MOVE : GEN_CAPTURES;
+  this->stage = pos.isPseudoLegal(ttMove) ? TT_MOVE : GEN_CAPTURES;
 
   // Ensure tt, killer, and counter, are all different
 

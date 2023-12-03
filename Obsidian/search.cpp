@@ -406,9 +406,6 @@ namespace Search {
       ttStaticEval = ttEntry->getStaticEval();
     }
 
-    if (ttMove && !position.isPseudoLegal(ttMove))
-      ttMove = MOVE_NONE;
-
     // In non PV nodes, if tt bound allows it, return ttScore
     if (!PvNode) {
       if (ttFlag & flagForTT(ttScore >= beta))
@@ -571,9 +568,6 @@ namespace Search {
       ttDepth = ttEntry->getDepth();
       ttStaticEval = ttEntry->getStaticEval();
     }
-
-    if (ttMove && !position.isPseudoLegal(ttMove))
-      ttMove = MOVE_NONE;
 
     bool ttMoveNoisy = ttMove && !position.isQuiet(ttMove);
 
@@ -936,7 +930,7 @@ namespace Search {
     else
       ttMove = ttHit ? ttEntry->getMove() : MOVE_NONE;
 
-    if (ttMove && !position.isPseudoLegal(ttMove))
+    if (!position.isPseudoLegal(ttMove))
       ttMove = MOVE_NONE;
 
     scoreRootMoves(position, rootMoves, ttMove, ss);
