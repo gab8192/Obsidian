@@ -769,6 +769,9 @@ namespace Search {
 
       int newDepth = depth + extension - 1;
 
+      if (newPos.checkers)
+        newDepth++;
+
       Score score;
 
       // Late move reductions. Search at a reduced depth, moves that are late in the move list
@@ -799,9 +802,6 @@ namespace Search {
           if (moveStage > QUIETS)
             R++;
         }
-
-        if (newPos.checkers)
-          R --;
 
         R -= PvNode;
 
