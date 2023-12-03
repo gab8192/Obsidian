@@ -527,9 +527,9 @@ namespace Search {
     if (is2FoldRepetition(position) || position.halfMoveClock >= 100)
       return makeDrawScore();
 
-    // If we are in check, increment the depth and avoid entering a qsearch
+    // If we are in check, increment the depth
     if (position.checkers)
-      depth = std::max(1, depth + 1);
+      depth++;
 
     // Enter qsearch when depth is 0
     if (depth <= 0)
