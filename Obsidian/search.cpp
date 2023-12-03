@@ -723,11 +723,6 @@ namespace Search {
           // Late move pruning. At low depths, only visit a few quiet moves
           if (quietCount >= (LmpQuad * depth * depth + LmpBase) / (2 - improving))
             skipQuiets = true;
-
-          // Futility pruning (~8 Elo). If our evaluation is far below alpha,
-          // only visit the first quiet move
-          if (lmrDepth <= FpMaxDepth && !wasInCheck && eval + FpBase + FpDepthMul * lmrDepth <= alpha)
-            skipQuiets = true;
         }
       }
 
