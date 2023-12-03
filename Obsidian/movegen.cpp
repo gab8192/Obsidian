@@ -24,13 +24,13 @@ void getWhitePawnMoves(const Position& pos, Bitboard targets, MoveList* receiver
   Bitboard captureEast = ((wPawns & ~FILE_HBB) << 9) & pos.pieces(BLACK) & targets;
   Bitboard captureWest = ((wPawns & ~FILE_ABB) << 7) & pos.pieces(BLACK) & targets;
 
-  while (advance1) {
-    Square dest = popLsb(advance1);
-    receiver->add(createMove(dest - 8, dest, MT_NORMAL));
-  }
   while (advance2) {
     Square dest = popLsb(advance2);
     receiver->add(createMove(dest - 16, dest, MT_NORMAL));
+  }
+  while (advance1) {
+    Square dest = popLsb(advance1);
+    receiver->add(createMove(dest - 8, dest, MT_NORMAL));
   }
   while (captureEast) {
     Square dest = popLsb(captureEast);
@@ -62,13 +62,13 @@ void getBlackPawnMoves(const Position& pos, Bitboard targets, MoveList* receiver
   Bitboard captureEast = ((bPawns & ~FILE_HBB) >> 7) & pos.pieces(WHITE) & targets;
   Bitboard captureWest = ((bPawns & ~FILE_ABB) >> 9) & pos.pieces(WHITE) & targets;
 
-  while (advance1) {
-    Square dest = popLsb(advance1);
-    receiver->add(createMove(dest + 8, dest, MT_NORMAL));
-  }
   while (advance2) {
     Square dest = popLsb(advance2);
     receiver->add(createMove(dest + 16, dest, MT_NORMAL));
+  }
+  while (advance1) {
+    Square dest = popLsb(advance1);
+    receiver->add(createMove(dest + 8, dest, MT_NORMAL));
   }
   while (captureEast) {
     Square dest = popLsb(captureEast);
