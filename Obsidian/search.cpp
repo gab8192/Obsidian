@@ -1027,11 +1027,8 @@ namespace Search {
       cancelMove();
 
       playedMoves++;
-
-      {
-        int idx = rootMoves.indexOf(move);
-        rootMoves[idx].nodes += nodesSearched - oldNodesCount;
-      }
+      
+      rootMoves[rootMoves.indexOf(move)].nodes += nodesSearched - oldNodesCount;
 
       if (score > bestScore) {
         bestScore = score;
