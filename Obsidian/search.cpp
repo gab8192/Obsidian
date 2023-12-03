@@ -708,7 +708,7 @@ namespace Search {
           int lmrDepth = std::max(0, depth - lmrRed);
 
           // Late move pruning. At low depths, only visit a few quiet moves
-          int uwu = PvNode ? 7 : 3;
+          int uwu = PvNode ? 7 : 4;
           if (quietCount >= (LmpQuad * depth * depth + uwu) / (2 - improving))
             skipQuiets = true;
 
