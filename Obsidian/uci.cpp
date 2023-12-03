@@ -277,10 +277,10 @@ string UCI::move(Move m) {
   if (m == MOVE_NONE)
     return "(none)";
 
-  string move = UCI::square(getMoveSrc(m)) + UCI::square(getMoveDest(m));
+  string move = UCI::square(move_from(m)) + UCI::square(move_to(m));
 
-  if (getMoveType(m) == MT_PROMOTION)
-    move += "  nbrq"[getPromoType(m)];
+  if (move_type(m) == MT_PROMOTION)
+    move += "  nbrq"[promo_type(m)];
 
   return move;
 }

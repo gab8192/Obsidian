@@ -32,30 +32,30 @@ constexpr Move createCastlingMove(CastlingRights type) {
   return CastlingMoves[type];
 }
 
-inline Square getMoveSrc(Move move) {
+inline Square move_from(Move move) {
   // being these the first bits, we do not need to SHR anything 
   return Square(move & 63);
 }
 
-inline Square getMoveDest(Move move) {
+inline Square move_to(Move move) {
   return Square((move >> 6) & 63);
 }
 
-inline MoveType getMoveType(Move move) {
+inline MoveType move_type(Move move) {
   return (MoveType)((move >> 12) & 3);
 }
 
-inline int getMoveExtra(Move move) {
+inline int move_extra(Move move) {
   //  being these the last bits, we do not need to AND anything
   return move >> 14;
 }
 
-inline PieceType getPromoType(Move move) {
-  return PieceType(getMoveExtra(move) + KNIGHT);
+inline PieceType promo_type(Move move) {
+  return PieceType(move_extra(move) + KNIGHT);
 }
 
-inline CastlingRights getCastlingType(Move move) {
-  return CastlingRights(1 << getMoveExtra(move));
+inline CastlingRights castling_type(Move move) {
+  return CastlingRights(1 << move_extra(move));
 }
 
 struct MoveScored {

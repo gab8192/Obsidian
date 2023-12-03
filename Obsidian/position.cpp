@@ -105,9 +105,9 @@ bool Position::isPseudoLegal(Move move) const {
     return false;
 
   const Color us = sideToMove, them = ~us;
-  const MoveType moveType = getMoveType(move);
+  const MoveType moveType = move_type(move);
   const Bitboard allPieces = pieces();
-  const Square from = getMoveSrc(move), to = getMoveDest(move);
+  const Square from = move_from(move), to = move_to(move);
   const Piece pc = board[from];
 
   if (pc == NO_PIECE || colorOf(pc) != us)
@@ -117,7 +117,7 @@ bool Position::isPseudoLegal(Move move) const {
     return ptypeOf(pc) == KING && (get_king_attacks(from) & to & ~pieces(us));
 
   if (moveType == MT_CASTLING) {
-    CastlingRights ct = getCastlingType(move);
+    CastlingRights ct = castling_type(move);
     return
              !checkers
           && (castlingRights & ct)
@@ -167,8 +167,8 @@ bool Position::isPseudoLegal(Move move) const {
 
 bool Position::isLegal(Move move) const {
 
-  if (getMoveType(move) == MT_CASTLING) {
-    switch (getCastlingType(move))
+  if (move_type(move) == MT_CASTLING) {
+    switch (castling_type(move))
     {
     case WHITE_OO: return !attackersTo(SQ_F1, BLACK) && !attackersTo(SQ_G1, BLACK);
     case WHITE_OOO: return !attackersTo(SQ_D1, BLACK) && !attackersTo(SQ_C1, BLACK);
@@ -177,8 +177,8 @@ bool Position::isLegal(Move move) const {
     }
   }
 
-  const Square from = getMoveSrc(move);
-  const Square to = getMoveDest(move);
+  const Square from = move_from(move);
+  const Square to = move_to(move);
   const Piece movedPc = board[from];
 
   if (ptypeOf(movedPc) == KING)
@@ -189,7 +189,7 @@ bool Position::isLegal(Move move) const {
       return true;
   }
 
-  if (getMoveType(move) == MT_EN_PASSANT) {
+  if (move_type(move) == MT_EN_PASSANT) {
     Square capSq = (sideToMove == WHITE ? epSquare - 8 : epSquare + 8);
     return !slidingAttackersTo(kingSquare(sideToMove), ~sideToMove, pieces() ^ from ^ capSq ^ to);
   }
@@ -234,12 +234,12 @@ void Position::doMove(Move move, NNUE::Accumulator& acc) {
 
   CastlingRights newCastlingRights = castlingRights;
 
-  const MoveType moveType = getMoveType(move);
+  const MoveType moveType = move_type(move);
 
   switch (moveType) {
   case MT_NORMAL: {
-    const Square from = getMoveSrc(move);
-    const Square to = getMoveDest(move);
+    const Square from = move_from(move);
+    const Square to = move_to(move);
 
     const Piece movedPc = board[from];
     const Piece capturedPc = board[to];
@@ -283,7 +283,7 @@ void Position::doMove(Move move, NNUE::Accumulator& acc) {
     break;
   }
   case MT_CASTLING: {
-    const CastlingData* cd = &CASTLING_DATA[getCastlingType(move)];
+    const CastlingData* cd = &CASTLING_DATA[castling_type(move)];
 
     const Square kingSrc = cd->kingSrc, kingDest = cd->kingDest,
                  rookSrc = cd->rookSrc, rookDest = cd->rookDest;
@@ -306,8 +306,8 @@ void Position::doMove(Move move, NNUE::Accumulator& acc) {
   case MT_EN_PASSANT: {
     halfMoveClock = 0;
 
-    const Square from = getMoveSrc(move);
-    const Square to = getMoveDest(move);
+    const Square from = move_from(move);
+    const Square to = move_to(move);
 
     if (us == WHITE) {
 
@@ -325,11 +325,11 @@ void Position::doMove(Move move, NNUE::Accumulator& acc) {
   case MT_PROMOTION: {
     halfMoveClock = 0;
 
-    const Square from = getMoveSrc(move);
-    const Square to = getMoveDest(move);
+    const Square from = move_from(move);
+    const Square to = move_to(move);
 
     const Piece capturedPc = board[to];
-    const Piece promoteToPc = make_piece(us, getPromoType(move));
+    const Piece promoteToPc = make_piece(us, promo_type(move));
 
     if (capturedPc != NO_PIECE) {
       removePiece(to, capturedPc, acc);
@@ -368,8 +368,8 @@ Key Position::keyAfter(Move move) const {
 
   CastlingRights newCastlingRights = castlingRights;
 
-  const Square from = getMoveSrc(move);
-  const Square to = getMoveDest(move);
+  const Square from = move_from(move);
+  const Square to = move_to(move);
 
   const Piece movedPc = board[from];
   const Piece capturedPc = board[to];
@@ -589,10 +589,10 @@ std::ostream& operator<<(std::ostream& stream, Position& pos) {
 bool Position::see_ge(Move m, Score threshold) const {
 
   // Only deal with normal moves, assume others pass a simple SEE
-  if (getMoveType(m) != MT_NORMAL)
+  if (move_type(m) != MT_NORMAL)
     return DRAW >= threshold;
 
-  Square from = getMoveSrc(m), to = getMoveDest(m);
+  Square from = move_from(m), to = move_to(m);
 
   int swap = PieceValue[board[to]] - threshold;
   if (swap < 0)

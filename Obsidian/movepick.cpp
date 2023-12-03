@@ -28,11 +28,11 @@ MovePicker::MovePicker(
 }
 
 int pieceTo(Position& pos, Move m) {
-  return pos.board[getMoveSrc(m)] * SQUARE_NB + getMoveDest(m);
+  return pos.board[move_from(m)] * SQUARE_NB + move_to(m);
 }
 
 int fromTo(Move m) {
-  return getMoveSrc(m) * SQUARE_NB + getMoveDest(m);
+  return move_from(m) * SQUARE_NB + move_to(m);
 }
 
 constexpr int promotionScores[] = {
@@ -95,15 +95,15 @@ void MovePicker::scoreCaptures() {
     // initial score
     moveScore = 0;
 
-    MoveType mt = getMoveType(move);
+    MoveType mt = move_type(move);
 
-    Piece moved = pos.board[getMoveSrc(move)];
-    PieceType captured = ptypeOf(mt == MT_EN_PASSANT ? W_PAWN : pos.board[getMoveDest(move)]);
+    Piece moved = pos.board[move_from(move)];
+    PieceType captured = ptypeOf(mt == MT_EN_PASSANT ? W_PAWN : pos.board[move_to(move)]);
 
     moveScore += PieceValue[captured] * 64;
 
     if (mt == MT_PROMOTION)
-      moveScore += promotionScores[getPromoType(move)];
+      moveScore += promotionScores[promo_type(move)];
     else if (mt == MT_EN_PASSANT) {}
     else {
       if (!pos.see_ge(move, Score(-50)))
