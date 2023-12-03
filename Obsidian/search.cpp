@@ -858,15 +858,13 @@ namespace Search {
     // Update histories
     if (bestScore >= beta)
     {
-      int bonus = stat_bonus(depth);
+      int bonus = (bestScore > beta + StatBonusBoostAt) ? stat_bonus(depth + 1) : stat_bonus(depth);
 
       if (pos.isQuiet(bestMove)) 
       {
         updateHistories(pos, depth, bestMove, bestScore, beta, quietMoves, quietCount, ss);
       }
       else if (pos.board[move_to(bestMove)]) {
-        int bonus = stat_bonus(depth);
-
         Piece captured = pos.board[move_to(bestMove)];
         addToHistory(captureHistory[pieceTo(pos, bestMove)][ptypeOf(captured)], bonus);
       }
@@ -1073,15 +1071,13 @@ namespace Search {
     // Update histories
     if (bestScore >= beta)
     {
-      int bonus = stat_bonus(depth);
+      int bonus = (bestScore > beta + StatBonusBoostAt) ? stat_bonus(depth + 1) : stat_bonus(depth);
 
       if (pos.isQuiet(bestMove))
       {
         updateHistories(pos, depth, bestMove, bestScore, beta, quietMoves, quietCount, ss);
       }
       else if (pos.board[move_to(bestMove)]) {
-        int bonus = stat_bonus(depth);
-
         Piece captured = pos.board[move_to(bestMove)];
         addToHistory(captureHistory[pieceTo(pos, bestMove)][ptypeOf(captured)], bonus);
       }
