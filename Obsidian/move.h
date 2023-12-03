@@ -58,6 +58,14 @@ inline CastlingRights castling_type(Move move) {
   return CastlingRights(1 << move_extra(move));
 }
 
+inline bool is_ep(Move move) {
+  return move_type(move) == MT_EN_PASSANT;
+}
+
+inline bool is_promo(Move move) {
+  return move_type(move) == MT_PROMOTION;
+}
+
 struct MoveScored {
   Move move;
   int score;

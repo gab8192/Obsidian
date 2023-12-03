@@ -284,14 +284,12 @@ namespace Search {
       MoveType mt = move_type(move);
 
       Piece moved = pos.board[move_from(move)];
-      Piece captured = pos.board[move_to(move)];
+      Piece captured = is_ep(move) ? W_PAWN : pos.board[move_to(move)];
 
       if (move == ttMove)
         moveScore = INT_MAX;
       else if (mt == MT_PROMOTION)
         moveScore = promotionScores[promo_type(move)] + PieceValue[captured];
-      else if (mt == MT_EN_PASSANT)
-        moveScore = 300000 + PieceValue[PAWN] * 64;
       else if (captured) {
         moveScore = pos.see_ge(move, Score(-10)) ? 300000 : -200000;
         moveScore += PieceValue[captured] * 64;
@@ -864,10 +862,10 @@ namespace Search {
       {
         updateHistories(pos, depth, bestMove, bestScore, beta, quietMoves, quietCount, ss);
       }
-      else if (pos.board[move_to(bestMove)]) {
+      else {
         int bonus = stat_bonus(depth);
 
-        Piece captured = pos.board[move_to(bestMove)];
+        Piece captured = is_ep(bestMove) ? W_PAWN : pos.board[move_to(bestMove)];
         addToHistory(captureHistory[pieceTo(pos, bestMove)][ptypeOf(captured)], bonus);
       }
 
@@ -876,7 +874,7 @@ namespace Search {
         if (otherMove == bestMove)
           continue;
 
-        Piece captured = pos.board[move_to(otherMove)];
+        Piece captured = is_ep(otherMove) ? W_PAWN : pos.board[move_to(otherMove)];
         addToHistory(captureHistory[pieceTo(pos, otherMove)][ptypeOf(captured)], -bonus);
       }
     }
@@ -1075,14 +1073,14 @@ namespace Search {
     {
       int bonus = stat_bonus(depth);
 
-      if (pos.isQuiet(bestMove))
+      if (pos.isQuiet(bestMove)) 
       {
         updateHistories(pos, depth, bestMove, bestScore, beta, quietMoves, quietCount, ss);
       }
-      else if (pos.board[move_to(bestMove)]) {
+      else {
         int bonus = stat_bonus(depth);
 
-        Piece captured = pos.board[move_to(bestMove)];
+        Piece captured = is_ep(bestMove) ? W_PAWN : pos.board[move_to(bestMove)];
         addToHistory(captureHistory[pieceTo(pos, bestMove)][ptypeOf(captured)], bonus);
       }
 
@@ -1091,7 +1089,7 @@ namespace Search {
         if (otherMove == bestMove)
           continue;
 
-        Piece captured = pos.board[move_to(otherMove)];
+        Piece captured = is_ep(otherMove) ? W_PAWN : pos.board[move_to(otherMove)];
         addToHistory(captureHistory[pieceTo(pos, otherMove)][ptypeOf(captured)], -bonus);
       }
     }
