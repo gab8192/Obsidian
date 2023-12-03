@@ -527,10 +527,6 @@ namespace Search {
     if (is2FoldRepetition(position) || position.halfMoveClock >= 100)
       return makeDrawScore();
 
-    // If we are in check, increment the depth
-    if (position.checkers)
-      depth++;
-
     // Enter qsearch when depth is 0
     if (depth <= 0)
       return qsearch<PvNode ? PV : NonPV>(position, alpha, beta, ss);
