@@ -56,10 +56,6 @@ namespace Search {
 
   int lmrTable[MAX_PLY][MAX_MOVES];
 
-  int fromTo(Move m) {
-    return move_from(m) * SQUARE_NB + move_to(m);
-  }
-
   int pieceTo(Position& pos, Move m) {
     return pos.board[move_from(m)] * SQUARE_NB + move_to(m);
   }
@@ -212,7 +208,7 @@ namespace Search {
 
   int SearchThread::getHistoryScore(Position& pos, Move move, SearchInfo* ss) {
 
-    return    mainHistory[pos.sideToMove][fromTo(move)]
+    return    mainHistory[pos.sideToMove][move_from_to(move)]
             + (ss - 1)->contHistory()[pieceTo(pos, move)]
             + (ss - 2)->contHistory()[pieceTo(pos, move)]
             + (ss - 4)->contHistory()[pieceTo(pos, move)];
@@ -233,7 +229,7 @@ namespace Search {
                        Score beta, Move* quietMoves, int quietCount, SearchInfo* ss) {
 
     // Butterfly history
-    addToHistory(mainHistory[pos.sideToMove][fromTo(bestMove)], bonus);
+    addToHistory(mainHistory[pos.sideToMove][move_from_to(bestMove)], bonus);
 
     // Continuation history
     addToContHistory(pos, bonus, bestMove, ss);
@@ -246,7 +242,7 @@ namespace Search {
 
       addToContHistory(pos, -bonus, otherMove, ss);
 
-      addToHistory(mainHistory[pos.sideToMove][fromTo(otherMove)], -bonus);
+      addToHistory(mainHistory[pos.sideToMove][move_from_to(otherMove)], -bonus);
     }
 
     // Counter move
@@ -286,7 +282,7 @@ namespace Search {
         moveScore += captureHistory[pieceTo(pos, move)][ptypeOf(captured)];
       }
       else
-        moveScore = mainHistory[pos.sideToMove][fromTo(move)];
+        moveScore = mainHistory[pos.sideToMove][move_from_to(move)];
     }
   }
 

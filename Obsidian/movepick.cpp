@@ -31,10 +31,6 @@ int pieceTo(Position& pos, Move m) {
   return pos.board[move_from(m)] * SQUARE_NB + move_to(m);
 }
 
-int fromTo(Move m) {
-  return move_from(m) * SQUARE_NB + move_to(m);
-}
-
 constexpr int promotionScores[] = {
     0, 0, 200000, -300000, -200000, 300000
 };
@@ -70,7 +66,7 @@ void MovePicker::scoreQuiets() {
     int chIndex = pieceTo(pos, move);
 
     quiets[i].score =
-      mainHist[pos.sideToMove][fromTo(move)]
+      mainHist[pos.sideToMove][move_from_to(move)]
       + (ss - 1)->contHistory()[chIndex]
       + (ss - 2)->contHistory()[chIndex]
       + (ss - 4)->contHistory()[chIndex];
