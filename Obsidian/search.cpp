@@ -603,8 +603,7 @@ namespace Search {
     // to catch up, thus cut off
     if ( !IsPV
       && depth < 9
-      && abs(eval) < TB_WIN_IN_MAX_PLY
-      && eval >= beta
+      && eval < TB_WIN_IN_MAX_PLY
       && eval - RfpDepthMul * (depth - improving) >= beta)
       return eval;
 
