@@ -59,10 +59,6 @@ namespace Search {
     }
   };
 
-  enum NodeType {
-    PV, NonPV
-  };
-
   // A sort of header of the search stack, so that plies behind 0 are accessible and
   // it's easier to determine conthist score, improving, ...
   constexpr int SsOffset = 4;
@@ -124,10 +120,10 @@ namespace Search {
 
     Score makeDrawScore();
 
-    template<NodeType nodeType>
+    template<bool IsPV>
     Score qsearch(Position& position, Score alpha, Score beta, SearchInfo* ss);
 
-    template<NodeType nodeType>
+    template<bool IsPV>
     Score negaMax(Position& position, Score alpha, Score beta, int depth, bool cutNode, SearchInfo* ss);
 
     Score rootNegaMax(Position& position, Score alpha, Score beta, int depth, SearchInfo* ss);

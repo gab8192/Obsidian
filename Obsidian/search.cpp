@@ -352,9 +352,8 @@ namespace Search {
     return Score(int(nodesSearched & 2) - 1);
   }
 
-  template<NodeType nodeType>
+  template<bool IsPV>
   Score SearchThread::qsearch(Position& pos, Score alpha, Score beta, SearchInfo* ss) {
-    constexpr bool PvNode = nodeType != NonPV;
     
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY-4)
@@ -379,7 +378,7 @@ namespace Search {
     }
 
     // In non PV nodes, if tt bound allows it, return ttScore
-    if (!PvNode) {
+    if (!IsPV) {
       if (ttFlag & flagForTT(ttScore >= beta))
         return ttScore;
     }
@@ -446,7 +445,7 @@ namespace Search {
       Position newPos = pos;
       playMove(newPos, move, ss);
 
-      Score score = -qsearch<nodeType>(newPos, -beta, -alpha, ss + 1);
+      Score score = -qsearch<IsPV>(newPos, -beta, -alpha, ss + 1);
 
       cancelMove();
 
@@ -487,9 +486,8 @@ namespace Search {
     ss->pvLength = (ss + 1)->pvLength;
   }
 
-  template<NodeType nodeType>
+  template<bool IsPV>
   Score SearchThread::negaMax(Position& pos, Score alpha, Score beta, int depth, bool cutNode, SearchInfo* ss) {
-    constexpr bool PvNode = nodeType != NonPV;
 
     if (Threads::getSearchState() != RUNNING)
       return DRAW;
@@ -503,7 +501,7 @@ namespace Search {
     }
     
     // Init node
-    if (PvNode)
+    if (IsPV)
       ss->pvLength = ply;
 
     // Detect draw
@@ -512,7 +510,7 @@ namespace Search {
 
     // Enter qsearch when depth is 0
     if (depth <= 0)
-      return qsearch<PvNode ? PV : NonPV>(pos, alpha, beta, ss);
+      return qsearch<IsPV>(pos, alpha, beta, ss);
 
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY - 4)
@@ -551,7 +549,7 @@ namespace Search {
     Score bestScore = -SCORE_INFINITE;
 
     // In non PV nodes, if tt depth and bound allow it, return ttScore
-    if (!PvNode
+    if ( !IsPV
       && !excludedMove
       && ttDepth >= depth) 
     {
@@ -594,16 +592,16 @@ namespace Search {
 
     // Razoring. When evaluation is far below alpha, we could probably only catch up with a capture,
     // thus do a qsearch. If the qsearch still can't hit alpha, cut off
-    if (!PvNode
+    if ( !IsPV
       && eval < alpha - RazoringDepthMul * depth) {
-      Score score = qsearch<NonPV>(pos, alpha-1, alpha, ss);
+      Score score = qsearch<false>(pos, alpha-1, alpha, ss);
       if (score < alpha)
         return score;
     }
 
     // Reverse futility pruning. When evaluation is far above beta, the opponent is unlikely
     // to catch up, thus cut off
-    if (!PvNode
+    if ( !IsPV
       && depth < 9
       && abs(eval) < TB_WIN_IN_MAX_PLY
       && eval >= beta
@@ -612,7 +610,7 @@ namespace Search {
 
     // Null move pruning. When our evaluation is above beta, we give the opponent
     // a free move, and if he still can't catch up, cut off
-    if (!PvNode
+    if ( !IsPV
       && !excludedMove
       && (ss - 1)->playedMove != MOVE_NONE
       && eval >= beta
@@ -623,7 +621,7 @@ namespace Search {
 
       Position newPos = pos;
       playNullMove(newPos, ss);
-      Score score = -negaMax<NonPV>(newPos, -beta, -beta + 1, depth - R, !cutNode, ss + 1);
+      Score score = -negaMax<false>(newPos, -beta, -beta + 1, depth - R, !cutNode, ss + 1);
       cancelMove();
 
       if (score >= beta)
@@ -631,7 +629,7 @@ namespace Search {
     }
 
     // IIR. Decrement the depth if we expect this search to have bad move ordering
-    if ((PvNode || cutNode) && depth >= 4 && !ttMove)
+    if ((IsPV || cutNode) && depth >= 4 && !ttMove)
       depth --;
 
   moves_loop:
@@ -700,7 +698,7 @@ namespace Search {
 
         if (isQuiet && !skipQuiets) {
 
-          int lmrRed = lmrTable[depth][playedMoves + 1] - PvNode + !improving;
+          int lmrRed = lmrTable[depth][playedMoves + 1] - IsPV + !improving;
           int lmrDepth = std::max(0, depth - lmrRed);
 
           // Late move pruning. At low depths, only visit a few quiet moves
@@ -728,13 +726,13 @@ namespace Search {
         Score singularBeta = ttScore - depth;
         
         ss->excludedMove = move;
-        Score seScore = negaMax<NonPV>(pos, singularBeta - 1, singularBeta, (depth - 1) / 2, cutNode, ss);
+        Score seScore = negaMax<false>(pos, singularBeta - 1, singularBeta, (depth - 1) / 2, cutNode, ss);
         ss->excludedMove = MOVE_NONE;
         
         if (seScore < singularBeta) {
           extension = 1;
           // Extend even more if s. value is smaller than s. beta by some margin
-          if (!PvNode && ss->doubleExt <= 5 && seScore < singularBeta - 17) {
+          if (!IsPV && ss->doubleExt <= 5 && seScore < singularBeta - 17) {
             extension = 2;
             ss->doubleExt = (ss - 1)->doubleExt + 1;
           }
@@ -742,7 +740,7 @@ namespace Search {
         else if (singularBeta >= beta) // Multicut
           return singularBeta;
         else if (ttScore >= beta) // Negative extension (~18 Elo)
-          extension = -1 + PvNode;
+          extension = -1 + IsPV;
       }
 
       int oldNodesCount = nodesSearched;
@@ -758,7 +756,7 @@ namespace Search {
 
       bool needFullSearch;
 
-      if (depth >= 3 && playedMoves > (1 + 2 * PvNode)) {
+      if (depth >= 3 && playedMoves > (1 + 2 * IsPV)) {
         int R;
 
         if (isQuiet) {
@@ -786,25 +784,25 @@ namespace Search {
         if (newPos.checkers)
           R --;
 
-        R -= PvNode;
+        R -= IsPV;
 
         R += cutNode;
 
         // Do the clamp to avoid a qsearch or an extension in the child search
         int reducedDepth = std::clamp(newDepth - R, 1, newDepth + 1);
 
-        score = -negaMax<NonPV>(newPos, -alpha - 1, -alpha, reducedDepth, true, ss + 1);
+        score = -negaMax<false>(newPos, -alpha - 1, -alpha, reducedDepth, true, ss + 1);
 
         needFullSearch = score > alpha && reducedDepth < newDepth;
       }
       else
-        needFullSearch = !PvNode || playedMoves >= 1;
+        needFullSearch = !IsPV || playedMoves >= 1;
 
       if (needFullSearch)
-        score = -negaMax<NonPV>(newPos, -alpha - 1, -alpha, newDepth, !cutNode, ss + 1);
+        score = -negaMax<false>(newPos, -alpha - 1, -alpha, newDepth, !cutNode, ss + 1);
 
-      if (PvNode && (playedMoves == 0 || score > alpha))
-        score = -negaMax<PV>(newPos, -beta, -alpha, newDepth, false, ss + 1);
+      if (IsPV && (playedMoves == 0 || score > alpha))
+        score = -negaMax<true>(newPos, -beta, -alpha, newDepth, false, ss + 1);
 
       cancelMove();
 
@@ -816,7 +814,7 @@ namespace Search {
         if (bestScore > alpha) {
           bestMove = move;
 
-          if (PvNode)
+          if (IsPV)
             updatePV(ss, ply, bestMove);
 
           // Always true in NonPV nodes
@@ -868,9 +866,9 @@ namespace Search {
       if (bestScore >= beta)
         flag = TT::FLAG_LOWER;
       else
-        flag = (PvNode && bestMove) ? TT::FLAG_EXACT : TT::FLAG_UPPER;
+        flag = (IsPV && bestMove) ? TT::FLAG_EXACT : TT::FLAG_UPPER;
 
-      ttEntry->store(pos.key, flag, depth, bestMove, bestScore, ss->staticEval, PvNode, ply);
+      ttEntry->store(pos.key, flag, depth, bestMove, bestScore, ss->staticEval, IsPV, ply);
     }
 
     return bestScore;
@@ -1005,19 +1003,18 @@ namespace Search {
         // Do the clamp to avoid a qsearch or an extension in the child search
         int reducedDepth = std::clamp(newDepth - R, 1, newDepth + 1);
 
-        score = -negaMax<NonPV>(newPos, -alpha - 1, -alpha, reducedDepth, true, ss + 1);
+        score = -negaMax<false>(newPos, -alpha - 1, -alpha, reducedDepth, true, ss + 1);
 
         needFullSearch = score > alpha && reducedDepth < newDepth;
       }
       else
         needFullSearch = playedMoves >= 1;
 
-
       if (needFullSearch)
-        score = -negaMax<NonPV>(newPos, -alpha - 1, -alpha, newDepth, true, ss + 1);
+        score = -negaMax<false>(newPos, -alpha - 1, -alpha, newDepth, true, ss + 1);
 
       if (playedMoves == 0 || score > alpha)
-        score = -negaMax<PV>(newPos, -beta, -alpha, newDepth, false, ss + 1);
+        score = -negaMax<true>(newPos, -beta, -alpha, newDepth, false, ss + 1);
 
       cancelMove();
 
