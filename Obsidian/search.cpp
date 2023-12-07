@@ -370,6 +370,7 @@ namespace Search {
     Score ttScore = SCORE_NONE;
     Move ttMove = MOVE_NONE;
     Score ttStaticEval = SCORE_NONE;
+
     if (ttHit) {
       ttFlag = ttEntry->getFlag();
       ttScore = ttEntry->getScore(ply);
@@ -394,16 +395,14 @@ namespace Search {
       ss->staticEval = SCORE_NONE;
     }
     else {
-
       if (ttHit)
         bestScore = ss->staticEval = ttStaticEval;
       else
         bestScore = ss->staticEval = Eval::evaluate(pos, accumulatorStack[ply]);
 
       // When tt bound allows it, use ttScore as a better standing pat
-      if (ttFlag & flagForTT(ttScore > bestScore)) {
+      if (ttFlag & flagForTT(ttScore > bestScore))
         bestScore = ttScore;
-      }
 
       if (bestScore >= beta)
         return bestScore;
@@ -635,8 +634,6 @@ namespace Search {
 
     // Generate moves and score them
 
-    const bool wasInCheck = pos.checkers;
-
     bool foundLegalMove = false;
 
     int playedMoves = 0;
@@ -706,7 +703,7 @@ namespace Search {
 
           // Futility pruning (~8 Elo). If our evaluation is far below alpha,
           // only visit the first quiet move
-          if (lmrDepth <= FpMaxDepth && !wasInCheck && eval + FpBase + FpDepthMul * lmrDepth <= alpha)
+          if (lmrDepth <= FpMaxDepth && !pos.checkers && eval + FpBase + FpDepthMul * lmrDepth <= alpha)
             skipQuiets = true;
         }
       }
@@ -934,8 +931,6 @@ namespace Search {
   moves_loop:
 
     // Generate moves and score them
-
-    const bool wasInCheck = pos.checkers;
 
     MoveList moves = rootMoves;
 
