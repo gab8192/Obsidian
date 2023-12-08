@@ -34,8 +34,8 @@ namespace Search {
   DEFINE_PARAM(NmpEvalDiv, 200, 100, 400);
   DEFINE_PARAM(NmpEvalDivMin, 3, 2, 6);
 
-  DEFINE_PARAM(LmpBase, 7, 3, 9);
-  DEFINE_PARAM(LmpQuad, 1, 1, 3);
+  DEFINE_PARAM(PvLmpBase,    7, 0, 20);
+  DEFINE_PARAM(NonPvLmpBase, 3, 0, 20);
 
   DEFINE_PARAM(PvsQuietSeeMargin, -87, -300, 0);
   DEFINE_PARAM(PvsCapSeeMargin, -123, -300, 0);
@@ -686,7 +686,8 @@ namespace Search {
           int lmrDepth = std::max(0, depth - lmrRed);
 
           // Late move pruning. At low depths, only visit a few quiet moves
-          if (quietCount >= (LmpQuad * depth * depth + LmpBase) / (2 - improving))
+          int lmpBase = IsPV ? PvLmpBase : NonPvLmpBase;
+          if (quietCount >= (depth * depth + lmpBase) / (2 - improving))
             skipQuiets = true;
 
           // Futility pruning (~8 Elo). If our evaluation is far below alpha,
