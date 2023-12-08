@@ -656,19 +656,10 @@ namespace Search {
 
       if (!pos.isLegal(move))
         continue;
-
-      bool isQuiet = pos.isQuiet(move);
-
-      if (isQuiet) {
-        if (quietCount < 64)
-          quietMoves[quietCount++] = move;
-      }
-      else {
-        if (captureCount < 64)
-          captures[captureCount++] = move;
-      }
-
+      
       foundLegalMove = true;
+      
+      bool isQuiet = pos.isQuiet(move);
 
       if ( pos.hasNonPawns(pos.sideToMove)
         && bestScore > TB_LOSS_IN_MAX_PLY)
@@ -687,7 +678,7 @@ namespace Search {
 
           // Late move pruning. At low depths, only visit a few quiet moves
           int lmpBase = IsPV ? PvLmpBase : NonPvLmpBase;
-          if (quietCount >= (depth * depth + lmpBase) / (2 - improving))
+          if (quietCount+1 >= (depth * depth + lmpBase) / (2 - improving))
             skipQuiets = true;
 
           // Futility pruning (~8 Elo). If our evaluation is far below alpha,
@@ -792,6 +783,15 @@ namespace Search {
       cancelMove();
 
       playedMoves++;
+      
+      if (isQuiet) {
+        if (quietCount < 64)
+          quietMoves[quietCount++] = move;
+      }
+      else {
+        if (captureCount < 64)
+          captures[captureCount++] = move;
+      }
 
       if (score > bestScore) {
         bestScore = score;
