@@ -109,9 +109,9 @@ namespace {
       }
     }
 
-    Search::doingBench = true;
-
     cout << totalNodes << " nodes " << (totalNodes * 1000 / elapsed) << " nps" << endl;
+
+    Search::doingBench = false;
   }
 
   // setoption() is called when the engine receives the "setoption" UCI command.

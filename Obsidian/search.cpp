@@ -225,7 +225,7 @@ namespace Search {
   }
 
   void SearchThread::updateHistories(Position& pos, int bonus, Move bestMove, Score bestScore,
-                       Score beta, Move* quietMoves, int quietCount, SearchInfo* ss) {
+                       Score beta, Move* quiets, int quietCount, SearchInfo* ss) {
     // Butterfly history
     addToHistory(mainHistory[pos.sideToMove][move_from_to(bestMove)], bonus);
 
@@ -234,7 +234,7 @@ namespace Search {
 
     // Decrease score of other quiet moves
     for (int i = 0; i < quietCount; i++) {
-      Move otherMove = quietMoves[i];
+      Move otherMove = quiets[i];
       if (otherMove == bestMove)
         continue;
 
@@ -626,7 +626,7 @@ namespace Search {
 
     int playedMoves = 0;
 
-    Move quietMoves[64];
+    Move quiets[64];
     int quietCount = 0;
     Move captures[64];
     int captureCount = 0;
@@ -786,7 +786,7 @@ namespace Search {
       
       if (isQuiet) {
         if (quietCount < 64)
-          quietMoves[quietCount++] = move;
+          quiets[quietCount++] = move;
       }
       else {
         if (captureCount < 64)
@@ -828,7 +828,7 @@ namespace Search {
 
       if (pos.isQuiet(bestMove)) 
       {
-        updateHistories(pos, bonus, bestMove, bestScore, beta, quietMoves, quietCount, ss);
+        updateHistories(pos, bonus, bestMove, bestScore, beta, quiets, quietCount, ss);
       }
       else if (pos.board[move_to(bestMove)]) {
         Piece captured = pos.board[move_to(bestMove)];
@@ -927,7 +927,7 @@ namespace Search {
 
     int playedMoves = 0;
 
-    Move quietMoves[64];
+    Move quiets[64];
     int quietCount = 0;
     Move captures[64];
     int captureCount = 0;
@@ -945,7 +945,7 @@ namespace Search {
 
       if (isQuiet) {
         if (quietCount < 64)
-          quietMoves[quietCount++] = move;
+          quiets[quietCount++] = move;
       }
       else {
         if (captureCount < 64)
@@ -1035,7 +1035,7 @@ namespace Search {
 
       if (pos.isQuiet(bestMove))
       {
-        updateHistories(pos, bonus, bestMove, bestScore, beta, quietMoves, quietCount, ss);
+        updateHistories(pos, bonus, bestMove, bestScore, beta, quiets, quietCount, ss);
       }
       else if (pos.board[move_to(bestMove)]) {
         Piece captured = pos.board[move_to(bestMove)];
