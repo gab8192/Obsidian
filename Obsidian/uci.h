@@ -7,8 +7,6 @@
 #include <string>
 #include <vector>
 
-extern std::vector<uint64_t> seenPositions;
-
 namespace UCI {
 
   class Option;

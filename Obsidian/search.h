@@ -5,6 +5,8 @@
 #include "position.h"
 #include "types.h"
 
+#include <vector>
+
 namespace Search {
 
   extern Move lastBestMove;
@@ -22,6 +24,8 @@ namespace Search {
     int64_t nodes;
 
     Position position;
+
+    std::vector<uint64_t> prevPositions;
 
     Settings() {
       time[WHITE] = time[BLACK] = inc[WHITE] = inc[BLACK] = movetime = 0;
@@ -89,8 +93,11 @@ namespace Search {
 
     int ply = 0;
 
-    Key keyStack[MAX_PLY];
+    int keyStackHead;
+    Key keyStack[100 + MAX_PLY];
+
     NNUE::Accumulator accumulatorStack[MAX_PLY];
+
     SearchInfo searchStack[MAX_PLY + SsOffset];
 
     MoveList rootMoves;

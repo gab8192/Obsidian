@@ -146,13 +146,11 @@ namespace Search {
     if (Threads::searchSettings.movetime) {
 
       clock_t timeLimit = Threads::searchSettings.movetime;
-
       return elapsedTime() >= (timeLimit - 100);
     }
     else if (Threads::searchSettings.hasTimeLimit()) {
 
       clock_t timeLimit = Threads::searchSettings.time[rootColor];
-
       // never use more than ~80 % of our time
       return elapsedTime() >= (0.8 * timeLimit - 50);
     }
@@ -164,7 +162,7 @@ namespace Search {
 
     ss->mContHistory = &contHistory[false][0];
     ss->playedMove = MOVE_NONE;
-    keyStack[ply] = pos.key;
+    keyStack[keyStackHead++] = pos.key;
 
     memcpy(&accumulatorStack[ply + 1], &accumulatorStack[ply], sizeof(NNUE::Accumulator));
 
@@ -182,7 +180,7 @@ namespace Search {
     bool isCap = pos.board[move_to(move)] != NO_PIECE;
     ss->mContHistory = &contHistory[isCap][pieceTo(pos, move)];
     ss->playedMove = move;
-    keyStack[ply] = pos.key;
+    keyStack[keyStackHead++] = pos.key;
 
     memcpy(&accumulatorStack[ply + 1], &accumulatorStack[ply], sizeof(NNUE::Accumulator));
 
@@ -192,6 +190,7 @@ namespace Search {
 
   void SearchThread::cancelMove() {
     ply--;
+    keyStackHead--;
   }
 
   //        TT move:  MAX
@@ -227,7 +226,6 @@ namespace Search {
 
   void SearchThread::updateHistories(Position& pos, int bonus, Move bestMove, Score bestScore,
                        Score beta, Move* quietMoves, int quietCount, SearchInfo* ss) {
-
     // Butterfly history
     addToHistory(mainHistory[pos.sideToMove][move_from_to(bestMove)], bonus);
 
@@ -256,7 +254,6 @@ namespace Search {
   }
 
   void SearchThread::scoreRootMoves(Position& pos, MoveList& moves, Move ttMove, SearchInfo* ss) {
-
     for (int i = 0; i < moves.size(); i++) {
       int& moveScore = moves[i].score;
 
@@ -288,7 +285,6 @@ namespace Search {
 
   Move peekBestMove(MoveList& moveList) {
     int bestMoveI = 0;
-
     int bestMoveScore = moveList[bestMoveI].score;
 
     int size = moveList.size();
@@ -305,7 +301,6 @@ namespace Search {
 
   Move nextBestMove(MoveList& moveList, int scannedMoves, int* moveScore) {
     int bestMoveI = scannedMoves;
-
     int bestMoveScore = moveList[bestMoveI].score;
 
     int size = moveList.size();
@@ -330,18 +325,11 @@ namespace Search {
 
   // Should not be called from Root node
   bool SearchThread::is2FoldRepetition(Position& pos) {
-
     if (pos.halfMoveClock < 4)
       return false;
 
-    for (int i = ply - 2; i >= 0; i -= 2) {
+    for (int i = keyStackHead - 4; i >= 0; i -= 2) {
       if (pos.key == keyStack[i])
-        return true;
-    }
-
-    // Start at last-1 because posStack[0] = seenPositions[last]
-    for (int i = seenPositions.size() + (ply&1) - 3; i >= 0; i -= 2) {
-      if (pos.key == seenPositions[i])
         return true;
     }
 
@@ -1101,6 +1089,10 @@ namespace Search {
 
     Position rootPos = Threads::searchSettings.position;
     rootPos.updateAccumulator(accumulatorStack[0]);
+
+    keyStackHead = 0;
+    for (int i = 0; i < Threads::searchSettings.prevPositions.size(); i++)
+      keyStack[keyStackHead++] = Threads::searchSettings.prevPositions[i];
 
     Move bestMove;
 

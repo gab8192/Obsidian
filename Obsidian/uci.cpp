@@ -19,7 +19,7 @@
 using namespace std;
 using namespace Threads;
 
-std::vector<uint64_t> seenPositions;
+std::vector<uint64_t> prevPositions;
 
 namespace {
 
@@ -27,8 +27,6 @@ namespace {
   const char* StartFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
   void position(Position& pos, NNUE::Accumulator& acc, istringstream& is) {
-    seenPositions.clear();
-
     Move m;
     string token, fen;
 
@@ -47,7 +45,8 @@ namespace {
 
     pos.setToFen(fen, acc);
 
-    seenPositions.push_back(pos.key);
+    prevPositions.clear();
+    prevPositions.push_back(pos.key);
 
     // Parse the move list, if any
     while (is >> token && (m = UCI::to_move(pos, token)) != MOVE_NONE)
@@ -56,10 +55,13 @@ namespace {
 
       // If this move reset the half move clock, we can ignore and forget all the previous position
       if (pos.halfMoveClock == 0)
-        seenPositions.clear();
+        prevPositions.clear();
 
-      seenPositions.push_back(pos.key);
+      prevPositions.push_back(pos.key);
     }
+
+    // Remove the last position because it is equal to the current position
+    prevPositions.pop_back();
   }
 
   void newGame() {
@@ -156,6 +158,7 @@ namespace {
     searchSettings = Search::Settings();
     searchSettings.startTime = timeMillis();
     searchSettings.position = pos;
+    searchSettings.prevPositions = prevPositions;
 
     int perftPlies = 0;
 
