@@ -823,7 +823,7 @@ namespace Search {
     // Update histories
     if (bestScore >= beta)
     {
-      int bonus = (bestScore > beta + StatBonusBoostAt) ? stat_bonus(depth + 1) : stat_bonus(depth);
+      int bonus = stat_bonus(depth + (bestScore > beta + StatBonusBoostAt));
 
       if (pos.isQuiet(bestMove)) 
       {
@@ -1030,7 +1030,7 @@ namespace Search {
     // Update histories
     if (bestScore >= beta)
     {
-      int bonus = (bestScore > beta + StatBonusBoostAt) ? stat_bonus(depth + 1) : stat_bonus(depth);
+      int bonus = stat_bonus(depth + (bestScore > beta + StatBonusBoostAt));
 
       if (pos.isQuiet(bestMove))
       {
