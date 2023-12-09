@@ -716,7 +716,7 @@ namespace Search {
         else if (singularBeta >= beta) // Multicut
           return singularBeta;
         else if (ttScore >= beta) // Negative extension (~18 Elo)
-          extension = -1 + IsPV;
+          extension = -1;
       }
 
       int oldNodesCount = nodesSearched;
