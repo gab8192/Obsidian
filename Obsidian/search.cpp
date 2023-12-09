@@ -263,18 +263,16 @@ namespace Search {
       Move move = moves[i].move;
 
       MoveType mt = move_type(move);
-
-      Piece moved = pos.board[move_from(move)];
-      Piece captured = pos.board[move_to(move)];
+      PieceType captured = ptypeOf(pos.board[move_to(move)]);
 
       if (move == ttMove)
         moveScore = INT_MAX;
       else if (mt == MT_PROMOTION)
-        moveScore = promotionScores[promo_type(move)] + PieceValue[captured];
+        moveScore = promotionScores[promo_type(move)] + PieceValue[captured] * 64;
       else if (captured || mt == MT_EN_PASSANT) {
         moveScore = pos.see_ge(move, Score(-10)) ? 300000 : -200000;
         moveScore += PieceValue[mt == MT_EN_PASSANT ? PAWN : captured] * 64;
-        moveScore += captureHistory[pieceTo(pos, move)][ptypeOf(captured)];
+        moveScore += captureHistory[pieceTo(pos, move)][captured];
       }
       else
         moveScore = mainHistory[pos.sideToMove][move_from_to(move)];
