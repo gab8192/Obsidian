@@ -143,12 +143,9 @@ struct alignas(32) Position {
 
   inline bool isQuiet(Move move) const {
     MoveType mt = move_type(move);
-    if (mt == MT_PROMOTION || mt == MT_EN_PASSANT)
-      return false;
-    if (mt == MT_CASTLING)
-      return true;
 
-    return board[move_to(move)] == NO_PIECE;
+    return    (mt == MT_NORMAL && ! board[move_to(move)]) 
+           || (mt == MT_CASTLING);
   }
 
   bool isPseudoLegal(Move move) const;
