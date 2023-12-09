@@ -416,7 +416,7 @@ namespace Search {
     MpStage moveStage;
     Move move;
 
-    while (move = movePicker.nextMove(false, &moveStage)) {
+    while (move = movePicker.nextMove(&moveStage)) {
 
       if (!pos.isLegal(move))
         continue;
@@ -643,14 +643,12 @@ namespace Search {
       mainHistory, captureHistory,
       ss);
 
-    bool skipQuiets = false;
-    
     // Visit moves
 
     Move move;
     MpStage moveStage;
 
-    while (move = movePicker.nextMove(skipQuiets, & moveStage)) {
+    while (move = movePicker.nextMove(& moveStage)) {
       if (move == excludedMove)
         continue;
 
@@ -678,13 +676,13 @@ namespace Search {
 
           // Late move pruning. At low depths, only visit a few quiet moves
           int lmpBase = IsPV ? PvLmpBase : NonPvLmpBase;
-          if (quietCount+1 >= (depth * depth + lmpBase) / (2 - improving))
-            skipQuiets = true;
+          if (quietCount + 1 >= (depth * depth + lmpBase) / (2 - improving))
+            movePicker.skipQuiets();
 
           // Futility pruning (~8 Elo). If our evaluation is far below alpha,
           // only visit the first quiet move
           if (lmrDepth <= FpMaxDepth && !pos.checkers && eval + FpBase + FpDepthMul * lmrDepth <= alpha)
-            skipQuiets = true;
+            movePicker.skipQuiets();
         }
       }
 
