@@ -652,6 +652,8 @@ namespace Search {
         continue;
       
       foundLegalMove = true;
+
+      int historyScore = getHistoryScore(pos, move, ss);
       
       bool isQuiet = pos.isQuiet(move);
 
@@ -678,6 +680,9 @@ namespace Search {
           // Futility pruning (~8 Elo). If our evaluation is far below alpha,
           // only visit the first quiet move
           if (lmrDepth <= FpMaxDepth && !pos.checkers && eval + FpBase + FpDepthMul * lmrDepth <= alpha)
+            movePicker.skipQuiets();
+
+          if (lmrDepth <= 5 && historyScore < -7000 * lmrDepth)
             movePicker.skipQuiets();
         }
       }
@@ -742,7 +747,7 @@ namespace Search {
             R -= 2;
           // Reduce or extend depending on history of this quiet move (~12 Elo)
           else 
-            R -= std::clamp(getHistoryScore(pos, move, ss) / LmrHistoryDiv, -2, 2);
+            R -= std::clamp(historyScore / LmrHistoryDiv, -2, 2);
         }
         else {
           R = 0;
