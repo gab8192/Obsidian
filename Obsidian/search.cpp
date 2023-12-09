@@ -671,7 +671,7 @@ namespace Search {
             continue;
         }
 
-        if (isQuiet && !skipQuiets) {
+        if (isQuiet) {
 
           int lmrRed = lmrTable[depth][playedMoves + 1] - IsPV + !improving;
           int lmrDepth = std::max(0, depth - lmrRed);
