@@ -743,7 +743,7 @@ namespace Search {
 
           // Do less reduction for killer and counter move (~4 Elo)
           if (moveStage == KILLER || moveStage == COUNTER)
-            R--;
+            R -= 2;
           // Reduce or extend depending on history of this quiet move (~12 Elo)
           else 
             R -= std::clamp(getHistoryScore(pos, move, ss) / LmrHistoryDiv, -2, 2);
@@ -760,7 +760,7 @@ namespace Search {
 
         R -= IsPV;
 
-        R += cutNode;
+        R += 2 * cutNode;
 
         // Do the clamp to avoid a qsearch or an extension in the child search
         int reducedDepth = std::clamp(newDepth - R, 1, newDepth + 1);
