@@ -45,7 +45,7 @@ namespace Search {
   DEFINE_PARAM(FpDepthMul, 117, 50, 350);
 
   DEFINE_PARAM(HistPrMaxDepth, 5, 0, 20);
-  DEFINE_PARAM(HistPrDepthMul, 7000, 4000, 16000);
+  DEFINE_PARAM(HistPrDepthMul, 7600, 4000, 16000);
 
   DEFINE_PARAM(LmrHistoryDiv, 9828, 4000, 16000);
 
