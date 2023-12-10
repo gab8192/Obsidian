@@ -108,10 +108,6 @@ void MovePicker::scoreCaptures() {
   }
 }
 
-void MovePicker::skipQuiets() {
-  stage = BAD_CAPTURES;
-}
-
 Move MovePicker::nextMove(MpStage* outStage) {
   select:
   switch (stage)

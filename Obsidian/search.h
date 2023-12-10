@@ -96,7 +96,8 @@ namespace Search {
     int keyStackHead;
     Key keyStack[100 + MAX_PLY];
 
-    NNUE::Accumulator accumulatorStack[MAX_PLY];
+    int accumStackHead;
+    NNUE::Accumulator accumStack[MAX_PLY];
 
     SearchInfo searchStack[MAX_PLY + SsOffset];
 
@@ -110,6 +111,8 @@ namespace Search {
     bool usedMostOfTime();
 
     void playNullMove(Position& pos, SearchInfo* ss);
+
+    void cancelNullMove();
 
     void playMove(Position& pos, Move move, SearchInfo* ss);
 
