@@ -44,7 +44,7 @@ namespace Search {
   DEFINE_PARAM(FpMaxDepth, 8, 0, 30);
   DEFINE_PARAM(FpDepthMul, 117, 50, 350);
 
-  DEFINE_PARAM(LmrHistoryDiv, 9828, 4000, 16000);
+  DEFINE_PARAM(LmrHistoryDiv, 8600, 4000, 16000);
 
   DEFINE_PARAM(AspWindowStartDepth, 5, 4, 8);
   DEFINE_PARAM(AspWindowStartDelta, 10, 10, 20);
@@ -210,7 +210,7 @@ namespace Search {
     return    mainHistory[pos.sideToMove][move_from_to(move)]
             + (ss - 1)->contHistory()[pieceTo(pos, move)]
             + (ss - 2)->contHistory()[pieceTo(pos, move)]
-            + (ss - 4)->contHistory()[pieceTo(pos, move)];
+            + (ss - 4)->contHistory()[pieceTo(pos, move)]/2;
   }
 
   void addToContHistory(Position& pos, int bonus, Move move, SearchInfo* ss) {
