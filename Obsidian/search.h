@@ -38,6 +38,15 @@ namespace Search {
     }
   };
 
+  inline int pieceTo(Position& pos, Move m) {
+    return pos.board[move_from(m)] * SQUARE_NB + move_to(m);
+  }
+
+  inline int fromTo(Move m) {
+    // Nice trick
+    return m & 4095;
+  }
+
   struct SearchLoopInfo {
     Score score;
     Move bestMove;
@@ -79,6 +88,19 @@ namespace Search {
 
     void resetHistories();
 
+    inline int getHistScore(Position& pos, Move move, SearchInfo* ss) {
+      int chIndex = pieceTo(pos, move);
+      return  mainHistory[pos.sideToMove][fromTo(move)]
+            + (ss - 1)->contHistory()[chIndex]
+            + (ss - 2)->contHistory()[chIndex]
+            + (ss - 4)->contHistory()[chIndex];
+    }
+
+    inline int getCapHistScore(Position& pos, Move move) {
+      PieceType captured = ptypeOf(pos.board[move_to(move)]);
+      return captureHistory[pieceTo(pos, move)][captured];
+    }
+
     inline bool isRunning() {
       return running;
     }
@@ -114,8 +136,6 @@ namespace Search {
     void playMove(Position& pos, Move move, SearchInfo* ss);
 
     void cancelMove();
-
-    int getHistoryScore(Position& pos, Move move, SearchInfo* ss);
 
     void updateHistories(Position& pos, int depth, Move bestMove, Score bestScore,
       Score beta, Move* quietMoves, int quietCount, SearchInfo* ss);

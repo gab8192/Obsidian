@@ -4,11 +4,11 @@
 MovePicker::MovePicker(
   bool _isQsearch, Position& _pos,
   Move _ttMove, Move _killerMove, Move _counterMove,
-  MainHistory& _mainHist, CaptureHistory& _capHist,
+  Search::SearchThread* _thread,
   Search::SearchInfo* _ss) :
   isQsearch(_isQsearch), pos(_pos),
   ttMove(_ttMove),
-  mainHist(_mainHist), capHist(_capHist), 
+  thread(_thread),
   ss(_ss),
   capIndex(0), quietIndex(0)
 {
@@ -25,10 +25,6 @@ MovePicker::MovePicker(
     this->counterMove = MOVE_NONE;
   else
     this->counterMove = _counterMove;
-}
-
-int pieceTo(Position& pos, Move m) {
-  return pos.board[move_from(m)] * SQUARE_NB + move_to(m);
 }
 
 constexpr int promotionScores[] = {
@@ -63,15 +59,7 @@ void MovePicker::scoreQuiets() {
       continue;
     }
 
-    int chIndex = pieceTo(pos, move);
-
-    quiets[i].score =
-      mainHist[pos.sideToMove][move_from_to(move)]
-      + (ss - 1)->contHistory()[chIndex]
-      + (ss - 2)->contHistory()[chIndex]
-      + (ss - 4)->contHistory()[chIndex];
-
-    i++;
+    quiets[i++].score = thread->getHistScore(pos, move, ss);
   }
 }
 
@@ -101,7 +89,7 @@ void MovePicker::scoreCaptures() {
     else {
       if (!pos.see_ge(move, Score(-50)))
         moveScore -= 500000;
-      moveScore += capHist[pieceTo(pos, move)][captured];
+      moveScore += thread->getCapHistScore(pos, move);
     }
 
     i++;

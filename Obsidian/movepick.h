@@ -24,7 +24,7 @@ public:
   MovePicker(
     bool _isQsearch, Position& _pos,
     Move _ttMove, Move _killerMove, Move _counterMove,
-    MainHistory& _mainHist, CaptureHistory& _capHist,
+    Search::SearchThread* _thread,
     Search::SearchInfo* _ss);
 
   void skipQuiets();
@@ -39,8 +39,7 @@ private:
   Move killerMove;
   Move counterMove;
 
-  MainHistory& mainHist;
-  CaptureHistory& capHist;
+  Search::SearchThread* thread;
   
   Search::SearchInfo* ss;
 

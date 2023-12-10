@@ -58,11 +58,6 @@ inline CastlingRights castling_type(Move move) {
   return CastlingRights(1 << move_extra(move));
 }
 
-inline int move_from_to(Move m) {
-  // Nice trick
-  return m & 4095;
-}
-
 struct MoveScored {
   Move move;
   int score;

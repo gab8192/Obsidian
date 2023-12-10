@@ -56,9 +56,7 @@ namespace Search {
 
   int lmrTable[MAX_PLY][MAX_MOVES];
 
-  int pieceTo(Position& pos, Move m) {
-    return pos.board[move_from(m)] * SQUARE_NB + move_to(m);
-  }
+  
 
   void initLmrTable() {
     // avoid log(0) because it's negative infinity
@@ -205,14 +203,6 @@ namespace Search {
     0, 0, 400000, -100001, -100000, 410000
   };
 
-  int SearchThread::getHistoryScore(Position& pos, Move move, SearchInfo* ss) {
-
-    return    mainHistory[pos.sideToMove][move_from_to(move)]
-            + (ss - 1)->contHistory()[pieceTo(pos, move)]
-            + (ss - 2)->contHistory()[pieceTo(pos, move)]
-            + (ss - 4)->contHistory()[pieceTo(pos, move)];
-  }
-
   void addToContHistory(Position& pos, int bonus, Move move, SearchInfo* ss) {
     int moved = pieceTo(pos, move);
 
@@ -227,7 +217,7 @@ namespace Search {
   void SearchThread::updateHistories(Position& pos, int bonus, Move bestMove, Score bestScore,
                        Score beta, Move* quiets, int quietCount, SearchInfo* ss) {
     // Butterfly history
-    addToHistory(mainHistory[pos.sideToMove][move_from_to(bestMove)], bonus);
+    addToHistory(mainHistory[pos.sideToMove][fromTo(bestMove)], bonus);
 
     // Continuation history
     addToContHistory(pos, bonus, bestMove, ss);
@@ -240,7 +230,7 @@ namespace Search {
 
       addToContHistory(pos, -bonus, otherMove, ss);
 
-      addToHistory(mainHistory[pos.sideToMove][move_from_to(otherMove)], -bonus);
+      addToHistory(mainHistory[pos.sideToMove][fromTo(otherMove)], -bonus);
     }
 
     // Counter move
@@ -272,10 +262,10 @@ namespace Search {
       else if (captured || mt == MT_EN_PASSANT) {
         moveScore = pos.see_ge(move, Score(-10)) ? 300000 : -200000;
         moveScore += PieceValue[mt == MT_EN_PASSANT ? PAWN : captured] * 64;
-        moveScore += captureHistory[pieceTo(pos, move)][captured];
+        moveScore += getCapHistScore(pos, move);
       }
       else
-        moveScore = mainHistory[pos.sideToMove][move_from_to(move)];
+        moveScore = mainHistory[pos.sideToMove][fromTo(move)];
     }
   }
 
@@ -402,7 +392,7 @@ namespace Search {
       true, pos,
       visitTTMove ? ttMove : MOVE_NONE,
       MOVE_NONE, MOVE_NONE,
-      mainHistory, captureHistory,
+      this,
       ss);
 
     bool foundLegalMoves = false;
@@ -636,7 +626,7 @@ namespace Search {
     MovePicker movePicker(
       false, pos,
       ttMove, ss->killerMove, counterMove,
-      mainHistory, captureHistory,
+      this,
       ss);
 
     // Visit moves
@@ -742,7 +732,7 @@ namespace Search {
             R -= 2;
           // Reduce or extend depending on history of this quiet move (~12 Elo)
           else 
-            R -= std::clamp(getHistoryScore(pos, move, ss) / LmrHistoryDiv, -2, 2);
+            R -= std::clamp(getHistScore(pos, move, ss) / LmrHistoryDiv, -2, 2);
         }
         else {
           R = 0;
