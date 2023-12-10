@@ -20,14 +20,14 @@ ENABLE_INCR_OPERATORS_ON(MpStage);
 
 class MovePicker {
 public:
+
+  MpStage stage;
   
   MovePicker(
     bool _isQsearch, Position& _pos,
     Move _ttMove, Move _killerMove, Move _counterMove,
     MainHistory& _mainHist, CaptureHistory& _capHist,
     Search::SearchInfo* _ss);
-
-  void skipQuiets();
 
   Move nextMove(MpStage* outStage);
 
@@ -43,8 +43,6 @@ private:
   CaptureHistory& capHist;
   
   Search::SearchInfo* ss;
-
-  MpStage stage;
 
   MoveList captures;
   MoveList quiets;
