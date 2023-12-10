@@ -206,22 +206,21 @@ namespace Search {
   };
 
   int SearchThread::getHistoryScore(Position& pos, Move move, SearchInfo* ss) {
-
+    int chIndex = pieceTo(pos, move);
     return    mainHistory[pos.sideToMove][move_from_to(move)]
-            + (ss - 1)->contHistory()[pieceTo(pos, move)]
-            + (ss - 2)->contHistory()[pieceTo(pos, move)]
-            + (ss - 4)->contHistory()[pieceTo(pos, move)];
+            + (ss - 1)->contHistory()[chIndex]
+            + (ss - 2)->contHistory()[chIndex]
+            + (ss - 4)->contHistory()[chIndex];
   }
 
   void addToContHistory(Position& pos, int bonus, Move move, SearchInfo* ss) {
-    int moved = pieceTo(pos, move);
-
+    int chIndex = pieceTo(pos, move);
     if ((ss - 1)->playedMove)
-      addToHistory((ss - 1)->contHistory()[moved], bonus);
+      addToHistory((ss - 1)->contHistory()[chIndex], bonus);
     if ((ss - 2)->playedMove)              
-      addToHistory((ss - 2)->contHistory()[moved], bonus);
+      addToHistory((ss - 2)->contHistory()[chIndex], bonus);
     if ((ss - 4)->playedMove)              
-      addToHistory((ss - 4)->contHistory()[moved], bonus);
+      addToHistory((ss - 4)->contHistory()[chIndex], bonus);
   }
 
   void SearchThread::updateHistories(Position& pos, int bonus, Move bestMove, Score bestScore,
@@ -263,20 +262,16 @@ namespace Search {
       Move move = moves[i].move;
 
       MoveType mt = move_type(move);
-
-      Piece moved = pos.board[move_from(move)];
-      Piece captured = pos.board[move_to(move)];
+      PieceType captured = ptypeOf(pos.board[move_to(move)]);
 
       if (move == ttMove)
         moveScore = INT_MAX;
       else if (mt == MT_PROMOTION)
-        moveScore = promotionScores[promo_type(move)] + PieceValue[captured];
-      else if (mt == MT_EN_PASSANT)
-        moveScore = 300000 + PieceValue[PAWN] * 64;
-      else if (captured) {
+        moveScore = promotionScores[promo_type(move)] + PieceValue[captured] * 64;
+      else if (captured || mt == MT_EN_PASSANT) {
         moveScore = pos.see_ge(move, Score(-10)) ? 300000 : -200000;
-        moveScore += PieceValue[captured] * 64;
-        moveScore += captureHistory[pieceTo(pos, move)][ptypeOf(captured)];
+        moveScore += PieceValue[mt == MT_EN_PASSANT ? PAWN : captured] * 64;
+        moveScore += captureHistory[pieceTo(pos, move)][captured];
       }
       else
         moveScore = mainHistory[pos.sideToMove][move_from_to(move)];
@@ -828,7 +823,7 @@ namespace Search {
       {
         updateHistories(pos, bonus, bestMove, bestScore, beta, quiets, quietCount, ss);
       }
-      else if (pos.board[move_to(bestMove)]) {
+      else {
         Piece captured = pos.board[move_to(bestMove)];
         addToHistory(captureHistory[pieceTo(pos, bestMove)][ptypeOf(captured)], bonus);
       }
@@ -1035,7 +1030,7 @@ namespace Search {
       {
         updateHistories(pos, bonus, bestMove, bestScore, beta, quiets, quietCount, ss);
       }
-      else if (pos.board[move_to(bestMove)]) {
+      else {
         Piece captured = pos.board[move_to(bestMove)];
         addToHistory(captureHistory[pieceTo(pos, bestMove)][ptypeOf(captured)], bonus);
       }
