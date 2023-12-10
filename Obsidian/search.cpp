@@ -44,6 +44,9 @@ namespace Search {
   DEFINE_PARAM(FpMaxDepth, 8, 0, 30);
   DEFINE_PARAM(FpDepthMul, 117, 50, 350);
 
+  DEFINE_PARAM(HistPrMaxDepth, 5, 0, 20);
+  DEFINE_PARAM(HistPrDepthMul, 7000, 4000, 16000);
+
   DEFINE_PARAM(LmrHistoryDiv, 9828, 4000, 16000);
 
   DEFINE_PARAM(AspWindowStartDepth, 5, 4, 8);
@@ -682,7 +685,7 @@ namespace Search {
           if (lmrDepth <= FpMaxDepth && !pos.checkers && eval + FpBase + FpDepthMul * lmrDepth <= alpha)
             movePicker.skipQuiets();
 
-          if (lmrDepth <= 5 && historyScore < -7000 * lmrDepth)
+          if (lmrDepth <= HistPrMaxDepth && historyScore < - HistPrDepthMul * lmrDepth)
             movePicker.skipQuiets();
         }
       }
