@@ -677,12 +677,12 @@ namespace Search {
           // Late move pruning. At low depths, only visit a few quiet moves
           int lmpBase = IsPV ? PvLmpBase : NonPvLmpBase;
           if (quietCount + 1 >= (depth * depth + lmpBase) / (2 - improving))
-            movePicker.stage = BAD_CAPTURES;
+            movePicker.stage = (MpStage)-1;
 
           // Futility pruning (~8 Elo). If our evaluation is far below alpha,
           // only visit a few quiet moves
           if (lmrDepth <= FpMaxDepth && !pos.checkers && eval + FpBase + FpDepthMul * lmrDepth <= alpha)
-            movePicker.stage = (MpStage) -1;
+            movePicker.stage = BAD_CAPTURES;
         }
       }
 
