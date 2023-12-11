@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "net7-epoch6.bin"
+#define EvalFile "net6-epoch5.bin"
 
 using namespace SIMD;
 
