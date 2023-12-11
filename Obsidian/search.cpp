@@ -970,6 +970,8 @@ namespace Search {
 
         if (isQuiet) {
           R = lmrTable[depth][playedMoves + 1];
+
+          R += ttMoveNoisy;
         }
         else {
           R = 0;
