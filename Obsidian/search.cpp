@@ -738,9 +738,6 @@ namespace Search {
 
           R += !improving;
 
-          // Reduce more if ttmove was noisy (~6 Elo)
-          R += ttMoveNoisy;
-
           // Do less reduction for killer and counter move (~4 Elo)
           if (moveStage == KILLER || moveStage == COUNTER)
             R -= 2;
@@ -757,6 +754,9 @@ namespace Search {
 
         if (newPos.checkers)
           R --;
+
+        // Reduce more if ttmove was noisy (~6 Elo)
+        R += ttMoveNoisy;
 
         R -= IsPV;
 
