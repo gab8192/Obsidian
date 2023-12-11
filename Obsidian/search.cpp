@@ -682,7 +682,7 @@ namespace Search {
           // Futility pruning (~8 Elo). If our evaluation is far below alpha,
           // only visit a few quiet moves
           if (lmrDepth <= FpMaxDepth && !pos.checkers && eval + FpBase + FpDepthMul * lmrDepth <= alpha)
-            movePicker.stage = BAD_CAPTURES;
+            movePicker.stage = (MpStage) -1;
         }
       }
 
