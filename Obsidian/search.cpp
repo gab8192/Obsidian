@@ -736,6 +736,8 @@ namespace Search {
         if (isQuiet) {
           R = lmrTable[depth][playedMoves + 1];
 
+          R -= IsPV;
+
           R += !improving;
 
           // Reduce more if ttmove was noisy (~6 Elo)
@@ -751,14 +753,14 @@ namespace Search {
         else {
           R = 0;
 
+          R -= 2 * IsPV;
+
           if (moveStage > QUIETS)
             R++;
         }
 
         if (newPos.checkers)
           R --;
-
-        R -= IsPV;
 
         R += 2 * cutNode;
 
