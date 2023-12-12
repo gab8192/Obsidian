@@ -17,8 +17,8 @@
 
 namespace Search {
 
-  DEFINE_PARAM(LmrBase, 21, -75, 125);
-  DEFINE_PARAM(LmrDiv, 224, 150, 300);
+  DEFINE_PARAM(LmrBase, 30, -75, 125);
+  DEFINE_PARAM(LmrDiv, 220, 150, 300);
 
   DEFINE_PARAM(StatBonusQuad, 3, 0, 16);
   DEFINE_PARAM(StatBonusLinear, 112, 16, 256);
