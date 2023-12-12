@@ -715,6 +715,8 @@ namespace Search {
           return singularBeta;
         else if (ttScore >= beta) // Negative extension (~18 Elo)
           extension = -1 + IsPV;
+        else if (ttScore <= alpha)
+          extension = -1;
       }
 
       int oldNodesCount = nodesSearched;
