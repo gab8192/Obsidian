@@ -100,34 +100,30 @@ struct alignas(32) Position {
   /// Assmue there is a piece in the given square.
   /// Call this if you already know what piece was there
   /// </summary>
-  inline void removePiece(Square sq, Piece pc, NNUE::Accumulator& acc) {
+  inline void removePiece(Square sq, Piece pc) {
     key ^= RANDOM_ARRAY[64 * HASH_PIECE[pc] + sq];
 
     board[sq] = NO_PIECE;
     byColorBB[colorOf(pc)] ^= sq;
     byPieceBB[ptypeOf(pc)] ^= sq;
-
-    acc.deactivateFeature(sq, pc);
   }
 
   /// <summary>
   /// Assmue there is not any piece in the given square
   /// </summary>
-  inline void putPiece(Square sq, Piece pc, NNUE::Accumulator& acc) {
+  inline void putPiece(Square sq, Piece pc) {
     key ^= RANDOM_ARRAY[64 * HASH_PIECE[pc] + sq];
 
     board[sq] = pc;
     byColorBB[colorOf(pc)] ^= sq;
     byPieceBB[ptypeOf(pc)] ^= sq;
-
-    acc.activateFeature(sq, pc);
   }
 
   /// <summary>
   /// Assmue there is not any piece in the destination square
   /// Call this if you already know what piece was there
   /// </summary>
-  inline void movePiece(Square from, Square to, Piece pc, NNUE::Accumulator& acc) {
+  inline void movePiece(Square from, Square to, Piece pc) {
 
     const int c0 = 64 * HASH_PIECE[pc];
     key ^= RANDOM_ARRAY[c0 + from] ^ RANDOM_ARRAY[c0 + to];
@@ -137,8 +133,6 @@ struct alignas(32) Position {
     const Bitboard fromTo = from | to;
     byColorBB[colorOf(pc)] ^= fromTo;
     byPieceBB[ptypeOf(pc)] ^= fromTo;
-
-    acc.moveFeature(from, to, pc);
   }
 
   inline bool isQuiet(Move move) const {
@@ -154,7 +148,7 @@ struct alignas(32) Position {
 
   void doNullMove();
 
-  void doMove(Move move, NNUE::Accumulator& acc);
+  void doMove(Move move, DirtyPiece* dp, int& dpCount);
 
   /// Only works for MT_NORMAL moves
   Key keyAfter(Move move) const;

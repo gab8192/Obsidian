@@ -7,6 +7,12 @@
 
 using namespace SIMD;
 
+struct DirtyPiece {
+  Square from;
+  Square to;
+  Piece pc;
+};
+
 namespace NNUE {
 
   using weight_t = int16_t;
@@ -20,6 +26,9 @@ namespace NNUE {
   struct Accumulator {
     alignas(Alignment) weight_t white[TransformedFeatureDimensions];
     alignas(Alignment) weight_t black[TransformedFeatureDimensions];
+
+    int dirtyCount;
+    DirtyPiece dirtyPieces[4];
 
     void reset();
 

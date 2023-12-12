@@ -1,5 +1,5 @@
 #include "search.h"
-#include "evaluate.h"
+#include "endgame.h"
 #include "movepick.h"
 #include "timeman.h"
 #include "threads.h"
@@ -118,9 +118,11 @@ namespace Search {
       if (!pos.isLegal(move))
         continue;
 
-      Position newPos = pos;
       NNUE::Accumulator fakeAcc;
-      newPos.doMove(move, fakeAcc);
+      fakeAcc.dirtyCount = 0;
+
+      Position newPos = pos;
+      newPos.doMove(move, fakeAcc.dirtyPieces, fakeAcc.dirtyCount);
 
       int64_t thisNodes = perft<false>(newPos, depth - 1);
       if constexpr (root)
@@ -185,11 +187,11 @@ namespace Search {
     ss->playedMove = move;
     keyStack[keyStackHead++] = pos.key;
 
-    memcpy(&accumStack[accumStackHead + 1], &accumStack[accumStackHead], sizeof(NNUE::Accumulator));
-    accumStackHead++;
+    NNUE::Accumulator& acc = accumStack[++accumStackHead];
+    acc.dirtyCount = 0;
 
     ply++;
-    pos.doMove(move, accumStack[accumStackHead]);
+    pos.doMove(move, acc.dirtyPieces, acc.dirtyCount);
   }
 
   void SearchThread::cancelMove() {
@@ -340,12 +342,61 @@ namespace Search {
     return Score(int(nodesSearched & 2) - 1);
   }
 
+  Score SearchThread::doEvaluation(Position& pos) {
+
+    const bool whiteOnlyKing = pos.pieces(WHITE) == pos.pieces(WHITE, KING);
+    const bool blackOnlyKing = pos.pieces(BLACK) == pos.pieces(BLACK, KING);
+
+    if (whiteOnlyKing && blackOnlyKing)
+      return DRAW;
+
+    Score v;
+
+    if (whiteOnlyKing != blackOnlyKing) {
+      Color strongSide = whiteOnlyKing ? BLACK : WHITE;
+      Score strongV = Eval::evaluateEndgame(pos, strongSide);
+
+      v = (strongSide == pos.sideToMove ? strongV : -strongV);
+    }
+    else {
+      NNUE::Accumulator* lastComputed = &accumStack[accumStackHead];
+
+      while (lastComputed->dirtyCount)
+        --lastComputed;
+
+      while (lastComputed != &accumStack[accumStackHead]) {
+        NNUE::Accumulator* next = (lastComputed + 1);
+
+        // Copy the features
+        memcpy(next->white, lastComputed->white, 2*sizeof(next->white));
+
+        // Refresh according to the moved pieces
+        for (int i = 0; i < next->dirtyCount; i++) {
+          DirtyPiece dp = next->dirtyPieces[i];
+          if (dp.from == SQ_NONE) next->activateFeature(dp.to, dp.pc);
+          else if (dp.to == SQ_NONE) next->deactivateFeature(dp.from, dp.pc);
+          else next->moveFeature(dp.from, dp.to, dp.pc);
+        }
+
+        next->dirtyCount = 0; // Now it is updated
+
+        lastComputed = next;
+      }
+
+      v = NNUE::evaluate(accumStack[accumStackHead], pos.sideToMove);
+    }
+
+    v = Score(v * (200 - pos.halfMoveClock) / 200);
+
+    return v;
+  }
+
   template<bool IsPV>
   Score SearchThread::qsearch(Position& pos, Score alpha, Score beta, SearchInfo* ss) {
     
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY-4)
-      return pos.checkers ? DRAW : Eval::evaluate(pos, accumStack[accumStackHead]);
+      return pos.checkers ? DRAW : doEvaluation(pos);
 
     // Detect draw
     if (pos.halfMoveClock >= 100)
@@ -386,7 +437,7 @@ namespace Search {
       if (ttHit)
         bestScore = ss->staticEval = ttStaticEval;
       else
-        bestScore = ss->staticEval = Eval::evaluate(pos, accumStack[accumStackHead]);
+        bestScore = ss->staticEval = doEvaluation(pos);
 
       // When tt bound allows it, use ttScore as a better standing pat
       if (ttFlag & flagForTT(ttScore > bestScore))
@@ -501,7 +552,7 @@ namespace Search {
 
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY - 4)
-      return pos.checkers ? DRAW : Eval::evaluate(pos, accumStack[accumStackHead]);
+      return pos.checkers ? DRAW : doEvaluation(pos);
 
     // Mate distance pruning
     alpha = std::max(alpha, Score(ply - CHECKMATE));
@@ -564,7 +615,7 @@ namespace Search {
       if (ttHit)
         ss->staticEval = eval = ttStaticEval;
       else
-        ss->staticEval = eval = Eval::evaluate(pos, accumStack[accumStackHead]);
+        ss->staticEval = eval = doEvaluation(pos);
 
       // When tt bound allows it, use ttScore as a better evaluation
       if (ttFlag & flagForTT(ttScore > eval))
@@ -908,7 +959,7 @@ namespace Search {
       if (ttHit)
         ss->staticEval = eval = ttStaticEval;
       else
-        ss->staticEval = eval = Eval::evaluate(pos, accumStack[accumStackHead]);
+        ss->staticEval = eval = doEvaluation(pos);
 
       // When tt bound allows it, use ttScore as a better evaluation
       if (ttFlag & flagForTT(ttScore > eval))

@@ -1,6 +1,5 @@
 #include "uci.h"
 #include "bench.h"
-#include "evaluate.h"
 #include "move.h"
 #include "movegen.h"
 #include "nnue.h"
@@ -51,7 +50,8 @@ namespace {
     // Parse the move list, if any
     while (is >> token && (m = UCI::to_move(pos, token)) != MOVE_NONE)
     {
-      pos.doMove(m, acc);
+      acc.dirtyCount = 0;
+      pos.doMove(m, acc.dirtyPieces, acc.dirtyCount);
 
       // If this move reset the half move clock, we can ignore and forget all the previous position
       if (pos.halfMoveClock == 0)
@@ -62,6 +62,8 @@ namespace {
 
     // Remove the last position because it is equal to the current position
     prevPositions.pop_back();
+
+    pos.updateAccumulator(acc);
   }
 
   void newGame() {
@@ -233,7 +235,7 @@ void UCI::loop(int argc, char* argv[]) {
     else if (token == "d")        cout << pos << endl;
     else if (token == "tune")     cout << paramsToSpsaInput();
     else if (token == "eval") {
-      Score eval = Eval::evaluate(pos, tempAccumulator);
+      Score eval = NNUE::evaluate(tempAccumulator, pos.sideToMove);
       if (pos.sideToMove == BLACK)
         eval = -eval;
       cout << "Evaluation: " << UCI::to_cp(eval) << endl;
