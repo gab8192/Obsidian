@@ -529,7 +529,7 @@ namespace Search {
       ttStaticEval = ttEntry->getStaticEval();
     }
 
-    bool ttMoveNoisy = ttMove && !pos.isQuiet(ttMove);
+    bool ttMoveNoisy = ttMove && (ttMove != excludedMove) && !pos.isQuiet(ttMove);
 
     Score eval;
     Move bestMove = MOVE_NONE;
