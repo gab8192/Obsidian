@@ -715,6 +715,8 @@ namespace Search {
           return singularBeta;
         else if (ttScore >= beta) // Negative extension (~18 Elo)
           extension = -1 + IsPV;
+        else if (cutNode)
+          extension = -1;
       }
 
       int oldNodesCount = nodesSearched;
@@ -750,9 +752,8 @@ namespace Search {
         }
         else {
           R = 0;
-
-          if (moveStage > QUIETS)
-            R++;
+          
+          R += (moveStage == BAD_CAPTURES);
         }
 
         if (newPos.checkers)
