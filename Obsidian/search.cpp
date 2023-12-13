@@ -512,8 +512,8 @@ namespace Search {
     Move excludedMove = ss->excludedMove;
 
     // Probe TT
-    bool ttHit;
-    TT::Entry* ttEntry = TT::probe(pos.key, ttHit);
+    bool ttHit = false;
+    TT::Entry* ttEntry = excludedMove ? nullptr : TT::probe(pos.key, ttHit);
 
     TT::Flag ttFlag = TT::NO_FLAG;
     Score ttScore   = SCORE_NONE;
@@ -615,7 +615,7 @@ namespace Search {
     }
 
     // IIR. Decrement the depth if we expect this search to have bad move ordering
-    if ((IsPV || cutNode) && depth >= 4 && !ttMove)
+    if ((IsPV || cutNode) && depth >= 4 && !(ttMove || excludedMove))
       depth --;
 
   moves_loop:
