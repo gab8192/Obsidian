@@ -751,7 +751,7 @@ namespace Search {
             R -= std::clamp(getHistoryScore(pos, move, ss) / LmrHistoryDiv, -2, 2);
         }
         else {
-          R = 0;
+          R = 1;
           
           R += (moveStage == BAD_CAPTURES);
         }
@@ -764,7 +764,7 @@ namespace Search {
         R += 2 * cutNode;
 
         // Do the clamp to avoid a qsearch or an extension in the child search
-        int reducedDepth = std::clamp(newDepth - R, 1, newDepth);
+        int reducedDepth = std::clamp(newDepth - R, 1, newDepth + 1);
 
         score = -negaMax<false>(newPos, -alpha - 1, -alpha, reducedDepth, true, ss + 1);
 
