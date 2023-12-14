@@ -743,6 +743,8 @@ namespace Search {
           // Reduce more if ttmove was noisy (~6 Elo)
           R += ttMoveNoisy;
 
+          R -= IsPV;
+
           // Do less reduction for killer and counter move (~4 Elo)
           if (moveStage == KILLER || moveStage == COUNTER)
             R -= 2;
@@ -752,14 +754,14 @@ namespace Search {
         }
         else {
           R = 1;
+
+          R -= 2 * IsPV;
           
           R += (moveStage == BAD_CAPTURES);
         }
 
         if (newPos.checkers)
           R --;
-
-        R -= IsPV;
 
         R += 2 * cutNode;
 
