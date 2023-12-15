@@ -141,7 +141,7 @@ namespace NNUE {
     Vec* oppWeightsVec = (Vec*) &Content.OutputWeights[TransformedFeatureDimensions];
 
     const Vec reluClipMin = vecSetZero();
-    const Vec reluClipMax = vecSet1Epi16(181);
+    const Vec reluClipMax = vecSet1Epi16(NetworkQA);
 
     Vec sum = vecSetZero();
     Vec reg;
@@ -197,9 +197,9 @@ namespace NNUE {
 
 #endif
 
-    int unsquared = vecHadd(sum) / 255 + Content.OutputBias;
+    int unsquared = vecHadd(sum) / NetworkQA + Content.OutputBias;
 
-    return Score((unsquared * NetworkScale) / NetworkQ);
+    return Score((unsquared * NetworkScale) / NetworkQAB);
   }
 
 }
