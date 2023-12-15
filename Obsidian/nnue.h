@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "fireandice255.bin"
+#define EvalFile "fireandice181.bin"
 
 using namespace SIMD;
 
