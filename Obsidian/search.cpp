@@ -966,14 +966,14 @@ namespace Search {
 
       bool needFullSearch;
 
-      if (depth >= 3 && playedMoves > 3) {
+      if (depth >= 5 && playedMoves > 3) {
         int R;
 
         if (isQuiet) {
           R = lmrTable[depth][playedMoves + 1];
         }
         else {
-          R = 0;
+          R = 1;
 
           if (moveScore < 0)
             R++;
