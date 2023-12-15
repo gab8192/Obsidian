@@ -966,7 +966,7 @@ namespace Search {
 
       bool needFullSearch;
 
-      if (depth >= 5 && playedMoves > 2) {
+      if (depth >= 4 && playedMoves > 2) {
         int R;
 
         if (isQuiet) {
