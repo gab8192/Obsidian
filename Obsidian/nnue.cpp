@@ -124,7 +124,7 @@ namespace NNUE {
   }
 
   inline int SCRelu(weight_t x) {
-    int16_t clipped = std::clamp<int16_t>(x, 0, 255);
+    int16_t clipped = std::clamp<int16_t>(x, 0, 1023);
     int wide = clipped;
     return wide * wide;
   }
@@ -150,7 +150,7 @@ namespace NNUE {
       sum += SCRelu(oppAccumulator[i]) * Content.OutputWeights[TransformedFeatureDimensions + i];
     }
 
-    int unsquared = sum / 255 + Content.OutputBias;
+    int unsquared = sum / 1023 + Content.OutputBias;
 
     return Score((unsquared * NetworkScale) / NetworkQ);
   }

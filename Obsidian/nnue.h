@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "net7-epoch9.bin"
+#define EvalFile "net1023.bin"
 
 using namespace SIMD;
 
@@ -15,7 +15,7 @@ namespace NNUE {
   constexpr int TransformedFeatureDimensions = 1024;
 
   constexpr int NetworkScale = 400;
-  constexpr int NetworkQ = 255 * 64;
+  constexpr int NetworkQ = 1023 * 64;
 
   struct Accumulator {
     alignas(Alignment) weight_t white[TransformedFeatureDimensions];
