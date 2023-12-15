@@ -215,7 +215,7 @@ namespace Search {
     return    mainHistory[pos.sideToMove][move_from_to(move)]
             + (ss - 1)->contHistory()[chIndex]
             + (ss - 2)->contHistory()[chIndex]
-            + (ss - 4)->contHistory()[chIndex];
+            + (ss - 4)->contHistory()[chIndex]/2;
   }
 
   void addToContHistory(Position& pos, int bonus, Move move, SearchInfo* ss) {
