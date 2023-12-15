@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "net6.bin"
+#define EvalFile "fireandice255.bin"
 
 using namespace SIMD;
 
@@ -12,7 +12,7 @@ namespace NNUE {
   using weight_t = int16_t;
 
   constexpr int FeatureDimensions = 768;
-  constexpr int TransformedFeatureDimensions = 1024;
+  constexpr int TransformedFeatureDimensions = 1536;
 
   constexpr int NetworkScale = 400;
   constexpr int NetworkQ = 255 * 64;
