@@ -123,34 +123,81 @@ namespace NNUE {
     }
   }
 
-  inline int SCRelu(weight_t x) {
-    int16_t clipped = std::clamp<int16_t>(x, 0, 255);
-    int wide = clipped;
-    return wide * wide;
-  }
-
   Score evaluate(Accumulator& accumulator, Color sideToMove) {
 
-    weight_t* stmAccumulator;
-    weight_t* oppAccumulator;
+    Vec* stmAcc;
+    Vec* oppAcc;
 
     if (sideToMove == WHITE) {
-      stmAccumulator = accumulator.white;
-      oppAccumulator = accumulator.black;
+      stmAcc = (Vec*) accumulator.white;
+      oppAcc = (Vec*) accumulator.black;
     }
     else {
-      stmAccumulator = accumulator.black;
-      oppAccumulator = accumulator.white;
+      stmAcc = (Vec*) accumulator.black;
+      oppAcc = (Vec*) accumulator.white;
     }
 
-    int sum = 0;
+    Vec* stmWeightsVec = (Vec*) &Content.OutputWeights[0];
+    Vec* oppWeightsVec = (Vec*) &Content.OutputWeights[TransformedFeatureDimensions];
+
+    const Vec reluClipMin = vecSetZero();
+    const Vec reluClipMax = vecSet1Epi16(181);
+
+    Vec sum = vecSetZero();
+    Vec reg;
+
+#if defined(USE_AVX512)
+
+    for (int i = 0; i < TransformedFeatureDimensions / WeightsPerVec; ++i) {
+
+      // Side to move
+      reg = _mm512_min_epi16(_mm512_max_epi16(stmAcc[i], reluClipMin), reluClipMax); // clip
+      reg = _mm512_mullo_epi16(reg, reg); // square
+      reg = _mm512_madd_epi16(reg, stmWeightsVec[i]); // multiply with output layer
+      sum = _mm512_add_epi32(sum, reg); // collect the result,
+
+      // Non side to move
+      reg = _mm512_min_epi16(_mm512_max_epi16(oppAcc[i], reluClipMin), reluClipMax);
+      reg = _mm512_mullo_epi16(reg, reg);
+      reg = _mm512_madd_epi16(reg, oppWeightsVec[i]);
+      sum = _mm512_add_epi32(sum, reg);
+    }
+
+#elif defined(USE_AVX2)
+
+    for (int i = 0; i < TransformedFeatureDimensions / WeightsPerVec; ++i) {
+
+      // Side to move
+      reg = _mm256_min_epi16(_mm256_max_epi16(stmAcc[i], reluClipMin), reluClipMax); // clip
+      reg = _mm256_mullo_epi16(reg, reg); // square
+      reg = _mm256_madd_epi16(reg, stmWeightsVec[i]); // multiply with output layer
+      sum = _mm256_add_epi32(sum, reg); // collect the result,
+
+      // Non side to move
+      reg = _mm256_min_epi16(_mm256_max_epi16(oppAcc[i], reluClipMin), reluClipMax);
+      reg = _mm256_mullo_epi16(reg, reg);
+      reg = _mm256_madd_epi16(reg, oppWeightsVec[i]);
+      sum = _mm256_add_epi32(sum, reg);
+  }
+
+#else
 
     for (int i = 0; i < TransformedFeatureDimensions; ++i) {
-      sum += SCRelu(stmAccumulator[i]) * Content.OutputWeights[i];
-      sum += SCRelu(oppAccumulator[i]) * Content.OutputWeights[TransformedFeatureDimensions + i];
-    }
 
-    int unsquared = sum / 255 + Content.OutputBias;
+      // Side to move
+      reg = std::min(std::max(stmAcc[i], reluClipMin), reluClipMax); // clip
+      reg *= reg; // square
+      sum += int(reg) * stmWeightsVec[i];
+
+      // Non side to move
+      reg = std::min(std::max(oppAcc[i], reluClipMin), reluClipMax);
+      reg *= reg;
+      sum += int(reg) * oppWeightsVec[i];
+  }
+
+#endif
+
+    int unsquared = vecHadd(sum) / 255 + Content.OutputBias;
 
     return Score((unsquared * NetworkScale) / NetworkQ);
   }

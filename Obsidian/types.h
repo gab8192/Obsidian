@@ -10,7 +10,7 @@
 
 using namespace std;
 
-const string engineVersion = "dev-8.19";
+const string engineVersion = "dev-8.20";
 
 
 using Key = uint64_t;
