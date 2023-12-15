@@ -128,33 +128,6 @@ namespace NNUE {
     return clipped * clipped;
   }
 
-  inline int vecHadd(Vec vec) {
-    __m128i xmm0;
-    __m128i xmm1;
-
-    // Get the lower and upper half of the register:
-    xmm0 = _mm256_castsi256_si128(vec);
-    xmm1 = _mm256_extracti128_si256(vec, 1);
-
-    // Add the lower and upper half vertically:
-    xmm0 = _mm_add_epi32(xmm0, xmm1);
-
-    // Get the upper half of the result:
-    xmm1 = _mm_unpackhi_epi64(xmm0, xmm0);
-
-    // Add the lower and upper half vertically:
-    xmm0 = _mm_add_epi32(xmm0, xmm1);
-
-    // Shuffle the result so that the lower 32-bits are directly above the second-lower 32-bits:
-    xmm1 = _mm_shuffle_epi32(xmm0, _MM_SHUFFLE(2, 3, 0, 1));
-
-    // Add the lower 32-bits to the second-lower 32-bits vertically:
-    xmm0 = _mm_add_epi32(xmm0, xmm1);
-
-    // Cast the result to the 32-bit integer type and return it:
-    return _mm_cvtsi128_si32(xmm0);
-  }
-
   Score evaluate(Accumulator& accumulator, Color sideToMove) {
 
     Vec* stmAcc;
@@ -176,21 +149,21 @@ namespace NNUE {
     const Vec reluClipMax = _mm256_set1_epi16(181);
 
     Vec sumVec = _mm256_setzero_si256();
+    Vec reg;
 
     for (int i = 0; i < TransformedFeatureDimensions / WeightsPerVec; ++i) {
 
-      { // Side to move
-        Vec clamp = _mm256_min_epi16(_mm256_max_epi16(stmAcc[i], reluClipMin), reluClipMax);
-        clamp = _mm256_mullo_epi16(clamp, clamp);
-        Vec stmProduct = _mm256_madd_epi16(clamp, stmWeightsVec[i]);
-        sumVec = _mm256_add_epi32(sumVec, stmProduct);
-      }
-      { // Non side to move
-        Vec clamp = _mm256_min_epi16(_mm256_max_epi16(oppAcc[i], reluClipMin), reluClipMax);
-        clamp = _mm256_mullo_epi16(clamp, clamp);
-        Vec oppProduct = _mm256_madd_epi16(clamp, oppWeightsVec[i]);
-        sumVec = _mm256_add_epi32(sumVec, oppProduct);
-      }
+      // Side to move
+      reg = _mm256_min_epi16(_mm256_max_epi16(stmAcc[i], reluClipMin), reluClipMax);
+      reg = _mm256_mullo_epi16(reg, reg);
+      reg = _mm256_madd_epi16(reg, stmWeightsVec[i]);
+      sumVec = _mm256_add_epi32(sumVec, reg);
+
+      // Non side to move
+      reg = _mm256_min_epi16(_mm256_max_epi16(oppAcc[i], reluClipMin), reluClipMax);
+      reg = _mm256_mullo_epi16(reg, reg);
+      reg = _mm256_madd_epi16(reg, oppWeightsVec[i]);
+      sumVec = _mm256_add_epi32(sumVec, reg);
     }
 
     int sum = vecHadd(sumVec);
