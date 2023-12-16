@@ -324,13 +324,17 @@ namespace Search {
   }
 
   // Should not be called from Root node
-  bool SearchThread::is2FoldRepetition(Position& pos) {
-    if (pos.halfMoveClock < 4)
+  bool SearchThread::is3FoldRepetition(Position& pos) {
+    if (pos.halfMoveClock < 8)
       return false;
-
+    
+    bool found = false;
     for (int i = keyStackHead - 4; i >= 0; i -= 2) {
-      if (pos.key == keyStack[i])
-        return true;
+      if (pos.key == keyStack[i]) {
+        if (found)
+          return true;
+        found = true;
+      }
     }
 
     return false;
@@ -492,7 +496,7 @@ namespace Search {
       ss->pvLength = ply;
 
     // Detect draw
-    if (is2FoldRepetition(pos) || pos.halfMoveClock >= 100)
+    if (is3FoldRepetition(pos) || pos.halfMoveClock >= 100)
       return makeDrawScore();
 
     // Enter qsearch when depth is 0

@@ -126,7 +126,7 @@ namespace Search {
     void scoreRootMoves(Position& pos, MoveList& moves, Move ttMove, SearchInfo* ss);
 
     // Should not be called from Root node
-    bool is2FoldRepetition(Position& pos);
+    bool is3FoldRepetition(Position& pos);
 
     Score makeDrawScore();
 
