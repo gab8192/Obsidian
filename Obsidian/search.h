@@ -9,7 +9,6 @@
 
 namespace Search {
 
-  extern Move lastBestMove;
   extern clock_t lastSearchTimeSpan;
   extern bool doingBench;
 
