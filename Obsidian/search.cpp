@@ -185,17 +185,13 @@ namespace Search {
     ss->playedMove = move;
     keyStack[keyStackHead++] = pos.key;
 
-    memcpy(&accumStack[accumStackHead + 1], &accumStack[accumStackHead], sizeof(NNUE::Accumulator));
-    accumStackHead++;
-
     ply++;
-    pos.doMove(move, accumStack[accumStackHead]);
+    pos.doMove(move, accumulator);
   }
 
   void SearchThread::cancelMove() {
     ply--;
     keyStackHead--;
-    accumStackHead--;
   }
 
   //        TT move:  MAX
@@ -345,7 +341,7 @@ namespace Search {
     
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY-4)
-      return pos.checkers ? DRAW : Eval::evaluate(pos, accumStack[accumStackHead]);
+      return pos.checkers ? DRAW : Eval::evaluate(pos, accumulator);
 
     // Detect draw
     if (pos.halfMoveClock >= 100)
@@ -386,7 +382,7 @@ namespace Search {
       if (ttHit)
         bestScore = ss->staticEval = ttStaticEval;
       else
-        bestScore = ss->staticEval = Eval::evaluate(pos, accumStack[accumStackHead]);
+        bestScore = ss->staticEval = Eval::evaluate(pos, accumulator);
 
       // When tt bound allows it, use ttScore as a better standing pat
       if (ttFlag & flagForTT(ttScore > bestScore))
@@ -435,6 +431,7 @@ namespace Search {
       Score score = -qsearch<IsPV>(newPos, -beta, -alpha, ss + 1);
 
       cancelMove();
+      pos.undoMoveOnAcc(move, accumulator);
 
       if (score > bestScore) {
         bestScore = score;
@@ -501,7 +498,7 @@ namespace Search {
 
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY - 4)
-      return pos.checkers ? DRAW : Eval::evaluate(pos, accumStack[accumStackHead]);
+      return pos.checkers ? DRAW : Eval::evaluate(pos, accumulator);
 
     // Mate distance pruning
     alpha = std::max(alpha, Score(ply - CHECKMATE));
@@ -564,7 +561,7 @@ namespace Search {
       if (ttHit)
         ss->staticEval = eval = ttStaticEval;
       else
-        ss->staticEval = eval = Eval::evaluate(pos, accumStack[accumStackHead]);
+        ss->staticEval = eval = Eval::evaluate(pos, accumulator);
 
       // When tt bound allows it, use ttScore as a better evaluation
       if (ttFlag & flagForTT(ttScore > eval))
@@ -780,6 +777,7 @@ namespace Search {
         score = -negaMax<true>(newPos, -beta, -alpha, newDepth, false, ss + 1);
 
       cancelMove();
+      pos.undoMoveOnAcc(move, accumulator);
 
       playedMoves++;
       
@@ -909,7 +907,7 @@ namespace Search {
       if (ttHit)
         ss->staticEval = eval = ttStaticEval;
       else
-        ss->staticEval = eval = Eval::evaluate(pos, accumStack[accumStackHead]);
+        ss->staticEval = eval = Eval::evaluate(pos, accumulator);
 
       // When tt bound allows it, use ttScore as a better evaluation
       if (ttFlag & flagForTT(ttScore > eval))
@@ -999,6 +997,7 @@ namespace Search {
         score = -negaMax<true>(newPos, -beta, -alpha, newDepth, false, ss + 1);
 
       cancelMove();
+      pos.undoMoveOnAcc(move, accumulator);
 
       playedMoves++;
       
@@ -1089,8 +1088,7 @@ namespace Search {
 
     Position rootPos = Threads::searchSettings.position;
 
-    accumStackHead = 0;
-    rootPos.updateAccumulator(accumStack[accumStackHead]);
+    rootPos.updateAccumulator(accumulator);
 
     keyStackHead = 0;
     for (int i = 0; i < Threads::searchSettings.prevPositions.size(); i++)

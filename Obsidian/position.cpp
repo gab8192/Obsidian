@@ -356,6 +356,72 @@ void Position::doMove(Move move, NNUE::Accumulator& acc) {
   }
 }
 
+void Position::undoMoveOnAcc(Move move, NNUE::Accumulator& acc) const {
+  const Color us = sideToMove, them = ~us;
+
+  const MoveType moveType = move_type(move);
+
+  switch (moveType) {
+  case MT_NORMAL: {
+    const Square from = move_from(move);
+    const Square to = move_to(move);
+
+    const Piece movedPc = board[from];
+    const Piece capturedPc = board[to];
+
+    if (capturedPc != NO_PIECE)
+      acc.activateFeature(to, capturedPc);
+
+    acc.moveFeature(to, from, movedPc);
+
+    break;
+  }
+  case MT_CASTLING: {
+    const CastlingData* cd = &CASTLING_DATA[castling_type(move)];
+
+    const Square kingSrc = cd->kingSrc, kingDest = cd->kingDest,
+      rookSrc = cd->rookSrc, rookDest = cd->rookDest;
+
+    acc.moveFeature(kingDest, kingSrc, make_piece(us, KING));
+    acc.moveFeature(rookDest, rookSrc, make_piece(us, ROOK));
+
+    break;
+  }
+  case MT_EN_PASSANT: {
+
+    const Square from = move_from(move);
+    const Square to = move_to(move);
+
+    if (us == WHITE) {
+      acc.activateFeature(to - 8, B_PAWN);
+      acc.moveFeature(to, from, W_PAWN);
+    }
+    else {
+      acc.activateFeature(to + 8, W_PAWN);
+      acc.moveFeature(to, from, B_PAWN);
+    }
+
+    break;
+  }
+  case MT_PROMOTION: {
+
+    const Square from = move_from(move);
+    const Square to = move_to(move);
+
+    const Piece capturedPc = board[to];
+    const Piece promoteToPc = make_piece(us, promo_type(move));
+
+    if (capturedPc != NO_PIECE)
+      acc.activateFeature(to, capturedPc);
+
+    acc.activateFeature(from, board[from]);
+    acc.deactivateFeature(to, promoteToPc);
+
+    break;
+  }
+  }
+}
+
 /// Only works for MT_NORMAL moves
 Key Position::keyAfter(Move move) const {
 

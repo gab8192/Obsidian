@@ -95,8 +95,7 @@ namespace Search {
     int keyStackHead;
     Key keyStack[100 + MAX_PLY];
 
-    int accumStackHead;
-    NNUE::Accumulator accumStack[MAX_PLY];
+    NNUE::Accumulator accumulator;
 
     SearchInfo searchStack[MAX_PLY + SsOffset];
 

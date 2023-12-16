@@ -156,6 +156,8 @@ struct alignas(32) Position {
 
   void doMove(Move move, NNUE::Accumulator& acc);
 
+  void undoMoveOnAcc(Move move, NNUE::Accumulator& acc) const;
+
   /// Only works for MT_NORMAL moves
   Key keyAfter(Move move) const;
 
