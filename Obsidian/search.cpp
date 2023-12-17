@@ -50,7 +50,6 @@ namespace Search {
   DEFINE_PARAM(AspWindowStartDelta, 10, 10, 20);
   DEFINE_PARAM(AspFailHighReductionMax, 11, 6, 11);
   
-  Move lastBestMove;
   clock_t lastSearchTimeSpan;
   bool doingBench = false;
 
@@ -1276,9 +1275,7 @@ namespace Search {
   bestMoveDecided:
 
     if (this == Threads::mainThread()) {
-      lastBestMove = bestMove;
       lastSearchTimeSpan = timeMillis() - startTimeForBench;
-
       if (!doingBench)
         std::cout << "bestmove " << UCI::move(bestMove) << endl;
     }
