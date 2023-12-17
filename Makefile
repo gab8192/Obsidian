@@ -6,7 +6,7 @@ endif
 
 FILES = Obsidian/*.cpp
 
-OPTIMIZE = -O3 -fno-stack-protector -fno-math-errno -funroll-loops -fno-exceptions
+OPTIMIZE = -Ofast -fno-stack-protector -fno-math-errno -funroll-loops -fno-exceptions
 
 FLAGS = -s -pthread -std=c++17 -flto
 
