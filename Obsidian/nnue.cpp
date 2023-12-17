@@ -178,7 +178,7 @@ namespace NNUE {
       reg = _mm256_mullo_epi16(reg, reg);
       reg = _mm256_madd_epi16(reg, oppWeightsVec[i]);
       sum = _mm256_add_epi32(sum, reg);
-  }
+    }
 
 #else
 
@@ -193,7 +193,7 @@ namespace NNUE {
       reg = std::min(std::max(oppAcc[i], reluClipMin), reluClipMax);
       reg *= reg;
       sum += int(reg) * oppWeightsVec[i];
-  }
+    }
 
 #endif
 
