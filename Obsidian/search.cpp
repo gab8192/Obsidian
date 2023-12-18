@@ -324,11 +324,9 @@ namespace Search {
 
   // Should not be called from Root node
   bool SearchThread::is2FoldRepetition(Position& pos) {
-    if (pos.halfMoveClock < 4)
-      return false;
 
-    for (int i = keyStackHead - 4; i >= 0; i -= 2) {
-      if (pos.key == keyStack[i])
+    for (int i = 4; i <= pos.halfMoveClock; i += 2) {
+      if (pos.key == keyStack[keyStackHead-i])
         return true;
     }
 
