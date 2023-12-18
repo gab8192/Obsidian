@@ -745,7 +745,7 @@ namespace Search {
             R -= 2;
           // Reduce or extend depending on history of this quiet move (~12 Elo)
           else 
-            R -= std::clamp(getHistoryScore(pos, move, ss) / LmrHistoryDiv, -2, 2);
+            R -= std::min(getHistoryScore(pos, move, ss) / LmrHistoryDiv, 2);
         }
         else {
           R = 0;
