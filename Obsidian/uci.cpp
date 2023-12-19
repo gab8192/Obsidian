@@ -184,6 +184,7 @@ namespace {
       return;
     }
     else {
+      TT::age();
       Threads::startSearch();
     }
   }

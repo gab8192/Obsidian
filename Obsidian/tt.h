@@ -75,6 +75,10 @@ namespace TT {
       staticEval = SCORE_NONE;
     }
 
+    inline void age() {
+      depth = std::max(0, depth - 1);
+    }
+
   private:
     Key key64;
     int16_t staticEval;
@@ -93,4 +97,6 @@ namespace TT {
   void prefetch(Key key);
 
   Entry* probe(Key key, bool& hit);
+
+  void age();
 }

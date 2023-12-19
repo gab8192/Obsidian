@@ -43,4 +43,9 @@ namespace TT {
     hit = entry->matches(key);
     return entry;
   }
+
+  void age() {
+    for (uint64_t i = 0; i < entryCount; i++)
+      entries[i].age();
+  }
 }
