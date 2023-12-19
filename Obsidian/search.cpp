@@ -29,10 +29,10 @@ namespace Search {
 
   DEFINE_PARAM(RfpDepthMul, 122, 60, 180);
 
-  DEFINE_PARAM(NmpBase, 4, 3, 5);
-  DEFINE_PARAM(NmpDepthDiv, 3, 3, 5);
-  DEFINE_PARAM(NmpEvalDiv, 200, 100, 400);
-  DEFINE_PARAM(NmpEvalDivMin, 3, 2, 6);
+  DEFINE_PARAM(NmpBase, 4, 0, 20);
+  DEFINE_PARAM(NmpDepthDiv, 3, 0, 20);
+  DEFINE_PARAM(NmpEvalDiv, 200, 100, 800);
+  DEFINE_PARAM(NmpEvalDivMin, 3, 0, 20);
 
   DEFINE_PARAM(PvLmpBase,    7, 0, 20);
   DEFINE_PARAM(NonPvLmpBase, 3, 0, 20);
