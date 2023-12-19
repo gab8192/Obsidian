@@ -1108,9 +1108,8 @@ namespace Search {
 
     rootColor = rootPos.sideToMove;
     rootDepth = 0;
-    completeRootDepth = 0;
-
-    SearchLoopInfo iterDeepening[MAX_PLY];
+    completedDepth = 0;
+    memset(iterDeepening, 0, sizeof(iterDeepening));
 
     for (int i = 0; i < MAX_PLY + SsOffset; i++) {
       searchStack[i].staticEval = SCORE_NONE;
@@ -1210,7 +1209,7 @@ namespace Search {
 
       iterDeepening[rootDepth].score = score;
       iterDeepening[rootDepth].bestMove = bestMove = ss->pv[0];
-      completeRootDepth = rootDepth;
+      completedDepth = rootDepth;
 
       if (this != Threads::mainThread())
         continue;
@@ -1279,8 +1278,29 @@ namespace Search {
     if (this == Threads::mainThread()) {
       Threads::onSearchComplete();
       lastSearchTimeSpan = timeMillis() - startTimeForBench;
-      if (!doingBench)
-        std::cout << "bestmove " << UCI::move(bestMove) << endl;
+
+      // Don't care of printing best move when doing bench
+      if (doingBench)
+        return;
+
+      int bestDepth = completedDepth;
+      SearchLoopInfo* bestSli = & iterDeepening[completedDepth];
+
+      for (int i = 1; i < Threads::searchThreads.size(); i++) {
+        SearchThread* other = Threads::searchThreads[i];
+        SearchLoopInfo* otherSli = & other->iterDeepening[other->completedDepth];
+
+        bool cond0 = other->completedDepth > bestDepth;
+        bool cond1 = other->completedDepth == bestDepth
+                   && otherSli->score > bestSli->score;
+
+        if (cond0 || cond1) {
+          bestDepth = other->completedDepth;
+          bestSli = otherSli;
+        }
+      }
+
+      std::cout << "bestmove " << UCI::move(bestSli->bestMove) << endl;
     }
   }
 

@@ -88,7 +88,7 @@ namespace Search {
     
     Color rootColor;
     int rootDepth;
-    int completeRootDepth;
+    int completedDepth;
 
     int ply = 0;
 
@@ -99,6 +99,8 @@ namespace Search {
     NNUE::Accumulator accumStack[MAX_PLY];
 
     SearchInfo searchStack[MAX_PLY + SsOffset];
+
+    SearchLoopInfo iterDeepening[MAX_PLY];
 
     MoveList rootMoves;
 
