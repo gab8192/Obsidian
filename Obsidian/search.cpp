@@ -1107,6 +1107,8 @@ namespace Search {
     nodesSearched = 0;
 
     rootColor = rootPos.sideToMove;
+    rootDepth = 0;
+    completeRootDepth = 0;
 
     SearchLoopInfo iterDeepening[MAX_PLY];
 
@@ -1208,6 +1210,7 @@ namespace Search {
 
       iterDeepening[rootDepth].score = score;
       iterDeepening[rootDepth].bestMove = bestMove = ss->pv[0];
+      completeRootDepth = rootDepth;
 
       if (this != Threads::mainThread())
         continue;
@@ -1261,9 +1264,10 @@ namespace Search {
 
         int bmNodes = rootMoves[rootMoves.indexOf(bestMove)].nodes;
         double notBestNodes = 1.0 - (bmNodes / double(idNodes));
-        double nodesFactor = notBestNodes * (tm0/100.0) + (tm1/100.0);
 
-        double stabilityFactor = (tm2/100.0) - (tm3/100.0) * searchStability;
+        double nodesFactor = (tm1/100.0) + notBestNodes * (tm0/100.0);
+
+        double stabilityFactor = (tm2/100.0) - searchStability * (tm3/100.0);
 
         if (elapsed > stabilityFactor * nodesFactor * optimumTime)
           goto bestMoveDecided;
@@ -1273,6 +1277,7 @@ namespace Search {
   bestMoveDecided:
 
     if (this == Threads::mainThread()) {
+      Threads::onSearchComplete();
       lastSearchTimeSpan = timeMillis() - startTimeForBench;
       if (!doingBench)
         std::cout << "bestmove " << UCI::move(bestMove) << endl;
@@ -1292,8 +1297,6 @@ namespace Search {
 
       this->running = true;
       startSearch();
-      if (this == Threads::mainThread())
-        Threads::onSearchComplete();
       this->running = false;
     }
   }

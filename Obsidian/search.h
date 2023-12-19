@@ -87,8 +87,8 @@ namespace Search {
     volatile bool running;
     
     Color rootColor;
-
     int rootDepth;
+    int completeRootDepth;
 
     int ply = 0;
 
