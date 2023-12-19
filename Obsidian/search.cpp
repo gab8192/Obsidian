@@ -256,32 +256,6 @@ namespace Search {
     ss->killerMove = bestMove;
   }
 
-  void SearchThread::scoreRootMoves(Position& pos, MoveList& moves, Move ttMove, SearchInfo* ss) {
-    for (int i = 0; i < moves.size(); i++) {
-      int& moveScore = moves[i].score;
-
-      // initial score
-      moveScore = 0;
-
-      Move move = moves[i].move;
-
-      MoveType mt = move_type(move);
-      PieceType captured = ptypeOf(pos.board[move_to(move)]);
-
-      if (move == ttMove)
-        moveScore = INT_MAX;
-      else if (mt == MT_PROMOTION)
-        moveScore = promotionScores[promo_type(move)] + PieceValue[captured] * 64;
-      else if (captured || mt == MT_EN_PASSANT) {
-        moveScore = pos.see_ge(move, Score(-10)) ? 300000 : -200000;
-        moveScore += PieceValue[mt == MT_EN_PASSANT ? PAWN : captured] * 64;
-        moveScore += captureHistory[pieceTo(pos, move)][captured];
-      }
-      else
-        moveScore = mainHistory[pos.sideToMove][move_from_to(move)];
-    }
-  }
-
   Move peekBestMove(MoveList& moveList) {
     int bestMoveI = 0;
     int bestMoveScore = moveList[bestMoveI].score;
@@ -884,8 +858,6 @@ namespace Search {
     if (!pos.isPseudoLegal(ttMove))
       ttMove = MOVE_NONE;
 
-    scoreRootMoves(pos, rootMoves, ttMove, ss);
-
     bool ttMoveNoisy = ttMove && !pos.isQuiet(ttMove);
 
     Score eval;
@@ -928,11 +900,18 @@ namespace Search {
     Move captures[64];
     int captureCount = 0;
 
+    MovePicker movePicker(
+      false, pos,
+      ttMove, MOVE_NONE, MOVE_NONE,
+      mainHistory, captureHistory,
+      ss);
+
     // Visit moves
 
-    for (int i = 0; i < moves.size(); i++) {
-      int moveScore;
-      Move move = nextBestMove(moves, i, &moveScore);
+    Move move;
+    MpStage moveStage;
+
+    while (move = movePicker.nextMove(&moveStage)) {
 
       if (!pos.isLegal(move))
         continue;
@@ -972,8 +951,7 @@ namespace Search {
         else {
           R = 0;
 
-          if (moveScore < 0)
-            R++;
+          R += (moveStage == BAD_CAPTURES);
         }
 
         if (newPos.checkers)

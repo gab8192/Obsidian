@@ -122,8 +122,6 @@ namespace Search {
     void updateHistories(Position& pos, int depth, Move bestMove, Score bestScore,
       Score beta, Move* quietMoves, int quietCount, SearchInfo* ss);
 
-    void scoreRootMoves(Position& pos, MoveList& moves, Move ttMove, SearchInfo* ss);
-
     // Should not be called from Root node
     bool is2FoldRepetition(Position& pos);
 
