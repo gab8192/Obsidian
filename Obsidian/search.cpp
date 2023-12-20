@@ -740,6 +740,8 @@ namespace Search {
           // Reduce more if ttmove was noisy (~6 Elo)
           R += ttMoveNoisy;
 
+          R += 2 * cutNode;
+
           // Do less reduction for killer and counter move (~4 Elo)
           if (moveStage == KILLER || moveStage == COUNTER)
             R -= 2;
@@ -749,6 +751,8 @@ namespace Search {
         }
         else {
           R = 0;
+
+          R += cutNode;
           
           R += (moveStage == BAD_CAPTURES);
         }
@@ -757,8 +761,6 @@ namespace Search {
           R --;
 
         R += ! IsPV;
-
-        R += 2 * cutNode;
 
         // Do the clamp to avoid a qsearch or an extension in the child search
         int reducedDepth = std::clamp(newDepth - R, 1, newDepth + 1);
