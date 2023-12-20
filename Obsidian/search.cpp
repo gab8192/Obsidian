@@ -339,14 +339,14 @@ namespace Search {
 
   template<bool IsPV>
   Score SearchThread::qsearch(Position& pos, Score alpha, Score beta, SearchInfo* ss) {
+
+    // Detect draw
+    if (is2FoldRepetition(pos) || pos.halfMoveClock >= 100)
+      return makeDrawScore();
     
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY-4)
       return pos.checkers ? DRAW : Eval::evaluate(pos, accumStack[accumStackHead]);
-
-    // Detect draw
-    if (pos.halfMoveClock >= 100)
-      return makeDrawScore();
 
     // Probe TT
     bool ttHit;
@@ -488,13 +488,13 @@ namespace Search {
     if (IsPV)
       ss->pvLength = ply;
 
-    // Detect draw
-    if (is2FoldRepetition(pos) || pos.halfMoveClock >= 100)
-      return makeDrawScore();
-
     // Enter qsearch when depth is 0
     if (depth <= 0)
       return qsearch<IsPV>(pos, alpha, beta, ss);
+
+    // Detect draw
+    if (is2FoldRepetition(pos) || pos.halfMoveClock >= 100)
+      return makeDrawScore();
 
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY - 4)
