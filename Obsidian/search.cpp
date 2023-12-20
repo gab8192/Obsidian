@@ -746,19 +746,21 @@ namespace Search {
           // Reduce or extend depending on history of this quiet move (~12 Elo)
           else 
             R -= std::clamp(getHistoryScore(pos, move, ss) / LmrHistoryDiv, -2, 2);
+
+          R += 2 * cutNode;
         }
         else {
           R = 0;
           
           R += (moveStage == BAD_CAPTURES);
+
+          R += cutNode;
         }
 
         if (newPos.checkers)
           R --;
 
         R -= IsPV;
-
-        R += 2 * cutNode;
 
         // Do the clamp to avoid a qsearch or an extension in the child search
         int reducedDepth = std::clamp(newDepth - R, 1, newDepth + 1);
