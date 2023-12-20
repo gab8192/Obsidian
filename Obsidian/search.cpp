@@ -18,16 +18,16 @@
 namespace Search {
 
   DEFINE_PARAM(LmrBase, 21, -75, 125);
-  DEFINE_PARAM(LmrDiv, 224, 150, 300);
+  DEFINE_PARAM(LmrDiv, 222, 150, 300);
 
   DEFINE_PARAM(StatBonusQuad, 3, 0, 16);
   DEFINE_PARAM(StatBonusLinear, 112, 16, 256);
-  DEFINE_PARAM(StatBonusMax, 1213, 800, 2400);
-  DEFINE_PARAM(StatBonusBoostAt, 130, 50, 300);
+  DEFINE_PARAM(StatBonusMax, 1196, 800, 2400);
+  DEFINE_PARAM(StatBonusBoostAt, 133, 50, 300);
 
-  DEFINE_PARAM(RazoringDepthMul, 406, 400, 800);
+  DEFINE_PARAM(RazoringDepthMul, 408, 400, 800);
 
-  DEFINE_PARAM(RfpDepthMul, 122, 60, 180);
+  DEFINE_PARAM(RfpDepthMul, 123, 60, 180);
 
   DEFINE_PARAM(NmpBase, 4, 3, 5);
   DEFINE_PARAM(NmpDepthDiv, 3, 3, 5);
@@ -37,14 +37,14 @@ namespace Search {
   DEFINE_PARAM(PvLmpBase,    7, 0, 20);
   DEFINE_PARAM(NonPvLmpBase, 3, 0, 20);
 
-  DEFINE_PARAM(PvsQuietSeeMargin, -87, -300, 0);
-  DEFINE_PARAM(PvsCapSeeMargin, -123, -300, 0);
+  DEFINE_PARAM(PvsQuietSeeMargin, -80, -300, 0);
+  DEFINE_PARAM(PvsCapSeeMargin, -121, -300, 0);
 
-  DEFINE_PARAM(FpBase, 177, 50, 350);
+  DEFINE_PARAM(FpBase, 178, 50, 350);
   DEFINE_PARAM(FpMaxDepth, 8, 0, 30);
-  DEFINE_PARAM(FpDepthMul, 117, 50, 350);
+  DEFINE_PARAM(FpDepthMul, 120, 50, 350);
 
-  DEFINE_PARAM(LmrHistoryDiv, 9828, 4000, 16000);
+  DEFINE_PARAM(LmrHistoryDiv, 10116, 4000, 16000);
 
   DEFINE_PARAM(AspWindowStartDepth, 5, 4, 8);
   DEFINE_PARAM(AspWindowStartDelta, 10, 10, 20);
