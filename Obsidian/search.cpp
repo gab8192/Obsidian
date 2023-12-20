@@ -735,8 +735,7 @@ namespace Search {
         if (isQuiet) {
           R = lmrTable[depth][playedMoves + 1];
 
-          // Reduce more if ttmove was noisy (~6 Elo)
-          R += ttMoveNoisy;
+          R += !improving;
 
           // Do less reduction for killer and counter move (~4 Elo)
           if (moveStage == KILLER || moveStage == COUNTER)
@@ -758,7 +757,8 @@ namespace Search {
         if (newPos.checkers)
           R --;
 
-        R += !improving;
+        // Reduce more if ttmove was noisy (~6 Elo)
+        R += ttMoveNoisy;
 
         R -= IsPV;
 
