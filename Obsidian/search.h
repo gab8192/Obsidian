@@ -124,6 +124,8 @@ namespace Search {
 
     void scoreRootMoves(Position& pos, MoveList& moves, Move ttMove, SearchInfo* ss);
 
+    bool hasUpcomingRepetition(Position& pos, int ply);
+
     // Should not be called from Root node
     bool is2FoldRepetition(Position& pos);
 

@@ -1,6 +1,7 @@
 // Obsidian.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
+#include "cuckoo.h"
 #include "threads.h"
 #include "tt.h"
 #include "uci.h"
@@ -18,6 +19,8 @@ int main(int argc, char** argv)
 
   bitboardsInit();
   positionInit();
+
+  Cuckoo::init();
 
   Search::searchInit();
 

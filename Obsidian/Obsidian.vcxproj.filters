@@ -60,6 +60,9 @@
     <ClCompile Include="movepick.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="cuckoo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="types.h">
@@ -120,6 +123,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="movepick.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cuckoo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,4 +1,5 @@
 #include "search.h"
+#include "cuckoo.h"
 #include "evaluate.h"
 #include "movepick.h"
 #include "timeman.h"
@@ -322,6 +323,44 @@ namespace Search {
     return failsHigh ? TT::FLAG_LOWER : TT::FLAG_UPPER;
   }
 
+  bool SearchThread::hasUpcomingRepetition(Position& pos, int ply) {
+
+    const Bitboard occ = pos.pieces();
+    const int maxDist = std::min(pos.halfMoveClock, keyStackHead);
+
+    for (int i = 3; i <= maxDist; i += 2) {
+
+      Key moveKey = pos.key ^ keyStack[keyStackHead - i];
+
+      int hash = Cuckoo::h1(moveKey);
+
+      // try the other slot
+      if (Cuckoo::keys[hash] != moveKey)
+        hash = Cuckoo::h2(moveKey);
+
+      if (Cuckoo::keys[hash] != moveKey)
+        continue; // neither slot matches
+
+      Move   move = Cuckoo::moves[hash];
+      Square from = move_from(move);
+      Square to = move_to(move);
+
+      // Check if the move is obstructed
+      if ((BetweenBB[from][to] ^ to) & occ)
+        continue;
+
+      // Repetition after root
+      if (ply > i)
+        return true;
+      
+      Piece pc = pos.board[ pos.board[from] ? from : to ];
+
+      return colorOf(pc) == pos.sideToMove;
+    }
+
+    return false;
+  }
+
   // Should not be called from Root node
   bool SearchThread::is2FoldRepetition(Position& pos) {
 
@@ -489,7 +528,7 @@ namespace Search {
       ss->pvLength = ply;
 
     // Detect draw
-    if (is2FoldRepetition(pos) || pos.halfMoveClock >= 100)
+    if (hasUpcomingRepetition(pos, ply) || is2FoldRepetition(pos) || pos.halfMoveClock >= 100)
       return makeDrawScore();
 
     // Enter qsearch when depth is 0

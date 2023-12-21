@@ -135,6 +135,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="bitboard.cpp" />
+    <ClCompile Include="cuckoo.cpp" />
     <ClCompile Include="endgame.cpp" />
     <ClCompile Include="evaluate.cpp" />
     <ClCompile Include="main.cpp" />
@@ -153,6 +154,7 @@
   <ItemGroup>
     <ClInclude Include="bench.h" />
     <ClInclude Include="bitboard.h" />
+    <ClInclude Include="cuckoo.h" />
     <ClInclude Include="endgame.h" />
     <ClInclude Include="evaluate.h" />
     <ClInclude Include="history.h" />
