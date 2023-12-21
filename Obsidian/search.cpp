@@ -528,7 +528,14 @@ namespace Search {
       ss->pvLength = ply;
 
     // Detect draw
-    if (hasUpcomingRepetition(pos, ply) || is2FoldRepetition(pos) || pos.halfMoveClock >= 100)
+
+    if (alpha < DRAW && hasUpcomingRepetition(pos, ply)) {
+      alpha = makeDrawScore();
+      if (alpha >= beta)
+        return alpha;
+    }
+
+    if (is2FoldRepetition(pos) || pos.halfMoveClock >= 100)
       return makeDrawScore();
 
     // Enter qsearch when depth is 0
