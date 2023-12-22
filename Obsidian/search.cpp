@@ -376,7 +376,7 @@ namespace Search {
 
     for (int i = 4; i <= maxDist; i += 2) {
       if (pos.key == keyStack[keyStackHead - i]) {
-        if (ply > i)
+        if (ply >= i)
           return true;
         if (hitBeforeRoot)
           return true;
