@@ -1,4 +1,5 @@
 #include "search.h"
+#include "cuckoo.h"
 #include "evaluate.h"
 #include "movepick.h"
 #include "timeman.h"
@@ -322,12 +323,65 @@ namespace Search {
     return failsHigh ? TT::FLAG_LOWER : TT::FLAG_UPPER;
   }
 
-  // Should not be called from Root node
-  bool SearchThread::is2FoldRepetition(Position& pos) {
+  bool SearchThread::hasUpcomingRepetition(Position& pos, int ply) {
 
-    for (int i = 4; i <= pos.halfMoveClock; i += 2) {
-      if (pos.key == keyStack[keyStackHead-i])
+    const Bitboard occ = pos.pieces();
+    const int maxDist = std::min(pos.halfMoveClock, keyStackHead);
+
+    for (int i = 3; i <= maxDist; i += 2) {
+
+      Key moveKey = pos.key ^ keyStack[keyStackHead - i];
+
+      int hash = Cuckoo::h1(moveKey);
+
+      // try the other slot
+      if (Cuckoo::keys[hash] != moveKey)
+        hash = Cuckoo::h2(moveKey);
+
+      if (Cuckoo::keys[hash] != moveKey)
+        continue; // neither slot matches
+
+      Move   move = Cuckoo::moves[hash];
+      Square from = move_from(move);
+      Square to = move_to(move);
+
+      // Check if the move is obstructed
+      if ((BetweenBB[from][to] ^ to) & occ)
+        continue;
+
+      // Repetition after root
+      if (ply > i)
         return true;
+      
+      Piece pc = pos.board[ pos.board[from] ? from : to ];
+
+      if (colorOf(pc) != pos.sideToMove)
+        continue;
+
+      // We want one more repetition before root
+      for (int j = i+4; j <= maxDist; j += 2) {
+        if (keyStack[keyStackHead - j] == keyStack[keyStackHead - i])
+          return true;
+      }
+    }
+
+    return false;
+  }
+
+  bool SearchThread::isRepetition(Position& pos, int ply) {
+
+    const int maxDist = std::min(pos.halfMoveClock, keyStackHead);
+
+    bool hitBeforeRoot = false;
+
+    for (int i = 4; i <= maxDist; i += 2) {
+      if (pos.key == keyStack[keyStackHead - i]) {
+        if (ply >= i)
+          return true;
+        if (hitBeforeRoot)
+          return true;
+        hitBeforeRoot = true;
+      }
     }
 
     return false;
@@ -489,7 +543,14 @@ namespace Search {
       ss->pvLength = ply;
 
     // Detect draw
-    if (is2FoldRepetition(pos) || pos.halfMoveClock >= 100)
+
+    if (alpha < DRAW && hasUpcomingRepetition(pos, ply)) {
+      alpha = makeDrawScore();
+      if (alpha >= beta)
+        return alpha;
+    }
+
+    if (isRepetition(pos, ply) || pos.halfMoveClock >= 100)
       return makeDrawScore();
 
     // Enter qsearch when depth is 0
