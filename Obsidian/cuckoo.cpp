@@ -27,8 +27,7 @@ namespace Cuckoo {
 
               Move move = createMove(s1, s2, MT_NORMAL);
 
-              const int c0 = 64 * HASH_PIECE[piece];
-              Key key = RANDOM_ARRAY[c0 + s1] ^ RANDOM_ARRAY[c0 + s2] ^ RANDOM_ARRAY[780];
+              Key key = ZobristPsq[piece][s1] ^ ZobristPsq[piece][s2] ^ ZobristTempo;
 
               int slot = h1(key);
 

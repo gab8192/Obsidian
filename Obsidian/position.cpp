@@ -86,16 +86,16 @@ void Position::updateKey() {
     Square sq = popLsb(allPieces);
     Piece pc = board[sq];
 
-    newKey ^= RANDOM_ARRAY[64 * HASH_PIECE[pc] + sq];
+    newKey ^= ZobristPsq[pc][sq];
   }
 
-  newKey ^= HASH_CASTLING[castlingRights];
+  newKey ^= ZobristCastling[castlingRights];
 
   if (epSquare != SQ_NONE)
-    newKey ^= RANDOM_ARRAY[772 + file_of(epSquare)];
+    newKey ^= ZobristEp[file_of(epSquare)];
 
   if (sideToMove == WHITE)
-    newKey ^= RANDOM_ARRAY[780];
+    newKey ^= ZobristTempo;
 
   key = newKey;
 }
@@ -205,7 +205,7 @@ void Position::doNullMove() {
   const Color us = sideToMove, them = ~us;
 
   if (epSquare != SQ_NONE) {
-    key ^= RANDOM_ARRAY[772 + file_of(epSquare)];
+    key ^= ZobristEp[file_of(epSquare)];
     epSquare = SQ_NONE;
   }
 
@@ -214,7 +214,7 @@ void Position::doNullMove() {
   halfMoveClock++;
 
   sideToMove = them;
-  key ^= RANDOM_ARRAY[780];
+  key ^= ZobristTempo;
 
   updateAttacksToKings();
 }
@@ -224,7 +224,7 @@ void Position::doMove(Move move, NNUE::Accumulator& acc) {
   const Color us = sideToMove, them = ~us;
 
   if (epSquare != SQ_NONE) {
-    key ^= RANDOM_ARRAY[772 + file_of(epSquare)];
+    key ^= ZobristEp[file_of(epSquare)];
     epSquare = SQ_NONE;
   }
 
@@ -261,11 +261,11 @@ void Position::doMove(Move move, NNUE::Accumulator& acc) {
 
       if (to == from + 16) { // black can take en passant
         epSquare = from + 8;
-        key ^= RANDOM_ARRAY[772 + file_of(epSquare)];
+        key ^= ZobristEp[file_of(epSquare)];
       }
       else if (to == from - 16) { // white can take en passant
         epSquare = from - 8;
-        key ^= RANDOM_ARRAY[772 + file_of(epSquare)];
+        key ^= ZobristEp[file_of(epSquare)];
       }
       break;
     }
@@ -346,14 +346,17 @@ void Position::doMove(Move move, NNUE::Accumulator& acc) {
   }
 
   sideToMove = them;
-  key ^= RANDOM_ARRAY[780];
+  key ^= ZobristTempo;
 
   updateAttacksToKings();
 
   if (newCastlingRights != castlingRights) {
-    key ^= HASH_CASTLING[castlingRights] ^ HASH_CASTLING[newCastlingRights];
+    key ^= ZobristCastling[castlingRights ^ newCastlingRights];
     castlingRights = newCastlingRights;
   }
+
+  Key oldKey = key;
+  updateKey();
 }
 
 /// Only works for MT_NORMAL moves
@@ -364,7 +367,7 @@ Key Position::keyAfter(Move move) const {
   const Color us = sideToMove, them = ~us;
 
   if (epSquare != SQ_NONE)
-    newKey ^= RANDOM_ARRAY[772 + file_of(epSquare)];
+    newKey ^= ZobristEp[file_of(epSquare)];
 
   CastlingRights newCastlingRights = castlingRights;
 
@@ -375,24 +378,22 @@ Key Position::keyAfter(Move move) const {
   const Piece capturedPc = board[to];
 
   if (capturedPc != NO_PIECE) {
-
-    newKey ^= RANDOM_ARRAY[64 * HASH_PIECE[capturedPc] + to];
+    newKey ^= ZobristPsq[capturedPc][to];
 
     if (ptypeOf(capturedPc) == ROOK)
       newCastlingRights &= ROOK_SQR_TO_CR[to];
   }
 
-  const int c0 = 64 * HASH_PIECE[movedPc];
-  newKey ^= RANDOM_ARRAY[c0 + from] ^ RANDOM_ARRAY[c0 + to];
+  newKey ^= ZobristPsq[movedPc][from] ^ ZobristPsq[movedPc][to];
 
   switch (ptypeOf(movedPc)) {
   case PAWN: {
 
     if (to == from + 16)      // black can take en passant
-      newKey ^= RANDOM_ARRAY[772 + file_of(from + 8)];
+      newKey ^= ZobristEp[file_of(from + 8)];
     
     else if (to == from - 16) // white can take en passant
-      newKey ^= RANDOM_ARRAY[772 + file_of(from - 8)];
+      newKey ^= ZobristEp[file_of(from - 8)];
     
     break;
   }
@@ -407,10 +408,9 @@ Key Position::keyAfter(Move move) const {
   }
   }
 
-  newKey ^= RANDOM_ARRAY[780];
+  newKey ^= ZobristTempo;
 
-  if (newCastlingRights != castlingRights)
-    newKey ^= HASH_CASTLING[castlingRights] ^ HASH_CASTLING[newCastlingRights];
+  newKey ^= ZobristCastling[castlingRights ^ newCastlingRights];
 
   return newKey;
 }

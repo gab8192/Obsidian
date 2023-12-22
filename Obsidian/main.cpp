@@ -17,7 +17,10 @@ int main(int argc, char** argv)
 {
   cout << "Obsidian " << engineVersion << " by gabe" << endl;
 
+  zobristInit();
+
   bitboardsInit();
+
   positionInit();
 
   Cuckoo::init();

@@ -101,7 +101,7 @@ struct alignas(32) Position {
   /// Call this if you already know what piece was there
   /// </summary>
   inline void removePiece(Square sq, Piece pc, NNUE::Accumulator& acc) {
-    key ^= RANDOM_ARRAY[64 * HASH_PIECE[pc] + sq];
+    key ^= ZobristPsq[pc][sq];
 
     board[sq] = NO_PIECE;
     byColorBB[colorOf(pc)] ^= sq;
@@ -114,7 +114,7 @@ struct alignas(32) Position {
   /// Assmue there is not any piece in the given square
   /// </summary>
   inline void putPiece(Square sq, Piece pc, NNUE::Accumulator& acc) {
-    key ^= RANDOM_ARRAY[64 * HASH_PIECE[pc] + sq];
+    key ^= ZobristPsq[pc][sq];
 
     board[sq] = pc;
     byColorBB[colorOf(pc)] ^= sq;
@@ -129,8 +129,7 @@ struct alignas(32) Position {
   /// </summary>
   inline void movePiece(Square from, Square to, Piece pc, NNUE::Accumulator& acc) {
 
-    const int c0 = 64 * HASH_PIECE[pc];
-    key ^= RANDOM_ARRAY[c0 + from] ^ RANDOM_ARRAY[c0 + to];
+    key ^= ZobristPsq[pc][from] ^ ZobristPsq[pc][to];
 
     board[from] = NO_PIECE;
     board[to] = pc;
