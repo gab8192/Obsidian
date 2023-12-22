@@ -1,11 +1,18 @@
 #include "evaluate.h"
 #include "endgame.h"
+#include "tuning.h"
 
 #include <iostream>
 
 using namespace std;
 
 namespace Eval {
+
+  constexpr int ScalingValue[PIECE_NB] = { 0, 100, 500, 500, 500, 1200, 0, 0,
+                                           0, 100, 500, 500, 500, 1200, 0, 0 };
+
+  DEFINE_PARAM(val0, 10000, 5000, 15000);
+  DEFINE_PARAM(val1, 20000, 10000, 30000);
 
   Score evaluate(Position& pos, NNUE::Accumulator& accumulator) {
 
@@ -25,6 +32,15 @@ namespace Eval {
     }
     else {
       v = NNUE::evaluate(accumulator, pos.sideToMove);
+
+      int material = 0;
+
+      Bitboard piecesIter = pos.pieces();
+      while (piecesIter) material += ScalingValue[pos.board[popLsb(piecesIter)]];
+
+      
+
+      v = Score(v * (material + val0) / val1);
     }
 
     v = Score(v * (200 - pos.halfMoveClock) / 200);
