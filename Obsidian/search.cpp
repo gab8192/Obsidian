@@ -613,10 +613,13 @@ namespace Search {
       eval = ss->staticEval;
     }
     else {
-      if (ttHit)
+      if (ttHit) {
         ss->staticEval = eval = ttStaticEval;
-      else
+      }
+      else {
         ss->staticEval = eval = Eval::evaluate(pos, accumStack[accumStackHead]);
+        ttEntry->storeStaticEval(pos.key, ss->staticEval);
+      }
 
       // When tt bound allows it, use ttScore as a better evaluation
       if (ttFlag & flagForTT(ttScore > eval))

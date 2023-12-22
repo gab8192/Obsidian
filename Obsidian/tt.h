@@ -37,6 +37,19 @@ namespace TT {
       }
     }
 
+    inline void storeStaticEval(Key _key, Score _eval) {
+
+      if ( depth <= 0 && !matches(_key))
+      {
+        this->move = MOVE_NONE;
+        this->key64 = _key;
+        this->flag = NO_FLAG;
+        this->depth = -1;
+        this->value = SCORE_NONE;
+        this->staticEval = _eval;
+      }
+    }
+
     inline bool matches(Key key) const {
       return this->key64 == key;
     }
