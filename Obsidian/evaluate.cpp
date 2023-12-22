@@ -8,8 +8,11 @@ using namespace std;
 
 namespace Eval {
 
-  constexpr int ScalingValue[PIECE_NB] = { 0, 100, 500, 500, 500, 1200, 0, 0,
-                                           0, 100, 500, 500, 500, 1200, 0, 0 };
+  constexpr int ScalingValue[PIECE_NB] = { 0, 8, 33, 33, 37, 80, 0, 0,
+                                           0, 8, 33, 33, 37, 80, 0, 0 };
+
+  constexpr int full = ScalingValue[PAWN] * 16 + (ScalingValue[KNIGHT] + ScalingValue[BISHOP] + ScalingValue[ROOK]) * 4 +
+    ScalingValue[QUEEN] * 2;
 
   DEFINE_PARAM(val0, 11000, 1000, 30000);
   DEFINE_PARAM(val1, 19000, 1000, 50000);
@@ -38,9 +41,8 @@ namespace Eval {
       Bitboard piecesIter = pos.pieces();
       while (piecesIter) material += ScalingValue[pos.board[popLsb(piecesIter)]];
 
-      
-
-      v = Score(v * (material + val0) / val1);
+      // 0.7 -> 1.05
+      v = Score(v * (material + 1400) / 2000);
     }
 
     v = Score(v * (200 - pos.halfMoveClock) / 200);
