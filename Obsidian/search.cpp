@@ -399,7 +399,14 @@ namespace Search {
       return pos.checkers ? DRAW : Eval::evaluate(pos, accumStack[accumStackHead]);
 
     // Detect draw
-    if (pos.halfMoveClock >= 100)
+
+    if (alpha < DRAW && hasUpcomingRepetition(pos, ply)) {
+      alpha = makeDrawScore();
+      if (alpha >= beta)
+        return alpha;
+    }
+
+    if (isRepetition(pos, ply) || pos.halfMoveClock >= 100)
       return makeDrawScore();
 
     // Probe TT
@@ -542,6 +549,10 @@ namespace Search {
     if (IsPV)
       ss->pvLength = ply;
 
+    // Enter qsearch when depth is 0
+    if (depth <= 0)
+      return qsearch<IsPV>(pos, alpha, beta, ss);
+
     // Detect draw
 
     if (alpha < DRAW && hasUpcomingRepetition(pos, ply)) {
@@ -552,10 +563,6 @@ namespace Search {
 
     if (isRepetition(pos, ply) || pos.halfMoveClock >= 100)
       return makeDrawScore();
-
-    // Enter qsearch when depth is 0
-    if (depth <= 0)
-      return qsearch<IsPV>(pos, alpha, beta, ss);
 
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY - 4)
