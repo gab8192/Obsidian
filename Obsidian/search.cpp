@@ -75,8 +75,7 @@ namespace Search {
   }
 
   // Called once at engine initialization
-  void searchInit() {
-
+  void init() {
     initLmrTable();
   }
 

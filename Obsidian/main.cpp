@@ -22,14 +22,14 @@ int main(int argc, char** argv)
 
   Cuckoo::init();
 
-  Search::searchInit();
+  Search::init();
 
   UCI::init(Options);
 
   Threads::setThreadCount(Options["Threads"]);
   TT::resize(Options["Hash"]);
 
-  NNUE::load();
+  NNUE::init();
 
   UCI::loop(argc, argv);
 

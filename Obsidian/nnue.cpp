@@ -89,7 +89,7 @@ namespace NNUE {
       FeatureIndexTable[BLACK][pc][to], FeatureIndexTable[BLACK][pc][from]);
   }
 
-  void load() {
+  void init() {
 #ifdef _MSC_VER
     ifstream stream(EvalFile, ios::binary);
 

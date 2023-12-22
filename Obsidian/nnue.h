@@ -32,7 +32,7 @@ namespace NNUE {
     void moveFeature(Square from, Square to, Piece pc);
   };
 
-  void load();
+  void init();
 
   Score evaluate(Accumulator& accumulator, Color sideToMove);
 }

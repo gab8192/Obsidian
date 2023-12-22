@@ -149,5 +149,5 @@ namespace Search {
 
   void initLmrTable();
 
-  void searchInit();
+  void init();
 }
