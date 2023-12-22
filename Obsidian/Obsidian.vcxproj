@@ -150,6 +150,7 @@
     <ClCompile Include="tuning.cpp" />
     <ClCompile Include="uci.cpp" />
     <ClCompile Include="ucioption.cpp" />
+    <ClCompile Include="zobrist.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bench.h" />
