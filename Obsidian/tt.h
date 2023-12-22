@@ -39,7 +39,7 @@ namespace TT {
 
     inline void storeStaticEval(Key _key, Score _eval) {
 
-      if ( depth <= 0 && !matches(_key))
+      if ( depth <= 0 && !move)
       {
         this->move = MOVE_NONE;
         this->key64 = _key;
