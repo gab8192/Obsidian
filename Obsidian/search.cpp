@@ -355,18 +355,33 @@ namespace Search {
       
       Piece pc = pos.board[ pos.board[from] ? from : to ];
 
-      return colorOf(pc) == pos.sideToMove;
+      if (colorOf(pc) != pos.sideToMove)
+        continue;
+
+      // We want one more repetition before root
+      for (int j = i+4; j <= maxDist; j += 2) {
+        if (keyStack[keyStackHead - j] == keyStack[keyStackHead - i])
+          return true;
+      }
     }
 
     return false;
   }
 
-  // Should not be called from Root node
-  bool SearchThread::is2FoldRepetition(Position& pos) {
+  bool SearchThread::isRepetition(Position& pos, int ply) {
 
-    for (int i = 4; i <= pos.halfMoveClock; i += 2) {
-      if (pos.key == keyStack[keyStackHead-i])
-        return true;
+    const int maxDist = std::min(pos.halfMoveClock, keyStackHead);
+
+    bool hitBeforeRoot = false;
+
+    for (int i = 4; i <= maxDist; i += 2) {
+      if (pos.key == keyStack[keyStackHead - i]) {
+        if (ply > i)
+          return true;
+        if (hitBeforeRoot)
+          return true;
+        hitBeforeRoot = true;
+      }
     }
 
     return false;
@@ -535,7 +550,7 @@ namespace Search {
         return alpha;
     }
 
-    if (is2FoldRepetition(pos) || pos.halfMoveClock >= 100)
+    if (isRepetition(pos, ply) || pos.halfMoveClock >= 100)
       return makeDrawScore();
 
     // Enter qsearch when depth is 0

@@ -127,7 +127,7 @@ namespace Search {
     bool hasUpcomingRepetition(Position& pos, int ply);
 
     // Should not be called from Root node
-    bool is2FoldRepetition(Position& pos);
+    bool isRepetition(Position& pos, int ply);
 
     Score makeDrawScore();
 
