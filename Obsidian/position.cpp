@@ -354,9 +354,6 @@ void Position::doMove(Move move, NNUE::Accumulator& acc) {
     key ^= ZobristCastling[castlingRights ^ newCastlingRights];
     castlingRights = newCastlingRights;
   }
-
-  Key oldKey = key;
-  updateKey();
 }
 
 /// Only works for MT_NORMAL moves
@@ -388,13 +385,8 @@ Key Position::keyAfter(Move move) const {
 
   switch (ptypeOf(movedPc)) {
   case PAWN: {
-
-    if (to == from + 16)      // black can take en passant
-      newKey ^= ZobristEp[file_of(from + 8)];
-    
-    else if (to == from - 16) // white can take en passant
-      newKey ^= ZobristEp[file_of(from - 8)];
-    
+    if (to == from + 16 || to == from - 16)
+      newKey ^= ZobristEp[file_of(from)];
     break;
   }
   case ROOK: {
