@@ -11,8 +11,8 @@ namespace Eval {
   constexpr int ScalingValue[PIECE_NB] = { 0, 100, 500, 500, 500, 1200, 0, 0,
                                            0, 100, 500, 500, 500, 1200, 0, 0 };
 
-  DEFINE_PARAM(val0, 10000, 5000, 15000);
-  DEFINE_PARAM(val1, 20000, 10000, 30000);
+  DEFINE_PARAM(val0, 10000, 1000, 30000);
+  DEFINE_PARAM(val1, 20000, 1000, 50000);
 
   Score evaluate(Position& pos, NNUE::Accumulator& accumulator) {
 
