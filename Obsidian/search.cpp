@@ -464,16 +464,16 @@ namespace Search {
 
     while (move = movePicker.nextMove(&moveStage)) {
 
-      if (!pos.isLegal(move))
-        continue;
-
-      foundLegalMoves = true;
-
       // Prevent qsearch from visiting bad captures and under-promotions
       if (bestScore > TB_LOSS_IN_MAX_PLY) {
         if (moveStage > QUIETS)
           break;
       }
+
+      if (!pos.isLegal(move))
+        continue;
+
+      foundLegalMoves = true;
 
       Position newPos = pos;
       playMove(newPos, move, ss);
