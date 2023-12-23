@@ -259,13 +259,11 @@ void Position::doMove(Move move, NNUE::Accumulator& acc) {
     case PAWN: {
       halfMoveClock = 0;
 
-      if (to == from + 16) { // black can take en passant
-        epSquare = from + 8;
-        key ^= ZobristEp[file_of(epSquare)];
-      }
-      else if (to == from - 16) { // white can take en passant
-        epSquare = from - 8;
-        key ^= ZobristEp[file_of(epSquare)];
+      const int ourPush = (us == WHITE) ? 8 : -8;
+
+      if (to == from + 2 * ourPush) {
+        epSquare = from + ourPush;
+        key ^= ZobristEp[file_of(from)];
       }
       break;
     }
@@ -274,8 +272,7 @@ void Position::doMove(Move move, NNUE::Accumulator& acc) {
       break;
     }
     case KING: {
-      if (us == WHITE) newCastlingRights &= ~WHITE_CASTLING;
-      else             newCastlingRights &= ~BLACK_CASTLING;
+      newCastlingRights &= (WHITE_CASTLING << (2 * them));
       break;
     }
     }
@@ -285,22 +282,10 @@ void Position::doMove(Move move, NNUE::Accumulator& acc) {
   case MT_CASTLING: {
     const CastlingData* cd = &CASTLING_DATA[castling_type(move)];
 
-    const Square kingSrc = cd->kingSrc, kingDest = cd->kingDest,
-                 rookSrc = cd->rookSrc, rookDest = cd->rookDest;
+    movePiece(cd->kingSrc, cd->kingDest, make_piece(us, KING), acc);
+    movePiece(cd->rookSrc, cd->rookDest, make_piece(us, ROOK), acc);
 
-    if (us == WHITE) {
-      movePiece(kingSrc, kingDest, W_KING, acc);
-      movePiece(rookSrc, rookDest, W_ROOK, acc);
-
-      newCastlingRights &= ~WHITE_CASTLING;
-    }
-    else {
-      movePiece(kingSrc, kingDest, B_KING, acc);
-      movePiece(rookSrc, rookDest, B_ROOK, acc);
-
-      newCastlingRights &= ~BLACK_CASTLING;
-    }
-
+    newCastlingRights &= (WHITE_CASTLING << (2 * them));
     break;
   }
   case MT_EN_PASSANT: {
@@ -309,16 +294,10 @@ void Position::doMove(Move move, NNUE::Accumulator& acc) {
     const Square from = move_from(move);
     const Square to = move_to(move);
 
-    if (us == WHITE) {
+    const int theirPush = (them == WHITE) ? 8 : -8;
 
-      removePiece(to - 8, B_PAWN, acc);
-      movePiece(from, to, W_PAWN, acc);
-    }
-    else {
-
-      removePiece(to + 8, W_PAWN, acc);
-      movePiece(from, to, B_PAWN, acc);
-    }
+    removePiece(to + theirPush, make_piece(them, PAWN), acc);
+    movePiece(from, to, make_piece(us, PAWN), acc);
 
     break;
   }
@@ -385,7 +364,7 @@ Key Position::keyAfter(Move move) const {
 
   switch (ptypeOf(movedPc)) {
   case PAWN: {
-    if (to == from + 16 || to == from - 16)
+    if (to == from - 16 || to == from + 16)
       newKey ^= ZobristEp[file_of(from)];
     break;
   }
@@ -394,8 +373,7 @@ Key Position::keyAfter(Move move) const {
     break;
   }
   case KING: {
-    if (us == WHITE) newCastlingRights &= ~WHITE_CASTLING;
-    else             newCastlingRights &= ~BLACK_CASTLING;
+    newCastlingRights &= (WHITE_CASTLING << (2 * them));
     break;
   }
   }
