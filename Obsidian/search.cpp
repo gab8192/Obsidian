@@ -392,6 +392,9 @@ namespace Search {
 
   template<bool IsPV>
   Score SearchThread::qsearch(Position& pos, Score alpha, Score beta, SearchInfo* ss) {
+
+    if (isRepetition(pos, ply) || pos.halfMoveClock >= 100)
+      return DRAW;
     
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY-4)
@@ -544,12 +547,12 @@ namespace Search {
         return alpha;
     }
 
-    if (isRepetition(pos, ply) || pos.halfMoveClock >= 100)
-      return makeDrawScore();
-
     // Enter qsearch when depth is 0
     if (depth <= 0)
       return qsearch<IsPV>(pos, alpha, beta, ss);
+
+    if (isRepetition(pos, ply) || pos.halfMoveClock >= 100)
+      return makeDrawScore();
 
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY - 4)
