@@ -590,7 +590,8 @@ namespace Search {
     // In non PV nodes, if tt depth and bound allow it, return ttScore
     if ( !IsPV
       && !excludedMove
-      && ttDepth >= depth) 
+      && ttDepth >= depth
+      && (cutNode || ttScore <= alpha))
     {
       if (ttFlag & flagForTT(ttScore >= beta))
         return ttScore;
