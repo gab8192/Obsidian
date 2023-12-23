@@ -758,7 +758,7 @@ namespace Search {
         if (seScore < singularBeta) {
           extension = 1;
           // Extend even more if s. value is smaller than s. beta by some margin
-          if (!IsPV && ss->doubleExt <= 5 && seScore < singularBeta - 17) {
+          if (!IsPV && ss->doubleExt <= 5 && seScore < singularBeta - 15) {
             extension = 2;
             ss->doubleExt = (ss - 1)->doubleExt + 1;
           }
