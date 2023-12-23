@@ -429,7 +429,7 @@ namespace Search {
       ss->staticEval = SCORE_NONE;
     }
     else {
-      if (ttHit)
+      if (ttStaticEval != SCORE_NONE)
         bestScore = ss->staticEval = ttStaticEval;
       else
         bestScore = ss->staticEval = Eval::evaluate(pos, accumStack[accumStackHead]);
@@ -613,7 +613,7 @@ namespace Search {
       eval = ss->staticEval;
     }
     else {
-      if (ttHit)
+      if (ttStaticEval != SCORE_NONE)
         ss->staticEval = eval = ttStaticEval;
       else
         ss->staticEval = eval = Eval::evaluate(pos, accumStack[accumStackHead]);
@@ -958,7 +958,7 @@ namespace Search {
       goto moves_loop;
     }
     else {
-      if (ttHit)
+      if (ttStaticEval != SCORE_NONE)
         ss->staticEval = eval = ttStaticEval;
       else
         ss->staticEval = eval = Eval::evaluate(pos, accumStack[accumStackHead]);
