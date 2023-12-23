@@ -158,6 +158,8 @@ struct alignas(32) Position {
   /// Only works for MT_NORMAL moves
   Key keyAfter(Move move) const;
 
+  Key keyAfterNullMove() const;
+
   bool see_ge(Move m, Score threshold) const;
 
   void setToFen(const string& fen, NNUE::Accumulator& acc);

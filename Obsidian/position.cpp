@@ -407,6 +407,18 @@ Key Position::keyAfter(Move move) const {
   return newKey;
 }
 
+Key Position::keyAfterNullMove() const {
+
+  Key newKey = key;
+
+  if (epSquare != SQ_NONE)
+    newKey ^= ZobristEp[file_of(epSquare)];
+
+  newKey ^= ZobristTempo;
+
+  return newKey;
+}
+
 int readNumberTillSpace(const std::string& str, int& i) {
   int num = 0;
   while (str[i] && str[i] != ' ') {

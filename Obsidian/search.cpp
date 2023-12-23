@@ -159,6 +159,8 @@ namespace Search {
   void SearchThread::playNullMove(Position& pos, SearchInfo* ss) {
     nodesSearched++;
 
+    TT::prefetch(pos.keyAfterNullMove());
+
     ss->mContHistory = &contHistory[false][0];
     ss->playedMove = MOVE_NONE;
     keyStack[keyStackHead++] = pos.key;
