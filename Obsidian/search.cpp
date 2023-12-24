@@ -1022,7 +1022,7 @@ namespace Search {
         int R;
 
         if (isQuiet) {
-          R = lmrTable[depth][playedMoves + 1];
+          R = lmrTable[depth][playedMoves];
         }
         else {
           R = 0;
