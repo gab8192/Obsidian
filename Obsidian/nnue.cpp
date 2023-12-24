@@ -151,14 +151,12 @@ namespace NNUE {
     for (int i = 0; i < TransformedFeatureDimensions / WeightsPerVec; ++i) {
 
       // Side to move
-      reg = _mm512_min_epi16(_mm512_max_epi16(stmAcc[i], reluClipMin), reluClipMax); // clip
-      reg = _mm512_mullo_epi16(reg, reg); // square
+      reg = _mm512_max_epi16(stmAcc[i], reluClipMin); // clip
       reg = _mm512_madd_epi16(reg, stmWeightsVec[i]); // multiply with output layer
       sum = _mm512_add_epi32(sum, reg); // collect the result,
 
       // Non side to move
       reg = _mm512_min_epi16(_mm512_max_epi16(oppAcc[i], reluClipMin), reluClipMax);
-      reg = _mm512_mullo_epi16(reg, reg);
       reg = _mm512_madd_epi16(reg, oppWeightsVec[i]);
       sum = _mm512_add_epi32(sum, reg);
     }
@@ -168,14 +166,12 @@ namespace NNUE {
     for (int i = 0; i < TransformedFeatureDimensions / WeightsPerVec; ++i) {
 
       // Side to move
-      reg = _mm256_min_epi16(_mm256_max_epi16(stmAcc[i], reluClipMin), reluClipMax); // clip
-      reg = _mm256_mullo_epi16(reg, reg); // square
+      reg = _mm256_max_epi16(stmAcc[i], reluClipMin); // clip
       reg = _mm256_madd_epi16(reg, stmWeightsVec[i]); // multiply with output layer
       sum = _mm256_add_epi32(sum, reg); // collect the result,
 
       // Non side to move
       reg = _mm256_min_epi16(_mm256_max_epi16(oppAcc[i], reluClipMin), reluClipMax);
-      reg = _mm256_mullo_epi16(reg, reg);
       reg = _mm256_madd_epi16(reg, oppWeightsVec[i]);
       sum = _mm256_add_epi32(sum, reg);
     }
@@ -185,19 +181,17 @@ namespace NNUE {
     for (int i = 0; i < TransformedFeatureDimensions; ++i) {
 
       // Side to move
-      reg = std::min(std::max(stmAcc[i], reluClipMin), reluClipMax); // clip
-      reg *= reg; // square
+      reg = std::max(stmAcc[i], reluClipMin); // clip
       sum += int(reg) * stmWeightsVec[i];
 
       // Non side to move
-      reg = std::min(std::max(oppAcc[i], reluClipMin), reluClipMax);
-      reg *= reg;
+      reg = std::max(oppAcc[i], reluClipMin);
       sum += int(reg) * oppWeightsVec[i];
     }
 
 #endif
 
-    int unsquared = vecHadd(sum) / NetworkQA + Content.OutputBias;
+    int unsquared = vecHadd(sum) + Content.OutputBias;
 
     return Score((unsquared * NetworkScale) / NetworkQAB);
   }

@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "t80-screlu181-epoch13.bin"
+#define EvalFile "t80-relu-epoch13.bin"
 
 using namespace SIMD;
 
@@ -15,7 +15,7 @@ namespace NNUE {
   constexpr int TransformedFeatureDimensions = 64;
 
   constexpr int NetworkScale = 400;
-  constexpr int NetworkQA = 181;
+  constexpr int NetworkQA = 255;
   constexpr int NetworkQB = 64;
   constexpr int NetworkQAB = NetworkQA * NetworkQB;
 
