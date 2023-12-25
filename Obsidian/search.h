@@ -117,7 +117,9 @@ namespace Search {
 
     void cancelMove();
 
-    int getHistoryScore(Position& pos, Move move, SearchInfo* ss);
+    int getQuietHistory(Position& pos, Move move, SearchInfo* ss);
+
+    int getCapHistory(Position& pos, Move move);
 
     void updateHistories(Position& pos, int depth, Move bestMove, Score bestScore,
       Score beta, Move* quietMoves, int quietCount, SearchInfo* ss);
