@@ -787,9 +787,10 @@ namespace Search {
             R -= std::clamp(getHistoryScore(pos, move, ss) / LmrHistoryDiv, -2, 2);
         }
         else {
-          R = 0;
-          
-          R += (moveStage == BAD_CAPTURES);
+          if (moveStage == BAD_CAPTURES)
+            R = lmrTable[depth][playedMoves + 1];
+          else
+            R = 0;
         }
 
         if (newPos.checkers)
