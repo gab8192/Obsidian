@@ -503,6 +503,8 @@ namespace Search {
     ss->pvLength = (ss + 1)->pvLength;
   }
 
+  DEFINE_PARAM(lol0, -10, -100, 0);
+
   template<bool IsPV>
   Score SearchThread::negaMax(Position& pos, Score alpha, Score beta, int depth, bool cutNode, SearchInfo* ss) {
 
@@ -777,8 +779,8 @@ namespace Search {
         if (isQuiet) {
           R = lmrTable[depth][playedMoves + 1];
 
-          R += (improvement < -10);
-          R += (improvement < -30);
+          R += (improvement < lol0);
+          R += (improvement < 3*lol0);
 
           // Reduce more if ttmove was noisy (~6 Elo)
           R += ttMoveNoisy;
