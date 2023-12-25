@@ -282,22 +282,6 @@ namespace Search {
     }
   }
 
-  Move peekBestMove(MoveList& moveList) {
-    int bestMoveI = 0;
-    int bestMoveScore = moveList[bestMoveI].score;
-
-    int size = moveList.size();
-    for (int i = 0 + 1; i < size; i++) {
-      int thisScore = moveList[i].score;
-      if (thisScore > bestMoveScore) {
-        bestMoveScore = thisScore;
-        bestMoveI = i;
-      }
-    }
-
-    return moveList[bestMoveI].move;
-  }
-
   Move nextBestMove(MoveList& moveList, int scannedMoves, int* moveScore) {
     int bestMoveI = scannedMoves;
     int bestMoveScore = moveList[bestMoveI].score;
