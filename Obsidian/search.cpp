@@ -462,7 +462,7 @@ namespace Search {
     MpStage moveStage;
     Move move;
 
-    while (move = movePicker.nextMove(&moveStage)) {
+    while (move = movePicker.nextMove(false, &moveStage)) {
 
       // Prevent qsearch from visiting bad captures and under-promotions
       if (bestScore > TB_LOSS_IN_MAX_PLY) {
@@ -696,11 +696,11 @@ namespace Search {
       ss);
 
     // Visit moves
-
+    bool skipQuiets = false;
     Move move;
     MpStage moveStage;
 
-    while (move = movePicker.nextMove(& moveStage)) {
+    while (move = movePicker.nextMove(skipQuiets, & moveStage)) {
       if (move == excludedMove)
         continue;
 
@@ -729,12 +729,12 @@ namespace Search {
           // Late move pruning. At low depths, only visit a few quiet moves
           int lmpBase = IsPV ? PvLmpBase : NonPvLmpBase;
           if (quietCount + 1 >= (depth * depth + lmpBase) / (2 - improving))
-            movePicker.stage = BAD_CAPTURES;
+            skipQuiets = true;
 
           // Futility pruning (~8 Elo). If our evaluation is far below alpha,
           // only visit a few quiet moves
           if (lmrDepth <= FpMaxDepth && !pos.checkers && eval + FpBase + FpDepthMul * lmrDepth <= alpha)
-            movePicker.stage = BAD_CAPTURES;
+            skipQuiets = true;
         }
       }
 
