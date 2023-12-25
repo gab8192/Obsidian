@@ -29,7 +29,7 @@ public:
     MainHistory& _mainHist, CaptureHistory& _capHist,
     Search::SearchInfo* _ss);
 
-  Move nextMove(MpStage* outStage);
+  Move nextMove(bool skipQuiets, MpStage* outStage);
 
 private:
   bool isQsearch;
