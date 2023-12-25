@@ -584,6 +584,7 @@ namespace Search {
     ss->doubleExt = (ss - 1)->doubleExt;
 
     bool improving = false;
+    int improvement = 0;
 
     // Do the static evaluation
 
@@ -609,9 +610,11 @@ namespace Search {
 
     // Calculate whether the evaluation here is worse or better than it was 2 plies ago
     if ((ss - 2)->staticEval != SCORE_NONE)
-      improving = ss->staticEval > (ss - 2)->staticEval;
+      improvement = ss->staticEval - (ss - 2)->staticEval;
     else if ((ss - 4)->staticEval != SCORE_NONE)
-      improving = ss->staticEval > (ss - 4)->staticEval;
+      improvement = ss->staticEval - (ss - 4)->staticEval;
+
+    improving = improvement > 0;
 
     // Razoring. When evaluation is far below alpha, we could probably only catch up with a capture,
     // thus do a qsearch. If the qsearch still can't hit alpha, cut off
@@ -774,7 +777,8 @@ namespace Search {
         if (isQuiet) {
           R = lmrTable[depth][playedMoves + 1];
 
-          R += !improving;
+          R += (improvement < -10);
+          R += (improvement < -30);
 
           // Reduce more if ttmove was noisy (~6 Elo)
           R += ttMoveNoisy;
