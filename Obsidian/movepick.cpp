@@ -1,5 +1,10 @@
 #include "movepick.h"
+#include "tuning.h"
 #include "uci.h"
+
+DEFINE_PARAM(PvsSeeMargin, -50, -400, 0);
+
+DEFINE_PARAM(QsSeeMargin, -50, -400, 0);
 
 MovePicker::MovePicker(
   bool _isQsearch, Position& _pos,
@@ -99,7 +104,8 @@ void MovePicker::scoreCaptures() {
     if (mt == MT_PROMOTION)
       moveScore += promotionScores[promo_type(move)];
     else {
-      if (!pos.see_ge(move, Score(-50)))
+      int seeMargin = isQsearch ? QsSeeMargin : PvsSeeMargin;
+      if (!pos.see_ge(move, Score(seeMargin)))
         moveScore -= 500000;
       moveScore += capHist[pieceTo(pos, move)][captured];
     }

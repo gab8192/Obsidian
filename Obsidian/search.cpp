@@ -699,11 +699,9 @@ namespace Search {
         && bestScore > TB_LOSS_IN_MAX_PLY)
       {
         // SEE (Static Exchange Evalution) pruning
-        if (moveStage > GOOD_CAPTURES) {
-          int seeMargin = depth * (isQuiet ? PvsQuietSeeMargin : PvsCapSeeMargin);
-          if (!pos.see_ge(move, Score(seeMargin)))
-            continue;
-        }
+        int seeMargin = depth * (isQuiet ? PvsQuietSeeMargin : PvsCapSeeMargin);
+        if (!pos.see_ge(move, Score(seeMargin)))
+          continue;
 
         if (isQuiet) {
 
