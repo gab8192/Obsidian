@@ -1116,10 +1116,10 @@ namespace Search {
     return output.str();
   }
 
-  DEFINE_PARAM(tm0, 170, 0, 400);
-  DEFINE_PARAM(tm1, 62, 0, 200);
-  DEFINE_PARAM(tm2, 139, 0, 300);
-  DEFINE_PARAM(tm3, 3, 0, 40);
+  DEFINE_PARAM(tm0, 169, 0, 300);
+  DEFINE_PARAM(tm1, 62,  0, 150);
+  DEFINE_PARAM(tm2, 142, 0, 200);
+  DEFINE_PARAM(tm3, 3,   0, 30);
 
   void SearchThread::startSearch() {
 
