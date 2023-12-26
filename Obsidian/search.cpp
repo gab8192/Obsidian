@@ -1199,8 +1199,8 @@ namespace Search {
       Score score;
       if (rootDepth >= AspWindowStartDepth) {
         int windowSize = AspWindowStartDelta;
-        Score alpha = iterDeepening[rootDepth - 1].score - windowSize;
-        Score beta = iterDeepening[rootDepth - 1].score + windowSize;
+        Score alpha = std::max(-SCORE_INFINITE, iterDeepening[rootDepth - 1].score - windowSize);
+        Score beta  = std::min( SCORE_INFINITE, iterDeepening[rootDepth - 1].score + windowSize);
 
         int failedHighCnt = 0;
         while (true) {
