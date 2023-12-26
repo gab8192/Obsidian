@@ -923,8 +923,6 @@ namespace Search {
     if (!pos.isPseudoLegal(ttMove))
       ttMove = MOVE_NONE;
 
-    scoreRootMoves(pos, rootMoves, ttMove, ss);
-
     bool ttMoveNoisy = ttMove && !pos.isQuiet(ttMove);
 
     Score eval;
@@ -957,6 +955,8 @@ namespace Search {
     // Generate moves and score them
 
     MoveList moves = rootMoves;
+
+    scoreRootMoves(pos, moves, ttMove, ss);
 
     bool foundLegalMove = false;
 
@@ -1188,13 +1188,13 @@ namespace Search {
       goto bestMoveDecided;
     }
 
+    for (int i = 0; i < rootMoves.size(); i++)
+      rootMoves[i].nodes = 0;
+
     for (rootDepth = 1; rootDepth <= Threads::searchSettings.depth; rootDepth++) {
 
       if (Threads::searchSettings.nodes && nodesSearched >= Threads::searchSettings.nodes)
         break;
-
-      for (int i = 0; i < rootMoves.size(); i++)
-        rootMoves[i].nodes = 0;
 
       Score score;
       if (rootDepth >= AspWindowStartDepth) {
@@ -1294,12 +1294,8 @@ namespace Search {
         if (usedMostOfTime())
           goto bestMoveDecided;
 
-        int idNodes = 0;
-        for (int i = 0; i < rootMoves.size(); i++)
-          idNodes += rootMoves[i].nodes;
-
         int bmNodes = rootMoves[rootMoves.indexOf(bestMove)].nodes;
-        double notBestNodes = 1.0 - (bmNodes / double(idNodes));
+        double notBestNodes = 1.0 - (bmNodes / double(nodesSearched));
         double nodesFactor = notBestNodes * (tm0/100.0) + (tm1/100.0);
 
         double stabilityFactor = (tm2/100.0) - (tm3/100.0) * searchStability;
