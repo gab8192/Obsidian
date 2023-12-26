@@ -1281,16 +1281,16 @@ namespace Search {
         searchStability = std::min(searchStability + 1, 8);
       else
         searchStability = 0;
+    
+     if (usedMostOfTime())
+          goto bestMoveDecided;
 
-      if (Threads::searchSettings.hasTimeLimit() && rootDepth >= 4) {
+      if (Threads::searchSettings.hasTimeLimit() && rootDepth >= 6) {
 
         // If the position is a dead draw, stop searching
         if (rootDepth >= 40 && abs(score) < 5) {
           goto bestMoveDecided;
         }
-
-        if (usedMostOfTime())
-          goto bestMoveDecided;
 
         int bmNodes = rootMoves[rootMoves.indexOf(bestMove)].nodes;
         double notBestNodes = 1.0 - (bmNodes / double(nodesSearched));
