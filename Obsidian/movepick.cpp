@@ -99,8 +99,10 @@ void MovePicker::scoreCaptures() {
     if (mt == MT_PROMOTION)
       moveScore += promotionScores[promo_type(move)];
     else {
-      if (!pos.see_ge(move, Score(-50)))
+      if (!pos.see_ge(move, Score(-25)))
         moveScore -= 500000;
+      else
+        moveScore += 500000;
       moveScore += capHist[pieceTo(pos, move)][captured];
     }
 
