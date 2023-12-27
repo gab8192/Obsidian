@@ -219,7 +219,7 @@ void Position::doNullMove() {
   updateAttacksToKings();
 }
 
-void Position::doMove(Move move, NNUE::Accumulator& acc) {
+void Position::doMove(Move move, DirtyPiece* dp, int& dpCount) {
 
   const Color us = sideToMove, them = ~us;
 
@@ -247,13 +247,15 @@ void Position::doMove(Move move, NNUE::Accumulator& acc) {
     if (capturedPc != NO_PIECE) {
       halfMoveClock = 0;
 
-      removePiece(to, capturedPc, acc);
+      removePiece(to, capturedPc);
+      dp[dpCount++] = { to, SQ_NONE, capturedPc };
 
       if (ptypeOf(capturedPc) == ROOK)
         newCastlingRights &= ROOK_SQR_TO_CR[to];
     }
 
-    movePiece(from, to, movedPc, acc);
+    movePiece(from, to, movedPc);
+    dp[dpCount++] = { from, to, movedPc };
 
     switch (ptypeOf(movedPc)) {
     case PAWN: {
@@ -289,15 +291,17 @@ void Position::doMove(Move move, NNUE::Accumulator& acc) {
                  rookSrc = cd->rookSrc, rookDest = cd->rookDest;
 
     if (us == WHITE) {
-      movePiece(kingSrc, kingDest, W_KING, acc);
-      movePiece(rookSrc, rookDest, W_ROOK, acc);
-
+      movePiece(kingSrc, kingDest, W_KING);
+      movePiece(rookSrc, rookDest, W_ROOK);
+      dp[dpCount++] = { kingSrc, kingDest, W_KING };
+      dp[dpCount++] = { rookSrc, rookDest, W_ROOK };
       newCastlingRights &= ~WHITE_CASTLING;
     }
     else {
-      movePiece(kingSrc, kingDest, B_KING, acc);
-      movePiece(rookSrc, rookDest, B_ROOK, acc);
-
+      movePiece(kingSrc, kingDest, B_KING);
+      movePiece(rookSrc, rookDest, B_ROOK);
+      dp[dpCount++] = { kingSrc, kingDest, B_KING };
+      dp[dpCount++] = { rookSrc, rookDest, B_ROOK };
       newCastlingRights &= ~BLACK_CASTLING;
     }
 
@@ -310,14 +314,16 @@ void Position::doMove(Move move, NNUE::Accumulator& acc) {
     const Square to = move_to(move);
 
     if (us == WHITE) {
-
-      removePiece(to - 8, B_PAWN, acc);
-      movePiece(from, to, W_PAWN, acc);
+      removePiece(to - 8, B_PAWN);
+      movePiece(from, to, W_PAWN);
+      dp[dpCount++] = { to - 8, SQ_NONE, B_PAWN };
+      dp[dpCount++] = { from, to, W_PAWN };
     }
     else {
-
-      removePiece(to + 8, W_PAWN, acc);
-      movePiece(from, to, B_PAWN, acc);
+      removePiece(to + 8, W_PAWN);
+      movePiece(from, to, B_PAWN);
+      dp[dpCount++] = { to + 8, SQ_NONE, W_PAWN };
+      dp[dpCount++] = { from, to, B_PAWN };
     }
 
     break;
@@ -328,18 +334,22 @@ void Position::doMove(Move move, NNUE::Accumulator& acc) {
     const Square from = move_from(move);
     const Square to = move_to(move);
 
+    const Piece movedPc = board[from];
     const Piece capturedPc = board[to];
     const Piece promoteToPc = make_piece(us, promo_type(move));
 
     if (capturedPc != NO_PIECE) {
-      removePiece(to, capturedPc, acc);
+      removePiece(to, capturedPc);
+      dp[dpCount++] = { to, SQ_NONE, capturedPc };
 
       if (ptypeOf(capturedPc) == ROOK)
         newCastlingRights &= ROOK_SQR_TO_CR[to];
     }
 
-    removePiece(from, board[from], acc);
-    putPiece(to, promoteToPc, acc);
+    removePiece(from, movedPc);
+    putPiece(to, promoteToPc);
+    dp[dpCount++] = { from, SQ_NONE, movedPc };
+    dp[dpCount++] = { SQ_NONE, to, promoteToPc };
 
     break;
   }
@@ -683,6 +693,6 @@ void Position::updateAccumulator(NNUE::Accumulator& acc) const {
   Bitboard b0 = pieces();
   while (b0) {
     Square sq = popLsb(b0);
-    acc.activateFeature(sq, board[sq]);
+    acc.activateFeature(sq, board[sq], &acc);
   }
 }
