@@ -86,16 +86,16 @@ namespace NNUE {
       FeatureIndexTable[BLACK][pc][to], FeatureIndexTable[BLACK][pc][from]);
   }
 
-  void Accumulator::applyUpdates(Accumulator* input) {
+  void Accumulator::applyUpdates() {
     {
       DirtyPiece dp = dirtyPieces[0];
 
       if (dp.from == SQ_NONE)
-        activateFeature(dp.to, dp.pc, input);
+        activateFeature(dp.to, dp.pc, this-1);
       else if (dp.to == SQ_NONE)
-        deactivateFeature(dp.from, dp.pc, input);
+        deactivateFeature(dp.from, dp.pc, this-1);
       else
-        moveFeature(dp.from, dp.to, dp.pc, input);
+        moveFeature(dp.from, dp.to, dp.pc, this-1);
     }
 
     for (int i = 1; i < dirtyCount; i++) {

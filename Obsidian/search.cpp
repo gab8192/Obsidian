@@ -383,11 +383,8 @@ namespace Search {
     while (lastComputed->dirtyCount)
       --lastComputed;
 
-    while (lastComputed != &accumStack[accumStackHead]) {
-      NNUE::Accumulator* next = lastComputed + 1;
-      next->applyUpdates(lastComputed);
-      lastComputed = next;
-    }
+    while (lastComputed != &accumStack[accumStackHead])
+      (++lastComputed)->applyUpdates();
 
     return Eval::evaluate(pos, *lastComputed);
   }

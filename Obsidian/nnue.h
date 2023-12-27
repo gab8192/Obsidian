@@ -43,7 +43,7 @@ namespace NNUE {
 
     void moveFeature(Square from, Square to, Piece pc, Accumulator* input);
 
-    void applyUpdates(Accumulator* input);
+    void applyUpdates();
   };
 
   void init();
