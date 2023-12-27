@@ -522,7 +522,7 @@ namespace Search {
       ss->pvLength = ply;
 
     // Detect draw
-    if (alpha < DRAW && hasUpcomingRepetition(pos, ply)) {
+    if (alpha < DRAW && (ss-1)->playedMove && hasUpcomingRepetition(pos, ply)) {
       alpha = makeDrawScore();
       if (alpha >= beta)
         return alpha;
