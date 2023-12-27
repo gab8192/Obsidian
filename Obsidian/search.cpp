@@ -433,7 +433,7 @@ namespace Search {
     bool visitTTMove = (pos.checkers || !pos.isQuiet(ttMove));
 
     MovePicker movePicker(
-      true, pos,
+      QSEARCH, pos,
       visitTTMove ? ttMove : MOVE_NONE,
       MOVE_NONE, MOVE_NONE,
       mainHistory, captureHistory,
@@ -660,10 +660,10 @@ namespace Search {
         && !excludedMove
         && depth >= 5
         && std::abs(beta) < TB_WIN_IN_MAX_PLY
-        && !(ttDepth >= depth - 3 && ttScore < probcutBeta))
+        && !(ttHit && ttDepth >= depth - 3 && ttScore < probcutBeta))
     {
       MovePicker pcMovePicker(
-        true, pos,
+        PROBCUT, pos,
         pos.isQuiet(ttMove) ? MOVE_NONE : ttMove, MOVE_NONE, MOVE_NONE,
         mainHistory, captureHistory,
         ss);
@@ -711,7 +711,7 @@ namespace Search {
     }
 
     MovePicker movePicker(
-      false, pos,
+      PVS, pos,
       ttMove, ss->killerMove, counterMove,
       mainHistory, captureHistory,
       ss);

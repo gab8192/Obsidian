@@ -2,11 +2,11 @@
 #include "uci.h"
 
 MovePicker::MovePicker(
-  bool _isQsearch, Position& _pos,
+  SearchType _searchType, Position& _pos,
   Move _ttMove, Move _killerMove, Move _counterMove,
   MainHistory& _mainHist, CaptureHistory& _capHist,
   Search::SearchInfo* _ss) :
-  isQsearch(_isQsearch), pos(_pos),
+  searchType(_searchType), pos(_pos),
   ttMove(_ttMove),
   mainHist(_mainHist), capHist(_capHist), 
   ss(_ss),
@@ -74,6 +74,8 @@ void MovePicker::scoreQuiets() {
     i++;
   }
 }
+//                            PVS   QS  PC
+constexpr int seeMargin[] = { -50, -50, -1 };
 
 void MovePicker::scoreCaptures() {
   int i = 0;
@@ -99,7 +101,7 @@ void MovePicker::scoreCaptures() {
     if (mt == MT_PROMOTION)
       moveScore += promotionScores[promo_type(move)];
     else {
-      if (!pos.see_ge(move, Score(-50)))
+      if (!pos.see_ge(move, (Score) seeMargin[searchType]))
         moveScore -= 500000;
       moveScore += capHist[pieceTo(pos, move)][captured];
     }
@@ -136,8 +138,9 @@ Move MovePicker::nextMove(MpStage* outStage) {
         return move.move;
       }
     }
-
-    if (isQsearch && !pos.checkers)
+    
+    if (   (searchType == QSEARCH && !pos.checkers)
+         || searchType == PROBCUT)
       return MOVE_NONE;
 
     ++stage;
