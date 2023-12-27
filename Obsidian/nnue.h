@@ -29,6 +29,12 @@ namespace NNUE {
     alignas(Alignment) weight_t white[TransformedFeatureDimensions];
     alignas(Alignment) weight_t black[TransformedFeatureDimensions];
 
+    /*
+    * What updates need to be performed on this accumulator
+    */
+    int dirtyCount;
+    DirtyPiece dirtyPieces[4];
+
     void reset();
 
     void activateFeature(Square sq, Piece pc, Accumulator* input);
@@ -36,6 +42,8 @@ namespace NNUE {
     void deactivateFeature(Square sq, Piece pc, Accumulator* input);
 
     void moveFeature(Square from, Square to, Piece pc, Accumulator* input);
+
+    void applyUpdates(Accumulator* input);
   };
 
   void init();

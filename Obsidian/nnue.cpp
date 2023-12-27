@@ -86,6 +86,32 @@ namespace NNUE {
       FeatureIndexTable[BLACK][pc][to], FeatureIndexTable[BLACK][pc][from]);
   }
 
+  void Accumulator::applyUpdates(Accumulator* input) {
+    {
+      DirtyPiece dp = dirtyPieces[0];
+
+      if (dp.from == SQ_NONE)
+        activateFeature(dp.to, dp.pc, input);
+      else if (dp.to == SQ_NONE)
+        deactivateFeature(dp.from, dp.pc, input);
+      else
+        moveFeature(dp.from, dp.to, dp.pc, input);
+    }
+
+    for (int i = 1; i < dirtyCount; i++) {
+      DirtyPiece dp = dirtyPieces[i];
+
+      if (dp.from == SQ_NONE)
+        activateFeature(dp.to, dp.pc, this);
+      else if (dp.to == SQ_NONE)
+        deactivateFeature(dp.from, dp.pc, this);
+      else
+        moveFeature(dp.from, dp.to, dp.pc, this);
+    }
+
+    dirtyCount = 0;
+  }
+
   void init() {
 #ifdef _MSC_VER
     ifstream stream(EvalFile, ios::binary);

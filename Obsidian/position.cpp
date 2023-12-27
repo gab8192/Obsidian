@@ -695,4 +695,6 @@ void Position::updateAccumulator(NNUE::Accumulator& acc) const {
     Square sq = popLsb(b0);
     acc.activateFeature(sq, board[sq], &acc);
   }
+
+  acc.dirtyCount = 0;
 }
