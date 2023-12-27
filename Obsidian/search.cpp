@@ -884,7 +884,7 @@ namespace Search {
       if (bestScore >= beta)
         flag = TT::FLAG_LOWER;
       else
-        flag = (IsPV && bestMove) ? TT::FLAG_EXACT : TT::FLAG_UPPER;
+        flag = TT::FLAG_EXACT;
 
       ttEntry->store(pos.key, flag, depth, bestMove, bestScore, ss->staticEval, IsPV, ply);
     }
