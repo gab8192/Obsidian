@@ -25,42 +25,42 @@ namespace NNUE {
   } Content;
 
   template <int InputSize>
-  inline void addToAll(weight_t* input, int offset)
+  inline void addToAll(weight_t* output, weight_t* input, int offset)
   {
     offset /= WeightsPerVec;
 
     Vec* inputVec = (Vec*)input;
+    Vec* outputVec = (Vec*)output;
     Vec* weightsVec = (Vec*)Content.FeatureWeights;
 
-    for (int i = 0; i < InputSize / WeightsPerVec; ++i) {
-      inputVec[i] = addEpi16(inputVec[i], weightsVec[offset + i]);
-    }
+    for (int i = 0; i < InputSize / WeightsPerVec; ++i)
+      outputVec[i] = addEpi16(inputVec[i], weightsVec[offset + i]);
   }
 
   template <int InputSize>
-  inline void subtractFromAll(weight_t* input, int offset)
+  inline void subtractFromAll(weight_t* output, weight_t* input, int offset)
   {
     offset /= WeightsPerVec;
 
     Vec* inputVec = (Vec*)input;
+    Vec* outputVec = (Vec*)output;
     Vec* weightsVec = (Vec*)Content.FeatureWeights;
 
-    for (int i = 0; i < InputSize / WeightsPerVec; ++i) {
-      inputVec[i] = subEpi16(inputVec[i], weightsVec[offset + i]);
-    }
+    for (int i = 0; i < InputSize / WeightsPerVec; ++i)
+      outputVec[i] = subEpi16(inputVec[i], weightsVec[offset + i]);
   }
 
   template <int InputSize>
-  inline void addAndSubtractFromAll(weight_t* input, int addOff, int subtractOff) {
+  inline void addAndSubtractFromAll(weight_t* output, weight_t* input, int addOff, int subtractOff) {
     addOff /= WeightsPerVec;
     subtractOff /= WeightsPerVec;
 
     Vec* inputVec = (Vec*)input;
+    Vec* outputVec = (Vec*)output;
     Vec* weightsVec = (Vec*)Content.FeatureWeights;
 
-    for (int i = 0; i < InputSize / WeightsPerVec; ++i) {
-      inputVec[i] = subEpi16(addEpi16(inputVec[i], weightsVec[addOff + i]), weightsVec[subtractOff + i]);
-    }
+    for (int i = 0; i < InputSize / WeightsPerVec; ++i)
+      outputVec[i] = subEpi16(addEpi16(inputVec[i], weightsVec[addOff + i]), weightsVec[subtractOff + i]);
   }
 
 
@@ -69,23 +69,20 @@ namespace NNUE {
     memcpy(black, Content.FeatureBiases, sizeof(Content.FeatureBiases));
   }
 
-  void Accumulator::activateFeature(Square sq, Piece pc) {
-    addToAll<TransformedFeatureDimensions>(white, FeatureIndexTable[WHITE][pc][sq]);
-
-    addToAll<TransformedFeatureDimensions>(black, FeatureIndexTable[BLACK][pc][sq]);
+  void Accumulator::activateFeature(Square sq, Piece pc, Accumulator* input) {
+    addToAll<TransformedFeatureDimensions>(white, input->white, FeatureIndexTable[WHITE][pc][sq]);
+    addToAll<TransformedFeatureDimensions>(black, input->black, FeatureIndexTable[BLACK][pc][sq]);
   }
 
-  void Accumulator::deactivateFeature(Square sq, Piece pc) {
-    subtractFromAll<TransformedFeatureDimensions>(white, FeatureIndexTable[WHITE][pc][sq]);
-
-    subtractFromAll<TransformedFeatureDimensions>(black, FeatureIndexTable[BLACK][pc][sq]);
+  void Accumulator::deactivateFeature(Square sq, Piece pc, Accumulator* input) {
+    subtractFromAll<TransformedFeatureDimensions>(white, input->white, FeatureIndexTable[WHITE][pc][sq]);
+    subtractFromAll<TransformedFeatureDimensions>(black, input->black, FeatureIndexTable[BLACK][pc][sq]);
   }
 
-  void Accumulator::moveFeature(Square from, Square to, Piece pc) {
-    addAndSubtractFromAll<TransformedFeatureDimensions>(white,
+  void Accumulator::moveFeature(Square from, Square to, Piece pc, Accumulator* input) {
+    addAndSubtractFromAll<TransformedFeatureDimensions>(white, input->white,
       FeatureIndexTable[WHITE][pc][to], FeatureIndexTable[WHITE][pc][from]);
-
-    addAndSubtractFromAll<TransformedFeatureDimensions>(black,
+    addAndSubtractFromAll<TransformedFeatureDimensions>(black, input->black,
       FeatureIndexTable[BLACK][pc][to], FeatureIndexTable[BLACK][pc][from]);
   }
 

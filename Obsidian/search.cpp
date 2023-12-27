@@ -117,9 +117,11 @@ namespace Search {
       if (!pos.isLegal(move))
         continue;
 
+      int dirtyCount = 0;
+      DirtyPiece dirtyPieces[4];
+
       Position newPos = pos;
-      NNUE::Accumulator fakeAcc;
-      newPos.doMove(move, fakeAcc);
+      newPos.doMove(move, dirtyPieces, dirtyCount);
 
       int64_t thisNodes = perft<false>(newPos, depth - 1);
       if constexpr (root)
@@ -184,11 +186,36 @@ namespace Search {
     ss->playedMove = move;
     keyStack[keyStackHead++] = pos.key;
 
-    memcpy(&accumStack[accumStackHead + 1], &accumStack[accumStackHead], sizeof(NNUE::Accumulator));
-    accumStackHead++;
+    NNUE::Accumulator& oldAcc = accumStack[accumStackHead];
+    NNUE::Accumulator& newAcc = accumStack[++accumStackHead];
+
+    int dirtyCount = 0;
+    DirtyPiece dirtyPieces[4];
 
     ply++;
-    pos.doMove(move, accumStack[accumStackHead]);
+    pos.doMove(move, dirtyPieces, dirtyCount);
+
+    {
+      DirtyPiece dp = dirtyPieces[0];
+
+      if (dp.from == SQ_NONE)
+        newAcc.activateFeature(dp.to, dp.pc, &oldAcc);
+      else if (dp.to == SQ_NONE)
+        newAcc.deactivateFeature(dp.from, dp.pc, &oldAcc);
+      else
+        newAcc.moveFeature(dp.from, dp.to, dp.pc, &oldAcc);
+    }
+
+    for (int i = 1; i < dirtyCount; i++) {
+      DirtyPiece dp = dirtyPieces[i];
+
+      if (dp.from == SQ_NONE)
+        newAcc.activateFeature(dp.to, dp.pc, &newAcc);
+      else if (dp.to == SQ_NONE)
+        newAcc.deactivateFeature(dp.from, dp.pc, &newAcc);
+      else
+        newAcc.moveFeature(dp.from, dp.to, dp.pc, &newAcc);
+    }
   }
 
   void SearchThread::cancelMove() {
