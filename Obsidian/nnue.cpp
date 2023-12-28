@@ -141,7 +141,8 @@ namespace NNUE {
     const Vec reluClipMax = vecSet1Epi16(NetworkQA);
 
     Vec sum = vecSetZero();
-    Vec reg;
+    constexpr int numRegs = 4;
+    Vec regs[numRegs];
 
 #if defined(USE_AVX512)
 
@@ -162,19 +163,41 @@ namespace NNUE {
 
 #elif defined(USE_AVX2)
 
-    for (int i = 0; i < TransformedFeatureDimensions / WeightsPerVec; ++i) {
+    for (int i = 0; i < TransformedFeatureDimensions / WeightsPerVec; i += numRegs) {
 
       // Side to move
-      reg = _mm256_min_epi16(_mm256_max_epi16(stmAcc[i], reluClipMin), reluClipMax); // clip
-      reg = _mm256_mullo_epi16(reg, reg); // square
-      reg = _mm256_madd_epi16(reg, stmWeightsVec[i]); // multiply with output layer
-      sum = _mm256_add_epi32(sum, reg); // collect the result,
+      for (int j = 0; j < numRegs; j++)
+        regs[j] = _mm256_max_epi16(stmAcc[i + j], reluClipMin);
 
-      // Non side to move
-      reg = _mm256_min_epi16(_mm256_max_epi16(oppAcc[i], reluClipMin), reluClipMax);
-      reg = _mm256_mullo_epi16(reg, reg);
-      reg = _mm256_madd_epi16(reg, oppWeightsVec[i]);
-      sum = _mm256_add_epi32(sum, reg);
+      for (int j = 0; j < numRegs; j++)
+        regs[j] = _mm256_min_epi16(regs[j], reluClipMax);
+
+      for (int j = 0; j < numRegs; j++)
+        regs[j] = _mm256_mullo_epi16(regs[j], regs[j]);
+
+      for (int j = 0; j < numRegs; j++)
+        regs[j] = _mm256_madd_epi16(regs[j], stmWeightsVec[i+j]);
+
+      for (int j = 0; j < numRegs; j++)
+        sum = _mm256_add_epi32(sum, regs[j]);
+    }
+    for (int i = 0; i < TransformedFeatureDimensions / WeightsPerVec; i += numRegs) {
+
+      // Side to move
+      for (int j = 0; j < numRegs; j++)
+        regs[j] = _mm256_max_epi16(oppAcc[i + j], reluClipMin);
+
+      for (int j = 0; j < numRegs; j++)
+        regs[j] = _mm256_min_epi16(regs[j], reluClipMax);
+
+      for (int j = 0; j < numRegs; j++)
+        regs[j] = _mm256_mullo_epi16(regs[j], regs[j]);
+
+      for (int j = 0; j < numRegs; j++)
+        regs[j] = _mm256_madd_epi16(regs[j], oppWeightsVec[i + j]);
+
+      for (int j = 0; j < numRegs; j++)
+        sum = _mm256_add_epi32(sum, regs[j]);
     }
 
 #else
