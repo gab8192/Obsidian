@@ -31,13 +31,7 @@ inline Bitboard& operator|=(Bitboard& d1, Square d2) { return d1 = d1 | d2; }
 inline Bitboard operator^(Bitboard d1, Square d2) { return d1 ^ square_bb(d2); }
 inline Bitboard& operator^=(Bitboard& d1, Square d2) { return d1 = d1 ^ d2; }
 
-
 inline Bitboard operator|(Square d1, Square d2) { return square_bb(d1) | square_bb(d2); }
-
-
-constexpr Bitboard AllSquares = ~Bitboard(0);
-constexpr Bitboard DARK_SQUARES_BB = 0xAA55AA55AA55AA55ULL;
-constexpr Bitboard LIGHT_SQUARES_BB = ~DARK_SQUARES_BB;
 
 constexpr Bitboard Rank1BB = 0xffULL;
 constexpr Bitboard Rank2BB = Rank1BB << (8 * 1);
@@ -77,68 +71,17 @@ constexpr Bitboard RANKS_BB[FILE_NB] = {
     Rank7BB,
     Rank8BB };
 
-constexpr Bitboard ADJACENT_FILES_BB[FILE_NB] = {
-    FILE_BBB,
-    FILE_ABB | FILE_CBB,
-    FILE_BBB | FILE_DBB,
-    FILE_CBB | FILE_EBB,
-    FILE_DBB | FILE_FBB,
-    FILE_EBB | FILE_GBB,
-    FILE_FBB | FILE_HBB,
-    FILE_GBB };
-
-constexpr Bitboard CENTER_BB = (FILE_DBB | FILE_EBB) & (Rank4BB | Rank5BB);
-
-constexpr Bitboard CenterFiles = FILE_CBB | FILE_DBB | FILE_EBB | FILE_FBB;
-
-constexpr Bitboard QUEEN_SIDE_BB = FILE_ABB | FILE_BBB | FILE_CBB | FILE_DBB;
-constexpr Bitboard KING_SIDE_BB = FILE_EBB | FILE_FBB | FILE_GBB | FILE_HBB;
-
-constexpr Bitboard KingFlank[FILE_NB] = {
-    QUEEN_SIDE_BB ^ FILE_DBB, QUEEN_SIDE_BB, QUEEN_SIDE_BB,
-    CenterFiles, CenterFiles,
-    KING_SIDE_BB, KING_SIDE_BB, KING_SIDE_BB ^ FILE_EBB
-};
-
 constexpr bool more_than_one(Bitboard bb) {
   return bb & (bb - 1);
-}
-
-inline int edge_distance(File f) {
-  return std::min(f, File(FILE_H - f));
-}
-
-inline int edge_distance(Rank r) {
-  return std::min(r, Rank(RANK_8 - r));
-}
-
-inline int edge_distance(Square sqr) {
-  return std::min(edge_distance(file_of(sqr)), edge_distance(rank_of(sqr)));
-}
-
-inline Square flip_rank(Square s) { // Swap A1 <-> A8
-  return Square(int(s) ^ int(SQ_A8));
-}
-
-inline Square flip_file(Square s) { // Swap A1 <-> H1
-  return Square(int(s) ^ int(SQ_H1));
 }
 
 inline Bitboard file_bb(Square sqr) {
   return FILES_BB[sqr & 0x7];
 }
 
-inline Bitboard file_bb(File file) {
-  return FILE_ABB << file;
-}
-
 inline Bitboard rank_bb(Square sqr) {
   return RANKS_BB[sqr >> 3];
 }
-
-typedef int (*SquareConsumer)(Square sq);
-
-void printPerSquareInfo(SquareConsumer consumer);
 
 void printBitboard(Bitboard bitboard);
 
@@ -158,9 +101,6 @@ extern Bitboard knight_attacks[SQUARE_NB];
 extern Bitboard pawn_attacks[COLOR_NB][SQUARE_NB];
 
 
-extern int SquareDistance[SQUARE_NB][SQUARE_NB];
-extern int FileDistance[SQUARE_NB][SQUARE_NB];
-extern int RankDistance[SQUARE_NB][SQUARE_NB];
 extern Bitboard BetweenBB[SQUARE_NB][SQUARE_NB];
 extern Bitboard LineBB[SQUARE_NB][SQUARE_NB];
 
@@ -211,31 +151,4 @@ inline Bitboard get_piece_attacks(PieceType pt, Square s, Bitboard occupied) {
   return 0;
 }
 
-template<Color PawnColor>
-Bitboard get_pawns_bb_attacks(Bitboard bb);
-
 void bitboardsInit();
-
-inline Bitboard shiftEast(Bitboard bb) {
-  return (bb & ~FILE_HBB) << 1;
-}
-
-inline Bitboard shiftWest(Bitboard bb) {
-  return (bb & ~FILE_ABB) >> 1;
-}
-
-inline Bitboard adjacent_files_bb(Square s) {
-  return ADJACENT_FILES_BB[file_of(s)];
-}
-
-// This function is Copied from stockfish bitboard.h
-inline Bitboard forward_ranks_bb(Color c, Square s) {
-  return c == WHITE ? (~Rank1BB) << (8 * relative_rank(WHITE, s))
-    : (~Rank8BB) >> (8 * relative_rank(BLACK, s));
-}
-
-// All the squares in front of a pawn (including adjacent squares)
-// Used in trivial endgames
-inline Bitboard passed_pawn_span(Color c, Square s) {
-  return forward_ranks_bb(c, s) & (file_bb(s) | adjacent_files_bb(s));
-}

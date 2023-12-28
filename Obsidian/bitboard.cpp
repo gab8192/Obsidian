@@ -19,6 +19,7 @@ Bitboard BishopMasks[SQUARE_NB];
 Bitboard* BishopAttacks[SQUARE_NB];
 
 Bitboard king_attacks[SQUARE_NB];
+
 Bitboard knight_attacks[SQUARE_NB];
 
 Bitboard BishopTable[5248];
@@ -27,39 +28,9 @@ Bitboard RookTable[102400];
 
 // other stuff
 
-int SquareDistance[SQUARE_NB][SQUARE_NB];
-int FileDistance[SQUARE_NB][SQUARE_NB];
-int RankDistance[SQUARE_NB][SQUARE_NB];
 Bitboard BetweenBB[SQUARE_NB][SQUARE_NB];
 Bitboard LineBB[SQUARE_NB][SQUARE_NB];
 
-
-// print the board, where each square is replaced with a function of the square
-void printPerSquareInfo(SquareConsumer consumer)
-{
-  cout << endl;
-
-  // loop over board ranks
-  for (Rank y = RANK_8; y >= RANK_1; --y)
-  {
-    // print rank
-    cout << "  " << (y + 1) << " \n";
-
-    // loop over board files
-    for (File x = FILE_A; x < FILE_NB; ++x)
-    {
-      // init board square
-      Square square = make_square(x, y);
-
-      cout << " " << consumer(square);
-    }
-
-    cout << endl;
-  }
-
-  // print files
-  cout << "\n     a b c d e f g h" << endl;
-}
 
 // print bitboard
 void printBitboard(Bitboard bitboard)
@@ -148,23 +119,6 @@ Bitboard mask_pawn_attacks(Color pawnColor, Square sqr) {
   }
   return attacks;
 }
-
-template<Color PawnColor>
-Bitboard get_pawns_bb_attacks(Bitboard bb) {
-  if constexpr (PawnColor == WHITE) {
-    Bitboard east = (bb & ~FILE_HBB) << 9;
-    Bitboard west = (bb & ~FILE_ABB) << 7;
-    return east | west;
-  }
-  else {
-    Bitboard east = (bb & ~FILE_HBB) >> 7;
-    Bitboard west = (bb & ~FILE_ABB) >> 9;
-    return east | west;
-  }
-}
-
-template Bitboard get_pawns_bb_attacks<WHITE>(Bitboard bb);
-template Bitboard get_pawns_bb_attacks<BLACK>(Bitboard bb);
 
 int calcIncX(int direction) {
   switch (direction) {
@@ -273,21 +227,10 @@ void bitboardsInit() {
 
   }
 
-  for (Square s1 = SQ_A1; s1 < SQUARE_NB; ++s1) {
-    for (Square s2 = SQ_A1; s2 < SQUARE_NB; ++s2) {
-      FileDistance[s1][s2] = abs(file_of(s1) - file_of(s2));
-      RankDistance[s1][s2] = abs(rank_of(s1) - rank_of(s2));
-      SquareDistance[s1][s2] = std::max(FileDistance[s1][s2], RankDistance[s1][s2]);
-    }
-  }
-
-
   // Init sliding attacks
 
   init_bmi2(RookTable, RookAttacks, RookMasks, RookDirs, bmi2_index_rook);
   init_bmi2(BishopTable, BishopAttacks, BishopMasks, BishopDirs, bmi2_index_bishop);
-
-
 
   memset(LineBB, 0, sizeof(LineBB));
   memset(BetweenBB, 0, sizeof(BetweenBB));
