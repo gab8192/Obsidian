@@ -16,15 +16,16 @@ namespace TT {
 #pragma pack(1)
   struct Entry {
 
-    inline void store(Key _key, Flag _flag, int _depth, Move _move, Score _value, Score _eval, bool isPV, int ply) {
-      if (_value >= TB_WIN_IN_MAX_PLY)
-        _value += ply;
-      else if (value <= TB_LOSS_IN_MAX_PLY)
-        _value -= ply;
+    inline void store(Key _key, Flag _flag, int _depth, Move _move, Score _score, Score _eval, bool isPV, int ply) {
 
-      if (!matches(_key)
-        || _depth + 4 + 2*isPV >= this->depth
-        || _flag == FLAG_EXACT) {
+      if (   _flag == FLAG_EXACT
+          || !matches(_key)
+          || _depth + 4 + 2*isPV >= this->depth) {
+
+        if (_score >= TB_WIN_IN_MAX_PLY)
+          _score += ply;
+        else if (score <= TB_LOSS_IN_MAX_PLY)
+          _score -= ply;
 
         if (!matches(_key) || _move)
           this->move = _move;
@@ -32,9 +33,10 @@ namespace TT {
         this->key64 = _key;
         this->flag = _flag;
         this->depth = _depth;
-        this->value = _value;
+        this->score = _score;
         this->staticEval = _eval;
       }
+
     }
 
     inline bool matches(Key key) const {
@@ -55,15 +57,15 @@ namespace TT {
       return Move(move);
     }
     inline Score getScore(int ply) const {
-      if (value == SCORE_NONE)
+      if (score == SCORE_NONE)
         return SCORE_NONE;
 
-      if (value >= TB_WIN_IN_MAX_PLY)
-        return Score( value - ply );
-      if (value <= TB_LOSS_IN_MAX_PLY)
-        return Score(value + ply);
+      if (score >= TB_WIN_IN_MAX_PLY)
+        return Score( score - ply );
+      if (score <= TB_LOSS_IN_MAX_PLY)
+        return Score(score + ply);
 
-      return Score(value);
+      return Score(score);
     }
 
     inline void clear() {
@@ -71,7 +73,7 @@ namespace TT {
       depth = -1;
       flag = NO_FLAG;
       move = MOVE_NONE;
-      value = SCORE_NONE;
+      score = SCORE_NONE;
       staticEval = SCORE_NONE;
     }
 
@@ -81,7 +83,7 @@ namespace TT {
     Flag flag;
     uint8_t depth;
     uint16_t move;
-    int16_t value;
+    int16_t score;
   };
 #pragma pack()
 
