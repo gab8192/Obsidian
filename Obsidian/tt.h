@@ -20,7 +20,7 @@ namespace TT {
 
       if (   _flag == FLAG_EXACT
           || !matches(_key)
-          || _depth + 4 + 2*isPV >= this->depth) {
+          || (_depth + isPV)*2 >= this->depth) {
 
         if (_score >= TB_WIN_IN_MAX_PLY)
           _score += ply;
