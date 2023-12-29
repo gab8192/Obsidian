@@ -24,10 +24,7 @@ bool CaseInsensitiveLess::operator() (const string& s1, const string& s2) const 
 
 
 void init(OptionsMap& o) {
-
-  constexpr int MaxHashMB = 33554432;
-
-  o["Hash"]                  << Option(64, 1, MaxHashMB, hashChanged);
+  o["Hash"]                  << Option(64, 2, 65536, hashChanged);
   o["Clear Hash"]            << Option(clearHashClicked);
   o["Threads"]               << Option(1, 1, 1024, threadsChanged);
   o["Move Overhead"]         << Option(20, 0, 1000);

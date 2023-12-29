@@ -2,9 +2,15 @@
 
 #include <iostream>
 
+#if defined(__linux__)
+#include <sys/mman.h>
+#endif
+
 using namespace std;
 
 namespace TT {
+
+  constexpr size_t Mega = 1024 * 1024;
 
   Entry* entries = nullptr;
   uint64_t entryCount;
@@ -15,13 +21,21 @@ namespace TT {
   }
 
   void resize(size_t megaBytes) {
-    size_t bytes = megaBytes * 1024ULL * 1024ULL;
-    entryCount = bytes / sizeof(Entry);
 
-    if (entries != nullptr)
-      delete[] entries;
+    if (entries)
+      free(entries);
 
-    entries = new Entry[entryCount];
+    size_t size = megaBytes * Mega;
+    entryCount = size / sizeof(Entry);
+
+#if defined(__linux__)
+    entries = (Entry*) aligned_alloc(2 * Mega, size);
+    madvise(entries, size, MADV_HUGEPAGE);
+#else
+    entries = (Entry*) malloc(size);
+    exit(-1);
+#endif 
+
     clear();
   }
 
@@ -31,11 +45,7 @@ namespace TT {
   }
 
   void prefetch(Key key) {
-#if defined(_MSC_VER)
-    _mm_prefetch((char*)&entries[index(key)], _MM_HINT_T0);
-#else
     __builtin_prefetch(&entries[index(key)]);
-#endif
   }
 
   Entry* probe(Key key, bool& hit) {
