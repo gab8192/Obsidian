@@ -25,7 +25,7 @@ namespace NNUE {
   } Content;
 
   template <int InputSize>
-  inline void addToAll(weight_t* output, weight_t* input, int offset)
+  void addToAll(weight_t* output, weight_t* input, int offset)
   {
     offset /= WeightsPerVec;
 
@@ -38,7 +38,7 @@ namespace NNUE {
   }
 
   template <int InputSize>
-  inline void subtractFromAll(weight_t* output, weight_t* input, int offset)
+  void subtractFromAll(weight_t* output, weight_t* input, int offset)
   {
     offset /= WeightsPerVec;
 
@@ -51,7 +51,7 @@ namespace NNUE {
   }
 
   template <int InputSize>
-  inline void addAndSubtractFromAll(weight_t* output, weight_t* input, int addOff, int subtractOff) {
+  void addAndSubtractFromAll(weight_t* output, weight_t* input, int addOff, int subtractOff) {
     addOff /= WeightsPerVec;
     subtractOff /= WeightsPerVec;
 
@@ -59,8 +59,17 @@ namespace NNUE {
     Vec* outputVec = (Vec*)output;
     Vec* weightsVec = (Vec*)Content.FeatureWeights;
 
-    for (int i = 0; i < InputSize / WeightsPerVec; ++i)
-      outputVec[i] = subEpi16(addEpi16(inputVec[i], weightsVec[addOff + i]), weightsVec[subtractOff + i]);
+    constexpr int numRegs = 16;
+    Vec regs[numRegs];
+
+    for (int i = 0; i < InputSize / WeightsPerVec; i += numRegs) {
+
+      for (int j = 0; j < numRegs; j++)
+        regs[j] = addEpi16(inputVec[i + j], weightsVec[addOff + i + j]);
+
+      for (int j = 0; j < numRegs; j++)
+        outputVec[i+j] = subEpi16(regs[j], weightsVec[subtractOff + i + j]);
+    }
   }
 
 
