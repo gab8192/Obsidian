@@ -177,10 +177,6 @@ namespace Search {
   void SearchThread::playMove(Position& pos, Move move, SearchInfo* ss) {
     nodesSearched++;
 
-    // Prefetch the TT entry
-    if (move_type(move) == MT_NORMAL)
-      TT::prefetch(pos.keyAfter(move));
-
     bool isCap = pos.board[move_to(move)] != NO_PIECE;
     ss->mContHistory = &contHistory[isCap][pieceTo(pos, move)];
     ss->playedMove = move;
@@ -194,6 +190,8 @@ namespace Search {
 
     ply++;
     pos.doMove(move, dirtyPieces, dirtyCount);
+
+    TT::prefetch(pos.key);
 
     {
       DirtyPiece dp = dirtyPieces[0];
