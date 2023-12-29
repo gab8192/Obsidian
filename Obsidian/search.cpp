@@ -817,10 +817,8 @@ namespace Search {
             R -= std::clamp(getQuietHistory(pos, move, ss) / LmrHistoryDiv, -2, 2);
         }
         else {
-          R = 0;
+          R = 1;
 
-          R -= std::clamp(getCapHistory(pos, move) / 8192, -1, 1);
-          
           R += (moveStage == BAD_CAPTURES);
         }
 
