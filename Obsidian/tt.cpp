@@ -10,8 +10,7 @@ namespace TT {
   uint64_t entryCount;
 
   void clear() {
-    for (uint64_t i = 0; i < entryCount; i++)
-      entries[i].clear();
+    memset(entries, 0, sizeof(Entry)*entryCount);
   }
 
   void resize(size_t megaBytes) {

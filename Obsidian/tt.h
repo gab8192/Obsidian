@@ -68,15 +68,6 @@ namespace TT {
       return Score(score);
     }
 
-    inline void clear() {
-      key32 = 0xcafe;
-      depth = -1;
-      flag = NO_FLAG;
-      move = MOVE_NONE;
-      score = SCORE_NONE;
-      staticEval = SCORE_NONE;
-    }
-
   private:
     uint32_t key32;
     int16_t staticEval;
