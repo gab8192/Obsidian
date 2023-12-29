@@ -236,12 +236,17 @@ namespace Search {
     0, 0, 400000, -100001, -100000, 410000
   };
 
-  int SearchThread::getHistoryScore(Position& pos, Move move, SearchInfo* ss) {
+  int SearchThread::getQuietHistory(Position& pos, Move move, SearchInfo* ss) {
     int chIndex = pieceTo(pos, move);
     return    mainHistory[pos.sideToMove][move_from_to(move)]
             + (ss - 1)->contHistory()[chIndex]
             + (ss - 2)->contHistory()[chIndex]
             + (ss - 4)->contHistory()[chIndex];
+  }
+
+  int SearchThread::getCapHistory(Position& pos, Move move) {
+    PieceType captured = ptypeOf(pos.board[move_to(move)]);
+    return captureHistory[pieceTo(pos, move)][captured];
   }
 
   void addToContHistory(Position& pos, int bonus, Move move, SearchInfo* ss) {
@@ -809,10 +814,12 @@ namespace Search {
             R -= 2;
           // Reduce or extend depending on history of this quiet move (~12 Elo)
           else 
-            R -= std::clamp(getHistoryScore(pos, move, ss) / LmrHistoryDiv, -2, 2);
+            R -= std::clamp(getQuietHistory(pos, move, ss) / LmrHistoryDiv, -2, 2);
         }
         else {
           R = 0;
+
+          R -= std::clamp(getCapHistory(pos, move) / 8192, -1, 1);
           
           R += (moveStage == BAD_CAPTURES);
         }
