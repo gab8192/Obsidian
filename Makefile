@@ -4,7 +4,7 @@ else
 	EXE := Obsidian.elf
 endif
 
-FILES = Obsidian/*.cpp Obsidian/fathom/*.cpp
+FILES = Obsidian/*.cpp Obsidian/fathom/tbprobe.c
 
 OPTIMIZE = -O3 -fno-stack-protector -fno-math-errno -funroll-loops -fno-exceptions
 

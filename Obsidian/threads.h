@@ -20,6 +20,8 @@ namespace Threads {
 
   uint64_t totalNodes();
 
+  uint64_t totalTbHits();
+
   void waitForSearch();
 
   void startSearch();

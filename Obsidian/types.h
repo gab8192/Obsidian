@@ -12,9 +12,9 @@ using namespace std;
 
 const string engineVersion = "dev-9.16";
 
-
 using Key = uint64_t;
 using Bitboard = uint64_t;
+using TbResult = uint32_t;
 
 const string piecesChar = " PNBRQK  pnbrqk";
 
@@ -42,6 +42,7 @@ enum Score : int {
 
   TB_WIN_IN_MAX_PLY = CHECKMATE - 2 * MAX_PLY,
   TB_LOSS_IN_MAX_PLY = -TB_WIN_IN_MAX_PLY,
+  
   CHECKMATE_IN_MAX_PLY = CHECKMATE - MAX_PLY,
   CHECKMATED_IN_MAX_PLY = -CHECKMATE_IN_MAX_PLY
 

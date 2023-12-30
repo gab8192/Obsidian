@@ -23,6 +23,13 @@ namespace Threads {
     return result;
   }
 
+  uint64_t totalTbHits() {
+    uint64_t result = 0;
+    for (int i = 0; i < searchThreads.size(); i++)
+      result += searchThreads[i]->tbHits;
+    return result;
+  }
+
   void waitForSearch() {
     while (searchState != IDLE)
       sleep(1);

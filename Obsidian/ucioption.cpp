@@ -1,4 +1,5 @@
 #include "uci.h"
+#include "fathom/tbprobe.h"
 #include "threads.h"
 #include "tt.h"
 
@@ -12,9 +13,27 @@ UCI::OptionsMap Options;
 
 namespace UCI {
 
-void clearHashClicked(const Option&)   { TT::clear(); }
-void      hashChanged(const Option& o) { TT::resize(size_t(o)); }
-void   threadsChanged(const Option& o) { Threads::setThreadCount(int(o)); }
+void clearHashClicked(const Option&)   {
+   TT::clear(); 
+}
+
+void hashChanged(const Option& o) {
+   TT::resize(size_t(o)); 
+}
+
+void threadsChanged(const Option& o) { 
+  Threads::setThreadCount(int(o)); 
+}
+
+void syzygyPathChanged(const Option& o) {
+  std::string str = o;
+  tb_init(str.c_str());
+  if (TB_LARGEST)
+    std::cout << "info string Syzygy tablebases loaded. Pieces: " << TB_LARGEST << std::endl;
+  else
+    std::cout << "info string Syzygy tablebases failed to load" << std::endl;
+}
+
 
 bool CaseInsensitiveLess::operator() (const string& s1, const string& s2) const {
 
@@ -31,6 +50,7 @@ void init(OptionsMap& o) {
   o["Clear Hash"]            << Option(clearHashClicked);
   o["Threads"]               << Option(1, 1, 1024, threadsChanged);
   o["Move Overhead"]         << Option(20, 0, 1000);
+  o["SyzygyPath"]            << Option("", syzygyPathChanged);
 }
 
 

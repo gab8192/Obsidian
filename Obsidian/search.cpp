@@ -2,6 +2,7 @@
 #include "cuckoo.h"
 #include "evaluate.h"
 #include "movepick.h"
+#include "fathom/tbprobe.h"
 #include "timeman.h"
 #include "threads.h"
 #include "tt.h"
@@ -528,6 +529,20 @@ namespace Search {
     ss->pvLength = (ss + 1)->pvLength;
   }
 
+  TbResult probeTB(Position& pos) {
+    if (BitCount(pos.pieces()) > TB_LARGEST)
+        return TB_RESULT_FAILED;
+
+    const Square epSquare = pos.epSquare == SQ_NONE ? SQ_A1 : pos.epSquare;
+
+    return tb_probe_wdl(
+      pos.pieces(WHITE), pos.pieces(BLACK),
+      pos.pieces(KING), pos.pieces(QUEEN), pos.pieces(ROOK),
+      pos.pieces(BISHOP), pos.pieces(KNIGHT), pos.pieces(PAWN),
+      pos.halfMoveClock, pos.castlingRights, epSquare,
+      pos.sideToMove == WHITE);
+  }
+
   template<bool IsPV>
   Score SearchThread::negaMax(Position& pos, Score alpha, Score beta, int depth, bool cutNode, SearchInfo* ss) {
 
@@ -595,6 +610,7 @@ namespace Search {
     Score eval;
     Move bestMove = MOVE_NONE;
     Score bestScore = -SCORE_INFINITE;
+    Score maxScore  =  SCORE_INFINITE; 
 
     // In non PV nodes, if tt depth and bound allow it, return ttScore
     if ( !IsPV
@@ -603,6 +619,43 @@ namespace Search {
     {
       if (ttFlag & flagForTT(ttScore >= beta))
         return ttScore;
+    }
+
+    // Probe tablebases
+    TbResult tbResult = excludedMove ? TB_RESULT_FAILED : probeTB(pos);
+
+    if (tbResult != TB_RESULT_FAILED) {
+
+      tbHits++;
+      Score tbScore;
+      TT::Flag tbBound;
+
+      if (tbResult == TB_LOSS) {
+        tbScore = CHECKMATED_IN_MAX_PLY + ply;
+        tbBound = TT::FLAG_UPPER;
+      }
+      else if (tbResult == TB_WIN) {
+        tbScore = CHECKMATE_IN_MAX_PLY - ply;
+        tbBound = TT::FLAG_LOWER;
+      }
+      else {
+        tbScore = DRAW;
+        tbBound = TT::FLAG_EXACT;
+      }
+
+      if ((tbBound == TT::FLAG_EXACT) || (tbBound == TT::FLAG_LOWER ? tbScore >= beta : tbScore <= alpha)) {
+        ttEntry->store(pos.key, tbBound, depth, MOVE_NONE, tbScore, SCORE_NONE, true, ply);
+        return tbScore;
+      }
+
+      if (IsPV) {
+          if (tbBound == TT::FLAG_LOWER) {
+              bestScore = tbScore;
+              alpha = std::max(alpha, bestScore);
+          } else {
+              maxScore = tbScore;
+          }
+      }
     }
 
     (ss + 1)->killerMove = MOVE_NONE;
@@ -903,6 +956,8 @@ namespace Search {
       }
     }
 
+    bestScore = std::min(bestScore, maxScore);
+
     // Store to TT
     if (!excludedMove) {
       TT::Flag flag;
@@ -1162,11 +1217,11 @@ namespace Search {
     if (Threads::searchSettings.hasTimeLimit())
       optimumTime = TimeMan::calcOptimumTime(Threads::searchSettings, rootPos.sideToMove);
 
-    int searchStability = 0;
-
     ply = 0;
 
     nodesSearched = 0;
+
+    tbHits = 0;
 
     rootColor = rootPos.sideToMove;
 
@@ -1185,6 +1240,8 @@ namespace Search {
 
       searchStack[i].doubleExt = 0;
     }
+
+    int searchStability = 0;
 
     SearchInfo* ss = &searchStack[SsOffset];
 
@@ -1285,6 +1342,7 @@ namespace Search {
           << " score " << UCI::score(score)
           << " nodes " << Threads::totalNodes()
           << " nps " << (Threads::totalNodes() * 1000ULL) / std::max(elapsedStrict, 1L)
+          << " tbhits " << Threads::totalTbHits()
           << " time " << elapsed
           << " pv " << getPvString(ss);
         cout << infoStr.str() << endl;

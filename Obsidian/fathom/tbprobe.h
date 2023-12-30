@@ -24,7 +24,7 @@
 #ifndef TBPROBE_H
 #define TBPROBE_H
 
-#include <tbconfig.h>
+#include "tbconfig.h"
 
 #ifdef __cplusplus
 extern "C"
