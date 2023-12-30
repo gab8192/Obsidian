@@ -85,6 +85,7 @@ namespace Search {
     memset(captureHistory, 0, sizeof(captureHistory));
     memset(counterMoveHistory, 0, sizeof(counterMoveHistory));
     memset(contHistory, 0, sizeof(contHistory));
+    memset(evalCorrHistories, 0, sizeof(evalCorrHistories));
   }
 
   SearchThread::SearchThread() :
@@ -440,9 +441,13 @@ namespace Search {
     }
     else {
       if (ttStaticEval != SCORE_NONE)
-        bestScore = ss->staticEval = ttStaticEval;
+        ss->staticEval = ttStaticEval;
       else
-        bestScore = ss->staticEval = Eval::evaluate(pos, accumStack[accumStackHead]);
+        ss->staticEval = Eval::evaluate(pos, accumStack[accumStackHead]);
+
+      ss->staticEval += evalCorrHistories[pos.sideToMove].correctionFor(pos.pawnHash());
+      
+      bestScore = ss->staticEval;
 
       // When tt bound allows it, use ttScore as a better standing pat
       if (ttFlag & flagForTT(ttScore > bestScore))
@@ -509,6 +514,8 @@ namespace Search {
 
     if (pos.checkers && !foundLegalMoves)
       return Score(ply - CHECKMATE);
+
+
 
     ttEntry->store(pos.key,
       bestScore >= beta ? TT::FLAG_LOWER : TT::FLAG_UPPER,
@@ -676,9 +683,13 @@ namespace Search {
     }
     else {
       if (ttStaticEval != SCORE_NONE)
-        ss->staticEval = eval = ttStaticEval;
+        ss->staticEval = ttStaticEval;
       else
-        ss->staticEval = eval = Eval::evaluate(pos, accumStack[accumStackHead]);
+        ss->staticEval = Eval::evaluate(pos, accumStack[accumStackHead]);
+
+      ss->staticEval += evalCorrHistories[pos.sideToMove].correctionFor(pos.pawnHash());
+
+      eval = ss->staticEval;
 
       // When tt bound allows it, use ttScore as a better evaluation
       if (ttFlag & flagForTT(ttScore > eval))
@@ -958,16 +969,20 @@ namespace Search {
 
     bestScore = std::min(bestScore, maxScore);
 
-    // Store to TT
-    if (!excludedMove) {
-      TT::Flag flag;
+    TT::Flag flag;
       if (bestScore >= beta)
         flag = TT::FLAG_LOWER;
       else
         flag = (IsPV && bestMove) ? TT::FLAG_EXACT : TT::FLAG_UPPER;
 
-      ttEntry->store(pos.key, flag, depth, bestMove, bestScore, ss->staticEval, IsPV, ply);
+    if (pos.isQuiet(bestMove) && !pos.checkers) {
+      Score delta = ss->staticEval - bestScore;
+      evalCorrHistories[pos.sideToMove].update(pos.pawnHash(), flag, delta);
     }
+
+    // Store to TT
+    if (!excludedMove)
+      ttEntry->store(pos.key, flag, depth, bestMove, bestScore, ss->staticEval, IsPV, ply);
 
     return bestScore;
   }

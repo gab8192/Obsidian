@@ -108,6 +108,7 @@ namespace Search {
     CaptureHistory captureHistory;
     ContinuationHistory contHistory;
     CounterMoveHistory counterMoveHistory;
+    EvalCorrectionHistory evalCorrHistories[COLOR_NB];
 
     bool usedMostOfTime();
 

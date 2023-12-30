@@ -69,6 +69,16 @@ struct alignas(32) Position {
     return BLACK_CASTLING & castlingRights;
   }
 
+  inline Key pawnHash() const {
+    Key result = 0;
+    Bitboard iter = pieces(PAWN);
+    while (iter) {
+      Square sq = popLsb(iter);
+      result ^= ZobristPsq[board[sq]][sq];
+    }
+    return result;
+  }
+
   inline bool hasNonPawns(Color c) const {
     return pieces(c) & ~pieces(PAWN, KING);
   }
