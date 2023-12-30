@@ -72,7 +72,9 @@ namespace Search {
 
     volatile bool stopThread;
     std::thread thread;
+
     uint64_t nodesSearched;
+    uint64_t tbHits;
 
     SearchThread();
 
