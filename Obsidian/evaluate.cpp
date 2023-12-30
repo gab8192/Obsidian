@@ -14,7 +14,7 @@ namespace Eval {
 
     if (blockedPawns >= 4) {
       int div = blockedPawns*blockedPawns;
-      score = Score(score * 12 / div);
+      score = Score(score * 14 / div);
     }
 
     // Scale down as 50 move rule approaches
