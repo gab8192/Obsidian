@@ -10,6 +10,13 @@ namespace Eval {
 
     Score score = NNUE::evaluate(accumulator, pos.sideToMove);
 
+    int blockedPawns = BitCount((pos.pieces(WHITE, PAWN) << 8) & pos.pieces(BLACK, PAWN));
+
+    if (blockedPawns >= 4) {
+      int div = blockedPawns*blockedPawns;
+      score = Score(score * 12 / div);
+    }
+
     // Scale down as 50 move rule approaches
     score = Score(score * (200 - pos.halfMoveClock) / 200);
 
