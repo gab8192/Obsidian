@@ -22,29 +22,33 @@ namespace Search {
   DEFINE_PARAM(LmrBase, 21, -75, 125);
   DEFINE_PARAM(LmrDiv, 224, 150, 300);
 
-  DEFINE_PARAM(StatBonusQuad, 3, 0, 16);
+  DEFINE_PARAM(StatBonusQuad, 3, 0, 20);
   DEFINE_PARAM(StatBonusLinear, 112, 16, 256);
   DEFINE_PARAM(StatBonusMax, 1213, 800, 2400);
   DEFINE_PARAM(StatBonusBoostAt, 130, 50, 300);
 
-  DEFINE_PARAM(RazoringDepthMul, 406, 400, 800);
+  DEFINE_PARAM(RazoringDepthMul, 406, 200, 600);
 
+  DEFINE_PARAM(RfpMaxDepth, 8, 0, 40);
   DEFINE_PARAM(RfpDepthMul, 122, 60, 180);
 
-  DEFINE_PARAM(NmpBase, 4, 3, 5);
-  DEFINE_PARAM(NmpDepthDiv, 3, 3, 5);
+  DEFINE_PARAM(NmpBase, 4, 0, 20);
+  DEFINE_PARAM(NmpDepthDiv, 3, 1, 21);
   DEFINE_PARAM(NmpEvalDiv, 200, 100, 400);
-  DEFINE_PARAM(NmpEvalDivMin, 3, 2, 6);
+  DEFINE_PARAM(NmpEvalDivMin, 3, 0, 20);
 
   DEFINE_PARAM(PvLmpBase,    7, 0, 20);
   DEFINE_PARAM(NonPvLmpBase, 3, 0, 20);
 
-  DEFINE_PARAM(PvsQuietSeeMargin, -87, -300, 0);
-  DEFINE_PARAM(PvsCapSeeMargin, -123, -300, 0);
+  DEFINE_PARAM(PvsQuietSeeMargin, -87, -400, 0);
+  DEFINE_PARAM(PvsCapSeeMargin, -123, -400, 0);
 
   DEFINE_PARAM(FpBase, 177, 50, 350);
   DEFINE_PARAM(FpMaxDepth, 8, 0, 30);
   DEFINE_PARAM(FpDepthMul, 117, 50, 350);
+
+  DEFINE_PARAM(DoubleExtMargin, 17, 0, 40);
+  DEFINE_PARAM(DoubleExtMax, 5, 0, 40);
 
   DEFINE_PARAM(LmrHistoryDiv, 9828, 4000, 16000);
 
@@ -649,12 +653,12 @@ namespace Search {
       }
 
       if (IsPV) {
-          if (tbBound == TT::FLAG_LOWER) {
-              bestScore = tbScore;
-              alpha = std::max(alpha, bestScore);
-          } else {
-              maxScore = tbScore;
-          }
+        if (tbBound == TT::FLAG_LOWER) {
+          bestScore = tbScore;
+          alpha = std::max(alpha, bestScore);
+        } else {
+          maxScore = tbScore;
+        }
       }
     }
 
@@ -703,7 +707,7 @@ namespace Search {
     // Reverse futility pruning. When evaluation is far above beta, the opponent is unlikely
     // to catch up, thus cut off
     if ( !IsPV
-      && depth < 9
+      && depth <= RfpMaxDepth
       && eval < TB_WIN_IN_MAX_PLY
       && eval - RfpDepthMul * (depth - improving) >= beta)
       return eval;
@@ -820,7 +824,10 @@ namespace Search {
         if (seScore < singularBeta) {
           extension = 1;
           // Extend even more if s. value is smaller than s. beta by some margin
-          if (!IsPV && ss->doubleExt <= 5 && seScore < singularBeta - 17) {
+          if (   !IsPV 
+              && ss->doubleExt <= DoubleExtMax 
+              && seScore < singularBeta - DoubleExtMargin)
+          {
             extension = 2;
             ss->doubleExt = (ss - 1)->doubleExt + 1;
           }
