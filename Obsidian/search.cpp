@@ -20,7 +20,7 @@
 namespace Search {
 
   DEFINE_PARAM(LmrBase, 21, -75, 125);
-  DEFINE_PARAM(LmrDiv, 224, 150, 300);
+  DEFINE_PARAM(LmrDiv, 224, 100, 300);
 
   DEFINE_PARAM(StatBonusQuad, 3, 0, 20);
   DEFINE_PARAM(StatBonusLinear, 112, 16, 256);
@@ -52,9 +52,9 @@ namespace Search {
 
   DEFINE_PARAM(LmrHistoryDiv, 9828, 4000, 16000);
 
-  DEFINE_PARAM(AspWindowStartDepth, 5, 4, 8);
-  DEFINE_PARAM(AspWindowStartDelta, 10, 10, 20);
-  DEFINE_PARAM(AspFailHighReductionMax, 11, 6, 11);
+  DEFINE_PARAM(AspWindowStartDepth, 5, 4, 34);
+  DEFINE_PARAM(AspWindowStartDelta, 10, 5, 45);
+  DEFINE_PARAM(AspFailHighReductionMax, 11, 1, 21);
   
   clock_t lastSearchTimeSpan;
   bool doingBench = false;

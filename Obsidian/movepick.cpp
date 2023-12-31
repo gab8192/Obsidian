@@ -102,7 +102,9 @@ void MovePicker::scoreCaptures() {
       moveScore += promotionScores[promo_type(move)];
     else {
       int seeMargin = isQsearch ? MpQsSeeMargin : MpPvsSeeMargin;
-      if (!pos.see_ge(move, Score(seeMargin)))
+      if (pos.see_ge(move, Score(seeMargin)))
+        moveScore += 500000;
+      else
         moveScore -= 500000;
       moveScore += capHist[pieceTo(pos, move)][captured];
     }
