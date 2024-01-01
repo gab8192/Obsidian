@@ -17,8 +17,8 @@ namespace NNUE {
 
   using weight_t = int16_t;
 
-  constexpr int FeatureDimensions = 768;
-  constexpr int TransformedFeatureDimensions = 1536;
+  constexpr int FeaturesWidth = 768;
+  constexpr int HiddenWidth = 1536;
 
   constexpr int NetworkScale = 400;
   constexpr int NetworkQA = 181;
@@ -26,8 +26,7 @@ namespace NNUE {
   constexpr int NetworkQAB = NetworkQA * NetworkQB;
 
   struct Accumulator {
-    alignas(Alignment) weight_t white[TransformedFeatureDimensions];
-    alignas(Alignment) weight_t black[TransformedFeatureDimensions];
+    alignas(Alignment) weight_t colors[COLOR_NB][HiddenWidth];
 
     void reset();
 

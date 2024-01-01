@@ -5,9 +5,7 @@
 #include <iostream>
 #include <fstream>
 
-#ifndef _MSC_VER
 INCBIN(EmbeddedNNUE, EvalFile);
-#endif
 
 using namespace std;
 
@@ -15,17 +13,17 @@ namespace NNUE {
 
   constexpr int WeightsPerVec = sizeof(SIMD::Vec) / sizeof(weight_t);
 
-  alignas(SIMD::Alignment) int FeatureIndexTable[COLOR_NB][PIECE_NB][SQUARE_NB];
+  alignas(SIMD::Alignment) int FeaturesIndex[COLOR_NB][PIECE_NB][SQUARE_NB];
 
   struct {
-    alignas(SIMD::Alignment) weight_t FeatureWeights[FeatureDimensions * TransformedFeatureDimensions];
-    alignas(SIMD::Alignment) weight_t FeatureBiases[TransformedFeatureDimensions];
-    alignas(SIMD::Alignment) weight_t OutputWeights[2 * TransformedFeatureDimensions];
+    alignas(SIMD::Alignment) weight_t FeatureWeights[FeaturesWidth * HiddenWidth];
+    alignas(SIMD::Alignment) weight_t FeatureBiases[HiddenWidth];
+    alignas(SIMD::Alignment) weight_t OutputWeights[2 * HiddenWidth];
                              weight_t OutputBias;
   } Content;
 
   template <int InputSize>
-  inline void addToAll(weight_t* output, weight_t* input, int offset)
+  inline void addAll(weight_t* output, weight_t* input, int offset)
   {
     offset /= WeightsPerVec;
 
@@ -38,7 +36,7 @@ namespace NNUE {
   }
 
   template <int InputSize>
-  inline void subtractFromAll(weight_t* output, weight_t* input, int offset)
+  inline void subAll(weight_t* output, weight_t* input, int offset)
   {
     offset /= WeightsPerVec;
 
@@ -51,7 +49,7 @@ namespace NNUE {
   }
 
   template <int InputSize>
-  inline void addAndSubtractFromAll(weight_t* output, weight_t* input, int addOff, int subtractOff) {
+  inline void addSubAll(weight_t* output, weight_t* input, int addOff, int subtractOff) {
     addOff /= WeightsPerVec;
     subtractOff /= WeightsPerVec;
 
@@ -65,40 +63,28 @@ namespace NNUE {
 
 
   void Accumulator::reset() {
-    memcpy(white, Content.FeatureBiases, sizeof(Content.FeatureBiases));
-    memcpy(black, Content.FeatureBiases, sizeof(Content.FeatureBiases));
+    for (int c = WHITE; c <= BLACK; ++c)
+      memcpy(colors[c], Content.FeatureBiases, sizeof(Content.FeatureBiases));
   }
 
   void Accumulator::activateFeature(Square sq, Piece pc, Accumulator* input) {
-    addToAll<TransformedFeatureDimensions>(white, input->white, FeatureIndexTable[WHITE][pc][sq]);
-    addToAll<TransformedFeatureDimensions>(black, input->black, FeatureIndexTable[BLACK][pc][sq]);
+    for (int c = WHITE; c <= BLACK; ++c)
+      addAll<HiddenWidth>(colors[c], input->colors[c], FeaturesIndex[c][pc][sq]);
   }
 
   void Accumulator::deactivateFeature(Square sq, Piece pc, Accumulator* input) {
-    subtractFromAll<TransformedFeatureDimensions>(white, input->white, FeatureIndexTable[WHITE][pc][sq]);
-    subtractFromAll<TransformedFeatureDimensions>(black, input->black, FeatureIndexTable[BLACK][pc][sq]);
+    for (int c = WHITE; c <= BLACK; ++c)
+      subAll<HiddenWidth>(colors[c], input->colors[c], FeaturesIndex[c][pc][sq]);
   }
 
   void Accumulator::moveFeature(Square from, Square to, Piece pc, Accumulator* input) {
-    addAndSubtractFromAll<TransformedFeatureDimensions>(white, input->white,
-      FeatureIndexTable[WHITE][pc][to], FeatureIndexTable[WHITE][pc][from]);
-    addAndSubtractFromAll<TransformedFeatureDimensions>(black, input->black,
-      FeatureIndexTable[BLACK][pc][to], FeatureIndexTable[BLACK][pc][from]);
+    for (int c = WHITE; c <= BLACK; ++c)
+      addSubAll<HiddenWidth>(colors[c], input->colors[c], FeaturesIndex[c][pc][to], FeaturesIndex[c][pc][from]);
   }
 
   void init() {
-#ifdef _MSC_VER
-    ifstream stream(EvalFile, ios::binary);
 
-    if (!bool(stream)) {
-      cout << "Failed to load NNUE" << endl;
-      exit(1);
-    }
-
-    stream.read((char*)&Content, sizeof(Content));
-#else
     memcpy(&Content, gEmbeddedNNUEData, sizeof(Content));
-#endif // _MSC_VER	
 
     // Cache feature indexes
     for (int c = 0; c <= 1; ++c) {
@@ -107,14 +93,14 @@ namespace NNUE {
           Color color = Color(c);
           Piece piece = make_piece(color, PieceType(pt));
 
-          FeatureIndexTable[color][piece][sq] =
+          FeaturesIndex[color][piece][sq] =
             SQUARE_NB * (pt - 1) + relative_square(color, sq);
 
-          FeatureIndexTable[~color][piece][sq] =
+          FeaturesIndex[~color][piece][sq] =
             SQUARE_NB * (pt + 5) + relative_square(~color, sq);
 
-          FeatureIndexTable[color][piece][sq] *= TransformedFeatureDimensions;
-          FeatureIndexTable[~color][piece][sq] *= TransformedFeatureDimensions;
+          FeaturesIndex[color][piece][sq] *= HiddenWidth;
+          FeaturesIndex[~color][piece][sq] *= HiddenWidth;
         }
       }
     }
@@ -122,20 +108,11 @@ namespace NNUE {
 
   Score evaluate(Accumulator& accumulator, Color sideToMove) {
 
-    Vec* stmAcc;
-    Vec* oppAcc;
+    Vec* stmAcc = (Vec*) accumulator.colors[sideToMove];
+    Vec* oppAcc = (Vec*) accumulator.colors[~sideToMove];
 
-    if (sideToMove == WHITE) {
-      stmAcc = (Vec*) accumulator.white;
-      oppAcc = (Vec*) accumulator.black;
-    }
-    else {
-      stmAcc = (Vec*) accumulator.black;
-      oppAcc = (Vec*) accumulator.white;
-    }
-
-    Vec* stmWeightsVec = (Vec*) &Content.OutputWeights[0];
-    Vec* oppWeightsVec = (Vec*) &Content.OutputWeights[TransformedFeatureDimensions];
+    Vec* stmWeights = (Vec*) &Content.OutputWeights[0];
+    Vec* oppWeights = (Vec*) &Content.OutputWeights[HiddenWidth];
 
     const Vec reluClipMin = vecSetZero();
     const Vec reluClipMax = vecSet1Epi16(NetworkQA);
@@ -150,30 +127,30 @@ namespace NNUE {
       // Side to move
       reg = _mm512_min_epi16(_mm512_max_epi16(stmAcc[i], reluClipMin), reluClipMax); // clip
       reg = _mm512_mullo_epi16(reg, reg); // square
-      reg = _mm512_madd_epi16(reg, stmWeightsVec[i]); // multiply with output layer
+      reg = _mm512_madd_epi16(reg, stmWeights[i]); // multiply with output layer
       sum = _mm512_add_epi32(sum, reg); // collect the result,
 
       // Non side to move
       reg = _mm512_min_epi16(_mm512_max_epi16(oppAcc[i], reluClipMin), reluClipMax);
       reg = _mm512_mullo_epi16(reg, reg);
-      reg = _mm512_madd_epi16(reg, oppWeightsVec[i]);
+      reg = _mm512_madd_epi16(reg, oppWeights[i]);
       sum = _mm512_add_epi32(sum, reg);
     }
 
 #elif defined(USE_AVX2)
 
-    for (int i = 0; i < TransformedFeatureDimensions / WeightsPerVec; ++i) {
+    for (int i = 0; i < HiddenWidth / WeightsPerVec; ++i) {
 
       // Side to move
       reg = _mm256_min_epi16(_mm256_max_epi16(stmAcc[i], reluClipMin), reluClipMax); // clip
       reg = _mm256_mullo_epi16(reg, reg); // square
-      reg = _mm256_madd_epi16(reg, stmWeightsVec[i]); // multiply with output layer
+      reg = _mm256_madd_epi16(reg, stmWeights[i]); // multiply with output layer
       sum = _mm256_add_epi32(sum, reg); // collect the result,
 
       // Non side to move
       reg = _mm256_min_epi16(_mm256_max_epi16(oppAcc[i], reluClipMin), reluClipMax);
       reg = _mm256_mullo_epi16(reg, reg);
-      reg = _mm256_madd_epi16(reg, oppWeightsVec[i]);
+      reg = _mm256_madd_epi16(reg, oppWeights[i]);
       sum = _mm256_add_epi32(sum, reg);
     }
 
@@ -184,12 +161,12 @@ namespace NNUE {
       // Side to move
       reg = std::min(std::max(stmAcc[i], reluClipMin), reluClipMax); // clip
       reg *= reg; // square
-      sum += int(reg) * stmWeightsVec[i];
+      sum += int(reg) * stmWeights[i];
 
       // Non side to move
       reg = std::min(std::max(oppAcc[i], reluClipMin), reluClipMax);
       reg *= reg;
-      sum += int(reg) * oppWeightsVec[i];
+      sum += int(reg) * oppWeights[i];
     }
 
 #endif
