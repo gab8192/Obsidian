@@ -2,8 +2,8 @@
 #include "tuning.h"
 #include "uci.h"
 
-DEFINE_PARAM(MpPvsSeeMargin, -50, -400, 0);
-DEFINE_PARAM(MpQsSeeMargin, -50, -400, 0);
+DEFINE_PARAM(MpPvsSeeMargin, -43, -400, 0);
+DEFINE_PARAM(MpQsSeeMargin, -42, -400, 0);
 
 MovePicker::MovePicker(
   bool _isQsearch, Position& _pos,
