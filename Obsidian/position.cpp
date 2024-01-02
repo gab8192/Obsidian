@@ -588,7 +588,7 @@ std::ostream& operator<<(std::ostream& stream, Position& pos) {
   return stream;
 }
 
-bool Position::see_ge(Move m, Score threshold) const {
+bool Position::see_ge(Move m, int threshold) const {
 
   // Only deal with normal moves, assume others pass a simple SEE
   if (move_type(m) != MT_NORMAL)

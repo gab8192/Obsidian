@@ -19,6 +19,9 @@
 
 namespace Search {
 
+  DEFINE_PARAM(MpPvsSeeMargin, -43, -400, 0);
+  DEFINE_PARAM(MpQsSeeMargin, -42, -400, 0);
+
   DEFINE_PARAM(LmrBase, 29, -75, 125);
   DEFINE_PARAM(LmrDiv, 220, 100, 300);
 
@@ -303,7 +306,7 @@ namespace Search {
       else if (mt == MT_PROMOTION)
         moveScore = promotionScores[promo_type(move)] + PieceValue[captured] * 64;
       else if (captured || mt == MT_EN_PASSANT) {
-        moveScore = pos.see_ge(move, Score(-10)) ? 300000 : -200000;
+        moveScore = pos.see_ge(move, -10) ? 300000 : -200000;
         moveScore += PieceValue[mt == MT_EN_PASSANT ? PAWN : captured] * 64;
         moveScore += captureHistory[pieceTo(pos, move)][captured];
       }
@@ -467,6 +470,7 @@ namespace Search {
       visitTTMove ? ttMove : MOVE_NONE,
       MOVE_NONE, MOVE_NONE,
       mainHistory, captureHistory,
+      MpQsSeeMargin,
       ss);
 
     bool foundLegalMoves = false;
@@ -589,7 +593,7 @@ namespace Search {
     if (alpha >= beta)
       return alpha;
 
-    Move excludedMove = ss->excludedMove;
+    const Move excludedMove = ss->excludedMove;
 
     // Probe TT
     bool ttHit;
@@ -609,7 +613,7 @@ namespace Search {
       ttStaticEval = ttEntry->getStaticEval();
     }
 
-    bool ttMoveNoisy = ttMove && !pos.isQuiet(ttMove);
+    const bool ttMoveNoisy = ttMove && !pos.isQuiet(ttMove);
 
     Score eval;
     Move bestMove = MOVE_NONE;
@@ -626,7 +630,7 @@ namespace Search {
     }
 
     // Probe tablebases
-    TbResult tbResult = excludedMove ? TB_RESULT_FAILED : probeTB(pos);
+    const TbResult tbResult = excludedMove ? TB_RESULT_FAILED : probeTB(pos);
 
     if (tbResult != TB_RESULT_FAILED) {
 
@@ -759,6 +763,7 @@ namespace Search {
       false, pos,
       ttMove, ss->killerMove, counterMove,
       mainHistory, captureHistory,
+      MpPvsSeeMargin,
       ss);
 
     // Visit moves

@@ -27,6 +27,7 @@ public:
     bool _isQsearch, Position& _pos,
     Move _ttMove, Move _killerMove, Move _counterMove,
     MainHistory& _mainHist, CaptureHistory& _capHist,
+    int _seeMargin,
     Search::SearchInfo* _ss);
 
   Move nextMove(MpStage* outStage);
@@ -42,12 +43,14 @@ private:
   MainHistory& mainHist;
   CaptureHistory& capHist;
   
+  int seeMargin;
+  
   Search::SearchInfo* ss;
 
   MoveList captures;
   MoveList quiets;
 
-  int capIndex, quietIndex;
+  int capIndex = 0, quietIndex = 0;
 
   void scoreCaptures();
 
