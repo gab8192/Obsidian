@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "net7-qb16.bin"
+#define EvalFile "net7-qb1024.bin"
 
 using namespace SIMD;
 
@@ -22,7 +22,7 @@ namespace NNUE {
 
   constexpr int NetworkScale = 400;
   constexpr int NetworkQA = 181;
-  constexpr int NetworkQB = 16;
+  constexpr int NetworkQB = 1024;
   constexpr int NetworkQAB = NetworkQA * NetworkQB;
 
   struct Accumulator {
