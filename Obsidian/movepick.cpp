@@ -94,7 +94,7 @@ void MovePicker::scoreCaptures() {
     MoveType mt = move_type(move);
     PieceType captured = ptypeOf(pos.board[move_to(move)]);
 
-    moveScore += PieceValue[mt == MT_EN_PASSANT ? PAWN : captured] * 64;
+    moveScore += PieceValue[mt == MT_EN_PASSANT ? PAWN : captured] * 128;
 
     if (mt == MT_PROMOTION)
       moveScore += promotionScores[promo_type(move)];
