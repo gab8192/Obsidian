@@ -772,6 +772,8 @@ namespace Search {
 
       if (!pos.isLegal(move))
         continue;
+
+      int moveHistory = getHistoryScore(pos, move, ss);
       
       foundLegalMove = true;
       
@@ -789,7 +791,12 @@ namespace Search {
 
         if (isQuiet) {
 
-          int lmrRed = lmrTable[depth][playedMoves + 1] - IsPV + !improving;
+          int lmrRed = 
+             lmrTable[depth][playedMoves + 1]
+           - IsPV 
+           + !improving
+           - std::clamp(moveHistory / LmrHistoryDiv, -2, 2);
+
           int lmrDepth = std::max(0, depth - lmrRed);
 
           // Late move pruning. At low depths, only visit a few quiet moves
@@ -867,7 +874,7 @@ namespace Search {
             R -= 2;
           // Reduce or extend depending on history of this quiet move (~12 Elo)
           else 
-            R -= std::clamp(getHistoryScore(pos, move, ss) / LmrHistoryDiv, -2, 2);
+            R -= std::clamp(moveHistory / LmrHistoryDiv, -2, 2);
         }
         else {
           R = 0;
