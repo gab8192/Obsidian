@@ -473,6 +473,8 @@ namespace Search {
       MpQsSeeMargin,
       ss);
 
+    int playedMoves = 0;
+
     bool foundLegalMoves = false;
 
     // Visit moves
@@ -513,6 +515,11 @@ namespace Search {
           alpha = bestScore;
         }
       }
+
+      // Qsearch late move pruning
+      playedMoves++;
+      if (playedMoves > 3)
+        break;
     }
 
     if (pos.checkers && !foundLegalMoves)
