@@ -3,12 +3,12 @@
 #include "uci.h"
 
 MovePicker::MovePicker(
-  bool _isQsearch, Position& _pos,
+  SearchType _searchType, Position& _pos,
   Move _ttMove, Move _killerMove, Move _counterMove,
   MainHistory& _mainHist, CaptureHistory& _capHist,
   int _seeMargin,
   Search::SearchInfo* _ss) :
-  isQsearch(_isQsearch), pos(_pos),
+  searchType(_searchType), pos(_pos),
   ttMove(_ttMove),
   mainHist(_mainHist), capHist(_capHist), 
   seeMargin(_seeMargin),
@@ -139,7 +139,8 @@ Move MovePicker::nextMove(MpStage* outStage) {
       }
     }
 
-    if (isQsearch && !pos.checkers)
+    if (  (searchType == QSEARCH && !pos.checkers)
+        || searchType == PROBCUT)
       return MOVE_NONE;
 
     ++stage;

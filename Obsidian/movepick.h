@@ -13,7 +13,10 @@ enum MpStage {
   GEN_QUIETS,
   QUIETS,
   BAD_CAPTURES,
+};
 
+enum SearchType {
+  PVS, QSEARCH, PROBCUT
 };
 
 ENABLE_INCR_OPERATORS_ON(MpStage);
@@ -24,7 +27,7 @@ public:
   MpStage stage;
   
   MovePicker(
-    bool _isQsearch, Position& _pos,
+    SearchType _searchType, Position& _pos,
     Move _ttMove, Move _killerMove, Move _counterMove,
     MainHistory& _mainHist, CaptureHistory& _capHist,
     int _seeMargin,
@@ -33,7 +36,7 @@ public:
   Move nextMove(MpStage* outStage);
 
 private:
-  bool isQsearch;
+  SearchType searchType;
   Position& pos;
 
   Move ttMove;
