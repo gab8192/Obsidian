@@ -748,7 +748,7 @@ namespace Search {
         && std::abs(beta) < TB_WIN_IN_MAX_PLY
         && !(ttDepth >= depth - 3 && ttScore < probcutBeta))
     {
-      int pcSeeMargin = (probcutBeta - ss->staticEval) * 10 / 10;
+      int pcSeeMargin = std::max(-1, (probcutBeta - ss->staticEval) * 10 / 16);
       bool visitTTMove = ttMove && !pos.isQuiet(ttMove) && pos.see_ge(ttMove, pcSeeMargin);
 
       MovePicker pcMovePicker(
