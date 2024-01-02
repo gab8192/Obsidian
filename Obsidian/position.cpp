@@ -554,7 +554,7 @@ string Position::toFenString() const {
   if (epSquare == SQ_NONE)
     ss << " - ";
   else
-    ss << ' ' << UCI::square(epSquare) << ' ';
+    ss << ' ' << UCI::squareToString(epSquare) << ' ';
 
   ss << halfMoveClock << ' ';
 
@@ -588,9 +588,8 @@ std::ostream& operator<<(std::ostream& stream, Position& pos) {
   return stream;
 }
 
-bool Position::see_ge(Move m, Score threshold) const {
+bool Position::see_ge(Move m, int threshold) const {
 
-  // Only deal with normal moves, assume others pass a simple SEE
   if (move_type(m) != MT_NORMAL)
     return DRAW >= threshold;
 
@@ -604,9 +603,7 @@ bool Position::see_ge(Move m, Score threshold) const {
   if (swap <= 0)
     return true;
 
-  //assert(color_of(board[from]) == sideToMove);
-
-  Bitboard occupied = pieces() ^ from ^ to; // xoring to is important for pinned piece logic
+  Bitboard occupied = pieces() ^ from ^ to;
   Color stm = sideToMove;
   Bitboard attackers = attackersTo(to, occupied);
   Bitboard stmAttackers, bb;
@@ -617,12 +614,9 @@ bool Position::see_ge(Move m, Score threshold) const {
     stm = ~stm;
     attackers &= occupied;
 
-    // If stm has no more attackers then give up: stm loses
     if (!(stmAttackers = attackers & pieces(stm)))
       break;
 
-    // Don't allow pinned pieces to attack as long as there are
-    // pinners on their original square.
     if (pinners[~stm] & occupied) {
       stmAttackers &= ~blockersForKing[stm];
 
@@ -631,9 +625,6 @@ bool Position::see_ge(Move m, Score threshold) const {
     }
 
     res ^= 1;
-
-    // Locate and remove the next least valuable attacker, and add to
-    // the bitboard 'attackers' any X-ray attackers behind it.
     if ((bb = stmAttackers & pieces(PAWN)))
     {
       if ((swap = PieceValue[PAWN] - swap) < res)
@@ -677,10 +668,7 @@ bool Position::see_ge(Move m, Score threshold) const {
       attackers |= (get_bishop_attacks(to, occupied) & pieces(BISHOP, QUEEN))
                  | (get_rook_attacks(to, occupied) & pieces(ROOK, QUEEN));
     }
-
-    else // KING
-         // If we "capture" with the king but the opponent still has attackers,
-         // reverse the result.
+    else 
       return (attackers & ~pieces(stm)) ? res ^ 1 : res;
   }
 

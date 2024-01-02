@@ -120,58 +120,23 @@ namespace NNUE {
     Vec sum = vecSetZero();
     Vec reg;
 
-#if defined(USE_AVX512)
-
-    for (int i = 0; i < TransformedFeatureDimensions / WeightsPerVec; ++i) {
-
-      // Side to move
-      reg = _mm512_min_epi16(_mm512_max_epi16(stmAcc[i], reluClipMin), reluClipMax); // clip
-      reg = _mm512_mullo_epi16(reg, reg); // square
-      reg = _mm512_madd_epi16(reg, stmWeights[i]); // multiply with output layer
-      sum = _mm512_add_epi32(sum, reg); // collect the result,
-
-      // Non side to move
-      reg = _mm512_min_epi16(_mm512_max_epi16(oppAcc[i], reluClipMin), reluClipMax);
-      reg = _mm512_mullo_epi16(reg, reg);
-      reg = _mm512_madd_epi16(reg, oppWeights[i]);
-      sum = _mm512_add_epi32(sum, reg);
-    }
-
-#elif defined(USE_AVX2)
-
     for (int i = 0; i < HiddenWidth / WeightsPerVec; ++i) {
-
       // Side to move
-      reg = _mm256_min_epi16(_mm256_max_epi16(stmAcc[i], reluClipMin), reluClipMax); // clip
-      reg = _mm256_mullo_epi16(reg, reg); // square
-      reg = _mm256_madd_epi16(reg, stmWeights[i]); // multiply with output layer
-      sum = _mm256_add_epi32(sum, reg); // collect the result,
+      reg = maxEpi16(stmAcc[i], reluClipMin); // clip
+      reg = minEpi16(reg, reluClipMax); // clip
+      reg = mulloEpi16(reg, reg); // square
+      reg = maddEpi16(reg, stmWeights[i]); // multiply with output layer
+      sum = addEpi32(sum, reg); // collect the result
 
       // Non side to move
-      reg = _mm256_min_epi16(_mm256_max_epi16(oppAcc[i], reluClipMin), reluClipMax);
-      reg = _mm256_mullo_epi16(reg, reg);
-      reg = _mm256_madd_epi16(reg, oppWeights[i]);
-      sum = _mm256_add_epi32(sum, reg);
+      reg = maxEpi16(oppAcc[i], reluClipMin);
+      reg = minEpi16(reg, reluClipMax);
+      reg = mulloEpi16(reg, reg);
+      reg = maddEpi16(reg, oppWeights[i]);
+      sum = addEpi32(sum, reg);
     }
 
-#else
-
-    for (int i = 0; i < TransformedFeatureDimensions; ++i) {
-
-      // Side to move
-      reg = std::min(std::max(stmAcc[i], reluClipMin), reluClipMax); // clip
-      reg *= reg; // square
-      sum += int(reg) * stmWeights[i];
-
-      // Non side to move
-      reg = std::min(std::max(oppAcc[i], reluClipMin), reluClipMax);
-      reg *= reg;
-      sum += int(reg) * oppWeights[i];
-    }
-
-#endif
-
-    int unsquared = vecHadd(sum) / NetworkQA + Content.OutputBias;
+    int unsquared = vecHaddEpi32(sum) / NetworkQA + Content.OutputBias;
 
     return Score((unsquared * NetworkScale) / NetworkQAB);
   }

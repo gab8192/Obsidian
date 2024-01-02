@@ -26,15 +26,23 @@ namespace UCI {
 
   public:
     Option(OnChange = nullptr);
+
     Option(bool v, OnChange = nullptr);
+
     Option(const char* v, OnChange = nullptr);
+
     Option(double v, int minv, int maxv, OnChange = nullptr);
+
     Option(const char* v, const char* cur, OnChange = nullptr);
 
     Option& operator=(const std::string&);
+
     void operator<<(const Option&);
+
     operator int() const;
+
     operator std::string() const;
+
     bool operator==(const char*) const;
 
   private:
@@ -47,12 +55,18 @@ namespace UCI {
   };
 
   void init(OptionsMap&);
+
   void loop(int argc, char* argv[]);
-  int to_cp(Score v);
-  std::string score(Score v);
-  std::string square(Square s);
-  std::string move(Move m);
-  Move to_move(const Position& pos, std::string& str);
+
+  int normalizeToCp(Score v);
+
+  std::string scoreToString(Score v);
+
+  std::string squareToString(Square s);
+
+  std::string moveToString(Move m);
+
+  Move stringToMove(const Position& pos, std::string& str);
 
 } // namespace UCI
 

@@ -2,19 +2,17 @@
 #include "tuning.h"
 #include "uci.h"
 
-DEFINE_PARAM(MpPvsSeeMargin, -43, -400, 0);
-DEFINE_PARAM(MpQsSeeMargin, -42, -400, 0);
-
 MovePicker::MovePicker(
   bool _isQsearch, Position& _pos,
   Move _ttMove, Move _killerMove, Move _counterMove,
   MainHistory& _mainHist, CaptureHistory& _capHist,
+  int _seeMargin,
   Search::SearchInfo* _ss) :
   isQsearch(_isQsearch), pos(_pos),
   ttMove(_ttMove),
   mainHist(_mainHist), capHist(_capHist), 
-  ss(_ss),
-  capIndex(0), quietIndex(0)
+  seeMargin(_seeMargin),
+  ss(_ss)
 {
   this->stage = pos.isPseudoLegal(ttMove) ? TT_MOVE : GEN_CAPTURES;
 
@@ -101,8 +99,7 @@ void MovePicker::scoreCaptures() {
     if (mt == MT_PROMOTION)
       moveScore += promotionScores[promo_type(move)];
     else {
-      int seeMargin = isQsearch ? MpQsSeeMargin : MpPvsSeeMargin;
-      if (pos.see_ge(move, Score(seeMargin)))
+      if (pos.see_ge(move, seeMargin))
         moveScore += 500000;
       else
         moveScore -= 500000;

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
 #include <immintrin.h>
 
@@ -7,16 +8,34 @@ namespace SIMD {
 
 #if defined(USE_AVX512)
 
-  constexpr int Alignment = 64;
-
   using Vec = __m512i;
 
   inline Vec addEpi16(Vec x, Vec y) {
     return _mm512_add_epi16(x, y);
   }
 
+  inline Vec addEpi32(Vec x, Vec y) {
+    return _mm512_add_epi32(x, y);
+  }
+
   inline Vec subEpi16(Vec x, Vec y) {
     return _mm512_sub_epi16(x, y);
+  }
+
+  inline Vec minEpi16(Vec x, Vec y) {
+    return _mm512_min_epi16(x, y);
+  }
+
+  inline Vec maxEpi16(Vec x, Vec y) {
+    return _mm512_max_epi16(x, y);
+  }
+
+  inline Vec mulloEpi16(Vec x, Vec y) {
+    return _mm512_mullo_epi16(x, y);
+  }
+
+  inline Vec maddEpi16(Vec x, Vec y) {
+    return _mm512_madd_epi16(x, y);
   }
 
   inline Vec vecSetZero() {
@@ -27,22 +46,40 @@ namespace SIMD {
     return _mm512_set1_epi16(x);
   }
 
-  inline int vecHadd(Vec vec) {
+  inline int vecHaddEpi32(Vec vec) {
     return _mm512_reduce_add_epi32(vec);
   }
 
 #elif defined(USE_AVX2)
 
-  constexpr int Alignment = 32;
-
   using Vec = __m256i;
 
   inline Vec addEpi16(Vec x, Vec y) {
     return _mm256_add_epi16(x, y);
-}
+  }
+
+  inline Vec addEpi32(Vec x, Vec y) {
+    return _mm256_add_epi32(x, y);
+  }
 
   inline Vec subEpi16(Vec x, Vec y) {
     return _mm256_sub_epi16(x, y);
+  }
+
+  inline Vec minEpi16(Vec x, Vec y) {
+    return _mm256_min_epi16(x, y);
+  }
+
+  inline Vec maxEpi16(Vec x, Vec y) {
+    return _mm256_max_epi16(x, y);
+  }
+
+  inline Vec mulloEpi16(Vec x, Vec y) {
+    return _mm256_mullo_epi16(x, y);
+  }
+
+  inline Vec maddEpi16(Vec x, Vec y) {
+    return _mm256_madd_epi16(x, y);
   }
 
   inline Vec vecSetZero() {
@@ -53,7 +90,7 @@ namespace SIMD {
     return _mm256_set1_epi16(x);
   }
 
-  inline int vecHadd(Vec vec) {
+  inline int vecHaddEpi32(Vec vec) {
     __m128i xmm0;
     __m128i xmm1;
 
@@ -82,30 +119,51 @@ namespace SIMD {
 
 #else
 
-  constexpr int Alignment = 8;
-
-  using Vec = int16_t;
+  using Vec = __m128i;
 
   inline Vec addEpi16(Vec x, Vec y) {
-    return x + y;
+    return _mm_add_epi16(x, y);
+  }
+
+  inline Vec addEpi32(Vec x, Vec y) {
+    return _mm_add_epi32(x, y);
   }
 
   inline Vec subEpi16(Vec x, Vec y) {
-    return x - y;
+    return _mm_sub_epi16(x, y);
+  }
+
+  inline Vec minEpi16(Vec x, Vec y) {
+    return _mm_min_epi16(x, y);
+  }
+
+  inline Vec maxEpi16(Vec x, Vec y) {
+    return _mm_max_epi16(x, y);
+  }
+
+  inline Vec mulloEpi16(Vec x, Vec y) {
+    return _mm_mullo_epi16(x, y);
+  }
+
+  inline Vec maddEpi16(Vec x, Vec y) {
+    return _mm_madd_epi16(x, y);
   }
 
   inline Vec vecSetZero() {
-    return 0;
+    return _mm_setzero_si128();
   }
 
   inline Vec vecSet1Epi16(int16_t x) {
-    return x;
+    return _mm_set1_epi16(x);
   }
 
-  inline int vecHadd(Vec vec) {
-    return vec;
+  inline int vecHaddEpi32(Vec vec) {
+    int* asArray = (int*) &vec;
+    return asArray[0] + asArray[1] + asArray[2] + asArray[3];
   }
 
 #endif
+
+  constexpr int Alignment = std::max<int>(8, sizeof(Vec));
 
 }

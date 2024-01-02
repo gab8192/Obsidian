@@ -23,7 +23,6 @@ std::vector<uint64_t> prevPositions;
 
 namespace {
 
-  // Initial position
   const char* StartFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
   void position(Position& pos, NNUE::Accumulator& acc, istringstream& is) {
@@ -49,7 +48,7 @@ namespace {
     prevPositions.push_back(pos.key);
 
     // Parse the move list, if any
-    while (is >> token && (m = UCI::to_move(pos, token)) != MOVE_NONE)
+    while (is >> token && (m = UCI::stringToMove(pos, token)) != MOVE_NONE)
     {
       int dirtyCount = 0;
       DirtyPiece dirtyPieces[4];
@@ -116,19 +115,14 @@ namespace {
     Search::doingBench = false;
   }
 
-  // setoption() is called when the engine receives the "setoption" UCI command.
-  // The function updates the UCI option ("name") to the given value ("value").
-
   void setoption(istringstream& is) {
     string token, name, value;
 
-    is >> token; // Consume the "name" token
+    is >> token;
 
-    // Read the option name (can contain spaces)
     while (is >> token && token != "value")
       name += (name.empty() ? "" : " ") + token;
 
-    // Read the option value (can contain spaces)
     while (is >> token)
       value += (value.empty() ? "" : " ") + token;
 
@@ -146,10 +140,6 @@ namespace {
     else
       cout << "No such option: " << name << endl;
   }
-
-  // go() is called when the engine receives the "go" UCI command. The function
-  // sets the thinking time and other parameters from the input string, then starts
-  // with a search.
 
   void go(Position& pos, istringstream& is) {
 
@@ -210,7 +200,7 @@ void UCI::loop(int argc, char* argv[]) {
 
     istringstream is(cmd);
 
-    token.clear(); // Do not crash when given a blank line
+    token.clear();
     is >> skipws >> token;
 
     if (token == "quit"
@@ -238,30 +228,27 @@ void UCI::loop(int argc, char* argv[]) {
       Score eval = Eval::evaluate(pos, tempAccumulator);
       if (pos.sideToMove == BLACK)
         eval = -eval;
-      cout << "Evaluation: " << UCI::to_cp(eval) << endl;
+      cout << "Evaluation: " << UCI::normalizeToCp(eval) << endl;
     }
     else if (!token.empty() && token[0] != '#')
       cout << "Unknown command: '" << cmd << "'." << endl;
 
-  } while (token != "quit" && argc == 1); // The command-line arguments are one-shot
+  } while (token != "quit" && argc == 1);
 }
 
-
-/// Turns a Value to an integer centipawn number,
-/// without treatment of mate and similar special scores.
-int UCI::to_cp(Score v) {
+int UCI::normalizeToCp(Score v) {
 
   return 100 * v / 220;
 }
 
-string UCI::score(Score v) {
+string UCI::scoreToString(Score v) {
 
   assert(-SCORE_INFINITE < v && v < SCORE_INFINITE);
 
   stringstream ss;
 
   if (abs(v) < TB_WIN_IN_MAX_PLY)
-    ss << "cp " << UCI::to_cp(v);
+    ss << "cp " << UCI::normalizeToCp(v);
   else {
     if (v > 0)
       ss << "mate " << (CHECKMATE - v + 1) / 2;
@@ -272,17 +259,16 @@ string UCI::score(Score v) {
   return ss.str();
 }
 
-std::string UCI::square(Square s) {
+std::string UCI::squareToString(Square s) {
   return std::string{ char('a' + file_of(s)), char('1' + rank_of(s)) };
 }
 
-
-string UCI::move(Move m) {
+string UCI::moveToString(Move m) {
 
   if (m == MOVE_NONE)
     return "(none)";
 
-  string move = UCI::square(move_from(m)) + UCI::square(move_to(m));
+  string move = UCI::squareToString(move_from(m)) + UCI::squareToString(move_to(m));
 
   if (move_type(m) == MT_PROMOTION)
     move += "  nbrq"[promo_type(m)];
@@ -290,16 +276,16 @@ string UCI::move(Move m) {
   return move;
 }
 
-Move UCI::to_move(const Position& pos, string& str) {
+Move UCI::stringToMove(const Position& pos, string& str) {
 
   if (str.length() == 5)
-    str[4] = char(tolower(str[4])); // The promotion piece character must be lowercased
+    str[4] = char(tolower(str[4]));
 
   MoveList moves;
   getPseudoLegalMoves(pos, &moves);
 
   for (const auto& m : moves)
-    if (str == UCI::move(m.move))
+    if (str == UCI::moveToString(m.move))
       return m.move;
 
   return MOVE_NONE;
