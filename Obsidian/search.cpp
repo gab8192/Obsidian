@@ -900,7 +900,7 @@ namespace Search {
       if (needFullSearch)
         score = -negaMax<false>(newPos, -alpha - 1, -alpha, newDepth, !cutNode, ss + 1);
 
-      if (IsPV && (playedMoves == 0 || score > alpha))
+      if (IsPV && (playedMoves == 0 || (score > alpha && score < beta)))
         score = -negaMax<true>(newPos, -beta, -alpha, newDepth, false, ss + 1);
 
       cancelMove();
