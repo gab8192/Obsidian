@@ -703,8 +703,8 @@ namespace Search {
     // thus do a qsearch. If the qsearch still can't hit alpha, cut off
     if ( !IsPV
       && eval < alpha - RazoringDepthMul * depth) {
-      Score score = qsearch<false>(pos, alpha-1, alpha, ss);
-      if (score < alpha)
+      Score score = qsearch<IsPV>(pos, alpha, beta, ss);
+      if (score <= alpha)
         return score;
     }
 
