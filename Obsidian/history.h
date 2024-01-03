@@ -2,8 +2,8 @@
 
 #include "types.h"
 
-// [color][from to]
-using MainHistory  = int[COLOR_NB][SQUARE_NB * SQUARE_NB];
+// [color][from to][from threatened]
+using MainHistory  = int[COLOR_NB][SQUARE_NB * SQUARE_NB][2];
 
 // [piece to][piece to]
 using CaptureHistory = int[PIECE_NB * SQUARE_NB][PIECE_TYPE_NB];

@@ -140,8 +140,9 @@ inline Bitboard get_pawn_attacks(Square square, Color pawnColor) {
   return pawn_attacks[pawnColor][square];
 }
 
-inline Bitboard get_piece_attacks(PieceType pt, Square s, Bitboard occupied) {
-  switch (pt) {
+inline Bitboard get_piece_attacks(Piece pc, Square s, Bitboard occupied) {
+  switch (ptypeOf(pc)) {
+  case PAWN:   return get_pawn_attacks(s, colorOf(pc));
   case KNIGHT: return get_knight_attacks(s);
   case BISHOP: return get_bishop_attacks(s, occupied);
   case ROOK:   return get_rook_attacks(s, occupied);

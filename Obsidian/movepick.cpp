@@ -68,7 +68,7 @@ void MovePicker::scoreQuiets() {
     int chIndex = pieceTo(pos, move);
 
     quiets[i++].score =
-      mainHist[pos.sideToMove][move_from_to(move)]
+      mainHist[pos.sideToMove][move_from_to(move)][pos.hasThreat(move_from(move))]
       + (ss - 1)->contHistory()[chIndex]
       + (ss - 2)->contHistory()[chIndex]
       + (ss - 4)->contHistory()[chIndex]/2;

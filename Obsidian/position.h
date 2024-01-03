@@ -33,6 +33,9 @@ struct alignas(32) Position {
   // What pieces of the opponent are attacking the king of the side to move
   Bitboard checkers;
 
+  Bitboard threats;
+  bool threatsUpdated;
+
   inline Bitboard pieces(PieceType pt) const {
     return byPieceBB[pt];
   }
@@ -95,6 +98,24 @@ struct alignas(32) Position {
   }
 
   void updateKey();
+
+  inline bool hasThreat(Square sq) {
+    
+    if (!threatsUpdated) {
+      threatsUpdated = true;
+      threats = 0;
+
+      Bitboard occupied = pieces();
+
+      Bitboard iter = pieces(~sideToMove);
+      while (iter) {
+        Square sq = popLsb(iter);
+        threats |= get_piece_attacks(board[sq], sq, occupied);
+      }
+    }
+
+    return threats & sq;
+  }
 
   /// <summary>
   /// Assmue there is a piece in the given square.

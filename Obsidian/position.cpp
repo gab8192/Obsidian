@@ -162,7 +162,7 @@ bool Position::isPseudoLegal(Move move) const {
     return legalTo & to;
   }
 
-  return get_piece_attacks(ptypeOf(pc), from, pieces()) & to;
+  return get_piece_attacks(pc, from, pieces()) & to;
 }
 
 bool Position::isLegal(Move move) const {
@@ -204,6 +204,8 @@ void Position::doNullMove() {
 
   const Color us = sideToMove, them = ~us;
 
+  threatsUpdated = false;
+
   if (epSquare != SQ_NONE) {
     key ^= ZobristEp[file_of(epSquare)];
     epSquare = SQ_NONE;
@@ -222,6 +224,8 @@ void Position::doNullMove() {
 void Position::doMove(Move move, DirtyPiece* dp, int& dpCount) {
 
   const Color us = sideToMove, them = ~us;
+
+  threatsUpdated = false;
 
   if (epSquare != SQ_NONE) {
     key ^= ZobristEp[file_of(epSquare)];

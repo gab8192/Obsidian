@@ -244,7 +244,7 @@ namespace Search {
 
   int SearchThread::getHistoryScore(Position& pos, Move move, SearchInfo* ss) {
     int chIndex = pieceTo(pos, move);
-    return    mainHistory[pos.sideToMove][move_from_to(move)]
+    return    mainHistory[pos.sideToMove][move_from_to(move)][pos.hasThreat(move_from(move))]
             + (ss - 1)->contHistory()[chIndex]
             + (ss - 2)->contHistory()[chIndex]
             + (ss - 4)->contHistory()[chIndex];
@@ -262,8 +262,9 @@ namespace Search {
 
   void SearchThread::updateHistories(Position& pos, int bonus, Move bestMove, Score bestScore,
                        Score beta, Move* quiets, int quietCount, SearchInfo* ss) {
+
     // Butterfly history
-    addToHistory(mainHistory[pos.sideToMove][move_from_to(bestMove)], bonus);
+    addToHistory(mainHistory[pos.sideToMove][move_from_to(bestMove)][pos.hasThreat(move_from(bestMove))], bonus);
 
     // Continuation history
     addToContHistory(pos, bonus, bestMove, ss);
@@ -276,7 +277,7 @@ namespace Search {
 
       addToContHistory(pos, -bonus, otherMove, ss);
 
-      addToHistory(mainHistory[pos.sideToMove][move_from_to(otherMove)], -bonus);
+      addToHistory(mainHistory[pos.sideToMove][move_from_to(otherMove)][pos.hasThreat(move_from(otherMove))], -bonus);
     }
 
     // Counter move
@@ -290,6 +291,7 @@ namespace Search {
   }
 
   void SearchThread::scoreRootMoves(Position& pos, MoveList& moves, Move ttMove, SearchInfo* ss) {
+
     for (int i = 0; i < moves.size(); i++) {
       int& moveScore = moves[i].score;
 
@@ -310,8 +312,9 @@ namespace Search {
         moveScore += PieceValue[mt == MT_EN_PASSANT ? PAWN : captured] * 64;
         moveScore += captureHistory[pieceTo(pos, move)][captured];
       }
-      else
-        moveScore = mainHistory[pos.sideToMove][move_from_to(move)];
+      else {
+        moveScore = mainHistory[pos.sideToMove][move_from_to(move)][pos.hasThreat(move_from(move))];
+      }
     }
   }
 
