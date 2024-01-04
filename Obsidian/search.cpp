@@ -466,7 +466,7 @@ namespace Search {
     bool visitTTMove = (pos.checkers || !pos.isQuiet(ttMove));
 
     MovePicker movePicker(
-      true, pos,
+      QSEARCH, pos,
       visitTTMove ? ttMove : MOVE_NONE,
       MOVE_NONE, MOVE_NONE,
       mainHistory, captureHistory,
@@ -615,6 +615,8 @@ namespace Search {
 
     const bool ttMoveNoisy = ttMove && !pos.isQuiet(ttMove);
 
+    const Score probcutBeta = beta + 220;
+
     Score eval;
     Move bestMove = MOVE_NONE;
     Score bestScore = -SCORE_INFINITE;
@@ -740,6 +742,45 @@ namespace Search {
     if ((IsPV || cutNode) && depth >= 4 && !ttMove)
       depth --;
 
+    if (   !IsPV
+        && !excludedMove
+        && depth >= 5
+        && std::abs(beta) < TB_WIN_IN_MAX_PLY
+        && !(ttDepth >= depth - 3 && ttScore < probcutBeta))
+    {
+      int pcSeeMargin = (probcutBeta - ss->staticEval) * 10 / 16;
+      bool visitTTMove = ttMove && !pos.isQuiet(ttMove) && pos.see_ge(ttMove, pcSeeMargin);
+
+      MovePicker pcMovePicker(
+        PROBCUT, pos,
+        visitTTMove ? ttMove : MOVE_NONE, MOVE_NONE, MOVE_NONE,
+        mainHistory, captureHistory,
+        pcSeeMargin,
+        ss);
+
+      Move move;
+      MpStage moveStage;
+
+      while (move = pcMovePicker.nextMove(&moveStage)) {
+        if (!pos.isLegal(move))
+          continue;
+
+        Position newPos = pos;
+        playMove(newPos, move, ss);
+
+        Score score = -qsearch<false>(newPos, -probcutBeta, -probcutBeta + 1, ss + 1);
+
+        // Do a normal search if qsearch was positive
+        if (score >= probcutBeta)
+          score = -negaMax<false>(newPos, -probcutBeta, -probcutBeta + 1, depth - 4, !cutNode, ss + 1);
+
+        cancelMove();
+
+        if (score >= probcutBeta)
+          return score;
+      }
+    }
+
   moves_loop:
 
     // Generate moves and score them
@@ -760,7 +801,7 @@ namespace Search {
     }
 
     MovePicker movePicker(
-      false, pos,
+      PVS, pos,
       ttMove, ss->killerMove, counterMove,
       mainHistory, captureHistory,
       MpPvsSeeMargin,
