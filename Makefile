@@ -42,7 +42,7 @@ make: $(FILES)
 	$(EXE) bench
 	$(COMMAND) -fprofile-use="obs_pgo"
 	rmdir /s /q obs_pgo
-  
+
 else
 
 make: $(FILES)
@@ -52,3 +52,6 @@ make: $(FILES)
 	rm -rf obs_pgo
 
 endif
+
+nopgo: $(FILES)
+	$(COMMAND)

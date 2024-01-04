@@ -10,7 +10,7 @@
 
 using namespace std;
 
-const string engineVersion = "dev-9.19";
+const string engineVersion = "dev-9.20";
 
 using Key = uint64_t;
 using Bitboard = uint64_t;
