@@ -33,5 +33,25 @@ ifeq ($(NATIVE), true)
 	ARCH = -march=native
 endif
 
+COMMAND = g++ $(ARCH) $(OPTIMIZE) $(FLAGS) $(DEFINITIONS) $(FILES) -o $(EXE)
+
+ifeq ($(OS),Windows_NT)
+
 make: $(FILES)
-	g++ $(ARCH) $(OPTIMIZE) $(FLAGS) $(DEFINITIONS) $(FILES) -o $(EXE)
+	$(COMMAND) -fprofile-generate="obs_pgo"
+	$(EXE) bench
+	$(COMMAND) -fprofile-use="obs_pgo"
+	rmdir /s /q obs_pgo
+
+else
+
+make: $(FILES)
+	$(COMMAND) -fprofile-generate="obs_pgo"
+	./$(EXE) bench
+	$(COMMAND) -fprofile-use="obs_pgo"
+	rm -rf obs_pgo
+
+endif
+
+nopgo: $(FILES)
+	$(COMMAND)
