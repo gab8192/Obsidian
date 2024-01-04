@@ -916,7 +916,7 @@ namespace Search {
             R -= std::clamp(getHistoryScore(pos, move, ss) / LmrHistoryDiv, -2, 2);
         }
         else {
-          R = lmrTable[depth][playedMoves + 1];
+          R = 1;
           
           R += (moveStage == BAD_CAPTURES);
         }
