@@ -934,6 +934,13 @@ namespace Search {
         score = -negaMax<false>(newPos, -alpha - 1, -alpha, reducedDepth, true, ss + 1);
 
         needFullSearch = score > alpha && reducedDepth < newDepth;
+
+        if (needFullSearch) {
+          if (score > bestScore + 80) 
+            newDepth++;
+          else if (score < bestScore + newDepth)
+            newDepth--;
+        }
       }
       else
         needFullSearch = !IsPV || playedMoves >= 1;
