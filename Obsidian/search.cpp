@@ -1044,15 +1044,7 @@ namespace Search {
       ttStaticEval = ttEntry->getStaticEval();
     }
 
-    Move ttMove;
-
-    if (depth > 1)
-      ttMove = ss->pv[0];
-    else
-      ttMove = ttHit ? ttEntry->getMove() : MOVE_NONE;
-
-    if (!pos.isPseudoLegal(ttMove))
-      ttMove = MOVE_NONE;
+    Move ttMove = depth > 1 ? ss->pv[0] : MOVE_NONE;
 
     bool ttMoveNoisy = ttMove && !pos.isQuiet(ttMove);
 
