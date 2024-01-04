@@ -225,10 +225,12 @@ void UCI::loop(int argc, char* argv[]) {
     else if (token == "d")        cout << pos << endl;
     else if (token == "tune")     cout << paramsToSpsaInput();
     else if (token == "eval") {
+      pos.updateAccumulator(tempAccumulator);
       Score eval = Eval::evaluate(pos, tempAccumulator);
       if (pos.sideToMove == BLACK)
         eval = -eval;
-      cout << "Evaluation: " << UCI::normalizeToCp(eval) << endl;
+      cout << "Evaluation: " << UCI::normalizeToCp(eval) 
+           << "  (not normalized: " << eval << ")" << endl;
     }
     else if (!token.empty() && token[0] != '#')
       cout << "Unknown command: '" << cmd << "'." << endl;
