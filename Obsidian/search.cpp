@@ -1087,8 +1087,6 @@ namespace Search {
 
     MoveList moves = rootMoves;
 
-    scoreRootMoves(pos, moves, ttMove, ss);
-
     bool foundLegalMove = false;
 
     int playedMoves = 0;
@@ -1170,6 +1168,9 @@ namespace Search {
       playedMoves++;
       
       rootMoves[rootMoves.indexOf(move)].nodes += nodesSearched - oldNodesCount;
+
+      if (score > alpha || playedMoves == 1)
+        rootMoves[rootMoves.indexOf(move)].score =  score;
 
       if (score > bestScore) {
         bestScore = score;
@@ -1320,6 +1321,8 @@ namespace Search {
       bestMove = rootMoves[0].move;
       goto bestMoveDecided;
     }
+
+    scoreRootMoves(rootPos, rootMoves, MOVE_NONE, ss);
 
     for (int i = 0; i < rootMoves.size(); i++)
       rootMoves[i].nodes = 0;
