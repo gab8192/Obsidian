@@ -461,6 +461,9 @@ namespace Search {
         alpha = bestScore;
     }
 
+    if (bestScore + 500  < alpha)
+      return bestScore;
+
     // Visiting the tt move when it is quiet, and stm is not check, loses ~300 Elo
 
     bool visitTTMove = (pos.checkers || !pos.isQuiet(ttMove));
