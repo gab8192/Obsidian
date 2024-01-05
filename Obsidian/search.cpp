@@ -920,8 +920,7 @@ namespace Search {
           R += (moveStage == BAD_CAPTURES);
         }
 
-        if (newPos.checkers)
-          R --;
+        R -= (newPos.checkers != 0ULL);
 
         R -= IsPV;
 
