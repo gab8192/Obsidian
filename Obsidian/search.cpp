@@ -909,11 +909,10 @@ namespace Search {
           R += ttMoveNoisy;
 
           // Do less reduction for killer and counter move (~4 Elo)
-          if (moveStage == KILLER || moveStage == COUNTER)
-            R -= 2;
+          R -= (moveStage == KILLER || moveStage == COUNTER);
+
           // Reduce or extend depending on history of this quiet move (~12 Elo)
-          else 
-            R -= std::clamp(getHistoryScore(pos, move, ss) / LmrHistoryDiv, -2, 2);
+          R -= std::clamp(getHistoryScore(pos, move, ss) / LmrHistoryDiv, -2, 2);
         }
         else {
           R = 0;
