@@ -696,10 +696,10 @@ namespace Search {
     }
 
     // Calculate whether the evaluation here is worse or better than it was 2 plies ago
-    if ((ss - 2)->staticEval != SCORE_NONE)
+    if ((ss - 1)->staticEval != SCORE_NONE)
+      improving = ss->staticEval > - (ss - 1)->staticEval;
+    else if ((ss - 2)->staticEval != SCORE_NONE)
       improving = ss->staticEval > (ss - 2)->staticEval;
-    else if ((ss - 4)->staticEval != SCORE_NONE)
-      improving = ss->staticEval > (ss - 4)->staticEval;
 
     // Razoring. When evaluation is far below alpha, we could probably only catch up with a capture,
     // thus do a qsearch. If the qsearch still can't hit alpha, cut off
