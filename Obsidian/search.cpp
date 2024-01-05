@@ -777,7 +777,8 @@ namespace Search {
         cancelMove();
 
         if (score >= probcutBeta) {
-          ttEntry->store(pos.key, TT::FLAG_LOWER, depth - 4, move, score, ss->staticEval, false, ply);
+          // We played a move before the child search, so actual depth is depth - 3
+          ttEntry->store(pos.key, TT::FLAG_LOWER, depth - 3, move, score, ss->staticEval, false, ply);
           return score;
         }
       }
