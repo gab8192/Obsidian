@@ -776,8 +776,10 @@ namespace Search {
 
         cancelMove();
 
-        if (score >= probcutBeta)
+        if (score >= probcutBeta) {
+          ttEntry->store(pos.key, TT::FLAG_LOWER, depth - 4, move, score, ss->staticEval, false, ply);
           return score;
+        }
       }
     }
 
