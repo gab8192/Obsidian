@@ -437,6 +437,7 @@ namespace Search {
 
     Move bestMove = MOVE_NONE;
     Score bestScore;
+    Score futilityScore = SCORE_NONE;
 
     // Do the static evaluation
 
@@ -454,6 +455,8 @@ namespace Search {
       // When tt bound allows it, use ttScore as a better standing pat
       if (ttFlag & flagForTT(ttScore > bestScore))
         bestScore = ttScore;
+
+      futilityScore = bestScore + 90;
 
       if (bestScore >= beta)
         return bestScore;
@@ -492,6 +495,13 @@ namespace Search {
         continue;
 
       foundLegalMoves = true;
+
+      if (bestScore > TB_LOSS_IN_MAX_PLY) {
+        if (!pos.checkers && futilityScore <= alpha && !pos.see_ge(move, 1)) {
+          bestScore = std::max(bestScore, futilityScore);
+          continue;
+        }
+      }
 
       Position newPos = pos;
       playMove(newPos, move, ss);
