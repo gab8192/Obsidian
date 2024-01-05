@@ -1132,11 +1132,13 @@ namespace Search {
 
       bool needFullSearch;
 
-      if (depth >= 3 && playedMoves > 3) {
+      if (depth >= 3 && playedMoves >= 2) {
         int R;
 
         if (isQuiet) {
           R = lmrTable[depth][playedMoves + 1];
+
+          R -= std::clamp(getHistoryScore(pos, move, ss) / LmrHistoryDiv, -2, 2);
         }
         else {
           R = 0;
