@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "net7.bin"
+#define EvalFile "unquantized.bin"
 
 using namespace SIMD;
 
@@ -15,7 +15,7 @@ struct DirtyPiece {
 
 namespace NNUE {
 
-  using weight_t = int16_t;
+  using weight_t = float;
 
   constexpr int FeaturesWidth = 768;
   constexpr int HiddenWidth = 1536;

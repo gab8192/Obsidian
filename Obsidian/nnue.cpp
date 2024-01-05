@@ -32,7 +32,7 @@ namespace NNUE {
     Vec* weightsVec = (Vec*)Content.FeatureWeights;
 
     for (int i = 0; i < InputSize / WeightsPerVec; ++i)
-      outputVec[i] = addEpi16(inputVec[i], weightsVec[offset + i]);
+      outputVec[i] = _mm256_add_ps(inputVec[i], weightsVec[offset + i]);
   }
 
   template <int InputSize>
@@ -45,7 +45,7 @@ namespace NNUE {
     Vec* weightsVec = (Vec*)Content.FeatureWeights;
 
     for (int i = 0; i < InputSize / WeightsPerVec; ++i)
-      outputVec[i] = subEpi16(inputVec[i], weightsVec[offset + i]);
+      outputVec[i] = _mm256_sub_ps(inputVec[i], weightsVec[offset + i]);
   }
 
   template <int InputSize>
@@ -58,7 +58,7 @@ namespace NNUE {
     Vec* weightsVec = (Vec*)Content.FeatureWeights;
 
     for (int i = 0; i < InputSize / WeightsPerVec; ++i)
-      outputVec[i] = subEpi16(addEpi16(inputVec[i], weightsVec[addOff + i]), weightsVec[subtractOff + i]);
+      outputVec[i] = _mm256_sub_ps(_mm256_add_ps(inputVec[i], weightsVec[addOff + i]), weightsVec[subtractOff + i]);
   }
 
 
@@ -114,31 +114,31 @@ namespace NNUE {
     Vec* stmWeights = (Vec*) &Content.OutputWeights[0];
     Vec* oppWeights = (Vec*) &Content.OutputWeights[HiddenWidth];
 
-    const Vec reluClipMin = vecSetZero();
-    const Vec reluClipMax = vecSet1Epi16(NetworkQA);
+    const Vec reluClipMin = _mm256_setzero_ps();
+    const Vec reluClipMax = _mm256_set1_ps(1.0);
 
-    Vec sum = vecSetZero();
+    Vec sum = _mm256_setzero_ps();
     Vec reg;
 
     for (int i = 0; i < HiddenWidth / WeightsPerVec; ++i) {
       // Side to move
-      reg = maxEpi16(stmAcc[i], reluClipMin); // clip
-      reg = minEpi16(reg, reluClipMax); // clip
-      reg = mulloEpi16(reg, reg); // square
-      reg = maddEpi16(reg, stmWeights[i]); // multiply with output layer
-      sum = addEpi32(sum, reg); // collect the result
+      reg = _mm256_max_ps(stmAcc[i], reluClipMin); // clip
+      reg = _mm256_min_ps(reg, reluClipMax); // clip
+      reg = _mm256_mul_ps(reg, reg); // square
+      reg = _mm256_mul_ps(reg, stmWeights[i]); // multiply with output weight
+      sum = _mm256_add_ps(sum, reg); // collect the result
 
       // Non side to move
-      reg = maxEpi16(oppAcc[i], reluClipMin);
-      reg = minEpi16(reg, reluClipMax);
-      reg = mulloEpi16(reg, reg);
-      reg = maddEpi16(reg, oppWeights[i]);
-      sum = addEpi32(sum, reg);
+      reg = _mm256_max_ps(oppAcc[i], reluClipMin);
+      reg = _mm256_min_ps(reg, reluClipMax);
+      reg = _mm256_mul_ps(reg, reg);
+      reg = _mm256_mul_ps(reg, oppWeights[i]);
+      sum = _mm256_add_ps(sum, reg);
     }
 
-    int unsquared = vecHaddEpi32(sum) / NetworkQA + Content.OutputBias;
+    float result = vecHaddPs(sum) + Content.OutputBias;
 
-    return Score((unsquared * NetworkScale) / NetworkQAB);
+    return Score(result * 400.0f);
   }
 
 }

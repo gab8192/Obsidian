@@ -52,8 +52,9 @@ namespace SIMD {
 
 #elif defined(USE_AVX2)
 
-  using Vec = __m256i;
+  using Vec = __m256;
 
+/*
   inline Vec addEpi16(Vec x, Vec y) {
     return _mm256_add_epi16(x, y);
   }
@@ -115,6 +116,12 @@ namespace SIMD {
 
     // Cast the result to the 32-bit integer type and return it:
     return _mm_cvtsi128_si32(xmm0);
+  }*/
+
+  inline float vecHaddPs(Vec vec) {
+    vec = _mm256_hadd_ps(vec, vec);
+    float* asArray = (float*) &vec;
+    return asArray[0] + asArray[1] + asArray[4] + asArray[5];
   }
 
 #else
