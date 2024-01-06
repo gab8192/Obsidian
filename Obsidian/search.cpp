@@ -924,7 +924,9 @@ namespace Search {
 
         R -= (newPos.checkers != 0ULL);
 
-        R -= ttPV;
+        // If this node *was* in PV, reduce less. Even less if this node *is* PV
+        if (ttPV)
+          R -= (1 + IsPV);
 
         R += 2 * cutNode;
 
