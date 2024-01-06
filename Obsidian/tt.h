@@ -5,20 +5,21 @@
 
 namespace TT {
 
-  enum Flag : uint8_t {
-    NO_FLAG = 0,
+  using Flag = uint8_t;
 
+  constexpr Flag 
+    NO_FLAG = 0,
     FLAG_LOWER = 1,
     FLAG_UPPER = 2,
-    FLAG_EXACT = FLAG_LOWER | FLAG_UPPER
-  };
+    FLAG_EXACT = FLAG_LOWER | FLAG_UPPER,
+    FLAG_PV = 4;
 
 #pragma pack(1)
   struct Entry {
 
-    inline void store(Key _key, Flag _flag, int _depth, Move _move, Score _score, Score _eval, bool isPV, int ply) {
+    inline void store(Key _key, Flag _bound, int _depth, Move _move, Score _score, Score _eval, bool isPV, int ply) {
 
-      if (   _flag == FLAG_EXACT
+      if (   _bound == FLAG_EXACT
           || !matches(_key)
           || _depth + 4 + 2*isPV > this->depth) {
 
@@ -31,10 +32,12 @@ namespace TT {
           this->move = _move;
 
         this->key32 = (uint32_t) _key;
-        this->flag = _flag;
         this->depth = _depth;
         this->score = _score;
         this->staticEval = _eval;
+        this->flags = _bound;
+        if (isPV)
+          this->flags |= FLAG_PV;
       }
 
     }
@@ -50,12 +53,15 @@ namespace TT {
     inline int getDepth() const {
       return depth;
     }
-    inline Flag getFlag() const {
-      return flag;
+
+    inline Flag getBound() const {
+      return flags & FLAG_EXACT;
     }
+
     inline Move getMove() const {
       return Move(move);
     }
+
     inline Score getScore(int ply) const {
       if (score == SCORE_NONE)
         return SCORE_NONE;
@@ -68,10 +74,14 @@ namespace TT {
       return Score(score);
     }
 
+    inline bool wasPV() const {
+      return flags & FLAG_PV;
+    }
+
     inline void clear() {
       key32 = 0xcafe;
       depth = -1;
-      flag = NO_FLAG;
+      flags = NO_FLAG;
       move = MOVE_NONE;
       score = SCORE_NONE;
       staticEval = SCORE_NONE;
@@ -80,7 +90,7 @@ namespace TT {
   private:
     uint32_t key32;
     int16_t staticEval;
-    Flag flag;
+    Flag flags;
     uint8_t depth;
     uint16_t move;
     int16_t score;
