@@ -924,7 +924,7 @@ namespace Search {
 
         R -= (newPos.checkers != 0ULL);
 
-        R -= IsPV;
+        R -= ttPV;
 
         R += 2 * cutNode;
 
