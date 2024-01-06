@@ -335,7 +335,7 @@ namespace Search {
     return result;
   }
 
-  TT::Flag flagForTT(bool failsHigh) {
+  TT::Flag boundForTT(bool failsHigh) {
     return failsHigh ? TT::FLAG_LOWER : TT::FLAG_UPPER;
   }
 
@@ -417,13 +417,13 @@ namespace Search {
     // Probe TT
     bool ttHit;
     TT::Entry* ttEntry = TT::probe(pos.key, ttHit);
-    TT::Flag ttFlag = TT::NO_FLAG;
+    TT::Flag ttBound = TT::NO_FLAG;
     Score ttScore = SCORE_NONE;
     Move ttMove = MOVE_NONE;
     Score ttStaticEval = SCORE_NONE;
 
     if (ttHit) {
-      ttFlag = ttEntry->getFlag();
+      ttBound = ttEntry->getBound();
       ttScore = ttEntry->getScore(ply);
       ttMove = ttEntry->getMove();
       ttStaticEval = ttEntry->getStaticEval();
@@ -431,7 +431,7 @@ namespace Search {
 
     // In non PV nodes, if tt bound allows it, return ttScore
     if (!IsPV) {
-      if (ttFlag & flagForTT(ttScore >= beta))
+      if (ttBound & boundForTT(ttScore >= beta))
         return ttScore;
     }
 
@@ -452,7 +452,7 @@ namespace Search {
         bestScore = ss->staticEval = Eval::evaluate(pos, accumStack[accumStackHead]);
 
       // When tt bound allows it, use ttScore as a better standing pat
-      if (ttFlag & flagForTT(ttScore > bestScore))
+      if (ttBound & boundForTT(ttScore > bestScore))
         bestScore = ttScore;
 
       if (bestScore >= beta)
@@ -520,7 +520,7 @@ namespace Search {
 
     ttEntry->store(pos.key,
       bestScore >= beta ? TT::FLAG_LOWER : TT::FLAG_UPPER,
-      0, bestMove, bestScore, ss->staticEval, false, ply);
+      0, bestMove, bestScore, ss->staticEval, ttHit && ttEntry->wasPV(), ply);
 
     return bestScore;
   }
@@ -599,18 +599,20 @@ namespace Search {
     bool ttHit;
     TT::Entry* ttEntry = TT::probe(pos.key, ttHit);
 
-    TT::Flag ttFlag = TT::NO_FLAG;
+    TT::Flag ttBound = TT::NO_FLAG;
     Score ttScore   = SCORE_NONE;
     Move ttMove     = MOVE_NONE;
     int ttDepth     = -1;
     Score ttStaticEval = SCORE_NONE;
+    bool ttPV = IsPV;
 
     if (ttHit) {
-      ttFlag = ttEntry->getFlag();
+      ttBound = ttEntry->getBound();
       ttScore = ttEntry->getScore(ply);
       ttMove = ttEntry->getMove();
       ttDepth = ttEntry->getDepth();
       ttStaticEval = ttEntry->getStaticEval();
+      ttPV |= ttEntry->wasPV();
     }
 
     const bool ttMoveNoisy = ttMove && !pos.isQuiet(ttMove);
@@ -627,7 +629,7 @@ namespace Search {
       && !excludedMove
       && ttDepth >= depth) 
     {
-      if (ttFlag & flagForTT(ttScore >= beta))
+      if (ttBound & boundForTT(ttScore >= beta))
         return ttScore;
     }
 
@@ -654,7 +656,7 @@ namespace Search {
       }
 
       if ((tbBound == TT::FLAG_EXACT) || (tbBound == TT::FLAG_LOWER ? tbScore >= beta : tbScore <= alpha)) {
-        ttEntry->store(pos.key, tbBound, depth, MOVE_NONE, tbScore, SCORE_NONE, true, ply);
+        ttEntry->store(pos.key, tbBound, depth, MOVE_NONE, tbScore, SCORE_NONE, ttPV, ply);
         return tbScore;
       }
 
@@ -691,7 +693,7 @@ namespace Search {
         ss->staticEval = eval = Eval::evaluate(pos, accumStack[accumStackHead]);
 
       // When tt bound allows it, use ttScore as a better evaluation
-      if (ttFlag & flagForTT(ttScore > eval))
+      if (ttBound & boundForTT(ttScore > eval))
         eval = ttScore;
     }
 
@@ -858,7 +860,7 @@ namespace Search {
         && !excludedMove
         && move == ttMove
         && abs(ttScore) < TB_WIN_IN_MAX_PLY
-        && ttFlag & TT::FLAG_LOWER
+        && ttBound & TT::FLAG_LOWER
         && ttDepth >= depth - 3) 
       {
         Score singularBeta = ttScore - depth;
@@ -1024,7 +1026,7 @@ namespace Search {
       else
         flag = (IsPV && bestMove) ? TT::FLAG_EXACT : TT::FLAG_UPPER;
 
-      ttEntry->store(pos.key, flag, depth, bestMove, bestScore, ss->staticEval, IsPV, ply);
+      ttEntry->store(pos.key, flag, depth, bestMove, bestScore, ss->staticEval, ttPV, ply);
     }
 
     return bestScore;
@@ -1039,12 +1041,12 @@ namespace Search {
     bool ttHit;
     TT::Entry* ttEntry = TT::probe(pos.key, ttHit);
 
-    TT::Flag ttFlag = TT::NO_FLAG;
+    TT::Flag ttBound = TT::NO_FLAG;
     Score ttScore = SCORE_NONE;
     Score ttStaticEval = SCORE_NONE;
 
     if (ttHit) {
-      ttFlag = ttEntry->getFlag();
+      ttBound = ttEntry->getBound();
       ttScore = ttEntry->getScore(ply);
       ttStaticEval = ttEntry->getStaticEval();
     }
@@ -1082,7 +1084,7 @@ namespace Search {
         ss->staticEval = eval = Eval::evaluate(pos, accumStack[accumStackHead]);
 
       // When tt bound allows it, use ttScore as a better evaluation
-      if (ttFlag & flagForTT(ttScore > eval))
+      if (ttBound & boundForTT(ttScore > eval))
         eval = ttScore;
     }
 
