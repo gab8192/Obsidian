@@ -420,6 +420,10 @@ namespace Search {
     if (ply >= MAX_PLY-4)
       return pos.checkers ? DRAW : Eval::evaluate(pos, accumStack[accumStackHead]);
 
+    // Detect draw
+    if (isRepetition(pos, ply) || pos.halfMoveClock >= 100)
+      return makeDrawScore();
+
     // Probe TT
     bool ttHit;
     TT::Entry* ttEntry = TT::probe(pos.key, ttHit);
@@ -582,12 +586,12 @@ namespace Search {
         return alpha;
     }
 
-    if (isRepetition(pos, ply) || pos.halfMoveClock >= 100)
-      return makeDrawScore();
-
     // Enter qsearch when depth is 0
     if (depth <= 0)
       return qsearch<IsPV>(pos, alpha, beta, ss);
+
+    if (isRepetition(pos, ply) || pos.halfMoveClock >= 100)
+      return makeDrawScore();
 
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY - 4)
