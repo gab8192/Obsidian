@@ -4,8 +4,6 @@
 
 #include <immintrin.h>
 
-int blmain();
-
 inline Square getLsb(Bitboard bb) {
   return Square(_tzcnt_u64(bb));
 }
@@ -73,6 +71,9 @@ constexpr Bitboard RANKS_BB[FILE_NB] = {
     Rank7BB,
     Rank8BB };
 
+extern Bitboard BetweenBB[SQUARE_NB][SQUARE_NB];
+extern Bitboard LineBB[SQUARE_NB][SQUARE_NB];
+
 constexpr bool more_than_one(Bitboard bb) {
   return bb & (bb - 1);
 }
@@ -87,49 +88,13 @@ inline Bitboard rank_bb(Square sqr) {
 
 void printBitboard(Bitboard bitboard);
 
-#if defined(USE_PEXT)
-
-extern Bitboard* BishopAttacks[SQUARE_NB];
-extern Bitboard* RookAttacks[SQUARE_NB];
-
-extern Bitboard BishopTable[5248];
-extern Bitboard RookTable[102400];
-
-#else
-
-extern Bitboard BishopAttacks[64][512];
-extern Bitboard RookAttacks[64][4096];
-
-#endif
-
-// masks
-
-extern Bitboard RookMasks[SQUARE_NB];
-extern Bitboard BishopMasks[SQUARE_NB];
-
-extern Bitboard king_attacks[SQUARE_NB];
-extern Bitboard knight_attacks[SQUARE_NB];
-
-/*
-* The 2 squares diagonal to the pawn, which he can capture
-*/
-extern Bitboard pawn_attacks[COLOR_NB][SQUARE_NB];
-
-
-extern Bitboard BetweenBB[SQUARE_NB][SQUARE_NB];
-extern Bitboard LineBB[SQUARE_NB][SQUARE_NB];
-
 Bitboard get_bishop_attacks(Square s, Bitboard occupied) ;
 
-inline Bitboard get_bishop_attacks(Square s) {
-  return BishopAttacks[s][0];
-}
+Bitboard get_bishop_attacks(Square s);
 
 Bitboard get_rook_attacks(Square s, Bitboard occupied);
 
-inline Bitboard get_rook_attacks(Square s) {
-  return RookAttacks[s][0];
-}
+Bitboard get_rook_attacks(Square s);
 
 inline Bitboard get_queen_attacks(Square s) {
   return get_bishop_attacks(s) | get_rook_attacks(s);
@@ -139,17 +104,11 @@ inline Bitboard get_queen_attacks(Square s, Bitboard occupied) {
   return get_bishop_attacks(s, occupied) | get_rook_attacks(s, occupied);
 }
 
-inline Bitboard get_king_attacks(Square square) {
-  return king_attacks[square];
-}
+Bitboard get_king_attacks(Square square);
 
-inline Bitboard get_knight_attacks(Square square) {
-  return knight_attacks[square];
-}
+Bitboard get_knight_attacks(Square square);
 
-inline Bitboard get_pawn_attacks(Square square, Color pawnColor) {
-  return pawn_attacks[pawnColor][square];
-}
+Bitboard get_pawn_attacks(Square square, Color pawnColor);
 
 inline Bitboard get_piece_attacks(PieceType pt, Square s, Bitboard occupied) {
   switch (pt) {
@@ -165,7 +124,7 @@ inline Bitboard get_piece_attacks(PieceType pt, Square s, Bitboard occupied) {
 void bitboardsInit();
 
 // rook magic numbers
-constexpr Bitboard rook_magics[64] = {
+constexpr Bitboard RookMagics[64] = {
     0xa8002c000108020ULL,
     0x6c00049b0002001ULL,
     0x100200010090040ULL,
