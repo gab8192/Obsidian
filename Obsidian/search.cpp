@@ -53,7 +53,8 @@ namespace Search {
   DEFINE_PARAM(DoubleExtMargin, 16, 0, 40);
   DEFINE_PARAM(DoubleExtMax, 6, 0, 40);
 
-  DEFINE_PARAM(LmrHistoryDiv, 9847, 4000, 16000);
+  DEFINE_PARAM(LmrQuietHistoryDiv, 9847, 4000, 16000);
+  DEFINE_PARAM(LmrCapHistoryDiv, 8192, 4000, 16000);
 
   DEFINE_PARAM(AspWindowStartDepth, 5, 4, 34);
   DEFINE_PARAM(AspWindowStartDelta, 11, 5, 45);
@@ -242,7 +243,12 @@ namespace Search {
     0, 0, 400000, -100001, -100000, 410000
   };
 
-  int SearchThread::getHistoryScore(Position& pos, Move move, SearchInfo* ss) {
+  int SearchThread::getCapHistory(Position& pos, Move move) {
+    PieceType captured = ptypeOf(pos.board[move_to(move)]);
+    return captureHistory[pieceTo(pos, move)][captured];
+  }
+
+  int SearchThread::getQuietHistory(Position& pos, Move move, SearchInfo* ss) {
     int chIndex = pieceTo(pos, move);
     return    mainHistory[pos.sideToMove][move_from_to(move)]
             + (ss - 1)->contHistory()[chIndex]
@@ -308,7 +314,7 @@ namespace Search {
       else if (captured || mt == MT_EN_PASSANT) {
         moveScore = pos.see_ge(move, -10) ? 300000 : -200000;
         moveScore += PieceValue[mt == MT_EN_PASSANT ? PAWN : captured] * 64;
-        moveScore += captureHistory[pieceTo(pos, move)][captured];
+        moveScore += getCapHistory(pos, move);
       }
       else
         moveScore = mainHistory[pos.sideToMove][move_from_to(move)];
@@ -914,19 +920,19 @@ namespace Search {
           R -= (moveStage == KILLER || moveStage == COUNTER);
 
           // Reduce or extend depending on history of this quiet move (~12 Elo)
-          R -= std::clamp(getHistoryScore(pos, move, ss) / LmrHistoryDiv, -2, 2);
+          R -= std::clamp(getQuietHistory(pos, move, ss) / LmrQuietHistoryDiv, -2, 2);
         }
         else {
-          R = 1;
+          R = 0;
           
           R += (moveStage == BAD_CAPTURES);
+
+          R -= getCapHistory(pos, move) / LmrCapHistoryDiv;
         }
 
         R -= (newPos.checkers != 0ULL);
 
-        // If this node *was* in PV, reduce less. Even less if this node *is* PV
-        if (ttPV)
-          R -= (1 + IsPV);
+        R -= IsPV;
 
         R += 2 * cutNode;
 
