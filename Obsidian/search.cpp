@@ -921,6 +921,8 @@ namespace Search {
           // Reduce more if the expected best move is a capture (~6 Elo)
           R += ttMoveNoisy;
 
+          R += 2 * cutNode;
+
           // Extend killer and counter move (~4 Elo)
           R -= (moveStage == KILLER || moveStage == COUNTER);
 
@@ -932,14 +934,14 @@ namespace Search {
           
           R += (moveStage == BAD_CAPTURES);
 
+          R += cutNode;
+
           R -= getCapHistory(pos, move) / LmrCapHistoryDiv;
         }
 
         R -= (newPos.checkers != 0ULL);
 
         R -= IsPV;
-
-        R += 2 * cutNode;
 
         // Do the clamp to avoid a qsearch or an extension in the child search
         int reducedDepth = std::clamp(newDepth - R, 1, newDepth + 1);
