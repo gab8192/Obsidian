@@ -31,8 +31,9 @@ namespace NNUE {
     Vec* outputVec = (Vec*)output;
     Vec* weightsVec = (Vec*)Content.FeatureWeights;
 
-    for (int i = 0; i < InputSize / WeightsPerVec; ++i)
+    for (int i = 0; i < InputSize / WeightsPerVec; ++i) {
       outputVec[i] = addEpi16(inputVec[i], weightsVec[offset + i]);
+    }
   }
 
   template <int InputSize>
@@ -57,8 +58,17 @@ namespace NNUE {
     Vec* outputVec = (Vec*)output;
     Vec* weightsVec = (Vec*)Content.FeatureWeights;
 
-    for (int i = 0; i < InputSize / WeightsPerVec; ++i)
-      outputVec[i] = subEpi16(addEpi16(inputVec[i], weightsVec[addOff + i]), weightsVec[subtractOff + i]);
+    constexpr int NUM_REGS = 4;
+
+    Vec regs[NUM_REGS];
+
+    for (int i = 0; i < InputSize / WeightsPerVec; i += NUM_REGS) {
+      for (int j = 0; j < NUM_REGS; j++)
+        regs[j] = addEpi16(inputVec[i+j], weightsVec[addOff + i + j]);
+
+      for (int j = 0; j < NUM_REGS; j++)
+        outputVec[i+j] = subEpi16(regs[j], weightsVec[subtractOff + i + j]);
+    }
   }
 
 
