@@ -10,7 +10,7 @@ OPTIMIZE = -O3 -fno-stack-protector -fno-math-errno -funroll-loops -fno-exceptio
 
 FLAGS = -s -pthread -std=c++17 -flto
 
-DEFINITIONS = -DNDEBUG -D_CONSOLE
+DEFINITIONS = -DNDEBUG -D_CONSOLE -DUSE_PEXT
 
 NATIVE = false
 
