@@ -13,10 +13,6 @@
 #include <cmath>
 #include <sstream>
 
-#ifdef USE_AVX2
-#include <immintrin.h>
-#endif
-
 namespace Search {
 
   DEFINE_PARAM(MpPvsSeeMargin, -43, -400, 0);

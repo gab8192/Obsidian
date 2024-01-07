@@ -6,7 +6,7 @@
 
 namespace SIMD {
 
-#if defined(USE_AVX512)
+#if defined(__AVX512F__) && defined(__AVX512BW__)
 
   using Vec = __m512i;
 
@@ -50,7 +50,7 @@ namespace SIMD {
     return _mm512_reduce_add_epi32(vec);
   }
 
-#elif defined(USE_AVX2)
+#elif defined(__AVX2__)
 
   using Vec = __m256i;
 

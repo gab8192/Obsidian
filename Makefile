@@ -8,34 +8,34 @@ FILES = Obsidian/*.cpp Obsidian/fathom/tbprobe.c
 
 OPTIMIZE = -O3 -fno-stack-protector -fno-math-errno -funroll-loops -fno-exceptions
 
-FLAGS = -s -pthread -std=c++17 -flto
-
-DEFINITIONS = -DNDEBUG -D_CONSOLE -DUSE_PEXT
-
-NATIVE = false
+FLAGS = -s -pthread -std=c++17 -flto -DNDEBUG
 
 ifeq ($(build),)
-	build = avx2
-	NATIVE = true
+	build = native
 endif
 
 ifeq ($(build), avx512)
-	DEFINITIONS += -DUSE_AVX512
-    ARCH = -march=skylake-avx512
+    FLAGS += -march=skylake-avx512
+else ifeq ($(build), avx2)
+	FLAGS += -march=haswell
+else ifeq ($(build), native)
+	FLAGS += -march=native
 endif
 
-ifeq ($(build), avx2)
-	DEFINITIONS += -DUSE_AVX2
-	ARCH = -march=haswell
+ifeq ($(build), native)
+	PROPS = $(shell echo | $(CC) -march=native -E -dM -)
+	ifneq ($(findstring __BMI2__, $(PROPS)),)
+		ifeq ($(findstring __znver1, $(PROPS)),)
+			ifeq ($(findstring __znver2, $(PROPS)),)
+				FLAGS += -DUSE_PEXT
+			endif
+		endif
+	endif
+else ifeq ($(findstring bmi2, $(build)), bmi2)
+	FLAGS += -DUSE_PEXT -mbmi2
 endif
 
-ifeq ($(NATIVE), true)
-	ARCH = -march=native
-endif
-
-COMMAND = g++ $(ARCH) $(OPTIMIZE) $(FLAGS) $(DEFINITIONS) $(FILES) -o $(EXE)
-
-
+COMMAND = g++ $(OPTIMIZE) $(FLAGS) $(FILES) -o $(EXE)
 
 make: $(FILES)
 	$(COMMAND) -fprofile-generate="obs_pgo"
