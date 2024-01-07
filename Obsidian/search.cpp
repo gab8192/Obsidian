@@ -420,6 +420,10 @@ namespace Search {
     if (ply >= MAX_PLY-4)
       return pos.checkers ? DRAW : Eval::evaluate(pos, accumStack[accumStackHead]);
 
+    // Detect draw
+    if (isRepetition(pos, ply) || pos.halfMoveClock >= 100)
+      return DRAW;
+
     // Probe TT
     bool ttHit;
     TT::Entry* ttEntry = TT::probe(pos.key, ttHit);
@@ -575,19 +579,20 @@ namespace Search {
     if (IsPV)
       ss->pvLength = ply;
 
-    // Detect draw
+    // Detect upcoming draw
     if (alpha < DRAW && hasUpcomingRepetition(pos, ply)) {
       alpha = makeDrawScore();
       if (alpha >= beta)
         return alpha;
     }
 
-    if (isRepetition(pos, ply) || pos.halfMoveClock >= 100)
-      return makeDrawScore();
-
     // Enter qsearch when depth is 0
     if (depth <= 0)
       return qsearch<IsPV>(pos, alpha, beta, ss);
+
+    // Detect draw
+    if (isRepetition(pos, ply) || pos.halfMoveClock >= 100)
+      return makeDrawScore();
 
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY - 4)
@@ -913,10 +918,10 @@ namespace Search {
 
           R += !improving;
 
-          // Reduce more if ttmove was noisy (~6 Elo)
+          // Reduce more if the expected best move is a capture (~6 Elo)
           R += ttMoveNoisy;
 
-          // Do less reduction for killer and counter move (~4 Elo)
+          // Extend killer and counter move (~4 Elo)
           R -= (moveStage == KILLER || moveStage == COUNTER);
 
           // Reduce or extend depending on history of this quiet move (~12 Elo)
