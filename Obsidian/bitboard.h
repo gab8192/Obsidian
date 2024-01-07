@@ -4,6 +4,8 @@
 
 #include <immintrin.h>
 
+int blmain();
+
 inline Square getLsb(Bitboard bb) {
   return Square(_tzcnt_u64(bb));
 }
@@ -104,17 +106,13 @@ extern Bitboard pawn_attacks[COLOR_NB][SQUARE_NB];
 extern Bitboard BetweenBB[SQUARE_NB][SQUARE_NB];
 extern Bitboard LineBB[SQUARE_NB][SQUARE_NB];
 
-inline Bitboard get_bishop_attacks(Square s, Bitboard occupied) {
-  return BishopAttacks[s][_pext_u64(occupied, BishopMasks[s])];
-}
+Bitboard get_bishop_attacks(Square s, Bitboard occupied) ;
 
 inline Bitboard get_bishop_attacks(Square s) {
   return BishopAttacks[s][0];
 }
 
-inline Bitboard get_rook_attacks(Square s, Bitboard occupied) {
-  return RookAttacks[s][_pext_u64(occupied, RookMasks[s])];
-}
+Bitboard get_rook_attacks(Square s, Bitboard occupied);
 
 inline Bitboard get_rook_attacks(Square s) {
   return RookAttacks[s][0];

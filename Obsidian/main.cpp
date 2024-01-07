@@ -19,6 +19,8 @@ int main(int argc, char** argv)
 
   zobristInit();
 
+  blmain();
+
   bitboardsInit();
 
   positionInit();
