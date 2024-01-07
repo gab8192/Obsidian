@@ -422,7 +422,7 @@ namespace Search {
 
     // Detect draw
     if (isRepetition(pos, ply) || pos.halfMoveClock >= 100)
-      return makeDrawScore();
+      return DRAW;
 
     // Probe TT
     bool ttHit;
