@@ -6,12 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// define bitboard type
-
-// bits manipulations
-#define get_bit(bitboard, square) (bitboard & (1ULL << square))
-#define set_bit(bitboard, square) (bitboard |= (1ULL << square))
-#define pop_bit(bitboard, square) (get_bit(bitboard, square) ? (bitboard ^= (1ULL << square)) : 0)
 
 // square encoding
 
@@ -37,19 +31,6 @@ int bishop_relevant_bits[64] = {
     6, 5, 5, 5, 5, 5, 5, 6
 };
 
-// get index of LS1B in bitboard
-int get_ls1b_index(Bitboard bitboard) {
-    // make sure bitboard is not empty
-    if (bitboard != 0)
-        // convert trailing zeros before LS1B to ones and count them
-        return BitCount((bitboard & -bitboard) - 1);
-    
-    // otherwise
-    else
-        // return illegal index
-        return -1;
-}
-
 // set occupancies
 Bitboard set_occupancy(int index, int bits_in_mask, Bitboard attack_mask)
 {
@@ -60,10 +41,7 @@ Bitboard set_occupancy(int index, int bits_in_mask, Bitboard attack_mask)
     for (int count = 0; count < bits_in_mask; count++)
     {
         // get LS1B index of attacks mask
-        int square = get_ls1b_index(attack_mask);
-        
-        // pop LS1B in attack map
-        pop_bit(attack_mask, square);
+        Square square = popLsb(attack_mask);
         
         // make sure occupancy is on board
         if (index & (1 << count))
@@ -367,7 +345,7 @@ void init_sliders_attacks(bool is_bishop)
         rook_masks[square] = mask_rook_attacks(square);
         
         // init current mask
-        Bitboard mask = is_bishop ? mask_bishop_attacks(square) : mask_rook_attacks(square);
+        Bitboard mask = is_bishop ? bishop_masks[square] : rook_masks[square];
         
         // count attack mask bits
         int bit_count = BitCount(mask);
