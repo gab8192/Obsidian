@@ -848,8 +848,7 @@ namespace Search {
           int lmrDepth = std::max(0, depth - lmrRed);
 
           // Late move pruning. At low depths, only visit a few quiet moves
-          int lmpBase = IsPV ? PvLmpBase : NonPvLmpBase;
-          if (playedMoves + 1 >= (depth * depth + lmpBase) / (2 - improving))
+          if (playedMoves + 1 >= (depth * depth + 4) / (2 - improving))
             movePicker.stage = BAD_CAPTURES;
 
           // Futility pruning (~8 Elo). If our evaluation is far below alpha,
