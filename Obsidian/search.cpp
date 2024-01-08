@@ -911,7 +911,7 @@ namespace Search {
         if (isQuiet) {
           R = lmrTable[depth][playedMoves + 1];
 
-          R += !improving;
+          
 
           // Reduce more if the expected best move is a capture (~6 Elo)
           R += ttMoveNoisy;
@@ -932,7 +932,10 @@ namespace Search {
 
         R -= (newPos.checkers != 0ULL);
 
-        R -= IsPV;
+        if (ttPV)
+          R -= (1 + IsPV);
+
+        R += !improving;
 
         R += 2 * cutNode;
 
