@@ -37,7 +37,7 @@ namespace Search {
   DEFINE_PARAM(NmpEvalDivMin, 3, 0, 20);
 
   DEFINE_PARAM(PvLmpBase,    7, 0, 20);
-  DEFINE_PARAM(NonPvLmpBase, 3, 0, 20);
+  DEFINE_PARAM(NonPvLmpBase, 4, 0, 20);
 
   DEFINE_PARAM(PvsQuietSeeMargin, -75, -400, 0);
   DEFINE_PARAM(PvsCapSeeMargin, -120, -400, 0);
@@ -849,7 +849,7 @@ namespace Search {
 
           // Late move pruning. At low depths, only visit a few quiet moves
           int lmpBase = IsPV ? PvLmpBase : NonPvLmpBase;
-          if (quietCount + 1 >= (depth * depth + lmpBase) / (2 - improving))
+          if (playedMoves + 1 >= (depth * depth + lmpBase) / (2 - improving))
             movePicker.stage = BAD_CAPTURES;
 
           // Futility pruning (~8 Elo). If our evaluation is far below alpha,
