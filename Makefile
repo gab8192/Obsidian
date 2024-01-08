@@ -28,6 +28,10 @@ ifeq ($(build), native)
 		ifeq ($(findstring __znver1, $(PROPS)),)
 			ifeq ($(findstring __znver2, $(PROPS)),)
 				FLAGS += -DUSE_PEXT
+			else ifeq ($(shell uname), Linux)
+				ifneq ($(findstring AMD EPYC 7B, $(shell lscpu)),)
+					FLAGS += -DUSE_PEXT
+				endif
 			endif
 		endif
 	endif
