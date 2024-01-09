@@ -793,9 +793,8 @@ namespace Search {
 
     // Generate moves and score them
 
-    bool foundLegalMove = false;
-
-    int playedMoves = 0;
+    int legalCount = 0;
+    int playedCount = 0;
 
     Move quiets[64];
     int quietCount = 0;
@@ -827,7 +826,7 @@ namespace Search {
       if (!pos.isLegal(move))
         continue;
       
-      foundLegalMove = true;
+      legalCount++;
       
       bool isQuiet = pos.isQuiet(move);
 
@@ -843,11 +842,11 @@ namespace Search {
 
         if (isQuiet) {
 
-          int lmrRed = lmrTable[depth][playedMoves + 1] - IsPV + !improving;
+          int lmrRed = lmrTable[depth][legalCount] - IsPV + !improving;
           int lmrDepth = std::max(0, depth - lmrRed);
 
           // Late move pruning. At low depths, only visit a few quiet moves
-          if (playedMoves + 1 >= (depth * depth + LmpBase) / (2 - improving))
+          if (legalCount >= (depth * depth + LmpBase) / (2 - improving))
             movePicker.stage = BAD_CAPTURES;
 
           // Futility pruning (~8 Elo). If our evaluation is far below alpha,
@@ -904,13 +903,13 @@ namespace Search {
 
       bool needFullSearch;
 
-      if (depth >= 3 && playedMoves >= 1) {
+      if (depth >= 3 && playedCount >= 1) {
         int R;
 
         if (isQuiet) {
-          R = lmrTable[depth][playedMoves + 1];
-          
-          // Reduce more if the expected best move is a capture (~6 Elo)
+          R = lmrTable[depth][legalCount];
+
+          // Reduce if the expected best move is a capture (~6 Elo)
           R += ttMoveNoisy;
 
           // Extend killer and counter move (~4 Elo)
@@ -922,21 +921,26 @@ namespace Search {
         else {
           R = 0;
           
+          // Reduce if this is a bad capture (=> loses material)
           R += (moveStage == BAD_CAPTURES);
 
           R -= getCapHistory(pos, move) / LmrCapHistoryDiv;
         }
 
+        // Extend moves that give check
         R -= (newPos.checkers != 0ULL);
 
+        // Extend if this position *was* in a PV node. Even further if it *is*
         if (ttPV)
           R -= (1 + IsPV);
 
+        // Reduce if evaluation is trending down
         R += !improving;
 
+        // Reduce if we expect to fail high
         R += 2 * cutNode;
 
-        // Do the clamp to avoid a qsearch or an extension in the child search
+        // Clamp to avoid a qsearch or an extension in the child search
         int reducedDepth = std::clamp(newDepth - R, 1, newDepth + 1);
 
         score = -negaMax<false>(newPos, -alpha - 1, -alpha, reducedDepth, true, ss + 1);
@@ -951,17 +955,17 @@ namespace Search {
         }
       }
       else
-        needFullSearch = !IsPV || playedMoves >= 1;
+        needFullSearch = !IsPV || playedCount >= 1;
 
       if (needFullSearch)
         score = -negaMax<false>(newPos, -alpha - 1, -alpha, newDepth, !cutNode, ss + 1);
 
-      if (IsPV && (playedMoves == 0 || score > alpha))
+      if (IsPV && (playedCount == 0 || score > alpha))
         score = -negaMax<true>(newPos, -beta, -alpha, newDepth, false, ss + 1);
 
       cancelMove();
 
-      playedMoves++;
+      playedCount++;
       
       if (isQuiet) {
         if (quietCount < 64)
@@ -993,7 +997,7 @@ namespace Search {
     if (Threads::getSearchState() != RUNNING)
       return DRAW;
 
-    if (!foundLegalMove) {
+    if (!legalCount) {
       if (excludedMove) 
         return alpha;
 
