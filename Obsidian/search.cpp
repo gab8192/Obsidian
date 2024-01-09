@@ -920,7 +920,7 @@ namespace Search {
           R -= std::clamp(getQuietHistory(pos, move, ss) / LmrQuietHistoryDiv, -2, 2);
         }
         else {
-          R = 0;
+          R = 1;
           
           R += (moveStage == BAD_CAPTURES);
 
