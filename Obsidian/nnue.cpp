@@ -48,17 +48,36 @@ namespace NNUE {
       outputVec[i] = subEpi16(inputVec[i], weightsVec[offset + i]);
   }
 
+  constexpr int NumRegs = 16;
+  constexpr int Unroll = NumRegs * WeightsPerVec;
+
   template <int InputSize>
   inline void addSubAll(weight_t* output, weight_t* input, int addOff, int subtractOff) {
-    addOff /= WeightsPerVec;
-    subtractOff /= WeightsPerVec;
 
-    Vec* inputVec = (Vec*)input;
-    Vec* outputVec = (Vec*)output;
-    Vec* weightsVec = (Vec*)Content.FeatureWeights;
+    Vec regs[NumRegs];
 
-    for (int i = 0; i < InputSize / WeightsPerVec; ++i)
-      outputVec[i] = subEpi16(addEpi16(inputVec[i], weightsVec[addOff + i]), weightsVec[subtractOff + i]);
+    for (int c = 0; c < InputSize / Unroll; ++c) {
+      const int unrollOffset = c * Unroll;
+
+      const Vec* inputVec = (Vec*) &input[unrollOffset];
+      Vec* outputVec = (Vec*) &output[unrollOffset];
+
+      for (int i = 0; i < NumRegs; i++)
+        regs[i] = _mm256_load_si256(& inputVec[i]);
+
+      const int o1 = addOff + unrollOffset;
+      const Vec* w1 = (Vec*) &Content.FeatureWeights[o1];
+      for (int i = 0; i < NumRegs; i++)
+        regs[i] = _mm256_add_epi16(regs[i], w1[i]);
+
+      const int o2 = subtractOff + unrollOffset;
+      const Vec* w2 = (Vec*) &Content.FeatureWeights[o2];
+      for (int i = 0; i < NumRegs; i++)
+        regs[i] = _mm256_sub_epi16(regs[i], w2[i]);
+
+      for (int i = 0; i < NumRegs; i++)
+        _mm256_store_si256(&outputVec[i], regs[i]);
+    }
   }
 
 
