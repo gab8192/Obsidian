@@ -15,7 +15,7 @@
 
 namespace Search {
 
-  DEFINE_PARAM(MpPvsSeeMargin, -43, -400, 0);
+  DEFINE_PARAM(MpPvsSeeMargin, -1, -400, 0);
   DEFINE_PARAM(MpQsSeeMargin, -42, -400, 0);
 
   DEFINE_PARAM(LmrBase, 29, -75, 125);
@@ -36,8 +36,7 @@ namespace Search {
   DEFINE_PARAM(NmpEvalDiv, 203, 100, 400);
   DEFINE_PARAM(NmpEvalDivMin, 3, 0, 20);
 
-  DEFINE_PARAM(PvLmpBase,    7, 0, 20);
-  DEFINE_PARAM(NonPvLmpBase, 3, 0, 20);
+  DEFINE_PARAM(LmpBase,    3, 0, 20);
 
   DEFINE_PARAM(PvsQuietSeeMargin, -75, -400, 0);
   DEFINE_PARAM(PvsCapSeeMargin, -120, -400, 0);
@@ -848,8 +847,7 @@ namespace Search {
           int lmrDepth = std::max(0, depth - lmrRed);
 
           // Late move pruning. At low depths, only visit a few quiet moves
-          int lmpBase = IsPV ? PvLmpBase : NonPvLmpBase;
-          if (quietCount + 1 >= (depth * depth + lmpBase) / (2 - improving))
+          if (playedMoves + 1 >= (depth * depth + LmpBase) / (2 - improving))
             movePicker.stage = BAD_CAPTURES;
 
           // Futility pruning (~8 Elo). If our evaluation is far below alpha,
@@ -911,9 +909,7 @@ namespace Search {
 
         if (isQuiet) {
           R = lmrTable[depth][playedMoves + 1];
-
-          R += !improving;
-
+          
           // Reduce more if the expected best move is a capture (~6 Elo)
           R += ttMoveNoisy;
 
@@ -933,7 +929,10 @@ namespace Search {
 
         R -= (newPos.checkers != 0ULL);
 
-        R -= IsPV;
+        if (ttPV)
+          R -= (1 + IsPV);
+
+        R += !improving;
 
         R += 2 * cutNode;
 
