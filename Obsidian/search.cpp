@@ -1159,6 +1159,8 @@ namespace Search {
 
           if (moveScore < 0)
             R++;
+
+          R -= getCapHistory(pos, move) / LmrCapHistoryDiv;
         }
 
         if (newPos.checkers)
