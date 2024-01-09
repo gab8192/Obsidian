@@ -6,24 +6,52 @@ uint64_t ZobristPsq[PIECE_NB][SQUARE_NB];
 uint64_t ZobristEp[FILE_NB];
 uint64_t ZobristCastling[16];
 
-void zobristInit() {
-  std::mt19937_64 gen(12345);
-  std::uniform_int_distribution<uint64_t> dis;
+class PRNG {
 
-  ZobristTempo = dis(gen);
+    uint64_t s;
+
+    uint64_t rand64() {
+
+        s ^= s >> 12, s ^= s << 25, s ^= s >> 27;
+        return s * 2685821657736338717LL;
+    }
+
+   public:
+    PRNG(uint64_t seed) :
+        s(seed) {
+    }
+
+    template<typename T>
+    T rand() {
+        return T(rand64());
+    }
+
+    // Special generator used to fast init magic numbers.
+    // Output values only have 1/8th of their bits set on average.
+    template<typename T>
+    T sparse_rand() {
+        return T(rand64() & rand64() & rand64());
+    }
+};
+
+void zobristInit() {
+  
+  PRNG rng(1070372);
+
+  ZobristTempo = rng.rand<Key>();
 
   for (int pc = W_PAWN; pc < PIECE_NB; ++pc)
     for (Square sq = SQ_A1; sq < SQUARE_NB; ++sq)
-      ZobristPsq[pc][sq] = dis(gen);
+      ZobristPsq[pc][sq] = rng.rand<Key>();
 
   for (File f = FILE_A; f < FILE_NB; ++f)
-    ZobristEp[f] = dis(gen);
+    ZobristEp[f] = rng.rand<Key>();
 
   ZobristCastling[0] = 0;
-  ZobristCastling[WHITE_OO] = dis(gen);
-  ZobristCastling[WHITE_OOO] = dis(gen);
-  ZobristCastling[BLACK_OO] = dis(gen);
-  ZobristCastling[BLACK_OOO] = dis(gen);
+  ZobristCastling[WHITE_OO] = rng.rand<Key>();
+  ZobristCastling[WHITE_OOO] = rng.rand<Key>();
+  ZobristCastling[BLACK_OO] = rng.rand<Key>();
+  ZobristCastling[BLACK_OOO] = rng.rand<Key>();
 
   for (int i = 1; i < 16; i++) {
     
