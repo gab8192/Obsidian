@@ -850,7 +850,7 @@ namespace Search {
           if (playedMoves + 1 >= (depth * depth + LmpBase) / (2 - improving))
             movePicker.stage = BAD_CAPTURES;
 
-          // Futility pruning (~8 Elo). If our evaluation is far below alpha,
+          // Futility pruning. If our evaluation is far below alpha,
           // only visit a few quiet moves
           if (lmrDepth <= FpMaxDepth && !pos.checkers && eval + FpBase + FpDepthMul * lmrDepth <= alpha)
             movePicker.stage = BAD_CAPTURES;
@@ -887,7 +887,7 @@ namespace Search {
         }
         else if (singularBeta >= beta) // Multicut
           return singularBeta;
-        else if (ttScore >= beta) // Negative extension (~18 Elo)
+        else if (ttScore >= beta) // Negative extensions
           extension = -1 + IsPV;
         else if (cutNode)
           extension = -1;
@@ -910,13 +910,13 @@ namespace Search {
         if (isQuiet) {
           R = lmrTable[depth][playedMoves + 1];
           
-          // Reduce more if the expected best move is a capture (~6 Elo)
+          // Reduce more if the expected best move is a capture
           R += ttMoveNoisy;
 
-          // Extend killer and counter move (~4 Elo)
+          // Extend killer and counter move
           R -= (moveStage == KILLER || moveStage == COUNTER);
 
-          // Reduce or extend depending on history of this quiet move (~12 Elo)
+          // Reduce or extend depending on history of this quiet move
           R -= std::clamp(getQuietHistory(pos, move, ss) / LmrQuietHistoryDiv, -2, 2);
         }
         else {
