@@ -808,6 +808,8 @@ namespace Search {
       counterMove = counterMoveHistory[pos.board[prevSq] * SQUARE_NB + prevSq];
     }
 
+    bool skipQuiets = false;
+
     MovePicker movePicker(
       PVS, pos,
       ttMove, ss->killerMove, counterMove,
@@ -820,7 +822,7 @@ namespace Search {
     Move move;
     MpStage moveStage;
 
-    while (move = movePicker.nextMove(& moveStage)) {
+    while (move = movePicker.nextMove(& moveStage, skipQuiets)) {
       if (move == excludedMove)
         continue;
 
@@ -834,6 +836,10 @@ namespace Search {
       if ( pos.hasNonPawns(pos.sideToMove)
         && bestScore > TB_LOSS_IN_MAX_PLY)
       {
+        // Late move pruning. At low depths, only visit a few quiet moves
+        if (playedMoves + 1 >= (depth * depth + LmpBase) / (2 - improving))
+          skipQuiets = true;
+
         // SEE (Static Exchange Evalution) pruning
         if (moveStage > GOOD_CAPTURES) {
           int seeMargin = depth * (isQuiet ? PvsQuietSeeMargin : PvsCapSeeMargin);
@@ -846,14 +852,10 @@ namespace Search {
           int lmrRed = lmrTable[depth][playedMoves + 1] - IsPV + !improving;
           int lmrDepth = std::max(0, depth - lmrRed);
 
-          // Late move pruning. At low depths, only visit a few quiet moves
-          if (playedMoves + 1 >= (depth * depth + LmpBase) / (2 - improving))
-            movePicker.stage = BAD_CAPTURES;
-
           // Futility pruning (~8 Elo). If our evaluation is far below alpha,
           // only visit a few quiet moves
           if (lmrDepth <= FpMaxDepth && !pos.checkers && eval + FpBase + FpDepthMul * lmrDepth <= alpha)
-            movePicker.stage = BAD_CAPTURES;
+            skipQuiets = true;
         }
       }
 
