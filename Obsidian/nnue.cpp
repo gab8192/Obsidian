@@ -42,6 +42,8 @@ namespace NNUE {
       outputVec[i] = subEpi16(inputVec[i], sub0Vec[i]);
   }
 
+  constexpr int numRegs = 16;
+
   template <int InputSize>
   inline void addSubAll(weight_t* output, weight_t* input, int add0, int sub0) {
     Vec* inputVec = (Vec*)input;
@@ -50,8 +52,15 @@ namespace NNUE {
     Vec* add0Vec = (Vec*) &Content.FeatureWeights[add0];
     Vec* sub0Vec = (Vec*) &Content.FeatureWeights[sub0];
 
-    for (int i = 0; i < InputSize / WeightsPerVec; ++i)
-      outputVec[i] = subEpi16(addEpi16(inputVec[i], add0Vec[i]), sub0Vec[i]);
+    Vec regs[numRegs];
+
+    for (int i = 0; i < InputSize / WeightsPerVec; i += numRegs) {
+      for (int j = 0; j < numRegs; j++)
+        regs[j] = addEpi16(inputVec[i+j], add0Vec[i+j]);
+
+      for (int j = 0; j < numRegs; j++)
+        outputVec[i+j] = subEpi16(regs[j], sub0Vec[i+j]);
+    }
   }
 
   template <int InputSize>
@@ -63,8 +72,18 @@ namespace NNUE {
     Vec* add0Vec = (Vec*) &Content.FeatureWeights[add0];
     Vec* sub1Vec = (Vec*) &Content.FeatureWeights[sub1];
 
-    for (int i = 0; i < InputSize / WeightsPerVec; ++i)
-      outputVec[i] = subEpi16(subEpi16(addEpi16(inputVec[i], add0Vec[i]), sub0Vec[i]), sub1Vec[i]);
+    Vec regs[numRegs];
+
+    for (int i = 0; i < InputSize / WeightsPerVec; i += numRegs) {
+      for (int j = 0; j < numRegs; j++)
+        regs[j] = addEpi16(inputVec[i+j], add0Vec[i+j]);
+
+      for (int j = 0; j < numRegs; j++)
+        regs[j] = subEpi16(regs[j], sub0Vec[i+j]);
+
+      for (int j = 0; j < numRegs; j++)
+        outputVec[i+j] = subEpi16(regs[j], sub1Vec[i+j]);
+    }
   }
 
    template <int InputSize>
