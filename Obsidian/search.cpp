@@ -916,7 +916,7 @@ namespace Search {
           R -= (moveStage == KILLER || moveStage == COUNTER);
 
           // Reduce or extend depending on history of this quiet move
-          R -= std::clamp(getQuietHistory(pos, move, ss) / LmrQuietHistoryDiv, -2, 2);
+          R -= getQuietHistory(pos, move, ss) / LmrQuietHistoryDiv;
         }
         else {
           R = 0;
