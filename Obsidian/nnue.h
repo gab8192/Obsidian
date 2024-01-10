@@ -7,10 +7,17 @@
 
 using namespace SIMD;
 
-struct DirtyPiece {
-  Square from;
-  Square to;
+struct SquarePiece {
+  Square sq;
   Piece pc;
+};
+
+struct DirtyPieces {
+  SquarePiece sub0, add0, sub1, add1;
+
+  enum {
+    NORMAL, CAPTURE, CASTLING
+  } type;
 };
 
 namespace NNUE {
@@ -35,6 +42,8 @@ namespace NNUE {
     void deactivateFeature(Square sq, Piece pc, Accumulator* input);
 
     void moveFeature(Square from, Square to, Piece pc, Accumulator* input);
+
+    void doUpdates(DirtyPieces* dp, Accumulator* input);
   };
 
   void init();

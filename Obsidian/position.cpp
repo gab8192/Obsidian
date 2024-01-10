@@ -219,7 +219,7 @@ void Position::doNullMove() {
   updateAttacksToKings();
 }
 
-void Position::doMove(Move move, DirtyPiece* dp, int& dpCount) {
+void Position::doMove(Move move, DirtyPieces& dp) {
 
   const Color us = sideToMove, them = ~us;
 
@@ -244,18 +244,21 @@ void Position::doMove(Move move, DirtyPiece* dp, int& dpCount) {
     const Piece movedPc = board[from];
     const Piece capturedPc = board[to];
 
+    dp.type = capturedPc ? DirtyPieces::CAPTURE : DirtyPieces::NORMAL;
+
     if (capturedPc != NO_PIECE) {
       halfMoveClock = 0;
 
       removePiece(to, capturedPc);
-      dp[dpCount++] = { to, SQ_NONE, capturedPc };
+      dp.sub1 = {to, capturedPc};
 
       if (ptypeOf(capturedPc) == ROOK)
         newCastlingRights &= ROOK_SQR_TO_CR[to];
     }
 
     movePiece(from, to, movedPc);
-    dp[dpCount++] = { from, to, movedPc };
+    dp.sub0 = {from, movedPc};
+    dp.add0 = {to, movedPc};
 
     switch (ptypeOf(movedPc)) {
     case PAWN: {
@@ -290,20 +293,18 @@ void Position::doMove(Move move, DirtyPiece* dp, int& dpCount) {
     const Square kingSrc = cd->kingSrc, kingDest = cd->kingDest,
                  rookSrc = cd->rookSrc, rookDest = cd->rookDest;
 
-    if (us == WHITE) {
-      movePiece(kingSrc, kingDest, W_KING);
-      movePiece(rookSrc, rookDest, W_ROOK);
-      dp[dpCount++] = { kingSrc, kingDest, W_KING };
-      dp[dpCount++] = { rookSrc, rookDest, W_ROOK };
-      newCastlingRights &= ~WHITE_CASTLING;
-    }
-    else {
-      movePiece(kingSrc, kingDest, B_KING);
-      movePiece(rookSrc, rookDest, B_ROOK);
-      dp[dpCount++] = { kingSrc, kingDest, B_KING };
-      dp[dpCount++] = { rookSrc, rookDest, B_ROOK };
-      newCastlingRights &= ~BLACK_CASTLING;
-    }
+    const Piece ourKingPc = make_piece(us, KING);
+    const Piece ourRookPc = make_piece(us, ROOK);
+
+    movePiece(kingSrc, kingDest, ourKingPc);
+    movePiece(rookSrc, rookDest, ourRookPc);
+    castlingRights &= (us == WHITE ? BLACK_CASTLING : WHITE_CASTLING);
+
+    dp.type = DirtyPieces::CASTLING;
+    dp.sub0 = {kingSrc, ourKingPc};
+    dp.add0 = {kingDest, ourKingPc};
+    dp.sub1 = {rookSrc, ourRookPc};
+    dp.add1 = {rookDest, ourRookPc};
 
     break;
   }
@@ -313,18 +314,17 @@ void Position::doMove(Move move, DirtyPiece* dp, int& dpCount) {
     const Square from = move_from(move);
     const Square to = move_to(move);
 
-    if (us == WHITE) {
-      removePiece(to - 8, B_PAWN);
-      movePiece(from, to, W_PAWN);
-      dp[dpCount++] = { to - 8, SQ_NONE, B_PAWN };
-      dp[dpCount++] = { from, to, W_PAWN };
-    }
-    else {
-      removePiece(to + 8, W_PAWN);
-      movePiece(from, to, B_PAWN);
-      dp[dpCount++] = { to + 8, SQ_NONE, W_PAWN };
-      dp[dpCount++] = { from, to, B_PAWN };
-    }
+    const Piece ourPawnPc = make_piece(us, PAWN);
+    const Piece theirPawnPc = make_piece(them, PAWN);
+    const Square capSq = (us == WHITE ? to-8 : to+8);
+
+    removePiece(capSq, theirPawnPc);
+    movePiece(from, to, ourPawnPc);
+    
+    dp.type = DirtyPieces::CAPTURE;
+    dp.sub1 = {capSq, theirPawnPc};
+    dp.sub0 = {from, ourPawnPc};
+    dp.add0 = {to, ourPawnPc};
 
     break;
   }
@@ -338,19 +338,21 @@ void Position::doMove(Move move, DirtyPiece* dp, int& dpCount) {
     const Piece capturedPc = board[to];
     const Piece promoteToPc = make_piece(us, promo_type(move));
 
+    dp.type = capturedPc ? DirtyPieces::CAPTURE : DirtyPieces::NORMAL;
+
     if (capturedPc != NO_PIECE) {
       removePiece(to, capturedPc);
-      dp[dpCount++] = { to, SQ_NONE, capturedPc };
-
+      dp.sub1 = {to, capturedPc};
+      
       if (ptypeOf(capturedPc) == ROOK)
         newCastlingRights &= ROOK_SQR_TO_CR[to];
     }
 
     removePiece(from, movedPc);
     putPiece(to, promoteToPc);
-    dp[dpCount++] = { from, SQ_NONE, movedPc };
-    dp[dpCount++] = { SQ_NONE, to, promoteToPc };
-
+    dp.sub0 = {from, movedPc};
+    dp.add0 = {to, promoteToPc};
+    
     break;
   }
   }

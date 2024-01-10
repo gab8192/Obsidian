@@ -50,9 +50,8 @@ namespace {
     // Parse the move list, if any
     while (is >> token && (m = UCI::stringToMove(pos, token)) != MOVE_NONE)
     {
-      int dirtyCount = 0;
-      DirtyPiece dirtyPieces[4];
-      pos.doMove(m, dirtyPieces, dirtyCount);
+      DirtyPieces dirtyPieces;
+      pos.doMove(m, dirtyPieces);
 
       // If this move reset the half move clock, we can ignore and forget all the previous position
       if (pos.halfMoveClock == 0)
