@@ -298,7 +298,7 @@ void Position::doMove(Move move, DirtyPieces& dp) {
 
     movePiece(kingSrc, kingDest, ourKingPc);
     movePiece(rookSrc, rookDest, ourRookPc);
-    castlingRights &= (us == WHITE ? BLACK_CASTLING : WHITE_CASTLING);
+    newCastlingRights &= (us == WHITE ? BLACK_CASTLING : WHITE_CASTLING);
 
     dp.type = DirtyPieces::CASTLING;
     dp.sub0 = {kingSrc, ourKingPc};
