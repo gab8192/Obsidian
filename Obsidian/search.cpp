@@ -105,12 +105,8 @@ namespace Search {
 
     if (depth == 1) {
       int n = 0;
-      for (int i = 0; i < moves.size(); i++) {
-        if (!pos.isLegal(moves[i].move))
-          continue;
-
-        n++;
-      }
+      for (int i = 0; i < moves.size(); i++)
+        n += pos.isLegal(moves[i].move);
       return n;
     }
 
