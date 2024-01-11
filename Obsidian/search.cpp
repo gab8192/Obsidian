@@ -747,7 +747,7 @@ namespace Search {
     if ( !IsPV
       && depth >= 2 && depth <= 10
       && eval >= beta) {
-        int R = (eval - beta) / 70;
+        int R = (eval - beta) / 100;
         R = std::min(3, R);
         depth = std::max(1, depth - R);
     }
