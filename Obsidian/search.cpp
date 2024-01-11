@@ -1266,14 +1266,17 @@ namespace Search {
     return output.str();
   }
 
-  DEFINE_PARAM(tm0, 169, 0, 300);
-  DEFINE_PARAM(tm1, 62,  0, 150);
+  DEFINE_PARAM(tm0, 169, 0, 200);
+  DEFINE_PARAM(tm1, 62,  0, 100);
 
   DEFINE_PARAM(tm2, 142, 0, 200);
   DEFINE_PARAM(tm3, 3,   0, 30);
 
-  DEFINE_PARAM(tm4, 80,   0, 30);
-  DEFINE_PARAM(tm5, 2,   0, 30);
+  DEFINE_PARAM(tm4, 80,   0, 200);
+  DEFINE_PARAM(tm5, 2,   0, 20);
+
+  DEFINE_PARAM(lol0, -25, -200, 0);
+  DEFINE_PARAM(lol1, 50,   0,  200);
 
   void SearchThread::startSearch() {
 
@@ -1457,7 +1460,7 @@ namespace Search {
 
         double stabilityFactor = (tm2/100.0) - searchStability * (tm3/100.0);
 
-        int scoreLoss = std::clamp<int>(iterDeepening[rootDepth - 1].score - score, 0, 50);
+        int scoreLoss = std::clamp<int>(iterDeepening[rootDepth - 1].score - score, lol0, lol1);
         double scoreFactor     = (tm4/100.0) + scoreLoss * (tm5/100.0);
 
         if (elapsed > stabilityFactor * nodesFactor * scoreFactor * optimumTime)
