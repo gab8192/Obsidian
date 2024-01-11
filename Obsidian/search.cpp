@@ -1266,17 +1266,17 @@ namespace Search {
     return output.str();
   }
 
-  DEFINE_PARAM(tm0, 169, 50, 200);
-  DEFINE_PARAM(tm1, 62,  20, 100);
+  DEFINE_PARAM(tm0, 177, 50, 200);
+  DEFINE_PARAM(tm1, 64,  20, 100);
 
   DEFINE_PARAM(tm2, 142, 50, 200);
-  DEFINE_PARAM(tm3, 3,   0, 30);
+  DEFINE_PARAM(tm3, 4,   0, 30);
 
-  DEFINE_PARAM(tm4, 80,   0, 150);
-  DEFINE_PARAM(tm5, 20,   0, 150);
+  DEFINE_PARAM(tm4, 94,   0, 150);
+  DEFINE_PARAM(tm5, 10,   0, 150);
 
-  DEFINE_PARAM(lol0, -25, -150, 0);
-  DEFINE_PARAM(lol1, 50,   0,  150);
+  DEFINE_PARAM(lol0, -12, -150, 0);
+  DEFINE_PARAM(lol1, 56,   0,  150);
 
   void SearchThread::startSearch() {
 
