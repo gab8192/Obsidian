@@ -31,7 +31,7 @@ namespace TT {
         if (!matches(_key) || _move)
           this->move = _move;
 
-        this->key32 = (uint32_t) _key;
+        this->key16 = (uint16_t) _key;
         this->depth = _depth;
         this->score = _score;
         this->staticEval = _eval;
@@ -43,7 +43,7 @@ namespace TT {
     }
 
     inline bool matches(Key key) const {
-      return this->key32 == (uint32_t) key;
+      return this->key16 == (uint16_t) key;
     }
 
     inline Score getStaticEval() const {
@@ -79,7 +79,7 @@ namespace TT {
     }
 
     inline void clear() {
-      key32 = 0xcafe;
+      key16 = 0;
       depth = -1;
       flags = NO_FLAG;
       move = MOVE_NONE;
@@ -88,7 +88,7 @@ namespace TT {
     }
 
   private:
-    uint32_t key32;
+    uint16_t key16;
     int16_t staticEval;
     Flag flags;
     uint8_t depth;
