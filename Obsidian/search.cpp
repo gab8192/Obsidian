@@ -742,6 +742,11 @@ namespace Search {
         return score < TB_WIN_IN_MAX_PLY ? score : beta;
     }
 
+    if ( !IsPV
+      && depth >= 2 && depth <= 12
+      && eval - 50 * (depth - improving) >= beta)
+      depth--;
+
     // IIR. Decrement the depth if we expect this search to have bad move ordering
     if ((IsPV || cutNode) && depth >= 4 && !ttMove)
       depth --;
