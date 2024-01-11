@@ -743,10 +743,10 @@ namespace Search {
     }
 
     if ( !IsPV
-      && depth >= 2 && depth <= 10
+      && depth >= 2 && depth <= 12
       && eval < TB_WIN_IN_MAX_PLY
       && eval >= beta) {
-        int R = (eval - beta) / (40 + 80 * depth);
+        int R = (eval - beta) / (60 + 60 * depth);
         R = std::min(3, R);
         depth = std::max(1, depth - R);
     }
