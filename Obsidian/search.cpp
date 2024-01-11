@@ -552,6 +552,8 @@ namespace Search {
       pos.sideToMove == WHITE);
   }
 
+  DEFINE_PARAM(MegaMargin, 50, 0, 400);
+
   template<bool IsPV>
   Score SearchThread::negaMax(Position& pos, Score alpha, Score beta, int depth, bool cutNode, SearchInfo* ss) {
 
@@ -742,9 +744,10 @@ namespace Search {
         return score < TB_WIN_IN_MAX_PLY ? score : beta;
     }
 
+
     if ( !IsPV
       && depth >= 2 && depth <= 12
-      && eval - 50 * (depth - improving) >= beta)
+      && eval - MegaMargin * depth >= beta)
       depth--;
 
     // IIR. Decrement the depth if we expect this search to have bad move ordering
