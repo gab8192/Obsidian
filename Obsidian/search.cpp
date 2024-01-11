@@ -552,7 +552,7 @@ namespace Search {
       pos.sideToMove == WHITE);
   }
 
-  DEFINE_PARAM(MegaMargin, 50, 0, 400);
+  DEFINE_PARAM(MegaMargin, 60, 0, 400);
 
   template<bool IsPV>
   Score SearchThread::negaMax(Position& pos, Score alpha, Score beta, int depth, bool cutNode, SearchInfo* ss) {
