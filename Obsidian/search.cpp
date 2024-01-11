@@ -552,8 +552,6 @@ namespace Search {
       pos.sideToMove == WHITE);
   }
 
-  DEFINE_PARAM(MegaMargin, 60, 0, 400);
-
   template<bool IsPV>
   Score SearchThread::negaMax(Position& pos, Score alpha, Score beta, int depth, bool cutNode, SearchInfo* ss) {
 
@@ -746,8 +744,9 @@ namespace Search {
 
     if ( !IsPV
       && depth >= 2 && depth <= 10
+      && eval < TB_WIN_IN_MAX_PLY
       && eval >= beta) {
-        int R = (eval - beta) / 100;
+        int R = (eval - beta) / (40 + 80 * depth);
         R = std::min(3, R);
         depth = std::max(1, depth - R);
     }
