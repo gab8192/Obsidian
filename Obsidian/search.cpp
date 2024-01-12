@@ -1102,8 +1102,7 @@ namespace Search {
 
     scoreRootMoves(pos, moves, ttMove, ss);
 
-    bool foundLegalMove = false;
-
+    int seenMoves = 0;
     int playedMoves = 0;
 
     Move quiets[64];
@@ -1120,6 +1119,8 @@ namespace Search {
       if (!pos.isLegal(move))
         continue;
 
+      seenMoves++;
+
       bool isQuiet = pos.isQuiet(move);
 
       if (isQuiet) {
@@ -1130,8 +1131,6 @@ namespace Search {
         if (captureCount < 64)
           captures[captureCount++] = move;
       }
-
-      foundLegalMove = true;
 
       int oldNodesCount = nodesSearched;
 
@@ -1150,7 +1149,7 @@ namespace Search {
         int R;
 
         if (isQuiet) {
-          R = lmrTable[depth][playedMoves + 1];
+          R = lmrTable[depth][seenMoves];
         }
         else {
           R = 0;
@@ -1204,7 +1203,7 @@ namespace Search {
     if (Threads::getSearchState() != RUNNING)
       return DRAW;
 
-    if (!foundLegalMove)
+    if (!seenMoves)
       return pos.checkers ? Score(ply - CHECKMATE) : DRAW;
 
     // Update histories
