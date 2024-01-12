@@ -48,7 +48,7 @@ namespace Search {
   DEFINE_PARAM(DoubleExtMargin, 16, 0, 40);
   DEFINE_PARAM(DoubleExtMax, 6, 0, 40);
 
-  DEFINE_PARAM(LmrQuietHistoryDiv, 9847, 4000, 16000);
+  DEFINE_PARAM(LmrQuietHistoryDiv, 10500, 4000, 16000);
   DEFINE_PARAM(LmrCapHistoryDiv, 8192, 4000, 16000);
 
   DEFINE_PARAM(AspWindowStartDepth, 5, 4, 34);
