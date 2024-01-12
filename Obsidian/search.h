@@ -5,6 +5,7 @@
 #include "position.h"
 #include "types.h"
 
+#include <condition_variable>
 #include <vector>
 
 namespace Search {
@@ -70,7 +71,11 @@ namespace Search {
 
   public:
 
-    volatile bool stopThread;
+    std::mutex mutex;
+    std::condition_variable cv;
+
+    volatile bool searching = false;
+    volatile bool stopThread = false;
     std::thread thread;
 
     uint64_t nodesSearched;
@@ -79,14 +84,8 @@ namespace Search {
     SearchThread();
 
     void resetHistories();
-
-    inline bool isRunning() {
-      return running;
-    }
     
   private:
-
-    volatile bool running;
     
     Color rootColor;
 
