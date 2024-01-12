@@ -63,6 +63,7 @@ namespace Threads {
     waitForSearch();
 
     for (int i = 0; i < searchThreads.size(); i++) {
+      searchThreads[i]->searching = true; // <-- the predicate
       searchThreads[i]->stopThread = true;
       searchThreads[i]->cv.notify_all();
       searchThreads[i]->thread.join();
