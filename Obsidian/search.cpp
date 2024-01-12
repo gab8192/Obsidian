@@ -1145,11 +1145,14 @@ namespace Search {
 
       bool needFullSearch;
 
-      if (depth >= 3 && playedMoves > 3) {
+      if (depth >= 3 && playedMoves >= 2) {
         int R;
 
         if (isQuiet) {
           R = lmrTable[depth][seenMoves];
+
+          // Reduce or extend depending on history of this quiet move
+          R -= getQuietHistory(pos, move, ss) / LmrQuietHistoryDiv;
         }
         else {
           R = 0;
