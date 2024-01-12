@@ -1465,7 +1465,7 @@ namespace Search {
   void SearchThread::idleLoop() {
     while (true) {
       std::unique_lock lock(mutex);
-      cv.wait(lock);
+      cv.wait(lock, [&] { return searching; });
 
       if (stopThread)
           return;

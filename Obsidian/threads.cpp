@@ -46,9 +46,7 @@ namespace Threads {
     searchState = RUNNING;
     for (int i = 0; i < searchThreads.size(); i++) {
       SearchThread* st = searchThreads[i];
-      st->mutex.lock();
       st->searching = true;
-      st->mutex.unlock();
       st->cv.notify_all();
     }
   }
