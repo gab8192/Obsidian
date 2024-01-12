@@ -31,12 +31,11 @@ namespace Threads {
   }
 
   void waitForSearch() {
-    while (searchState != IDLE)
-      sleep(1);
-
-    for (int i = 0; i < searchThreads.size(); i++)
-      while (searchThreads[i]->isRunning())
-        sleep(1);
+    for (int i = 0; i < searchThreads.size(); i++) {
+      SearchThread* st = searchThreads[i];
+      std::unique_lock lock(st->mutex);
+      st->cv.wait(lock, [&] { return !st->searching; });
+    }
   }
 
   void onSearchComplete() {
@@ -45,6 +44,11 @@ namespace Threads {
 
   void startSearch() {
     searchState = RUNNING;
+    for (int i = 0; i < searchThreads.size(); i++) {
+      SearchThread* st = searchThreads[i];
+      st->searching = true;
+      st->cv.notify_all();
+    }
   }
 
   void stopSearch(bool wait) {
@@ -59,7 +63,9 @@ namespace Threads {
     waitForSearch();
 
     for (int i = 0; i < searchThreads.size(); i++) {
+      searchThreads[i]->searching = true; // <-- the predicate
       searchThreads[i]->stopThread = true;
+      searchThreads[i]->cv.notify_all();
       searchThreads[i]->thread.join();
       delete searchThreads[i];
     }
@@ -71,5 +77,4 @@ namespace Threads {
     }
   }
 
-  
 }

@@ -91,8 +91,7 @@ namespace Search {
   }
 
   SearchThread::SearchThread() :
-    thread(std::thread(&SearchThread::idleLoop, this)),
-    running(false), stopThread(false)
+    thread(std::thread(&SearchThread::idleLoop, this))
   {
     resetHistories();
   }
@@ -1465,20 +1464,20 @@ namespace Search {
 
   void SearchThread::idleLoop() {
     while (true) {
+      std::unique_lock lock(mutex);
+      cv.wait(lock, [&] { return searching; });
 
-      while (Threads::getSearchState() != RUNNING) {
-
-        if (stopThread)
+      if (stopThread)
           return;
 
-        sleep(1);
-      }
-
-      this->running = true;
+   // searching = true; (already done by the UCI thread)
       startSearch();
+      searching = false;
+
+      cv.notify_all();
+
       if (this == Threads::mainThread())
         Threads::onSearchComplete();
-      this->running = false;
     }
   }
 }
