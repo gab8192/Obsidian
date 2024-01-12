@@ -427,7 +427,7 @@ int readNumberTillSpace(const std::string& str, int& i) {
   return num;
 }
 
-void Position::setToFen(const string& fen, NNUE::Accumulator& acc) {
+void Position::setToFen(const std::string& fen, NNUE::Accumulator& acc) {
 
   memset(this, 0, sizeof(Position));
 
@@ -513,8 +513,8 @@ void Position::setToFen(const string& fen, NNUE::Accumulator& acc) {
   updateAccumulator(acc);
 }
 
-string Position::toFenString() const {
-  ostringstream ss;
+std::string Position::toFenString() const {
+  std::ostringstream ss;
 
   for (Rank r = RANK_8; r >= RANK_1; --r) {
     int emptyC = 0;
@@ -565,9 +565,9 @@ string Position::toFenString() const {
 
 std::ostream& operator<<(std::ostream& stream, Position& pos) {
 
-  const string rowSeparator = "\n +---+---+---+---+---+---+---+---+";
+  const std::string rowSeparator = "\n +---+---+---+---+---+---+---+---+";
 
-  ostringstream ss;
+  std::ostringstream ss;
   
   for (Rank rank = RANK_8; rank >= RANK_1; --rank)
   {

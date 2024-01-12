@@ -8,15 +8,13 @@
 #include <nmmintrin.h>
 #include <thread>
 
-using namespace std;
-
-const string engineVersion = "dev-9.27";
+const std::string engineVersion = "dev-9.27";
 
 using Key = uint64_t;
 using Bitboard = uint64_t;
 using TbResult = uint32_t;
 
-const string piecesChar = " PNBRQK  pnbrqk";
+const std::string piecesChar = " PNBRQK  pnbrqk";
 
 constexpr int MAX_PLY = 246;
 constexpr int MAX_MOVES = 224; // 32*7
@@ -24,14 +22,14 @@ constexpr int MAX_MOVES = 224; // 32*7
 #define BitCount(x) _mm_popcnt_u64(x)
 
 inline void sleep(int millis) {
-  this_thread::sleep_for(chrono::milliseconds(millis));
+  std::this_thread::sleep_for(std::chrono::milliseconds(millis));
 }
 
 inline int64_t timeMillis() {
 
-  auto sinceEpoch = chrono::steady_clock::now().time_since_epoch();
+  auto sinceEpoch = std::chrono::steady_clock::now().time_since_epoch();
 
-  return chrono::duration_cast<chrono::milliseconds>(sinceEpoch).count();
+  return std::chrono::duration_cast<std::chrono::milliseconds>(sinceEpoch).count();
 }
 
 enum Score : int {

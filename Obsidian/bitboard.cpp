@@ -45,12 +45,11 @@ Bitboard LineBB[SQUARE_NB][SQUARE_NB];
 // print bitboard
 void printBitboard(Bitboard bitboard)
 {
-  cout << endl;
   // loop over board ranks
   for (Rank y = RANK_8; y >= RANK_1; --y)
   {
     // print rank
-    cout << "  " << (y + 1) << " ";
+    std::cout << "  " << (y + 1) << " ";
 
     // loop over board files
     for (File x = FILE_A; x < FILE_NB; ++x)
@@ -59,17 +58,17 @@ void printBitboard(Bitboard bitboard)
       Square square = make_square(x, y);
 
       // print bit indexed by board square
-      cout << " " << (bitboard & square ? 1 : 0);
+      std::cout << " " << (bitboard & square ? 1 : 0);
     }
 
-    cout << endl;
+    std::cout << std::endl;
   }
 
   // print files
-  cout << "\n     a b c d e f g h" << endl;
+  std::cout << "\n     a b c d e f g h" << std::endl;
 
   // print bitboard as decimal
-  cout << "     bitboard: " << bitboard << endl;
+  std::cout << "     bitboard: " << bitboard << std::endl;
 }
 
 // square encoding

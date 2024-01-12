@@ -2,8 +2,6 @@
 
 #include <iostream>
 
-using namespace std;
-
 namespace Eval {
 
   Score evaluate(Position& pos, NNUE::Accumulator& accumulator) {

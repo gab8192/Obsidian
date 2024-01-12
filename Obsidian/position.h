@@ -6,8 +6,6 @@
 #include "types.h"
 #include "zobrist.h"
 
-using namespace std;
-
 /// <summary>
 /// Called once at engine initialization
 /// </summary>
@@ -154,9 +152,9 @@ struct alignas(32) Position {
 
   bool see_ge(Move m, int threshold) const;
 
-  void setToFen(const string& fen, NNUE::Accumulator& acc);
+  void setToFen(const std::string& fen, NNUE::Accumulator& acc);
 
-  string toFenString() const;
+  std::string toFenString() const;
 
   void updateAccumulator(NNUE::Accumulator& acc) const;
 };

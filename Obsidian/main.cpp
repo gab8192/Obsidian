@@ -11,11 +11,9 @@
 #include <sstream>
 #include <vector>
 
-using namespace std;
-
 int main(int argc, char** argv)
 {
-  cout << "Obsidian " << engineVersion << " by gabe" << endl;
+  std::cout << "Obsidian " << engineVersion << " by gabe" << std::endl;
 
   zobristInit();
 

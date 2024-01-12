@@ -7,8 +7,6 @@
 
 INCBIN(EmbeddedNNUE, EvalFile);
 
-using namespace std;
-
 namespace NNUE {
 
   constexpr int WeightsPerVec = sizeof(SIMD::Vec) / sizeof(weight_t);

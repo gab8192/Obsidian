@@ -125,7 +125,7 @@ namespace Search {
 
       int64_t thisNodes = perft<false>(newPos, depth - 1);
       if constexpr (root)
-        cout << UCI::moveToString(move) << " -> " << thisNodes << endl;
+        std::cout << UCI::moveToString(move) << " -> " << thisNodes << std::endl;
 
       n += thisNodes;
     }
@@ -1247,7 +1247,7 @@ namespace Search {
 
   std::string getPvString(SearchInfo* ss) {
 
-    ostringstream output;
+    std::ostringstream output;
 
     output << UCI::moveToString(ss->pv[0]);
 
@@ -1403,7 +1403,7 @@ namespace Search {
       clock_t elapsedStrict = timeMillis() - startTimeForBench;
 
       if (!doingBench) {
-        ostringstream infoStr;
+        std::ostringstream infoStr;
         infoStr
           << "info"
           << " depth " << rootDepth
@@ -1413,7 +1413,7 @@ namespace Search {
           << " tbhits " << Threads::totalTbHits()
           << " time " << elapsed
           << " pv " << getPvString(ss);
-        cout << infoStr.str() << endl;
+        std::cout << infoStr.str() << std::endl;
       }
 
       // Stop searching if we can deliver a forced checkmate.
@@ -1459,7 +1459,7 @@ namespace Search {
     if (this == Threads::mainThread()) {
       lastSearchTimeSpan = timeMillis() - startTimeForBench;
       if (!doingBench)
-        std::cout << "bestmove " << UCI::moveToString(bestMove) << endl;
+        std::cout << "bestmove " << UCI::moveToString(bestMove) << std::endl;
     }
   }
 

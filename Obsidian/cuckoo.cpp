@@ -50,7 +50,7 @@ namespace Cuckoo {
     }
 
     if (count != 3668) {
-      cout << "oops! cuckoo table is broken." << endl;
+      std::cout << "oops! cuckoo table is broken." << std::endl;
       exit(-1);
     }
   }

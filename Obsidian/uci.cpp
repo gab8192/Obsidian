@@ -16,7 +16,6 @@
 #include <string>
 #include <vector>
 
-using namespace std;
 using namespace Threads;
 
 std::vector<uint64_t> prevPositions;
@@ -25,9 +24,9 @@ namespace {
 
   const char* StartFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-  void position(Position& pos, NNUE::Accumulator& acc, istringstream& is) {
+  void position(Position& pos, NNUE::Accumulator& acc, std::istringstream& is) {
     Move m;
-    string token, fen;
+    std::string token, fen;
 
     is >> token;
 
@@ -89,7 +88,7 @@ namespace {
       searchSettings = Search::Settings();
       searchSettings.depth = 13;
       
-      istringstream posStr(BenchPositions[i]);
+      std::istringstream posStr(BenchPositions[i]);
       position(searchSettings.position, tempAccumulator, posStr);
 
       newGame();
@@ -110,13 +109,13 @@ namespace {
       }
     }
 
-    cout << totalNodes << " nodes " << (totalNodes * 1000 / elapsed) << " nps" << endl;
+    std::cout << totalNodes << " nodes " << (totalNodes * 1000 / elapsed) << " nps" << std::endl;
 
     Search::doingBench = false;
   }
 
-  void setoption(istringstream& is) {
-    string token, name, value;
+  void setoption(std::istringstream& is) {
+    std::string token, name, value;
 
     is >> token;
 
@@ -138,14 +137,14 @@ namespace {
     if (Options.count(name))
       Options[name] = value;
     else
-      cout << "No such option: " << name << endl;
+      std::cout << "No such option: " << name << std::endl;
   }
 
-  void go(Position& pos, istringstream& is) {
+  void go(Position& pos, std::istringstream& is) {
 
     Threads::waitForSearch();
 
-    string token;
+    std::string token;
 
     searchSettings = Search::Settings();
     searchSettings.startTime = timeMillis();
@@ -184,7 +183,7 @@ namespace {
 
 void UCI::loop(int argc, char* argv[]) {
 
-  string token, cmd;
+  std::string token, cmd;
 
   NNUE::Accumulator tempAccumulator;
   Position pos;
@@ -195,13 +194,13 @@ void UCI::loop(int argc, char* argv[]) {
     cmd += std::string(argv[i]) + " ";
 
   do {
-    if (argc == 1 && !getline(cin, cmd))
+    if (argc == 1 && !std::getline(std::cin, cmd))
       cmd = "quit";
 
-    istringstream is(cmd);
+    std::istringstream is(cmd);
 
     token.clear();
-    is >> skipws >> token;
+    is >> std::skipws >> token;
 
     if (token == "quit"
       || token == "stop") {
@@ -210,30 +209,30 @@ void UCI::loop(int argc, char* argv[]) {
     }
 
     else if (token == "uci") {
-      cout << "id name Obsidian " << engineVersion
+      std::cout << "id name Obsidian " << engineVersion
         << "\nid author gabe"
         << Options
         << "\n" << paramsToUci()
-        << "uciok" << endl;
+        << "uciok" << std::endl;
     }
     else if (token == "bench")      bench();
     else if (token == "setoption")  setoption(is);
     else if (token == "go")         go(pos, is);
     else if (token == "position")   position(pos, tempAccumulator, is);
     else if (token == "ucinewgame") newGame();
-    else if (token == "isready")    cout << "readyok" << endl;
-    else if (token == "d")        cout << pos << endl;
-    else if (token == "tune")     cout << paramsToSpsaInput();
+    else if (token == "isready")    std::cout << "readyok" << std::endl;
+    else if (token == "d")          std::cout << pos << std::endl;
+    else if (token == "tune")       std::cout << paramsToSpsaInput();
     else if (token == "eval") {
       pos.updateAccumulator(tempAccumulator);
       Score eval = Eval::evaluate(pos, tempAccumulator);
       if (pos.sideToMove == BLACK)
         eval = -eval;
-      cout << "Evaluation: " << UCI::normalizeToCp(eval) 
-           << "  (not normalized: " << eval << ")" << endl;
+      std::cout << "Evaluation: " << UCI::normalizeToCp(eval) 
+           << "  (not normalized: " << eval << ")" << std::endl;
     }
     else if (!token.empty() && token[0] != '#')
-      cout << "Unknown command: '" << cmd << "'." << endl;
+      std::cout << "Unknown command: '" << cmd << "'." << std::endl;
 
   } while (token != "quit" && argc == 1);
 }
@@ -243,11 +242,11 @@ int UCI::normalizeToCp(Score v) {
   return 100 * v / 220;
 }
 
-string UCI::scoreToString(Score v) {
+std::string UCI::scoreToString(Score v) {
 
   assert(-SCORE_INFINITE < v && v < SCORE_INFINITE);
 
-  stringstream ss;
+  std::stringstream ss;
 
   if (abs(v) < TB_WIN_IN_MAX_PLY)
     ss << "cp " << UCI::normalizeToCp(v);
@@ -265,12 +264,12 @@ std::string UCI::squareToString(Square s) {
   return std::string{ char('a' + file_of(s)), char('1' + rank_of(s)) };
 }
 
-string UCI::moveToString(Move m) {
+std::string UCI::moveToString(Move m) {
 
   if (m == MOVE_NONE)
     return "(none)";
 
-  string move = UCI::squareToString(move_from(m)) + UCI::squareToString(move_to(m));
+  std::string move = UCI::squareToString(move_from(m)) + UCI::squareToString(move_to(m));
 
   if (move_type(m) == MT_PROMOTION)
     move += "  nbrq"[promo_type(m)];
@@ -278,7 +277,7 @@ string UCI::moveToString(Move m) {
   return move;
 }
 
-Move UCI::stringToMove(const Position& pos, string& str) {
+Move UCI::stringToMove(const Position& pos, std::string& str) {
 
   if (str.length() == 5)
     str[4] = char(tolower(str[4]));

@@ -2,8 +2,6 @@
 
 #include <iostream>
 
-using namespace std;
-
 namespace TT {
 
   Entry* entries = nullptr;
