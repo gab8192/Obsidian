@@ -103,7 +103,7 @@ namespace {
       if (i >= 5) {
         // Skip the first 5 positions from nps calculation
 
-        elapsed += Search::lastSearchTimeSpan;
+        elapsed += timeMillis() - searchSettings.startTime;
 
         totalNodes += mainThread()->nodesSearched;
       }
@@ -142,16 +142,15 @@ namespace {
 
   void go(Position& pos, std::istringstream& is) {
 
-    Threads::waitForSearch();
-
     std::string token;
 
+    int perftPlies = 0;
     searchSettings = Search::Settings();
     searchSettings.startTime = timeMillis();
     searchSettings.position = pos;
     searchSettings.prevPositions = prevPositions;
 
-    int perftPlies = 0;
+    Threads::waitForSearch();
 
     while (is >> token)
       if (token == "wtime")     is >> searchSettings.time[WHITE];

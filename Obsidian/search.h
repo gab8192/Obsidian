@@ -10,7 +10,6 @@
 
 namespace Search {
 
-  extern clock_t lastSearchTimeSpan;
   extern bool doingBench;
 
   enum State {

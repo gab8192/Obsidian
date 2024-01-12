@@ -55,7 +55,6 @@ namespace Search {
   DEFINE_PARAM(AspWindowStartDelta, 11, 5, 45);
   DEFINE_PARAM(AspFailHighReductionMax, 11, 1, 21);
   
-  clock_t lastSearchTimeSpan;
   bool doingBench = false;
 
   int lmrTable[MAX_PLY][MAX_MOVES];
@@ -1455,11 +1454,8 @@ namespace Search {
 
   bestMoveDecided:
 
-    if (this == Threads::mainThread()) {
-      lastSearchTimeSpan = timeMillis() - startTimeForBench;
-      if (!doingBench)
-        std::cout << "bestmove " << UCI::moveToString(bestMove) << std::endl;
-    }
+    if (this == Threads::mainThread() && !doingBench) 
+      std::cout << "bestmove " << UCI::moveToString(bestMove) << std::endl;
   }
 
   void SearchThread::idleLoop() {
