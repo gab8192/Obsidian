@@ -48,7 +48,7 @@ namespace Search {
   DEFINE_PARAM(DoubleExtMargin, 16, 0, 40);
   DEFINE_PARAM(DoubleExtMax, 6, 0, 40);
 
-  DEFINE_PARAM(LmrQuietHistoryDiv, 9847, 4000, 16000);
+  DEFINE_PARAM(LmrQuietHistoryDiv, 10500, 4000, 16000);
   DEFINE_PARAM(LmrCapHistoryDiv, 8192, 4000, 16000);
 
   DEFINE_PARAM(AspWindowStartDepth, 5, 4, 34);
@@ -103,7 +103,7 @@ namespace Search {
     MoveList moves;
     getPseudoLegalMoves(pos, &moves);
 
-    if (depth == 1) {
+    if (depth <= 1) {
       int n = 0;
       for (int i = 0; i < moves.size(); i++)
         n += pos.isLegal(moves[i].move);
@@ -912,7 +912,7 @@ namespace Search {
           R -= (moveStage == KILLER || moveStage == COUNTER);
 
           // Reduce or extend depending on history of this quiet move
-          R -= std::clamp(getQuietHistory(pos, move, ss) / LmrQuietHistoryDiv, -2, 2);
+          R -= getQuietHistory(pos, move, ss) / LmrQuietHistoryDiv;
         }
         else {
           R = 0;
