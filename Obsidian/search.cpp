@@ -896,7 +896,7 @@ namespace Search {
           // Reduce if this is a bad capture (=> loses material)
           R += (moveStage == BAD_CAPTURES);
 
-          R -= getCapHistory(pos, move) / LmrCapHistoryDiv;
+          R -= getQuietHistory(pos, move, ss) / LmrQuietHistoryDiv;
         }
 
         // Extend moves that give check
