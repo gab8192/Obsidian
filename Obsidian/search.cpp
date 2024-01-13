@@ -890,6 +890,8 @@ namespace Search {
         else {
           R = 0;
 
+          R -= (moveStage == GOOD_CAPTURES);
+
           R -= getCapHistory(pos, move) / LmrCapHistoryDiv;
         }
 
