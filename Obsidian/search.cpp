@@ -115,11 +115,10 @@ namespace Search {
       if (!pos.isLegal(move))
         continue;
 
-      int dirtyCount = 0;
-      DirtyPiece dirtyPieces[4];
+      DirtyPieces dirtyPieces;
 
       Position newPos = pos;
-      newPos.doMove(move, dirtyPieces, dirtyCount);
+      newPos.doMove(move, dirtyPieces);
 
       int64_t thisNodes = perft<false>(newPos, depth - 1);
       if constexpr (root)
@@ -183,35 +182,14 @@ namespace Search {
     NNUE::Accumulator& oldAcc = accumStack[accumStackHead];
     NNUE::Accumulator& newAcc = accumStack[++accumStackHead];
 
-    int dirtyCount = 0;
-    DirtyPiece dirtyPieces[4];
+    DirtyPieces dirtyPieces;
 
     ply++;
-    pos.doMove(move, dirtyPieces, dirtyCount);
+    pos.doMove(move, dirtyPieces);
 
     TT::prefetch(pos.key);
 
-    {
-      DirtyPiece dp = dirtyPieces[0];
-
-      if (dp.from == SQ_NONE)
-        newAcc.activateFeature(dp.to, dp.pc, &oldAcc);
-      else if (dp.to == SQ_NONE)
-        newAcc.deactivateFeature(dp.from, dp.pc, &oldAcc);
-      else
-        newAcc.moveFeature(dp.from, dp.to, dp.pc, &oldAcc);
-    }
-
-    for (int i = 1; i < dirtyCount; i++) {
-      DirtyPiece dp = dirtyPieces[i];
-
-      if (dp.from == SQ_NONE)
-        newAcc.activateFeature(dp.to, dp.pc, &newAcc);
-      else if (dp.to == SQ_NONE)
-        newAcc.deactivateFeature(dp.from, dp.pc, &newAcc);
-      else
-        newAcc.moveFeature(dp.from, dp.to, dp.pc, &newAcc);
-    }
+    newAcc.doUpdates(&dirtyPieces, &oldAcc);
   }
 
   void SearchThread::cancelMove() {

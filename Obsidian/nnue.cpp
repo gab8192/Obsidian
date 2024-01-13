@@ -21,37 +21,63 @@ namespace NNUE {
   } Content;
 
   template <int InputSize>
-  inline void addAll(weight_t* output, weight_t* input, int offset){
+  inline void addAll(weight_t* output, weight_t* input, int add0){
     Vec* inputVec = (Vec*)input;
     Vec* outputVec = (Vec*)output;
-    Vec* add0Vec = (Vec*) &Content.FeatureWeights[offset];
+    Vec* add0Vec = (Vec*) &Content.FeatureWeights[add0];
 
     for (int i = 0; i < InputSize / WeightsPerVec; ++i)
       outputVec[i] = addEpi16(inputVec[i], add0Vec[i]);
   }
 
   template <int InputSize>
-  inline void subAll(weight_t* output, weight_t* input, int offset){
+  inline void subAll(weight_t* output, weight_t* input, int sub0){
     Vec* inputVec = (Vec*)input;
     Vec* outputVec = (Vec*)output;
-    Vec* sub0Vec = (Vec*) &Content.FeatureWeights[offset];
+    Vec* sub0Vec = (Vec*) &Content.FeatureWeights[sub0];
 
     for (int i = 0; i < InputSize / WeightsPerVec; ++i)
       outputVec[i] = subEpi16(inputVec[i], sub0Vec[i]);
   }
 
   template <int InputSize>
-  inline void addSubAll(weight_t* output, weight_t* input, int addOff, int subtractOff) {
+  inline void addSubAll(weight_t* output, weight_t* input, int add0, int sub0) {
     Vec* inputVec = (Vec*)input;
     Vec* outputVec = (Vec*)output;
 
-    Vec* add0Vec = (Vec*) &Content.FeatureWeights[addOff];
-    Vec* sub0Vec = (Vec*) &Content.FeatureWeights[subtractOff];
+    Vec* add0Vec = (Vec*) &Content.FeatureWeights[add0];
+    Vec* sub0Vec = (Vec*) &Content.FeatureWeights[sub0];
 
     for (int i = 0; i < InputSize / WeightsPerVec; ++i)
       outputVec[i] = subEpi16(addEpi16(inputVec[i], add0Vec[i]), sub0Vec[i]);
   }
 
+  template <int InputSize>
+  inline void subAddSub(weight_t* output, weight_t* input, int sub0, int add0, int sub1) {
+    Vec* inputVec = (Vec*)input;
+    Vec* outputVec = (Vec*)output;
+
+    Vec* sub0Vec = (Vec*) &Content.FeatureWeights[sub0];
+    Vec* add0Vec = (Vec*) &Content.FeatureWeights[add0];
+    Vec* sub1Vec = (Vec*) &Content.FeatureWeights[sub1];
+
+    for (int i = 0; i < InputSize / WeightsPerVec; ++i)
+      outputVec[i] = subEpi16(subEpi16(addEpi16(inputVec[i], add0Vec[i]), sub0Vec[i]), sub1Vec[i]);
+  }
+
+   template <int InputSize>
+  inline void subAddSubAdd(weight_t* output, weight_t* input, int sub0, int add0, int sub1, int add1) {
+    Vec* inputVec = (Vec*)input;
+    Vec* outputVec = (Vec*)output;
+
+    Vec* sub0Vec = (Vec*) &Content.FeatureWeights[sub0];
+    Vec* add0Vec = (Vec*) &Content.FeatureWeights[add0];
+    Vec* sub1Vec = (Vec*) &Content.FeatureWeights[sub1];
+    Vec* add1Vec = (Vec*) &Content.FeatureWeights[add1];
+
+    for (int i = 0; i < InputSize / WeightsPerVec; ++i)
+      outputVec[i] = addEpi16(subEpi16(subEpi16(addEpi16(inputVec[i], add0Vec[i]), sub0Vec[i]), sub1Vec[i]), add1Vec[i]);
+  }
 
   void Accumulator::reset() {
     for (int c = WHITE; c <= BLACK; ++c)
@@ -71,6 +97,32 @@ namespace NNUE {
   void Accumulator::moveFeature(Square from, Square to, Piece pc, Accumulator* input) {
     for (int c = WHITE; c <= BLACK; ++c)
       addSubAll<HiddenWidth>(colors[c], input->colors[c], FeaturesIndex[c][pc][to], FeaturesIndex[c][pc][from]);
+  }
+
+  inline int ftIndex(int color, SquarePiece sp) {
+    return FeaturesIndex[color][sp.pc][sp.sq];
+  }
+
+  void Accumulator::doUpdates(DirtyPieces* dp, Accumulator* input) {
+    if (dp->type == DirtyPieces::CASTLING) {
+
+      for (int c = WHITE; c <= BLACK; ++c)
+        subAddSubAdd<HiddenWidth>(colors[c], input->colors[c], 
+          ftIndex(c, dp->sub0), ftIndex(c, dp->add0), ftIndex(c, dp->sub1), ftIndex(c, dp->add1));
+
+    } else if (dp->type == DirtyPieces::CAPTURE) {
+
+      for (int c = WHITE; c <= BLACK; ++c)
+        subAddSub<HiddenWidth>(colors[c], input->colors[c], 
+          ftIndex(c, dp->sub0), ftIndex(c, dp->add0), ftIndex(c, dp->sub1));
+
+    } else {
+
+       for (int c = WHITE; c <= BLACK; ++c)
+        addSubAll<HiddenWidth>(colors[c], input->colors[c], 
+          ftIndex(c, dp->add0), ftIndex(c, dp->sub0));
+
+    }
   }
 
   void init() {
