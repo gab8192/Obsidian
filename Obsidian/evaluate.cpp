@@ -10,7 +10,7 @@ namespace Eval {
 
     const int pawnCount = BitCount(pos.pieces(PAWN));
 
-    score = Score(score * 32 / (pawnCount+20));
+    score = Score(score * 64 / (pawnCount+40));
 
     // Scale down as 50 move rule approaches
     score = Score(score * (200 - pos.halfMoveClock) / 200);
