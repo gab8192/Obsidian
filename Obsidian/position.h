@@ -145,7 +145,7 @@ struct alignas(32) Position {
 
   void doNullMove();
 
-  void doMove(Move move, DirtyPiece* dp, int& dpCount);
+  void doMove(Move move, DirtyPieces& dp);
 
   /// Only works for MT_NORMAL moves
   Key keyAfter(Move move) const;
