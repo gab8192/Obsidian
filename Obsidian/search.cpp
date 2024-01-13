@@ -859,7 +859,7 @@ namespace Search {
         else if (singularBeta >= beta) // Multicut
           return singularBeta;
         else if (ttScore >= beta) // Negative extensions
-          extension = -1 + IsPV;
+          extension = -2 + IsPV;
         else if (cutNode)
           extension = -1;
       }
