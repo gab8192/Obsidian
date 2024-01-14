@@ -1236,10 +1236,17 @@ namespace Search {
     return output.str();
   }
 
-  DEFINE_PARAM(tm0, 169, 0, 300);
-  DEFINE_PARAM(tm1, 62,  0, 150);
-  DEFINE_PARAM(tm2, 142, 0, 200);
-  DEFINE_PARAM(tm3, 3,   0, 30);
+  DEFINE_PARAM(tm0, 177, 50, 200);
+  DEFINE_PARAM(tm1, 63,  20, 100);
+
+  DEFINE_PARAM(tm2, 141, 50, 200);
+  DEFINE_PARAM(tm3, 4,   0, 30);
+
+  DEFINE_PARAM(tm4, 96,   0, 150);
+  DEFINE_PARAM(tm5, 10,   0, 150);
+
+  DEFINE_PARAM(lol0, -12, -150, 0);
+  DEFINE_PARAM(lol1, 56,   0,  150);
 
   void SearchThread::startSearch() {
 
@@ -1416,11 +1423,14 @@ namespace Search {
 
         int bmNodes = rootMoves[rootMoves.indexOf(bestMove)].nodes;
         double notBestNodes = 1.0 - (bmNodes / double(nodesSearched));
-        double nodesFactor = notBestNodes * (tm0/100.0) + (tm1/100.0);
+        double nodesFactor     = (tm1/100.0) + notBestNodes * (tm0/100.0);
 
-        double stabilityFactor = (tm2/100.0) - (tm3/100.0) * searchStability;
+        double stabilityFactor = (tm2/100.0) - searchStability * (tm3/100.0);
 
-        if (elapsed > stabilityFactor * nodesFactor * optimumTime)
+        int scoreLoss = std::clamp<int>(iterDeepening[rootDepth - 1].score - score, lol0, lol1);
+        double scoreFactor     = (tm4/100.0) + scoreLoss * (tm5/1000.0);
+
+        if (elapsed > stabilityFactor * nodesFactor * scoreFactor * optimumTime)
           goto bestMoveDecided;
       }
     }
