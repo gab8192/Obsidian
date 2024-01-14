@@ -1267,12 +1267,12 @@ namespace Search {
   }
 
   DEFINE_PARAM(tm0, 177, 50, 200);
-  DEFINE_PARAM(tm1, 64,  20, 100);
+  DEFINE_PARAM(tm1, 63,  20, 100);
 
-  DEFINE_PARAM(tm2, 142, 50, 200);
+  DEFINE_PARAM(tm2, 141, 50, 200);
   DEFINE_PARAM(tm3, 4,   0, 30);
 
-  DEFINE_PARAM(tm4, 94,   0, 150);
+  DEFINE_PARAM(tm4, 96,   0, 150);
   DEFINE_PARAM(tm5, 10,   0, 150);
 
   DEFINE_PARAM(lol0, -12, -150, 0);
