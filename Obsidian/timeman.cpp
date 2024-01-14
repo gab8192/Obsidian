@@ -8,8 +8,9 @@
 namespace TimeMan {
 
   /// Calcaulate how much of our time we should use
-  clock_t calcOptimumTime(Search::Settings& settings, Color us) {
-
+  void calcOptimumTime(Search::Settings& settings, Color us,
+                       clock_t* optimumTime, clock_t* maximumTime)
+  {
     double optScale;
 
     int overhead = Options["Move Overhead"];
@@ -28,6 +29,7 @@ namespace TimeMan {
         0.88 * settings.time[us] / double(timeLeft));
     }
 
-    return clock_t(optScale * timeLeft);
+    *optimumTime = clock_t(optScale * timeLeft);
+    *maximumTime = settings.time[us] * 0.8 - overhead;
   }
 }
