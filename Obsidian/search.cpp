@@ -913,7 +913,7 @@ namespace Search {
         // Clamp to avoid a qsearch or an extension in the child search
         int reducedDepth = std::clamp(newDepth - R, 1, newDepth + 1);
 
-        const bool isChildCutNode = (moveStage != GOOD_CAPTURES);
+        const bool isChildCutNode = (moveStage != GOOD_CAPTURES || !cutNode);
 
         score = -negaMax<false>(newPos, -alpha - 1, -alpha, reducedDepth, isChildCutNode, ss + 1);
 
