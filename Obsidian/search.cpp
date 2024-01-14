@@ -141,17 +141,15 @@ namespace Search {
   }
 
   bool SearchThread::usedMostOfTime() {
-    if (Threads::searchSettings.movetime) {
 
+    if (Threads::searchSettings.hasTimeLimit())
+      return elapsedTime() >= maximumTime;
+    
+    else if (Threads::searchSettings.movetime) {
       clock_t timeLimit = Threads::searchSettings.movetime;
-      return elapsedTime() >= (timeLimit - 100);
+      return elapsedTime() >= (timeLimit - 50);
     }
-    else if (Threads::searchSettings.hasTimeLimit()) {
 
-      clock_t timeLimit = Threads::searchSettings.time[rootColor];
-      // never use more than ~80 % of our time
-      return elapsedTime() >= (0.8 * timeLimit - 50);
-    }
     return false;
   }
 
@@ -1256,18 +1254,15 @@ namespace Search {
 
     Move bestMove;
 
-    clock_t optimumTime;
-
     if (Threads::searchSettings.hasTimeLimit())
-      optimumTime = TimeMan::calcOptimumTime(Threads::searchSettings, rootPos.sideToMove);
+      TimeMan::calcOptimumTime(Threads::searchSettings, rootPos.sideToMove,
+                              &optimumTime, &maximumTime);
 
     ply = 0;
 
     nodesSearched = 0;
 
     tbHits = 0;
-
-    rootColor = rootPos.sideToMove;
 
     SearchLoopInfo iterDeepening[MAX_PLY];
 

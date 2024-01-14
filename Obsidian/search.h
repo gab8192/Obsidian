@@ -86,7 +86,7 @@ namespace Search {
     
   private:
     
-    Color rootColor;
+    clock_t optimumTime, maximumTime;
 
     int rootDepth;
 

@@ -4,5 +4,6 @@
 
 namespace TimeMan {
 
-  clock_t calcOptimumTime(Search::Settings& settings, Color us);
+  void calcOptimumTime(Search::Settings& settings, Color us,
+                       clock_t* optimumTime, clock_t* maximumTime);
 }
