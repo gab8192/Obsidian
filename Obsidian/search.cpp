@@ -1122,11 +1122,13 @@ namespace Search {
 
       bool needFullSearch;
 
-      if (depth >= 3 && playedMoves > 3) {
+      if (depth >= 3 && playedMoves >= 3) {
         int R;
 
         if (isQuiet) {
           R = lmrTable[depth][playedMoves + 1];
+
+          R++;
         }
         else {
           R = 0;
