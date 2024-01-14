@@ -1128,7 +1128,7 @@ namespace Search {
         if (isQuiet) {
           R = lmrTable[depth][playedMoves + 1];
 
-          R++;
+          R--;
         }
         else {
           R = 0;
