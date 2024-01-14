@@ -873,7 +873,7 @@ namespace Search {
 
       bool needFullSearch;
 
-      if (depth >= 3 && playedMoves >= 1) {
+      if (depth >= 3 && playedMoves >= 1 && (isQuiet || !IsPV)) {
         int R;
 
         if (isQuiet) {
@@ -913,9 +913,7 @@ namespace Search {
         // Clamp to avoid a qsearch or an extension in the child search
         int reducedDepth = std::clamp(newDepth - R, 1, newDepth + 1);
 
-        const bool isChildCutNode = (moveStage != GOOD_CAPTURES || !cutNode);
-
-        score = -negaMax<false>(newPos, -alpha - 1, -alpha, reducedDepth, isChildCutNode, ss + 1);
+        score = -negaMax<false>(newPos, -alpha - 1, -alpha, reducedDepth, true, ss + 1);
 
         needFullSearch = score > alpha && reducedDepth < newDepth;
 
