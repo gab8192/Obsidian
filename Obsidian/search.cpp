@@ -38,7 +38,7 @@ namespace Search {
 
   DEFINE_PARAM(ProbcutBetaMargin, 220, 160, 280);
 
-  DEFINE_PARAM(LmpBase,    3, 0, 20);
+  DEFINE_PARAM(LmpBase,    4, 0, 20);
 
   DEFINE_PARAM(PvsQuietSeeMargin, -75, -400, 0);
   DEFINE_PARAM(PvsCapSeeMargin, -120, -400, 0);
@@ -794,7 +794,9 @@ namespace Search {
     Move move;
     MpStage moveStage;
 
-    while (move = movePicker.nextMove(& moveStage)) {
+    bool skipQuiets = false;
+
+    while (move = movePicker.nextMove(& moveStage, skipQuiets)) {
       if (move == excludedMove)
         continue;
 
@@ -817,10 +819,11 @@ namespace Search {
             continue;
         }
 
+        // Late move pruning. At low depths, only visit a few quiet moves
+        if (seenMoves >= (depth * depth + LmpBase) / (2 - improving))
+          skipQuiets = true;
+
         if (isQuiet) {
-          // Late move pruning. At low depths, only visit a few quiet moves
-          if (seenMoves >= (depth * depth + LmpBase) / (2 - improving))
-            movePicker.stage = BAD_CAPTURES;
 
           int lmrRed = lmrTable[depth][seenMoves] + !improving - history / EarlyLmrHistoryDiv;
           int lmrDepth = std::max(0, depth - lmrRed);
@@ -830,7 +833,7 @@ namespace Search {
           if (   lmrDepth <= FpMaxDepth 
               && !pos.checkers 
               && eval + FpBase + FpDepthMul * lmrDepth <= alpha)
-            movePicker.stage = BAD_CAPTURES;
+            skipQuiets = true;
         }
       }
 
