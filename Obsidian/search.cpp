@@ -38,7 +38,7 @@ namespace Search {
 
   DEFINE_PARAM(ProbcutBetaMargin, 220, 160, 280);
 
-  DEFINE_PARAM(LmpBase,    4, 0, 20);
+  DEFINE_PARAM(LmpBase,    3, 0, 20);
 
   DEFINE_PARAM(PvsQuietSeeMargin, -75, -400, 0);
   DEFINE_PARAM(PvsCapSeeMargin, -120, -400, 0);
