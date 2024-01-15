@@ -36,10 +36,14 @@ namespace Search {
   DEFINE_PARAM(NmpEvalDiv, 203, 100, 400);
   DEFINE_PARAM(NmpEvalDivMin, 3, 0, 20);
 
+  DEFINE_PARAM(ProbcutBetaMargin, 220, 160, 280);
+
   DEFINE_PARAM(LmpBase,    3, 0, 20);
 
   DEFINE_PARAM(PvsQuietSeeMargin, -75, -400, 0);
   DEFINE_PARAM(PvsCapSeeMargin, -120, -400, 0);
+
+  DEFINE_PARAM(EarlyLmrHistoryDiv, 5500, 4000, 12000);
 
   DEFINE_PARAM(FpBase, 187, 50, 350);
   DEFINE_PARAM(FpMaxDepth, 8, 0, 30);
@@ -48,8 +52,9 @@ namespace Search {
   DEFINE_PARAM(DoubleExtMargin, 16, 0, 40);
   DEFINE_PARAM(DoubleExtMax, 6, 0, 40);
 
-  DEFINE_PARAM(LmrQuietHistoryDiv, 10500, 4000, 16000);
-  DEFINE_PARAM(LmrCapHistoryDiv, 8192, 4000, 16000);
+  DEFINE_PARAM(LmrQuietHistoryDiv, 10500, 6000, 14000);
+  DEFINE_PARAM(LmrCapHistoryDiv, 8192, 6000, 14000);
+  DEFINE_PARAM(ZwsDeeperMargin, 80, 20, 140);
 
   DEFINE_PARAM(AspWindowStartDepth, 5, 4, 34);
   DEFINE_PARAM(AspWindowStartDelta, 11, 5, 45);
@@ -593,7 +598,7 @@ namespace Search {
 
     const bool ttMoveNoisy = ttMove && !pos.isQuiet(ttMove);
 
-    const Score probcutBeta = beta + 220;
+    const Score probcutBeta = beta + ProbcutBetaMargin;
 
     Score eval;
     Move bestMove = MOVE_NONE;
@@ -813,17 +818,18 @@ namespace Search {
         }
 
         if (isQuiet) {
-
-          int lmrRed = lmrTable[depth][seenMoves] + !improving - history / 5500;
-          int lmrDepth = std::max(0, depth - lmrRed);
-
           // Late move pruning. At low depths, only visit a few quiet moves
           if (seenMoves >= (depth * depth + LmpBase) / (2 - improving))
             movePicker.stage = BAD_CAPTURES;
 
+          int lmrRed = lmrTable[depth][seenMoves] + !improving - history / EarlyLmrHistoryDiv;
+          int lmrDepth = std::max(0, depth - lmrRed);
+
           // Futility pruning. If our evaluation is far below alpha,
           // only visit a few quiet moves
-          if (lmrDepth <= FpMaxDepth && !pos.checkers && eval + FpBase + FpDepthMul * lmrDepth <= alpha)
+          if (   lmrDepth <= FpMaxDepth 
+              && !pos.checkers 
+              && eval + FpBase + FpDepthMul * lmrDepth <= alpha)
             movePicker.stage = BAD_CAPTURES;
         }
       }
@@ -918,7 +924,7 @@ namespace Search {
         score = -negaMax<false>(newPos, -alpha - 1, -alpha, reducedDepth, true, ss + 1);
 
         if (score > alpha && reducedDepth < newDepth) {
-          if (score > bestScore + 80) 
+          if (score > bestScore + ZwsDeeperMargin) 
             newDepth++;
           else if (score < bestScore + newDepth)
             newDepth--;
