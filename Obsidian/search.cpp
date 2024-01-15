@@ -833,7 +833,7 @@ namespace Search {
           if (   lmrDepth <= FpMaxDepth 
               && !pos.checkers 
               && eval + FpBase + FpDepthMul * lmrDepth <= alpha)
-            skipQuiets = true;
+            continue;
         }
       }
 

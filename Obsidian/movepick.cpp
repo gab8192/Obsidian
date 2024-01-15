@@ -148,10 +148,6 @@ Move MovePicker::nextMove(MpStage* outStage, bool skipQuiets) {
   }
   case KILLER:
   {
-    if (skipQuiets) {
-      stage = BAD_CAPTURES;
-      goto select;
-    }
     ++stage;
     if (pos.isQuiet(killerMove) && pos.isPseudoLegal(killerMove)) {
       *outStage = KILLER;
@@ -161,10 +157,6 @@ Move MovePicker::nextMove(MpStage* outStage, bool skipQuiets) {
   }
   case COUNTER:
   {
-    if (skipQuiets) {
-      stage = BAD_CAPTURES;
-      goto select;
-    }
     ++stage;
     if (pos.isQuiet(counterMove) && pos.isPseudoLegal(counterMove)) {
       *outStage = COUNTER;
