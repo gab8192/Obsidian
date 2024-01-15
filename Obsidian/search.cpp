@@ -800,6 +800,8 @@ namespace Search {
       
       bool isQuiet = pos.isQuiet(move);
 
+      int history = isQuiet ? getQuietHistory(pos, move, ss) : getCapHistory(pos, move);
+
       if ( pos.hasNonPawns(pos.sideToMove)
         && bestScore > TB_LOSS_IN_MAX_PLY)
       {
@@ -812,7 +814,7 @@ namespace Search {
 
         if (isQuiet) {
 
-          int lmrRed = lmrTable[depth][seenMoves]  + !improving;
+          int lmrRed = lmrTable[depth][seenMoves] + !improving - history / 5500;
           int lmrDepth = std::max(0, depth - lmrRed);
 
           // Late move pruning. At low depths, only visit a few quiet moves
@@ -886,7 +888,7 @@ namespace Search {
           R -= (moveStage == KILLER || moveStage == COUNTER);
 
           // Reduce or extend depending on history of this quiet move
-          R -= getQuietHistory(pos, move, ss) / LmrQuietHistoryDiv;
+          R -= history / LmrQuietHistoryDiv;
         }
         else {
           R = 0;
@@ -894,7 +896,7 @@ namespace Search {
           // Reduce if this is a bad capture (=> loses material)
           R += (moveStage == BAD_CAPTURES);
 
-          R -= getCapHistory(pos, move) / LmrCapHistoryDiv;
+          R -= history / LmrCapHistoryDiv;
         }
 
         // Extend moves that give check
