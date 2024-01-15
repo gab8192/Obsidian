@@ -103,7 +103,10 @@ namespace NNUE {
     return FeaturesIndex[color][sp.pc][sp.sq];
   }
 
-  void Accumulator::doUpdates(DirtyPieces* dp, Accumulator* input) {
+  void Accumulator::doUpdates(Accumulator* input) {
+
+    DirtyPieces* dp = & this->dirtyPieces;
+
     if (dp->type == DirtyPieces::CASTLING) {
 
       for (int c = WHITE; c <= BLACK; ++c)
@@ -123,6 +126,8 @@ namespace NNUE {
           ftIndex(c, dp->add0), ftIndex(c, dp->sub0));
 
     }
+
+    computed = true;
   }
 
   void init() {

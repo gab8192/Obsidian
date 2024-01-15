@@ -35,6 +35,9 @@ namespace NNUE {
   struct Accumulator {
     alignas(Alignment) weight_t colors[COLOR_NB][HiddenWidth];
 
+    DirtyPieces dirtyPieces;
+    bool computed;
+
     void reset();
 
     void activateFeature(Square sq, Piece pc, Accumulator* input);
@@ -43,7 +46,7 @@ namespace NNUE {
 
     void moveFeature(Square from, Square to, Piece pc, Accumulator* input);
 
-    void doUpdates(DirtyPieces* dp, Accumulator* input);
+    void doUpdates(Accumulator* input);
   };
 
   void init();
