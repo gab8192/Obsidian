@@ -41,9 +41,9 @@ namespace Search {
   DEFINE_PARAM(PvsQuietSeeMargin, -75, -400, 0);
   DEFINE_PARAM(PvsCapSeeMargin, -120, -400, 0);
 
-  DEFINE_PARAM(FpBase, 185, 50, 350);
+  DEFINE_PARAM(FpBase, 187, 50, 350);
   DEFINE_PARAM(FpMaxDepth, 8, 0, 30);
-  DEFINE_PARAM(FpDepthMul, 119, 50, 350);
+  DEFINE_PARAM(FpDepthMul, 116, 50, 350);
 
   DEFINE_PARAM(DoubleExtMargin, 16, 0, 40);
   DEFINE_PARAM(DoubleExtMax, 6, 0, 40);
@@ -812,7 +812,7 @@ namespace Search {
 
         if (isQuiet) {
 
-          int lmrRed = lmrTable[depth][seenMoves] - IsPV + !improving;
+          int lmrRed = lmrTable[depth][seenMoves]  + !improving;
           int lmrDepth = std::max(0, depth - lmrRed);
 
           // Late move pruning. At low depths, only visit a few quiet moves
