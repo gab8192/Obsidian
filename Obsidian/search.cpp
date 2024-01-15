@@ -172,9 +172,6 @@ namespace Search {
   void SearchThread::playMove(Position& pos, Move move, SearchInfo* ss) {
     nodesSearched++;
 
-    //if (move_type(move) == MT_NORMAL)
-      //TT::prefetch(pos.keyAfter(move));
-
     bool isCap = pos.board[move_to(move)] != NO_PIECE;
     ss->mContHistory = &contHistory[isCap][pieceTo(pos, move)];
     ss->playedMove = move;
@@ -479,6 +476,8 @@ namespace Search {
 
       foundLegalMoves = true;
 
+      TT::prefetch(pos.keyAfter(move));
+
       Position newPos = pos;
       playMove(newPos, move, ss);
 
@@ -754,6 +753,8 @@ namespace Search {
         if (!pos.isLegal(move))
           continue;
 
+        TT::prefetch(pos.keyAfter(move));
+
         Position newPos = pos;
         playMove(newPos, move, ss);
 
@@ -872,6 +873,8 @@ namespace Search {
         else if (cutNode)
           extension = -1;
       }
+
+      TT::prefetch(pos.keyAfter(move));
 
       Position newPos = pos;
       playMove(newPos, move, ss);
@@ -1120,6 +1123,8 @@ namespace Search {
       foundLegalMove = true;
 
       int oldNodesCount = nodesSearched;
+
+      TT::prefetch(pos.keyAfter(move));
 
       Position newPos = pos;
       playMove(newPos, move, ss);
