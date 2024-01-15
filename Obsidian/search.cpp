@@ -871,7 +871,7 @@ namespace Search {
 
       // Late move reductions. Search at a reduced depth, moves that are late in the move list
 
-      bool needFullSearch;
+      bool needFullSearch = false;
 
       if (depth >= 3 && playedMoves >= 1) {
         int R;
@@ -915,13 +915,12 @@ namespace Search {
 
         score = -negaMax<false>(newPos, -alpha - 1, -alpha, reducedDepth, true, ss + 1);
 
-        needFullSearch = score > alpha && reducedDepth < newDepth;
-
-        if (needFullSearch) {
+        if (score > alpha && reducedDepth < newDepth) {
           if (score > bestScore + 80) 
             newDepth++;
           else if (score < bestScore + newDepth)
             newDepth--;
+          needFullSearch = reducedDepth < newDepth;
         }
       }
       else
