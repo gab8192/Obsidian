@@ -830,7 +830,7 @@ namespace Search {
           if (   lmrDepth <= FpMaxDepth 
               && !pos.checkers 
               && eval + FpBase + FpDepthMul * lmrDepth <= alpha)
-            movePicker.stage = BAD_CAPTURES;
+            continue;
         }
       }
 
