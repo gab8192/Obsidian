@@ -814,7 +814,7 @@ namespace Search {
 
         if (isQuiet) {
 
-          int lmrRed = lmrTable[depth][seenMoves] + !improving - history / 8192;
+          int lmrRed = lmrTable[depth][seenMoves] + !improving - history / 5500;
           int lmrDepth = std::max(0, depth - lmrRed);
 
           // Late move pruning. At low depths, only visit a few quiet moves
