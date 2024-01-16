@@ -14,12 +14,12 @@ ifeq ($(build),)
 	build = native
 endif
 
-ifeq ($(build), avx512)
-    FLAGS += -march=skylake-avx512
-else ifeq ($(build), avx2)
+ifeq ($(build), native)
+    FLAGS += -march=native
+else ifeq ($(findstring avx2, $(build)), avx2)
 	FLAGS += -march=haswell
-else ifeq ($(build), native)
-	FLAGS += -march=native
+else ifeq ($(findstring avx512, $(build)), avx512)
+	FLAGS += -march=skylake-avx512
 endif
 
 ifeq ($(build), native)
@@ -35,7 +35,7 @@ ifeq ($(build), native)
 			endif
 		endif
 	endif
-else ifeq ($(findstring bmi2, $(build)), bmi2)
+else ifeq ($(findstring pext, $(build)), pext)
 	FLAGS += -DUSE_PEXT -mbmi2
 endif
 
