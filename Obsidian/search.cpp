@@ -15,37 +15,37 @@
 
 namespace Search {
 
-  DEFINE_PARAM_S(MpPvsSeeMargin, -30, 15);
-  DEFINE_PARAM_S(MpQsSeeMargin, -25, 15);
+  DEFINE_PARAM_S(MpPvsSeeMargin, -35, 15);
+  DEFINE_PARAM_S(MpQsSeeMargin, -23, 15);
 
-  DEFINE_PARAM_S(LmrBase, 39, 10);
-  DEFINE_PARAM_S(LmrDiv, 211, 10);
+  DEFINE_PARAM_S(LmrBase, 38, 10);
+  DEFINE_PARAM_S(LmrDiv, 206, 10);
 
   DEFINE_PARAM_S(StatBonusQuad, 3, 1);
   DEFINE_PARAM_S(StatBonusLinear, 116, 10);
   DEFINE_PARAM_S(StatBonusMax, 1159, 50);
   DEFINE_PARAM_S(StatBonusBoostAt, 120, 10);
 
-  DEFINE_PARAM_S(RazoringDepthMul, 415, 10);
+  DEFINE_PARAM_S(RazoringDepthMul, 414, 10);
 
   DEFINE_PARAM_S(RfpMaxDepth, 9, 1);
   DEFINE_PARAM_S(RfpDepthMul, 123, 6);
 
   DEFINE_PARAM_S(NmpBase, 4, 1);
   DEFINE_PARAM_B(NmpDepthDiv, 4, 1, 21);
-  DEFINE_PARAM_S(NmpEvalDiv, 207, 20);
+  DEFINE_PARAM_S(NmpEvalDiv, 206, 20);
   DEFINE_PARAM_S(NmpEvalDivMin, 4, 1);
 
-  DEFINE_PARAM_S(ProbcutBetaMargin, 229, 10);
+  DEFINE_PARAM_S(ProbcutBetaMargin, 230, 10);
 
   DEFINE_PARAM_S(LmpBase,    3, 1);
 
-  DEFINE_PARAM_S(PvsQuietSeeMargin, -77, 20);
-  DEFINE_PARAM_S(PvsCapSeeMargin, -132, 20);
+  DEFINE_PARAM_S(PvsQuietSeeMargin, -80, 20);
+  DEFINE_PARAM_S(PvsCapSeeMargin, -129, 20);
 
   DEFINE_PARAM_S(EarlyLmrHistoryDiv, 5521, 300);
 
-  DEFINE_PARAM_S(FpBase, 182, 10);
+  DEFINE_PARAM_S(FpBase, 183, 10);
   DEFINE_PARAM_S(FpMaxDepth, 8, 1);
   DEFINE_PARAM_S(FpDepthMul, 111, 6);
 
