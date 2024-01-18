@@ -37,13 +37,9 @@ namespace NNUE {
 
     void reset();
 
-    void activateFeature(Square sq, Piece pc, Accumulator* input);
+    void addPiece(Square sq, Piece pc);
 
-    void deactivateFeature(Square sq, Piece pc, Accumulator* input);
-
-    void moveFeature(Square from, Square to, Piece pc, Accumulator* input);
-
-    void doUpdates(DirtyPieces* dp, Accumulator* input);
+    void doUpdates(DirtyPieces dp, Accumulator* input);
   };
 
   void init();

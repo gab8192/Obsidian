@@ -683,6 +683,6 @@ void Position::updateAccumulator(NNUE::Accumulator& acc) const {
   Bitboard b0 = pieces();
   while (b0) {
     Square sq = popLsb(b0);
-    acc.activateFeature(sq, board[sq], &acc);
+    acc.addPiece(sq, board[sq]);
   }
 }
