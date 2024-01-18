@@ -246,7 +246,7 @@ std::string UCI::scoreToString(Score v) {
 
   std::stringstream ss;
 
-  if (abs(v) < TB_WIN_IN_MAX_PLY)
+  if (abs(v) < CHECKMATE_IN_MAX_PLY)
     ss << "cp " << UCI::normalizeToCp(v);
   else {
     if (v > 0)

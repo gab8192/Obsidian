@@ -624,11 +624,11 @@ namespace Search {
       TT::Flag tbBound;
 
       if (tbResult == TB_LOSS) {
-        tbScore = CHECKMATED_IN_MAX_PLY + ply;
+        tbScore = Score(ply - SCORE_TB_WIN);
         tbBound = TT::FLAG_UPPER;
       }
       else if (tbResult == TB_WIN) {
-        tbScore = CHECKMATE_IN_MAX_PLY - ply;
+        tbScore = Score(SCORE_TB_WIN - ply);
         tbBound = TT::FLAG_LOWER;
       }
       else {

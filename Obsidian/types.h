@@ -8,7 +8,7 @@
 #include <nmmintrin.h>
 #include <thread>
 
-const std::string engineVersion = "dev-10.02";
+const std::string engineVersion = "dev-10.03";
 
 using Key = uint64_t;
 using Bitboard = uint64_t;
@@ -38,12 +38,12 @@ enum Score : int {
   SCORE_INFINITE = 32001,
   SCORE_NONE = 32002,
 
-  TB_WIN_IN_MAX_PLY = CHECKMATE - 2 * MAX_PLY,
-  TB_LOSS_IN_MAX_PLY = -TB_WIN_IN_MAX_PLY,
-  
   CHECKMATE_IN_MAX_PLY = CHECKMATE - MAX_PLY,
-  CHECKMATED_IN_MAX_PLY = -CHECKMATE_IN_MAX_PLY
+  CHECKMATED_IN_MAX_PLY = -CHECKMATE_IN_MAX_PLY,
 
+  SCORE_TB_WIN = CHECKMATE_IN_MAX_PLY - 1, // don't mix with mate scores
+  TB_WIN_IN_MAX_PLY = SCORE_TB_WIN - MAX_PLY,
+  TB_LOSS_IN_MAX_PLY = -TB_WIN_IN_MAX_PLY
 };
 
 enum Move {
