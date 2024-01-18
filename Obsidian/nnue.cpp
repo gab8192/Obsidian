@@ -120,24 +120,31 @@ namespace NNUE {
   void Accumulator::doUpdates(DirtyPieces dp, Accumulator* input) {
     const Color side = colorOf(dp.sub0.pc);
     if (dp.type == DirtyPieces::CASTLING) {
+      Accumulator* delta0 = cachedDelta(dp.sub0.sq, dp.add0.sq, dp.add0.pc);
+      Accumulator* delta1 = cachedDelta(dp.sub1.sq, dp.add1.sq, dp.add1.pc);
 
-      for (int c = WHITE; c <= BLACK; ++c)
-        multiSubAddSubAdd<HiddenWidth>(colors[c], input->colors[c], 
-          FeaturesAddress[c][dp.sub0.pc][dp.sub0.sq],
-          FeaturesAddress[c][dp.add0.pc][dp.add0.sq],
-          FeaturesAddress[c][dp.sub1.pc][dp.sub1.sq],
-          FeaturesAddress[c][dp.add1.pc][dp.add1.sq]);
+      multiAdd<HiddenWidth>(colors[WHITE], input->colors[WHITE], delta0->colors[side]);
+      multiAdd<HiddenWidth>(colors[BLACK], input->colors[BLACK], delta0->colors[~side]);
+      multiAdd<HiddenWidth>(colors[WHITE], colors[WHITE], delta1->colors[side]);
+      multiAdd<HiddenWidth>(colors[BLACK], colors[BLACK], delta1->colors[~side]);
 
     } else if (dp.type == DirtyPieces::CAPTURE) {
-
-      for (int c = WHITE; c <= BLACK; ++c)
-        multiSubAddSub<HiddenWidth>(colors[c], input->colors[c], 
-          FeaturesAddress[c][dp.sub0.pc][dp.sub0.sq],
-          FeaturesAddress[c][dp.add0.pc][dp.add0.sq],
-          FeaturesAddress[c][dp.sub1.pc][dp.sub1.sq]);
-
+      if (dp.add0.pc == dp.sub0.pc) {
+        Accumulator* delta = cachedDelta(dp.sub0.sq, dp.add0.sq, dp.add0.pc);
+        multiAdd<HiddenWidth>(colors[WHITE], input->colors[WHITE], delta->colors[side]);
+        multiAdd<HiddenWidth>(colors[BLACK], input->colors[BLACK], delta->colors[~side]);
+        
+        for (int c = WHITE; c <= BLACK; ++c)
+          multiSub<HiddenWidth>(colors[c], colors[c],
+            FeaturesAddress[c][dp.sub1.pc][dp.sub1.sq]);
+      } else {
+        for (int c = WHITE; c <= BLACK; ++c)
+          multiSubAddSub<HiddenWidth>(colors[c], input->colors[c], 
+            FeaturesAddress[c][dp.sub0.pc][dp.sub0.sq],
+            FeaturesAddress[c][dp.add0.pc][dp.add0.sq],
+            FeaturesAddress[c][dp.sub1.pc][dp.sub1.sq]);
+      }
     } else {
-
       if (dp.add0.pc == dp.sub0.pc) {
         Accumulator* delta = cachedDelta(dp.sub0.sq, dp.add0.sq, dp.add0.pc);
         multiAdd<HiddenWidth>(colors[WHITE], input->colors[WHITE], delta->colors[side]);
