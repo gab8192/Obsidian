@@ -20,13 +20,15 @@ namespace NNUE {
                              weight_t OutputBias;
   } Content;
 
-  NNUE::Accumulator crazyTable[12][SQUARE_NB][SQUARE_NB];
+  NNUE::Accumulator crazyTable[6][SQUARE_NB][SQUARE_NB];
 
-  int crazyIdx(Piece pc) {
-    if (colorOf(pc) == WHITE)
-      return pc-1;
-    else
-      return pc-3;
+  Accumulator* cachedDelta(Square from, Square to, Piece pc) {
+    if (colorOf(pc) == WHITE) {
+      return & crazyTable[pc-1][from][to];
+    }
+    else {
+      return & crazyTable[pc-9][from^56][to^56];
+    }
   }
 
   template <int InputSize>
@@ -116,6 +118,7 @@ namespace NNUE {
   }
 
   void Accumulator::doUpdates(DirtyPieces dp, Accumulator* input) {
+    const Color side = colorOf(dp.sub0.pc);
     if (dp.type == DirtyPieces::CASTLING) {
 
       for (int c = WHITE; c <= BLACK; ++c)
@@ -136,8 +139,9 @@ namespace NNUE {
     } else {
 
       if (dp.add0.pc == dp.sub0.pc) {
-        multiAdd<2 * HiddenWidth>((weight_t*) colors, (weight_t*) input->colors, 
-          (weight_t*) crazyTable[crazyIdx(dp.add0.pc)][dp.sub0.sq][dp.add0.sq].colors);
+        Accumulator* delta = cachedDelta(dp.sub0.sq, dp.add0.sq, dp.add0.pc);
+        multiAdd<HiddenWidth>(colors[WHITE], input->colors[WHITE], delta->colors[side]);
+        multiAdd<HiddenWidth>(colors[BLACK], input->colors[BLACK], delta->colors[~side]);
       } else {
        for (int c = WHITE; c <= BLACK; ++c)
         multiSubAdd<HiddenWidth>(colors[c], input->colors[c], 
@@ -168,17 +172,12 @@ namespace NNUE {
     }
 
     for (PieceType pt : {PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING}) {
-      for (Color color : {WHITE, BLACK}) {
+      for (Square s1 = SQ_A1; s1 < SQUARE_NB; ++s1) {
+        for (Square s2 = SQ_A1; s2 < SQUARE_NB; ++s2) {
+          Accumulator* target = & crazyTable[pt-1][s1][s2];
+          memset(target, 0, sizeof(Accumulator));
 
-        Piece piece = make_piece(color, pt);
-
-        for (Square s1 = SQ_A1; s1 < SQUARE_NB; ++s1) {
-          for (Square s2 = SQ_A1; s2 < SQUARE_NB; ++s2) {
-            Accumulator* target = & crazyTable[crazyIdx(piece)][s1][s2];
-            memset(target, 0, sizeof(Accumulator));
-
-            target->movePiece(s1, s2, piece);
-          }
+          target->movePiece(s1, s2, make_piece(WHITE, pt));
         }
       }
     }
