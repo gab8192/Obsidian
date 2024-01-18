@@ -11,7 +11,7 @@ namespace NNUE {
 
   constexpr int WeightsPerVec = sizeof(SIMD::Vec) / sizeof(weight_t);
 
-  alignas(SIMD::Alignment) int FeaturesIndex[COLOR_NB][PIECE_NB][SQUARE_NB];
+  weight_t* FeaturesAddress[COLOR_NB][PIECE_NB][SQUARE_NB];
 
   struct {
     alignas(SIMD::Alignment) weight_t FeatureWeights[FeaturesWidth * HiddenWidth];
@@ -84,14 +84,9 @@ namespace NNUE {
       memcpy(colors[c], Content.FeatureBiases, sizeof(Content.FeatureBiases));
   }
 
-  inline weight_t* weightsOf(int color, Piece pc, Square sq) {
-    int idx = FeaturesIndex[color][pc][sq];
-    return & Content.FeatureWeights[idx];
-  }
-
   void Accumulator::addPiece(Square sq, Piece pc) {
     for (int c = WHITE; c <= BLACK; ++c)
-      multiAdd<HiddenWidth>(colors[c], colors[c], weightsOf(c, pc, sq));
+      multiAdd<HiddenWidth>(colors[c], colors[c], FeaturesAddress[c][pc][sq]);
   }
 
   void Accumulator::doUpdates(DirtyPieces dp, Accumulator* input) {
@@ -99,25 +94,25 @@ namespace NNUE {
 
       for (int c = WHITE; c <= BLACK; ++c)
         multiSubAddSubAdd<HiddenWidth>(colors[c], input->colors[c], 
-          weightsOf(c, dp.sub0.pc, dp.sub0.sq),
-          weightsOf(c, dp.add0.pc, dp.add0.sq),
-          weightsOf(c, dp.sub1.pc, dp.sub1.sq),
-          weightsOf(c, dp.add1.pc, dp.add1.sq));
+          FeaturesAddress[c][dp.sub0.pc][dp.sub0.sq],
+          FeaturesAddress[c][dp.add0.pc][dp.add0.sq],
+          FeaturesAddress[c][dp.sub1.pc][dp.sub1.sq],
+          FeaturesAddress[c][dp.add1.pc][dp.add1.sq]);
 
     } else if (dp.type == DirtyPieces::CAPTURE) {
 
       for (int c = WHITE; c <= BLACK; ++c)
         multiSubAddSub<HiddenWidth>(colors[c], input->colors[c], 
-          weightsOf(c, dp.sub0.pc, dp.sub0.sq),
-          weightsOf(c, dp.add0.pc, dp.add0.sq),
-          weightsOf(c, dp.sub1.pc, dp.sub1.sq));
+          FeaturesAddress[c][dp.sub0.pc][dp.sub0.sq],
+          FeaturesAddress[c][dp.add0.pc][dp.add0.sq],
+          FeaturesAddress[c][dp.sub1.pc][dp.sub1.sq]);
 
     } else {
 
        for (int c = WHITE; c <= BLACK; ++c)
         multiSubAdd<HiddenWidth>(colors[c], input->colors[c], 
-          weightsOf(c, dp.sub0.pc, dp.sub0.sq),
-          weightsOf(c, dp.add0.pc, dp.add0.sq));
+          FeaturesAddress[c][dp.sub0.pc][dp.sub0.sq],
+          FeaturesAddress[c][dp.add0.pc][dp.add0.sq]);
           
     }
   }
@@ -133,14 +128,11 @@ namespace NNUE {
           Color color = Color(c);
           Piece piece = make_piece(color, PieceType(pt));
 
-          FeaturesIndex[color][piece][sq] =
-            SQUARE_NB * (pt - 1) + relative_square(color, sq);
+          int same = SQUARE_NB * (pt - 1) + relative_square(color, sq);
+          int opp = SQUARE_NB * (pt + 5) + relative_square(~color, sq);
 
-          FeaturesIndex[~color][piece][sq] =
-            SQUARE_NB * (pt + 5) + relative_square(~color, sq);
-
-          FeaturesIndex[color][piece][sq] *= HiddenWidth;
-          FeaturesIndex[~color][piece][sq] *= HiddenWidth;
+          FeaturesAddress[color][piece][sq] = & Content.FeatureWeights[same * HiddenWidth];
+          FeaturesAddress[~color][piece][sq] = & Content.FeatureWeights[opp * HiddenWidth];
         }
       }
     }
