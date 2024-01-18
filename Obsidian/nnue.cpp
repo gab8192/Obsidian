@@ -115,27 +115,40 @@ namespace NNUE {
   void Accumulator::doUpdates(DirtyPieces* dp, Accumulator* input) {
     if (dp->type == DirtyPieces::CASTLING) {
 
-      for (int c = WHITE; c <= BLACK; ++c)
-        subAddSubAdd<HiddenWidth>(colors[c], input->colors[c], 
-          ftIndex(c, dp->sub0), ftIndex(c, dp->add0), ftIndex(c, dp->sub1), ftIndex(c, dp->add1));
+      Vec* inputVec = (Vec*) input->colors;
+      Vec* outputVec = (Vec*) this->colors;
+      Vec* add0Vec = (Vec*) crazyTable[crazyIdx(dp->add0.pc)][dp->sub0.sq][dp->add0.sq].colors;
+      Vec* add1Vec = (Vec*) crazyTable[crazyIdx(dp->add1.pc)][dp->sub1.sq][dp->add1.sq].colors;
+
+      for (int i = 0; i < 2 * HiddenWidth / WeightsPerVec; ++i)
+        outputVec[i] = addEpi16(inputVec[i], addEpi16(add0Vec[i], add1Vec[i]));
 
     } else if (dp->type == DirtyPieces::CAPTURE) {
 
-      for (int c = WHITE; c <= BLACK; ++c)
-        subAddSub<HiddenWidth>(colors[c], input->colors[c], 
-          ftIndex(c, dp->sub0), ftIndex(c, dp->add0), ftIndex(c, dp->sub1));
-
-    } else {
       if (dp->add0.pc == dp->sub0.pc) {
-        NNUE::Accumulator* delta = & crazyTable[crazyIdx(dp->add0.pc)][dp->sub0.sq][dp->add0.sq];
-
         Vec* inputVec = (Vec*) input->colors;
         Vec* outputVec = (Vec*) this->colors;
-        Vec* add0Vec = (Vec*) delta->colors;
+        Vec* add0Vec = (Vec*) crazyTable[crazyIdx(dp->add0.pc)][dp->sub0.sq][dp->add0.sq].colors;
 
         for (int i = 0; i < 2 * HiddenWidth / WeightsPerVec; ++i)
           outputVec[i] = addEpi16(inputVec[i], add0Vec[i]);
 
+        for (int c = WHITE; c <= BLACK; ++c)
+          subAll<HiddenWidth>(colors[c], colors[c], ftIndex(c, dp->sub1));
+      } else {
+        for (int c = WHITE; c <= BLACK; ++c)
+          subAddSub<HiddenWidth>(colors[c], input->colors[c], 
+            ftIndex(c, dp->sub0), ftIndex(c, dp->add0), ftIndex(c, dp->sub1));
+      }
+
+    } else {
+      if (dp->add0.pc == dp->sub0.pc) {
+        Vec* inputVec = (Vec*) input->colors;
+        Vec* outputVec = (Vec*) this->colors;
+        Vec* add0Vec = (Vec*) crazyTable[crazyIdx(dp->add0.pc)][dp->sub0.sq][dp->add0.sq].colors;
+
+        for (int i = 0; i < 2 * HiddenWidth / WeightsPerVec; ++i)
+          outputVec[i] = addEpi16(inputVec[i], add0Vec[i]);
       } else {
         for (int c = WHITE; c <= BLACK; ++c)
           addSubAll<HiddenWidth>(colors[c], input->colors[c], 
@@ -173,10 +186,7 @@ namespace NNUE {
         Piece piece = make_piece(color, pt);
 
         for (Square s1 = SQ_A1; s1 < SQUARE_NB; ++s1) {
-          Bitboard atk = get_piece_attacks(piece, s1, 0);
-          while (atk) {
-            Square s2 = popLsb(atk);
-
+          for (Square s2 = SQ_A1; s2 < SQUARE_NB; ++s2) {
             Accumulator* target = & crazyTable[crazyIdx(piece)][s1][s2];
             memset(target, 0, sizeof(Accumulator));
 
