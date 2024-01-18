@@ -265,52 +265,6 @@ namespace Search {
     ss->killerMove = bestMove;
   }
 
-  void SearchThread::scoreRootMoves(Position& pos, MoveList& moves, Move ttMove, SearchInfo* ss) {
-    for (int i = 0; i < moves.size(); i++) {
-      int& moveScore = moves[i].score;
-
-      // initial score
-      moveScore = 0;
-
-      Move move = moves[i].move;
-
-      MoveType mt = move_type(move);
-      PieceType captured = ptypeOf(pos.board[move_to(move)]);
-
-      if (move == ttMove)
-        moveScore = INT_MAX;
-      else if (mt == MT_PROMOTION)
-        moveScore = promotionScores[promo_type(move)] + PieceValue[captured] * 64;
-      else if (captured || mt == MT_EN_PASSANT) {
-        moveScore = pos.see_ge(move, -10) ? 300000 : -200000;
-        moveScore += PieceValue[mt == MT_EN_PASSANT ? PAWN : captured] * 64;
-        moveScore += getCapHistory(pos, move);
-      }
-      else
-        moveScore = mainHistory[pos.sideToMove][move_from_to(move)];
-    }
-  }
-
-  Move nextBestMove(MoveList& moveList, int scannedMoves, int* moveScore) {
-    int bestMoveI = scannedMoves;
-    int bestMoveScore = moveList[bestMoveI].score;
-
-    int size = moveList.size();
-    for (int i = scannedMoves + 1; i < size; i++) {
-      int thisScore = moveList[i].score;
-      if (thisScore > bestMoveScore) {
-        bestMoveScore = thisScore;
-        bestMoveI = i;
-      }
-    }
-
-    (*moveScore) = bestMoveScore;
-
-    Move result = moveList[bestMoveI].move;
-    moveList[bestMoveI] = moveList[scannedMoves];
-    return result;
-  }
-
   TT::Flag boundForTT(bool failsHigh) {
     return failsHigh ? TT::FLAG_LOWER : TT::FLAG_UPPER;
   }
@@ -1081,9 +1035,12 @@ namespace Search {
 
     // Generate moves and score them
 
-    MoveList moves = rootMoves;
-
-    scoreRootMoves(pos, moves, ttMove, ss);
+    MovePicker movePicker(
+      PVS, pos,
+      ttMove, MOVE_NONE, MOVE_NONE,
+      mainHistory, captureHistory,
+      MpPvsSeeMargin,
+      ss);
 
     bool foundLegalMove = false;
 
@@ -1096,9 +1053,10 @@ namespace Search {
 
     // Visit moves
 
-    for (int i = 0; i < moves.size(); i++) {
-      int moveScore;
-      Move move = nextBestMove(moves, i, &moveScore);
+    Move move;
+    MpStage moveStage;
+
+    while (move = movePicker.nextMove(&moveStage)) {
 
       if (!pos.isLegal(move))
         continue;
@@ -1138,8 +1096,7 @@ namespace Search {
         else {
           R = 0;
 
-          if (moveScore < 0)
-            R++;
+          R += (moveStage == BAD_CAPTURES);
         }
 
         if (newPos.checkers)
