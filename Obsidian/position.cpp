@@ -162,7 +162,7 @@ bool Position::isPseudoLegal(Move move) const {
     return legalTo & to;
   }
 
-  return get_piece_attacks(ptypeOf(pc), from, pieces()) & to;
+  return get_piece_attacks(pc, from, pieces()) & to;
 }
 
 bool Position::isLegal(Move move) const {

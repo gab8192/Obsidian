@@ -103,6 +103,15 @@ namespace NNUE {
     return FeaturesIndex[color][sp.pc][sp.sq];
   }
 
+  NNUE::Accumulator crazyTable[12][SQUARE_NB][SQUARE_NB];
+
+  int crazyIdx(Piece pc) {
+    if (colorOf(pc) == WHITE)
+      return pc-1;
+    else
+      return pc-3;
+  }
+
   void Accumulator::doUpdates(DirtyPieces* dp, Accumulator* input) {
     if (dp->type == DirtyPieces::CASTLING) {
 
@@ -117,11 +126,21 @@ namespace NNUE {
           ftIndex(c, dp->sub0), ftIndex(c, dp->add0), ftIndex(c, dp->sub1));
 
     } else {
+      if (dp->add0.pc == dp->sub0.pc) {
+        NNUE::Accumulator* delta = & crazyTable[crazyIdx(dp->add0.pc)][dp->sub0.sq][dp->add0.sq];
 
-       for (int c = WHITE; c <= BLACK; ++c)
-        addSubAll<HiddenWidth>(colors[c], input->colors[c], 
-          ftIndex(c, dp->add0), ftIndex(c, dp->sub0));
+        Vec* inputVec = (Vec*) input->colors;
+        Vec* outputVec = (Vec*) this->colors;
+        Vec* add0Vec = (Vec*) delta->colors;
 
+        for (int i = 0; i < 2 * HiddenWidth / WeightsPerVec; ++i)
+          outputVec[i] = addEpi16(inputVec[i], add0Vec[i]);
+
+      } else {
+        for (int c = WHITE; c <= BLACK; ++c)
+          addSubAll<HiddenWidth>(colors[c], input->colors[c], 
+            ftIndex(c, dp->add0), ftIndex(c, dp->sub0));
+      }
     }
   }
 
@@ -144,6 +163,25 @@ namespace NNUE {
 
           FeaturesIndex[color][piece][sq] *= HiddenWidth;
           FeaturesIndex[~color][piece][sq] *= HiddenWidth;
+        }
+      }
+    }
+
+    for (PieceType pt : {PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING}) {
+      for (Color color : {WHITE, BLACK}) {
+
+        Piece piece = make_piece(color, pt);
+
+        for (Square s1 = SQ_A1; s1 < SQUARE_NB; ++s1) {
+          Bitboard atk = get_piece_attacks(piece, s1, 0);
+          while (atk) {
+            Square s2 = popLsb(atk);
+
+            Accumulator* target = & crazyTable[crazyIdx(piece)][s1][s2];
+            memset(target, 0, sizeof(Accumulator));
+
+            target->moveFeature(s1, s2, piece, target);
+          }
         }
       }
     }

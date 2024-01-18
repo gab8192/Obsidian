@@ -23,7 +23,7 @@ namespace Cuckoo {
 
         for (Square s1 = SQ_A1; s1 < SQUARE_NB; ++s1) {
           for (Square s2 = s1+1; s2 < SQUARE_NB; ++s2) {
-            if (get_piece_attacks(pt, s1, 0) & s2) {
+            if (get_piece_attacks(piece, s1, 0) & s2) {
 
               Move move = createMove(s1, s2, MT_NORMAL);
 
