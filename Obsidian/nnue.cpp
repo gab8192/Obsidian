@@ -20,6 +20,15 @@ namespace NNUE {
                              weight_t OutputBias;
   } Content;
 
+  NNUE::Accumulator crazyTable[12][SQUARE_NB][SQUARE_NB];
+
+  int crazyIdx(Piece pc) {
+    if (colorOf(pc) == WHITE)
+      return pc-1;
+    else
+      return pc-3;
+  }
+
   template <int InputSize>
   inline void multiAdd(weight_t* output, weight_t* input, weight_t* add0){
     Vec* inputVec = (Vec*)input;
@@ -38,6 +47,17 @@ namespace NNUE {
 
     for (int i = 0; i < InputSize / WeightsPerVec; ++i)
       outputVec[i] = subEpi16(inputVec[i], sub0Vec[i]);
+  }
+
+  template <int InputSize>
+  inline void multiAddAdd(weight_t* output, weight_t* input, weight_t* add0, weight_t* add1){
+    Vec* inputVec = (Vec*)input;
+    Vec* outputVec = (Vec*)output;
+    Vec* add0Vec = (Vec*) add0;
+    Vec* add1Vec = (Vec*) add1;
+
+    for (int i = 0; i < InputSize / WeightsPerVec; ++i)
+      outputVec[i] = addEpi16(inputVec[i], addEpi16(add0Vec[i], add1Vec[i]));
   }
 
   template <int InputSize>
@@ -89,6 +109,12 @@ namespace NNUE {
       multiAdd<HiddenWidth>(colors[c], colors[c], FeaturesAddress[c][pc][sq]);
   }
 
+  
+  void Accumulator::movePiece(Square from, Square to, Piece pc) {
+    for (int c = WHITE; c <= BLACK; ++c)
+      multiSubAdd<HiddenWidth>(colors[c], colors[c], FeaturesAddress[c][pc][from], FeaturesAddress[c][pc][to]);
+  }
+
   void Accumulator::doUpdates(DirtyPieces dp, Accumulator* input) {
     if (dp.type == DirtyPieces::CASTLING) {
 
@@ -109,11 +135,15 @@ namespace NNUE {
 
     } else {
 
+      if (dp.add0.pc == dp.sub0.pc) {
+        multiAdd<2 * HiddenWidth>((weight_t*) colors, (weight_t*) input->colors, 
+          (weight_t*) crazyTable[crazyIdx(dp.add0.pc)][dp.sub0.sq][dp.add0.sq].colors);
+      } else {
        for (int c = WHITE; c <= BLACK; ++c)
         multiSubAdd<HiddenWidth>(colors[c], input->colors[c], 
           FeaturesAddress[c][dp.sub0.pc][dp.sub0.sq],
           FeaturesAddress[c][dp.add0.pc][dp.add0.sq]);
-          
+      }  
     }
   }
 
@@ -133,6 +163,22 @@ namespace NNUE {
 
           FeaturesAddress[color][piece][sq] = & Content.FeatureWeights[same * HiddenWidth];
           FeaturesAddress[~color][piece][sq] = & Content.FeatureWeights[opp * HiddenWidth];
+        }
+      }
+    }
+
+    for (PieceType pt : {PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING}) {
+      for (Color color : {WHITE, BLACK}) {
+
+        Piece piece = make_piece(color, pt);
+
+        for (Square s1 = SQ_A1; s1 < SQUARE_NB; ++s1) {
+          for (Square s2 = SQ_A1; s2 < SQUARE_NB; ++s2) {
+            Accumulator* target = & crazyTable[crazyIdx(piece)][s1][s2];
+            memset(target, 0, sizeof(Accumulator));
+
+            target->movePiece(s1, s2, piece);
+          }
         }
       }
     }
