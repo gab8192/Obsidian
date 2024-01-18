@@ -13,6 +13,7 @@ const std::string engineVersion = "dev-10.03";
 using Key = uint64_t;
 using Bitboard = uint64_t;
 using TbResult = uint32_t;
+using Score = int;
 
 const std::string piecesChar = " PNBRQK  pnbrqk";
 
@@ -32,19 +33,17 @@ inline int64_t timeMillis() {
   return std::chrono::duration_cast<std::chrono::milliseconds>(sinceEpoch).count();
 }
 
-enum Score : int {
-  DRAW = 0,
-  CHECKMATE = 32000,
+constexpr Score 
+  SCORE_DRAW = 0,
+  SCORE_MATE = 32000,
   SCORE_INFINITE = 32001,
   SCORE_NONE = 32002,
 
-  CHECKMATE_IN_MAX_PLY = CHECKMATE - MAX_PLY,
-  CHECKMATED_IN_MAX_PLY = -CHECKMATE_IN_MAX_PLY,
+  SCORE_MATE_IN_MAX_PLY = SCORE_MATE - MAX_PLY,
 
-  SCORE_TB_WIN = CHECKMATE_IN_MAX_PLY - 1, // don't mix with mate scores
-  TB_WIN_IN_MAX_PLY = SCORE_TB_WIN - MAX_PLY,
-  TB_LOSS_IN_MAX_PLY = -TB_WIN_IN_MAX_PLY
-};
+  SCORE_TB_WIN = SCORE_MATE_IN_MAX_PLY - 1, // don't mix with mate scores
+  SCORE_TB_WIN_IN_MAX_PLY = SCORE_TB_WIN - MAX_PLY,
+  SCORE_TB_LOSS_IN_MAX_PLY = -SCORE_TB_WIN_IN_MAX_PLY;
 
 enum Move {
   MOVE_NONE = 0
@@ -223,7 +222,6 @@ inline T& operator--(T& d) { return d = T(int(d) - 1); }
 ENABLE_BASE_OPERATORS_ON(File)
 ENABLE_BASE_OPERATORS_ON(Rank)
 ENABLE_BASE_OPERATORS_ON(Square)
-ENABLE_BASE_OPERATORS_ON(Score)
 
 ENABLE_INCR_OPERATORS_ON(File)
 ENABLE_INCR_OPERATORS_ON(Rank)

@@ -23,9 +23,9 @@ namespace TT {
           || !matches(_key)
           || _depth + 4 + 2*isPV > this->depth) {
 
-        if (_score >= TB_WIN_IN_MAX_PLY)
+        if (_score >= SCORE_TB_WIN_IN_MAX_PLY)
           _score += ply;
-        else if (score <= TB_LOSS_IN_MAX_PLY)
+        else if (score <= SCORE_TB_LOSS_IN_MAX_PLY)
           _score -= ply;
 
         if (!matches(_key) || _move)
@@ -47,7 +47,7 @@ namespace TT {
     }
 
     inline Score getStaticEval() const {
-      return Score(staticEval);
+      return staticEval;
     }
 
     inline int getDepth() const {
@@ -66,12 +66,12 @@ namespace TT {
       if (score == SCORE_NONE)
         return SCORE_NONE;
 
-      if (score >= TB_WIN_IN_MAX_PLY)
-        return Score( score - ply );
-      if (score <= TB_LOSS_IN_MAX_PLY)
-        return Score(score + ply);
+      if (score >= SCORE_TB_WIN_IN_MAX_PLY)
+        return score - ply;
+      if (score <= SCORE_TB_LOSS_IN_MAX_PLY)
+        return score + ply;
 
-      return Score(score);
+      return score;
     }
 
     inline bool wasPV() const {

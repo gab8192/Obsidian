@@ -222,7 +222,7 @@ namespace NNUE {
 
     int unsquared = vecHaddEpi32(sum) / NetworkQA + Content.OutputBias;
 
-    return Score((unsquared * NetworkScale) / NetworkQAB);
+    return (unsquared * NetworkScale) / NetworkQAB;
   }
 
 }

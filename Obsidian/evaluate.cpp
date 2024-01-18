@@ -9,10 +9,10 @@ namespace Eval {
     Score score = NNUE::evaluate(accumulator, pos.sideToMove);
 
     // Scale down as 50 move rule approaches
-    score = Score(score * (200 - pos.halfMoveClock) / 200);
+    score = score * (200 - pos.halfMoveClock) / 200;
 
     // Make sure the evaluation does not mix with guaranteed win/loss scores
-    score = std::clamp(score, TB_LOSS_IN_MAX_PLY + 1, TB_WIN_IN_MAX_PLY - 1);
+    score = std::clamp(score, SCORE_TB_LOSS_IN_MAX_PLY + 1, SCORE_TB_WIN_IN_MAX_PLY - 1);
 
     return score;
   }

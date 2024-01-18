@@ -380,7 +380,7 @@ namespace Search {
   }
 
   Score SearchThread::makeDrawScore() {
-    return Score(int(nodesSearched & 2) - 1);
+    return int(nodesSearched & 2) - 1;
   }
 
   template<bool IsPV>
@@ -388,11 +388,11 @@ namespace Search {
     
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY-4)
-      return pos.checkers ? DRAW : Eval::evaluate(pos, accumStack[accumStackHead]);
+      return pos.checkers ? SCORE_DRAW : Eval::evaluate(pos, accumStack[accumStackHead]);
 
     // Detect draw
     if (isRepetition(pos, ply) || pos.halfMoveClock >= 100)
-      return DRAW;
+      return SCORE_DRAW;
 
     // Probe TT
     bool ttHit;
@@ -463,7 +463,7 @@ namespace Search {
     while (move = movePicker.nextMove(&moveStage)) {
 
       // Prevent qsearch from visiting bad captures and under-promotions
-      if (bestScore > TB_LOSS_IN_MAX_PLY) {
+      if (bestScore > SCORE_TB_LOSS_IN_MAX_PLY) {
         if (moveStage > QUIETS)
           break;
       }
@@ -496,7 +496,7 @@ namespace Search {
     }
 
     if (pos.checkers && !foundLegalMoves)
-      return Score(ply - CHECKMATE);
+      return ply - SCORE_MATE;
 
     ttEntry->store(pos.key,
       bestScore >= beta ? TT::FLAG_LOWER : TT::FLAG_UPPER,
@@ -535,13 +535,13 @@ namespace Search {
   Score SearchThread::negaMax(Position& pos, Score alpha, Score beta, int depth, bool cutNode, SearchInfo* ss) {
 
     if (Threads::getSearchState() != RUNNING)
-      return DRAW;
+      return SCORE_DRAW;
     
     // Check time
     if (this == Threads::mainThread() && (nodesSearched % 16384) == 0) {
       if (usedMostOfTime()) {
         Threads::stopSearch(false);
-        return DRAW;
+        return SCORE_DRAW;
       }
     }
     
@@ -550,7 +550,7 @@ namespace Search {
       ss->pvLength = ply;
 
     // Detect upcoming draw
-    if (alpha < DRAW && hasUpcomingRepetition(pos, ply)) {
+    if (alpha < SCORE_DRAW && hasUpcomingRepetition(pos, ply)) {
       alpha = makeDrawScore();
       if (alpha >= beta)
         return alpha;
@@ -566,11 +566,11 @@ namespace Search {
 
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY - 4)
-      return pos.checkers ? DRAW : Eval::evaluate(pos, accumStack[accumStackHead]);
+      return pos.checkers ? SCORE_DRAW : Eval::evaluate(pos, accumStack[accumStackHead]);
 
     // Mate distance pruning
-    alpha = std::max(alpha, Score(ply - CHECKMATE));
-    beta = std::min(beta, CHECKMATE - ply - 1);
+    alpha = std::max(alpha, ply - SCORE_MATE);
+    beta = std::min(beta, SCORE_MATE - ply - 1);
     if (alpha >= beta)
       return alpha;
 
@@ -624,15 +624,15 @@ namespace Search {
       TT::Flag tbBound;
 
       if (tbResult == TB_LOSS) {
-        tbScore = Score(ply - SCORE_TB_WIN);
+        tbScore = ply - SCORE_TB_WIN;
         tbBound = TT::FLAG_UPPER;
       }
       else if (tbResult == TB_WIN) {
-        tbScore = Score(SCORE_TB_WIN - ply);
+        tbScore = SCORE_TB_WIN - ply;
         tbBound = TT::FLAG_LOWER;
       }
       else {
-        tbScore = DRAW;
+        tbScore = SCORE_DRAW;
         tbBound = TT::FLAG_EXACT;
       }
 
@@ -697,7 +697,7 @@ namespace Search {
     // to catch up, thus cut off
     if ( !IsPV
       && depth <= RfpMaxDepth
-      && eval < TB_WIN_IN_MAX_PLY
+      && eval < SCORE_TB_WIN_IN_MAX_PLY
       && eval - RfpDepthMul * (depth - improving) >= beta)
       return eval;
 
@@ -708,7 +708,7 @@ namespace Search {
       && (ss - 1)->playedMove != MOVE_NONE
       && eval >= beta
       && pos.hasNonPawns(pos.sideToMove)
-      && beta > TB_LOSS_IN_MAX_PLY) {
+      && beta > SCORE_TB_LOSS_IN_MAX_PLY) {
 
       int R = std::min((eval - beta) / NmpEvalDiv, (int)NmpEvalDivMin) + depth / NmpDepthDiv + NmpBase;
 
@@ -718,7 +718,7 @@ namespace Search {
       cancelNullMove();
 
       if (score >= beta)
-        return score < TB_WIN_IN_MAX_PLY ? score : beta;
+        return score < SCORE_TB_WIN_IN_MAX_PLY ? score : beta;
     }
 
     // IIR. Decrement the depth if we expect this search to have bad move ordering
@@ -728,7 +728,7 @@ namespace Search {
     if (   !IsPV
         && !excludedMove
         && depth >= 5
-        && std::abs(beta) < TB_WIN_IN_MAX_PLY
+        && std::abs(beta) < SCORE_TB_WIN_IN_MAX_PLY
         && !(ttDepth >= depth - 3 && ttScore < probcutBeta))
     {
       int pcSeeMargin = (probcutBeta - ss->staticEval) * 10 / 16;
@@ -808,12 +808,12 @@ namespace Search {
       int history = isQuiet ? getQuietHistory(pos, move, ss) : getCapHistory(pos, move);
 
       if ( pos.hasNonPawns(pos.sideToMove)
-        && bestScore > TB_LOSS_IN_MAX_PLY)
+        && bestScore > SCORE_TB_LOSS_IN_MAX_PLY)
       {
         // SEE (Static Exchange Evalution) pruning
         if (moveStage > GOOD_CAPTURES) {
           int seeMargin = depth * (isQuiet ? PvsQuietSeeMargin : PvsCapSeeMargin);
-          if (!pos.see_ge(move, Score(seeMargin)))
+          if (!pos.see_ge(move, seeMargin))
             continue;
         }
 
@@ -841,7 +841,7 @@ namespace Search {
         && depth >= 6
         && !excludedMove
         && move == ttMove
-        && abs(ttScore) < TB_WIN_IN_MAX_PLY
+        && abs(ttScore) < SCORE_TB_WIN_IN_MAX_PLY
         && ttBound & TT::FLAG_LOWER
         && ttDepth >= depth - 3) 
       {
@@ -972,13 +972,13 @@ namespace Search {
     }
     
     if (Threads::getSearchState() != RUNNING)
-      return DRAW;
+      return SCORE_DRAW;
 
     if (!seenMoves) {
       if (excludedMove) 
         return alpha;
 
-      return pos.checkers ? Score(ply - CHECKMATE) : DRAW;
+      return pos.checkers ? ply - SCORE_MATE : SCORE_DRAW;
     }
 
     // Update histories
@@ -1185,10 +1185,10 @@ namespace Search {
     }
 
     if (Threads::getSearchState() != RUNNING)
-      return DRAW;
+      return SCORE_DRAW;
 
     if (!foundLegalMove)
-      return pos.checkers ? Score(ply - CHECKMATE) : DRAW;
+      return pos.checkers ? ply - SCORE_MATE : SCORE_DRAW;
 
     // Update histories
     if (bestScore >= beta)
@@ -1348,19 +1348,19 @@ namespace Search {
           if (Threads::searchSettings.nodes && nodesSearched >= Threads::searchSettings.nodes)
             break; // only break, in order to print info about the partial search we've done
 
-          if (score >= CHECKMATE_IN_MAX_PLY) {
+          if (score >= SCORE_MATE_IN_MAX_PLY) {
             beta = SCORE_INFINITE;
             failedHighCnt = 0;
           }
 
           if (score <= alpha) {
-            beta = Score((alpha + beta) / 2);
-            alpha = (Score)std::max(-SCORE_INFINITE, alpha - windowSize);
+            beta = (alpha + beta) / 2;
+            alpha = std::max(-SCORE_INFINITE, alpha - windowSize);
 
             failedHighCnt = 0;
           }
           else if (score >= beta) {
-            beta = (Score)std::min(SCORE_INFINITE, beta + windowSize);
+            beta = std::min(SCORE_INFINITE, beta + windowSize);
 
             failedHighCnt = std::min((int)AspFailHighReductionMax, failedHighCnt + 1);
           }
@@ -1404,7 +1404,7 @@ namespace Search {
       // Stop searching if we can deliver a forced checkmate.
       // No need to stop if we are getting checkmated, instead keep searching,
       // because we may have overlooked a way out of checkmate due to pruning
-      if (score >= CHECKMATE_IN_MAX_PLY)
+      if (score >= SCORE_MATE_IN_MAX_PLY)
         goto bestMoveDecided;
 
       // When playing in movetime mode, stop if we've used 75% time of movetime,

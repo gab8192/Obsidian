@@ -246,13 +246,13 @@ std::string UCI::scoreToString(Score v) {
 
   std::stringstream ss;
 
-  if (abs(v) < CHECKMATE_IN_MAX_PLY)
+  if (abs(v) < SCORE_MATE_IN_MAX_PLY)
     ss << "cp " << UCI::normalizeToCp(v);
   else {
     if (v > 0)
-      ss << "mate " << (CHECKMATE - v + 1) / 2;
+      ss << "mate " << (SCORE_MATE - v + 1) / 2;
     else
-      ss << "mate " << (-CHECKMATE - v) / 2;
+      ss << "mate " << (-SCORE_MATE - v) / 2;
   }
 
   return ss.str();

@@ -593,7 +593,7 @@ std::ostream& operator<<(std::ostream& stream, Position& pos) {
 bool Position::see_ge(Move m, int threshold) const {
 
   if (move_type(m) != MT_NORMAL)
-    return DRAW >= threshold;
+    return SCORE_DRAW >= threshold;
 
   Square from = move_from(m), to = move_to(m);
 
