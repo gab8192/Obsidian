@@ -12,17 +12,20 @@ namespace NNUE {
   constexpr int WeightsPerVec = sizeof(SIMD::Vec) / sizeof(weight_t);
 
   struct {
-    alignas(SIMD::Alignment) weight_t FeatureWeights[2][6][64][HiddenWidth];
+    union {
+      alignas(SIMD::Alignment) weight_t OldFeatureWeights[2][6][64][HiddenWidth];
+      alignas(SIMD::Alignment) weight_t NewFeatureWeights[6][64][2][HiddenWidth];
+    };
     alignas(SIMD::Alignment) weight_t FeatureBiases[HiddenWidth];
     alignas(SIMD::Alignment) weight_t OutputWeights[2 * HiddenWidth];
                              weight_t OutputBias;
   } Content;
 
   inline weight_t* featureAddress(Color color, Piece pc, Square sq) {
-    return Content.FeatureWeights
-            [color != colorOf(pc)]
+    return Content.NewFeatureWeights
             [ptypeOf(pc)-1]
-            [relative_square(color, sq)];
+            [relative_square(color, sq)]
+            [color != colorOf(pc)];
   }
 
   template <int InputSize>
@@ -128,6 +131,23 @@ namespace NNUE {
 
     memcpy(&Content, gEmbeddedNNUEData, sizeof(Content));
 
+    //int j = & Content.FeatureWeights;
+
+    auto newFtWeights = new weight_t[6][64][2][HiddenWidth];
+
+    constexpr int pieceWeightsSize = sizeof(newFtWeights[0][0][0]);
+
+    for (PieceType pt : {PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING}) {
+      for (Square sq = SQ_A1; sq < SQUARE_NB; ++sq) {
+
+        memcpy(newFtWeights[pt-1][sq][false], Content.OldFeatureWeights[false][pt-1][sq], pieceWeightsSize);
+        memcpy(newFtWeights[pt-1][sq][true], Content.OldFeatureWeights[true][pt-1][sq], pieceWeightsSize);
+      }
+    }
+
+    memcpy(Content.NewFeatureWeights, newFtWeights, sizeof(Content.NewFeatureWeights));
+
+    delete[] newFtWeights;
   }
 
   Score evaluate(Accumulator& accumulator, Color sideToMove) {
