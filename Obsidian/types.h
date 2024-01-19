@@ -170,7 +170,6 @@ constexpr Piece make_piece(Color color, PieceType pt) {
 }
 
 constexpr PieceType ptypeOf(Piece piece) {
-  
   return PieceType(piece & 7);
 }
 
@@ -223,6 +222,7 @@ ENABLE_BASE_OPERATORS_ON(File)
 ENABLE_BASE_OPERATORS_ON(Rank)
 ENABLE_BASE_OPERATORS_ON(Square)
 
+ENABLE_INCR_OPERATORS_ON(Color)
 ENABLE_INCR_OPERATORS_ON(File)
 ENABLE_INCR_OPERATORS_ON(Rank)
 ENABLE_INCR_OPERATORS_ON(Square)
