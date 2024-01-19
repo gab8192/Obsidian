@@ -810,13 +810,6 @@ namespace Search {
       if ( pos.hasNonPawns(pos.sideToMove)
         && bestScore > SCORE_TB_LOSS_IN_MAX_PLY)
       {
-        // SEE (Static Exchange Evalution) pruning
-        if (moveStage > GOOD_CAPTURES) {
-          int seeMargin = depth * (isQuiet ? PvsQuietSeeMargin : PvsCapSeeMargin);
-          if (!pos.see_ge(move, seeMargin))
-            continue;
-        }
-
         if (isQuiet) {
           // Late move pruning. At low depths, only visit a few quiet moves
           if (seenMoves >= (depth * depth + LmpBase) / (2 - improving))
@@ -831,6 +824,13 @@ namespace Search {
               && !pos.checkers 
               && ss->staticEval + FpBase + FpDepthMul * lmrDepth <= alpha)
             movePicker.stage = BAD_CAPTURES;
+        }
+        
+        // SEE (Static Exchange Evalution) pruning
+        if (moveStage > GOOD_CAPTURES) {
+          int seeMargin = depth * (isQuiet ? PvsQuietSeeMargin : PvsCapSeeMargin);
+          if (!pos.see_ge(move, seeMargin))
+            continue;
         }
       }
 
