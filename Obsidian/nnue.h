@@ -33,7 +33,10 @@ namespace NNUE {
   constexpr int NetworkQAB = NetworkQA * NetworkQB;
 
   struct Accumulator {
-    alignas(Alignment) weight_t colors[COLOR_NB][HiddenWidth];
+    union {
+      alignas(Alignment) weight_t colors[COLOR_NB][HiddenWidth];
+     alignas(Alignment) weight_t both[COLOR_NB * HiddenWidth];
+    };
 
     void reset();
 
