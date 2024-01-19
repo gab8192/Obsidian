@@ -27,14 +27,15 @@ namespace NNUE {
             [WHITE];
   }
 
-  NNUE::Accumulator deltaTable[6][SQUARE_NB][SQUARE_NB];
+  NNUE::Accumulator deltaTable[6][5][SQUARE_NB];
 
-  Accumulator* cachedDelta(Square from, Square to, Piece pc) {
-    if (colorOf(pc) == WHITE) {
-      return & deltaTable[pc-1][from][to];
+  Accumulator* cachedDelta(Piece attacker, Piece taken, Square to) {
+    sizeof(deltaTable);
+    if (colorOf(attacker) == WHITE) {
+      return & deltaTable[attacker-1][taken-9][to];
     }
     else {
-      return & deltaTable[pc-9][from^56][to^56];
+      return & deltaTable[attacker-9][taken-1][to^56];
     }
   }
 
@@ -117,6 +118,9 @@ namespace NNUE {
     multiAdd<HiddenWidth*2>(both, both, featureAddress(pc, sq));
   }
 
+  void Accumulator::removePiece(Square sq, Piece pc) {
+    multiSub<HiddenWidth*2>(both, both, featureAddress(pc, sq));
+  }
   
   void Accumulator::movePiece(Square from, Square to, Piece pc) {
     multiSubAdd<HiddenWidth*2>(both, both, featureAddress(pc, from), featureAddress(pc, to));
@@ -125,38 +129,33 @@ namespace NNUE {
   void Accumulator::doUpdates(DirtyPieces dp, Accumulator* input) {
     const Color side = colorOf(dp.sub0.pc);
     if (dp.type == DirtyPieces::CASTLING) {
-      Accumulator* delta0 = cachedDelta(dp.sub0.sq, dp.add0.sq, dp.add0.pc);
-      Accumulator* delta1 = cachedDelta(dp.sub1.sq, dp.add1.sq, dp.add1.pc);
-
-      multiAdd<HiddenWidth>(colors[WHITE], input->colors[WHITE], delta0->colors[side]);
-      multiAdd<HiddenWidth>(colors[BLACK], input->colors[BLACK], delta0->colors[~side]);
-      multiAdd<HiddenWidth>(colors[WHITE], colors[WHITE], delta1->colors[side]);
-      multiAdd<HiddenWidth>(colors[BLACK], colors[BLACK], delta1->colors[~side]);
+      
+      multiSubAddSubAdd<2*HiddenWidth>(both, input->both, 
+        featureAddress(dp.sub0.pc, dp.sub0.sq),
+        featureAddress(dp.add0.pc, dp.add0.sq),
+        featureAddress(dp.sub1.pc, dp.sub1.sq),
+        featureAddress(dp.add1.pc, dp.add1.sq));
 
     } else if (dp.type == DirtyPieces::CAPTURE) {
-      if (dp.add0.pc == dp.sub0.pc) {
-        Accumulator* delta = cachedDelta(dp.sub0.sq, dp.add0.sq, dp.add0.pc);
+
+      if (dp.add0.sq == dp.sub1.sq) {
+        Accumulator* delta = cachedDelta(dp.add0.pc, dp.sub1.pc, dp.sub1.sq);
         multiAdd<HiddenWidth>(colors[WHITE], input->colors[WHITE], delta->colors[side]);
         multiAdd<HiddenWidth>(colors[BLACK], input->colors[BLACK], delta->colors[~side]);
-        
+
         multiSub<HiddenWidth*2>(both, both,
-          featureAddress(dp.sub1.pc, dp.sub1.sq));
+          featureAddress(dp.sub0.pc, dp.sub0.sq));
       } else {
-        multiSubAddSub<HiddenWidth*2>(both, input->both, 
+        multiSubAddSub<2*HiddenWidth>(both, input->both, 
           featureAddress(dp.sub0.pc, dp.sub0.sq),
           featureAddress(dp.add0.pc, dp.add0.sq),
           featureAddress(dp.sub1.pc, dp.sub1.sq));
       }
+
     } else {
-      if (dp.add0.pc == dp.sub0.pc) {
-        Accumulator* delta = cachedDelta(dp.sub0.sq, dp.add0.sq, dp.add0.pc);
-        multiAdd<HiddenWidth>(colors[WHITE], input->colors[WHITE], delta->colors[side]);
-        multiAdd<HiddenWidth>(colors[BLACK], input->colors[BLACK], delta->colors[~side]);
-      } else {
-        multiSubAdd<HiddenWidth*2>(both, input->both, 
-          featureAddress(dp.sub0.pc, dp.sub0.sq),
-          featureAddress(dp.add0.pc, dp.add0.sq));
-      }  
+      multiSubAdd<HiddenWidth*2>(both, input->both, 
+        featureAddress(dp.sub0.pc, dp.sub0.sq),
+        featureAddress(dp.add0.pc, dp.add0.sq));
     }
   }
 
@@ -182,13 +181,14 @@ namespace NNUE {
       }
     }
 
-    for (PieceType pt : {PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING}) {
-      for (Square s1 = SQ_A1; s1 < SQUARE_NB; ++s1) {
-        for (Square s2 = SQ_A1; s2 < SQUARE_NB; ++s2) {
-          Accumulator* target = & deltaTable[pt-1][s1][s2];
+    for (PieceType attacker : {PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING}) {
+      for (PieceType taken : {PAWN, KNIGHT, BISHOP, ROOK, QUEEN}) {
+        for (Square sq = SQ_A1; sq < SQUARE_NB; ++sq) {
+          Accumulator* target = & deltaTable[attacker-1][taken-1][sq];
           memset(target, 0, sizeof(Accumulator));
 
-          target->movePiece(s1, s2, make_piece(WHITE, pt));
+          target->addPiece(sq, make_piece(WHITE, attacker));
+          target->removePiece(sq, make_piece(BLACK, taken));
         }
       }
     }

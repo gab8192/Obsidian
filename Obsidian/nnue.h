@@ -42,6 +42,8 @@ namespace NNUE {
 
     void addPiece(Square sq, Piece pc);
 
+    void removePiece(Square sq, Piece pc);
+
     void movePiece(Square from, Square to, Piece pc);
 
     void doUpdates(DirtyPieces dp, Accumulator* input);
