@@ -12,17 +12,19 @@ namespace NNUE {
   constexpr int WeightsPerVec = sizeof(SIMD::Vec) / sizeof(weight_t);
 
   struct {
-    alignas(SIMD::Alignment) weight_t FeatureWeights[2][6][64][HiddenWidth];
+    alignas(SIMD::Alignment) weight_t OldFeatureWeights[2][6][64][HiddenWidth];
     alignas(SIMD::Alignment) weight_t FeatureBiases[HiddenWidth];
     alignas(SIMD::Alignment) weight_t OutputWeights[2 * HiddenWidth];
                              weight_t OutputBias;
   } Content;
 
-  inline weight_t* featureAddress(Color color, Piece pc, Square sq) {
-    return Content.FeatureWeights
-            [color != colorOf(pc)]
-            [ptypeOf(pc)-1]
-            [relative_square(color, sq)];
+  alignas(SIMD::Alignment) weight_t NewFeatureWeights[PIECE_NB][64][2][HiddenWidth];
+
+  inline weight_t* featureAddress(Piece pc, Square sq) {
+    return NewFeatureWeights
+            [pc]
+            [sq]
+            [WHITE];
   }
 
   NNUE::Accumulator deltaTable[6][SQUARE_NB][SQUARE_NB];
@@ -112,14 +114,12 @@ namespace NNUE {
   }
 
   void Accumulator::addPiece(Square sq, Piece pc) {
-    for (Color c = WHITE; c <= BLACK; ++c)
-      multiAdd<HiddenWidth>(colors[c], colors[c], featureAddress(c, pc, sq));
+    multiAdd<HiddenWidth*2>(both, both, featureAddress(pc, sq));
   }
 
   
   void Accumulator::movePiece(Square from, Square to, Piece pc) {
-    for (Color c = WHITE; c <= BLACK; ++c)
-      multiSubAdd<HiddenWidth>(colors[c], colors[c], featureAddress(c, pc, from), featureAddress(c, pc, to));
+    multiSubAdd<HiddenWidth*2>(both, both, featureAddress(pc, from), featureAddress(pc, to));
   }
 
   void Accumulator::doUpdates(DirtyPieces dp, Accumulator* input) {
@@ -139,15 +139,13 @@ namespace NNUE {
         multiAdd<HiddenWidth>(colors[WHITE], input->colors[WHITE], delta->colors[side]);
         multiAdd<HiddenWidth>(colors[BLACK], input->colors[BLACK], delta->colors[~side]);
         
-        for (Color c = WHITE; c <= BLACK; ++c)
-          multiSub<HiddenWidth>(colors[c], colors[c],
-            featureAddress(c, dp.sub1.pc, dp.sub1.sq));
+        multiSub<HiddenWidth*2>(both, both,
+          featureAddress(dp.sub1.pc, dp.sub1.sq));
       } else {
-        for (Color c = WHITE; c <= BLACK; ++c)
-          multiSubAddSub<HiddenWidth>(colors[c], input->colors[c], 
-            featureAddress(c, dp.sub0.pc, dp.sub0.sq),
-            featureAddress(c, dp.add0.pc, dp.add0.sq),
-            featureAddress(c, dp.sub1.pc, dp.sub1.sq));
+        multiSubAddSub<HiddenWidth*2>(both, input->both, 
+          featureAddress(dp.sub0.pc, dp.sub0.sq),
+          featureAddress(dp.add0.pc, dp.add0.sq),
+          featureAddress(dp.sub1.pc, dp.sub1.sq));
       }
     } else {
       if (dp.add0.pc == dp.sub0.pc) {
@@ -155,10 +153,9 @@ namespace NNUE {
         multiAdd<HiddenWidth>(colors[WHITE], input->colors[WHITE], delta->colors[side]);
         multiAdd<HiddenWidth>(colors[BLACK], input->colors[BLACK], delta->colors[~side]);
       } else {
-        for (Color c = WHITE; c <= BLACK; ++c)
-          multiSubAdd<HiddenWidth>(colors[c], input->colors[c], 
-            featureAddress(c, dp.sub0.pc, dp.sub0.sq),
-            featureAddress(c, dp.add0.pc, dp.add0.sq));
+        multiSubAdd<HiddenWidth*2>(both, input->both, 
+          featureAddress(dp.sub0.pc, dp.sub0.sq),
+          featureAddress(dp.add0.pc, dp.add0.sq));
       }  
     }
   }
@@ -166,6 +163,24 @@ namespace NNUE {
   void init() {
 
     memcpy(&Content, gEmbeddedNNUEData, sizeof(Content));
+
+    // Rebuild the features weights array such that black pov weights are right after their white counterpart
+    for (Color pov : {WHITE, BLACK}) {
+      for (PieceType pt : {PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING}) {
+        for (Square sq = SQ_A1; sq < SQUARE_NB; ++sq) {
+          Piece whitePc = make_piece(WHITE, pt);
+          Piece blackPc = make_piece(BLACK, pt);
+
+          constexpr int pieceWeightsSize = sizeof(NewFeatureWeights[0][0][0]);
+
+          memcpy(NewFeatureWeights[whitePc][sq][pov], 
+            Content.OldFeatureWeights[pov != WHITE][pt-1][relative_square(pov, sq)], pieceWeightsSize);
+
+          memcpy(NewFeatureWeights[blackPc][sq][pov], 
+            Content.OldFeatureWeights[pov != BLACK][pt-1][relative_square(pov, sq)], pieceWeightsSize);
+        }
+      }
+    }
 
     for (PieceType pt : {PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING}) {
       for (Square s1 = SQ_A1; s1 < SQUARE_NB; ++s1) {
