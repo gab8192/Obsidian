@@ -12,10 +12,6 @@ namespace Search {
 
   extern bool doingBench;
 
-  enum State {
-    IDLE, RUNNING, STOPPING
-  };
-
   struct Settings {
 
     clock_t time[COLOR_NB], inc[COLOR_NB], movetime, startTime;
@@ -74,7 +70,7 @@ namespace Search {
     std::condition_variable cv;
 
     volatile bool searching = false;
-    volatile bool stopThread = false;
+    volatile bool exitThread = false;
     std::thread thread;
 
     uint64_t nodesSearched;

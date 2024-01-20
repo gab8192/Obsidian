@@ -6,14 +6,14 @@ namespace Threads {
 
   std::vector<SearchThread*> searchThreads;
 
-  volatile Search::State searchState;
+  volatile bool searchStopped;
 
   SearchThread* mainThread() {
     return searchThreads[0];
   }
 
-  State getSearchState() {
-    return searchState;
+  bool isSearchStopped() {
+    return searchStopped;
   }
 
   uint64_t totalNodes() {
@@ -38,12 +38,8 @@ namespace Threads {
     }
   }
 
-  void onSearchComplete() {
-    searchState = IDLE;
-  }
-
   void startSearch() {
-    searchState = RUNNING;
+    searchStopped = false;
     for (int i = 0; i < searchThreads.size(); i++) {
       SearchThread* st = searchThreads[i];
       st->searching = true;
@@ -51,12 +47,8 @@ namespace Threads {
     }
   }
 
-  void stopSearch(bool wait) {
-    if (searchState == RUNNING) {
-      searchState = STOPPING;
-      if (wait)
-        waitForSearch();
-    }
+  void stopSearch() {
+    searchStopped = true;
   }
 
   void setThreadCount(int threadCount) {
@@ -64,7 +56,7 @@ namespace Threads {
 
     for (int i = 0; i < searchThreads.size(); i++) {
       searchThreads[i]->searching = true; // <-- the predicate
-      searchThreads[i]->stopThread = true;
+      searchThreads[i]->exitThread = true;
       searchThreads[i]->cv.notify_all();
       searchThreads[i]->thread.join();
       delete searchThreads[i];

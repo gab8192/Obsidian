@@ -534,13 +534,13 @@ namespace Search {
   template<bool IsPV>
   Score SearchThread::negaMax(Position& pos, Score alpha, Score beta, int depth, bool cutNode, SearchInfo* ss) {
 
-    if (Threads::getSearchState() != RUNNING)
+    if (Threads::isSearchStopped())
       return SCORE_DRAW;
     
     // Check time
     if (this == Threads::mainThread() && (nodesSearched % 16384) == 0) {
       if (usedMostOfTime()) {
-        Threads::stopSearch(false);
+        Threads::stopSearch();
         return SCORE_DRAW;
       }
     }
@@ -971,7 +971,7 @@ namespace Search {
       }
     }
     
-    if (Threads::getSearchState() != RUNNING)
+    if (Threads::isSearchStopped())
       return SCORE_DRAW;
 
     if (!seenMoves) {
@@ -1184,7 +1184,7 @@ namespace Search {
       }
     }
 
-    if (Threads::getSearchState() != RUNNING)
+    if (Threads::isSearchStopped())
       return SCORE_DRAW;
 
     if (!foundLegalMove)
@@ -1342,7 +1342,7 @@ namespace Search {
 
           score = rootNegaMax(rootPos, alpha, beta, adjustedDepth, ss);
 
-          if (Threads::getSearchState() != RUNNING)
+          if (Threads::isSearchStopped())
             goto bestMoveDecided;
 
           if (Threads::searchSettings.nodes && nodesSearched >= Threads::searchSettings.nodes)
@@ -1375,7 +1375,7 @@ namespace Search {
       }
 
       // It's super important to not update the best move if the search was abruptly stopped
-      if (Threads::getSearchState() != RUNNING)
+      if (Threads::isSearchStopped())
         goto bestMoveDecided;
 
       iterDeepening[rootDepth].score = score;
@@ -1453,7 +1453,7 @@ namespace Search {
       std::unique_lock lock(mutex);
       cv.wait(lock, [&] { return searching; });
 
-      if (stopThread)
+      if (exitThread)
           return;
 
    // searching = true; (already done by the UCI thread)
@@ -1463,7 +1463,7 @@ namespace Search {
       cv.notify_all();
 
       if (this == Threads::mainThread())
-        Threads::onSearchComplete();
+        Threads::stopSearch();
     }
   }
 }

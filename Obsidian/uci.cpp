@@ -206,6 +206,7 @@ void UCI::loop(int argc, char* argv[]) {
       || token == "stop") {
 
       stopSearch();
+      waitForSearch();
     }
 
     else if (token == "uci") {

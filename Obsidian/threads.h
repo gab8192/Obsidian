@@ -14,9 +14,7 @@ namespace Threads {
 
   SearchThread* mainThread();
 
-  State getSearchState();
-
-  void onSearchComplete();
+  bool isSearchStopped();
 
   uint64_t totalNodes();
 
@@ -26,7 +24,7 @@ namespace Threads {
 
   void startSearch();
 
-  void stopSearch(bool wait = true);
+  void stopSearch();
 
   void setThreadCount(int threadCount);
 }
