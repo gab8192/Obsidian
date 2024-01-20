@@ -534,16 +534,14 @@ namespace Search {
   template<bool IsPV>
   Score SearchThread::negaMax(Position& pos, Score alpha, Score beta, int depth, bool cutNode, SearchInfo* ss) {
 
+    // Check time
+    if ( this == Threads::mainThread() 
+      && (nodesSearched & 16383) == 0
+      && usedMostOfTime())
+        Threads::stopSearch();
+
     if (Threads::isSearchStopped())
       return SCORE_DRAW;
-    
-    // Check time
-    if (this == Threads::mainThread() && (nodesSearched % 16384) == 0) {
-      if (usedMostOfTime()) {
-        Threads::stopSearch();
-        return SCORE_DRAW;
-      }
-    }
     
     // Init node
     if (IsPV)
@@ -953,6 +951,9 @@ namespace Search {
           captures[captureCount++] = move;
       }
 
+      if (Threads::isSearchStopped())
+        return SCORE_DRAW;
+
       if (score > bestScore) {
         bestScore = score;
 
@@ -970,9 +971,6 @@ namespace Search {
         }
       }
     }
-    
-    if (Threads::isSearchStopped())
-      return SCORE_DRAW;
 
     if (!seenMoves) {
       if (excludedMove) 
@@ -1167,6 +1165,9 @@ namespace Search {
       
       rootMoves[rootMoves.indexOf(move)].nodes += nodesSearched - oldNodesCount;
 
+      if (Threads::isSearchStopped())
+        return SCORE_DRAW;
+
       if (score > bestScore) {
         bestScore = score;
 
@@ -1183,9 +1184,6 @@ namespace Search {
         }
       }
     }
-
-    if (Threads::isSearchStopped())
-      return SCORE_DRAW;
 
     if (!foundLegalMove)
       return pos.checkers ? ply - SCORE_MATE : SCORE_DRAW;
