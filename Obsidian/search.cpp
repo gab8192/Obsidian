@@ -280,10 +280,10 @@ namespace Search {
       if (move == ttMove)
         moveScore = INT_MAX;
       else if (mt == MT_PROMOTION)
-        moveScore = promotionScores[promo_type(move)] + PieceValue[captured] * 64;
+        moveScore = promotionScores[promo_type(move)] + PieceValue[captured] * 128;
       else if (captured || mt == MT_EN_PASSANT) {
-        moveScore = pos.see_ge(move, -10) ? 300000 : -200000;
-        moveScore += PieceValue[mt == MT_EN_PASSANT ? PAWN : captured] * 64;
+        moveScore = pos.see_ge(move, MpPvsSeeMargin) ? 500000 : -500000;
+        moveScore += PieceValue[mt == MT_EN_PASSANT ? PAWN : captured] * 128;
         moveScore += getCapHistory(pos, move);
       }
       else
