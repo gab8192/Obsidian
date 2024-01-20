@@ -534,7 +534,7 @@ namespace Search {
   template<bool IsPV>
   Score SearchThread::negaMax(Position& pos, Score alpha, Score beta, int depth, bool cutNode, SearchInfo* ss) {
 
-    if (Threads::getSearchState() != RUNNING)
+    if (Threads::isSearchStopped())
       return SCORE_DRAW;
     
     // Check time
@@ -971,7 +971,7 @@ namespace Search {
       }
     }
     
-    if (Threads::getSearchState() != RUNNING)
+    if (Threads::isSearchStopped())
       return SCORE_DRAW;
 
     if (!seenMoves) {
@@ -1184,7 +1184,7 @@ namespace Search {
       }
     }
 
-    if (Threads::getSearchState() != RUNNING)
+    if (Threads::isSearchStopped())
       return SCORE_DRAW;
 
     if (!foundLegalMove)
@@ -1342,7 +1342,7 @@ namespace Search {
 
           score = rootNegaMax(rootPos, alpha, beta, adjustedDepth, ss);
 
-          if (Threads::getSearchState() != RUNNING)
+          if (Threads::isSearchStopped())
             goto bestMoveDecided;
 
           if (Threads::searchSettings.nodes && nodesSearched >= Threads::searchSettings.nodes)
@@ -1375,7 +1375,7 @@ namespace Search {
       }
 
       // It's super important to not update the best move if the search was abruptly stopped
-      if (Threads::getSearchState() != RUNNING)
+      if (Threads::isSearchStopped())
         goto bestMoveDecided;
 
       iterDeepening[rootDepth].score = score;

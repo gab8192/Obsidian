@@ -14,7 +14,7 @@ namespace Threads {
 
   SearchThread* mainThread();
 
-  State getSearchState();
+  bool isSearchStopped();
 
   void onSearchComplete();
 
