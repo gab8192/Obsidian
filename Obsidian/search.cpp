@@ -953,6 +953,9 @@ namespace Search {
           captures[captureCount++] = move;
       }
 
+      if (Threads::isSearchStopped())
+        return SCORE_DRAW;
+
       if (score > bestScore) {
         bestScore = score;
 
@@ -970,9 +973,6 @@ namespace Search {
         }
       }
     }
-    
-    if (Threads::isSearchStopped())
-      return SCORE_DRAW;
 
     if (!seenMoves) {
       if (excludedMove) 
@@ -1167,6 +1167,9 @@ namespace Search {
       
       rootMoves[rootMoves.indexOf(move)].nodes += nodesSearched - oldNodesCount;
 
+      if (Threads::isSearchStopped())
+        return SCORE_DRAW;
+
       if (score > bestScore) {
         bestScore = score;
 
@@ -1183,9 +1186,6 @@ namespace Search {
         }
       }
     }
-
-    if (Threads::isSearchStopped())
-      return SCORE_DRAW;
 
     if (!foundLegalMove)
       return pos.checkers ? ply - SCORE_MATE : SCORE_DRAW;
