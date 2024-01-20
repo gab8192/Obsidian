@@ -141,15 +141,17 @@ namespace {
 
   void go(Position& pos, std::istringstream& is) {
 
+    clock_t time = timeMillis();
+
+    Threads::waitForSearch();
+
     std::string token;
 
     int perftPlies = 0;
     searchSettings = Search::Settings();
-    searchSettings.startTime = timeMillis();
+    searchSettings.startTime = time;
     searchSettings.position = pos;
     searchSettings.prevPositions = prevPositions;
-
-    Threads::waitForSearch();
 
     while (is >> token)
       if (token == "wtime")     is >> searchSettings.time[WHITE];
