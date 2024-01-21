@@ -56,6 +56,8 @@ int nextMoveIndex(MoveList& moveList, int scannedMoves) {
 
 void MovePicker::scoreQuiets() {
 
+  const Color us = pos.sideToMove, them = ~us;
+
   int i = 0;
   while (i < quiets.size()) {
     Move move = quiets[i].move;
@@ -65,13 +67,24 @@ void MovePicker::scoreQuiets() {
       continue;
     }
 
+    const Square from = move_from(move);
+    const Square to = move_to(move);
+
     int chIndex = pieceTo(pos, move);
 
-    quiets[i++].score =
-      mainHist[pos.sideToMove][move_from_to(move)]
-      + (ss - 1)->contHistory()[chIndex]
-      + (ss - 2)->contHistory()[chIndex]
-      + (ss - 4)->contHistory()[chIndex]/2;
+    int& score = quiets[i++].score;
+
+    score =  mainHist[pos.sideToMove][move_from_to(move)]
+           + (ss - 1)->contHistory()[chIndex]
+           + (ss - 2)->contHistory()[chIndex]
+           + (ss - 4)->contHistory()[chIndex]/2;
+
+    // Discovered check
+    if (pos.blockersForKing[them] & from) {
+      const Bitboard line = LineBB[from][pos.kingSquare(them)];
+      if (!(line & to))
+        score += 8192;
+    }
   }
 }
 
