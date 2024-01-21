@@ -15,49 +15,49 @@
 
 namespace Search {
 
-  DEFINE_PARAM_S(MpPvsSeeMargin, -30, 15);
-  DEFINE_PARAM_S(MpQsSeeMargin, -25, 15);
+  DEFINE_PARAM_S(MpPvsSeeMargin, -30, 10);
+  DEFINE_PARAM_S(MpQsSeeMargin, -25, 10);
 
-  DEFINE_PARAM_S(LmrBase, 39, 10);
-  DEFINE_PARAM_S(LmrDiv, 211, 10);
+  DEFINE_PARAM_S(LmrBase, 39, 5);
+  DEFINE_PARAM_S(LmrDiv, 211, 5);
 
   DEFINE_PARAM_S(StatBonusQuad, 3, 1);
-  DEFINE_PARAM_S(StatBonusLinear, 116, 10);
-  DEFINE_PARAM_S(StatBonusMax, 1159, 50);
-  DEFINE_PARAM_S(StatBonusBoostAt, 120, 10);
+  DEFINE_PARAM_S(StatBonusLinear, 116, 5);
+  DEFINE_PARAM_S(StatBonusMax, 1159, 30);
+  DEFINE_PARAM_S(StatBonusBoostAt, 120, 5);
 
-  DEFINE_PARAM_S(RazoringDepthMul, 415, 10);
+  DEFINE_PARAM_S(RazoringDepthMul, 415, 5);
 
   DEFINE_PARAM_S(RfpMaxDepth, 9, 1);
-  DEFINE_PARAM_S(RfpDepthMul, 123, 6);
+  DEFINE_PARAM_S(RfpDepthMul, 123, 4);
 
   DEFINE_PARAM_S(NmpBase, 4, 1);
   DEFINE_PARAM_B(NmpDepthDiv, 4, 1, 21);
-  DEFINE_PARAM_S(NmpEvalDiv, 207, 20);
+  DEFINE_PARAM_S(NmpEvalDiv, 207, 10);
   DEFINE_PARAM_S(NmpEvalDivMin, 4, 1);
 
-  DEFINE_PARAM_S(ProbcutBetaMargin, 229, 10);
+  DEFINE_PARAM_S(ProbcutBetaMargin, 229, 5);
 
   DEFINE_PARAM_S(LmpBase,    3, 1);
 
-  DEFINE_PARAM_S(PvsQuietSeeMargin, -77, 20);
-  DEFINE_PARAM_S(PvsCapSeeMargin, -132, 20);
+  DEFINE_PARAM_S(PvsQuietSeeMargin, -77, 10);
+  DEFINE_PARAM_S(PvsCapSeeMargin, -132, 10);
 
-  DEFINE_PARAM_S(EarlyLmrHistoryDiv, 5521, 300);
+  DEFINE_PARAM_S(EarlyLmrHistoryDiv, 5521, 150);
 
-  DEFINE_PARAM_S(FpBase, 182, 10);
+  DEFINE_PARAM_S(FpBase, 182, 5);
   DEFINE_PARAM_S(FpMaxDepth, 8, 1);
-  DEFINE_PARAM_S(FpDepthMul, 111, 6);
+  DEFINE_PARAM_S(FpDepthMul, 111, 4);
 
-  DEFINE_PARAM_S(DoubleExtMargin, 16, 2);
+  DEFINE_PARAM_S(DoubleExtMargin, 16, 1);
   DEFINE_PARAM_S(DoubleExtMax, 6, 1);
 
-  DEFINE_PARAM_S(LmrQuietHistoryDiv, 10486, 300);
-  DEFINE_PARAM_S(LmrCapHistoryDiv, 8003, 300);
-  DEFINE_PARAM_S(ZwsDeeperMargin, 79, 5);
+  DEFINE_PARAM_S(LmrQuietHistoryDiv, 10486, 150);
+  DEFINE_PARAM_S(LmrCapHistoryDiv, 8003, 150);
+  DEFINE_PARAM_S(ZwsDeeperMargin, 79, 4);
 
-  DEFINE_PARAM_B(AspWindowStartDepth, 4, 4, 34);
-  DEFINE_PARAM_B(AspWindowStartDelta, 11, 5, 45);
+  DEFINE_PARAM_B(AspWindowStartDepth, 4, 3, 23);
+  DEFINE_PARAM_B(AspWindowStartDelta, 11, 5, 25);
   DEFINE_PARAM_B(AspFailHighReductionMax, 11, 1, 21);
   
   bool doingBench = false;
