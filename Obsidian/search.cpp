@@ -817,7 +817,7 @@ namespace Search {
 
         if (isQuiet) {
           // Late move pruning. At low depths, only visit a few quiet moves
-          if (seenMoves >= (depth * depth + LmpBase) / (2 - improving))
+          if (!pos.checkers && seenMoves >= (depth * depth + LmpBase) / (2 - improving))
             movePicker.stage = BAD_CAPTURES;
 
           int lmrRed = lmrTable[depth][seenMoves] + !improving - history / EarlyLmrHistoryDiv;
