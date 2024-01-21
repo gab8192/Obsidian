@@ -61,13 +61,13 @@ void Position::updatePins(Color us) {
 
   Bitboard snipers = ((get_rook_attacks(ksq) & pieces(QUEEN, ROOK))
     | (get_bishop_attacks(ksq) & pieces(QUEEN, BISHOP))) & pieces(them);
-  Bitboard occupancy = pieces() ^ snipers;
+  Bitboard occupied = pieces() ^ snipers;
 
   while (snipers)
   {
     Square sniperSq = popLsb(snipers);
 
-    Bitboard b = BetweenBB[ksq][sniperSq] & occupancy;
+    Bitboard b = BetweenBB[ksq][sniperSq] & occupied;
 
     if (BitCount(b) == 1)
     {

@@ -236,67 +236,54 @@ Bitboard sliding_attack(const Direction* dirs, Square s1, Bitboard occupied)
 
 typedef uint32_t(AttackIndexFunc)(Square, Bitboard);
 
-uint32_t bmi2_index_bishop(Square s, Bitboard occupied)
-{
-  return (uint32_t)_pext_u64(occupied, BishopMasks[s]);
+uint32_t attack_index_bishop(Square sq, Bitboard occupied) {
+#if defined(USE_PEXT)
+  return (uint32_t)_pext_u64(occupied, BishopMasks[sq]);
+#else
+  occupied &= BishopMasks[sq];
+  occupied *= BishopMagics[sq];
+  return occupied >> (64 - BishopRelevantBits[sq]);
+#endif
 }
 
-uint32_t bmi2_index_rook(Square s, Bitboard occupied)
-{
-  return (uint32_t)_pext_u64(occupied, RookMasks[s]);
+uint32_t attack_index_rook(Square sq, Bitboard occupied) {
+#if defined(USE_PEXT)
+  return (uint32_t)_pext_u64(occupied, RookMasks[sq]);
+#else
+  occupied &= RookMasks[sq];
+  occupied *= RookMagics[sq];
+  return occupied >> (64 - RookRelevantBits[sq]);
+#endif
 }
 
 // lookup bishop attacks 
-Bitboard get_bishop_attacks(Square square, Bitboard occupancy) {
-	
-  int index;
-
-#if defined(USE_PEXT)
-  index = _pext_u64(occupancy, BishopMasks[square]);
-#else
-  occupancy &= BishopMasks[square];
-	occupancy *=  BishopMagics[square];
-	index = occupancy >> 64 - BishopRelevantBits[square];
-#endif
-	
-	return BishopAttacks[square][index];
-	
+Bitboard get_bishop_attacks(Square sq, Bitboard occupied) {
+	return BishopAttacks[sq][attack_index_bishop(sq, occupied)];
 }
 
 // lookup rook attacks 
-Bitboard get_rook_attacks(Square square, Bitboard occupancy) {
-	
-  int index;
-
-#if defined(USE_PEXT)
-  index = _pext_u64(occupancy, RookMasks[square]);
-#else
-  occupancy &= RookMasks[square];
-	occupancy *=  RookMagics[square];
-	index = occupancy >> 64 - RookRelevantBits[square];
-#endif
-  
-	return RookAttacks[square][index];
+Bitboard get_rook_attacks(Square sq, Bitboard occupied) {  
+	return RookAttacks[sq][attack_index_rook(sq, occupied)];
 }
 
-Bitboard get_bishop_attacks(Square s) {
-  return BishopAttacks[s][0];
+Bitboard get_bishop_attacks(Square sq) {
+  return BishopAttacks[sq][0];
 }
 
-Bitboard get_rook_attacks(Square s) {
-  return RookAttacks[s][0];
+Bitboard get_rook_attacks(Square sq) {
+  return RookAttacks[sq][0];
 }
 
-Bitboard get_king_attacks(Square square) {
-  return king_attacks[square];
+Bitboard get_king_attacks(Square sq) {
+  return king_attacks[sq];
 }
 
-Bitboard get_knight_attacks(Square square) {
-  return knight_attacks[square];
+Bitboard get_knight_attacks(Square sq) {
+  return knight_attacks[sq];
 }
 
-Bitboard get_pawn_attacks(Square square, Color pawnColor) {
-  return pawn_attacks[pawnColor][square];
+Bitboard get_pawn_attacks(Square sq, Color pawnColor) {
+  return pawn_attacks[pawnColor][sq];
 }
 
 #if defined(USE_PEXT)
@@ -371,8 +358,8 @@ void bitboardsInit() {
   // Init sliding attacks
 
   #if defined(USE_PEXT)
-  init_pext_attacks(RookTable, RookAttacks, RookMasks, RookDirs, bmi2_index_rook);
-  init_pext_attacks(BishopTable, BishopAttacks, BishopMasks, BishopDirs, bmi2_index_bishop);
+  init_pext_attacks(RookTable, RookAttacks, RookMasks, RookDirs, attack_index_rook);
+  init_pext_attacks(BishopTable, BishopAttacks, BishopMasks, BishopDirs, attack_index_bishop);
   #else
   init_fancy_magic_attacks(BishopMasks, BishopDirs, BISHOP); // bishop
   init_fancy_magic_attacks(RookMasks, RookDirs, ROOK); // rook
