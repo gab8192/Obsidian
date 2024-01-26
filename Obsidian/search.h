@@ -83,6 +83,7 @@ namespace Search {
   private:
     
     clock_t optimumTime, maximumTime;
+    int hardTmCounter;
 
     int rootDepth;
 

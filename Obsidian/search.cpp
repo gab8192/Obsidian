@@ -536,8 +536,11 @@ namespace Search {
 
     // Check time
     if ( this == Threads::mainThread() 
-      && (nodesSearched & 16383) == 0
-      && usedMostOfTime()) {}
+      && (hardTmCounter++ & 16383) == 0
+      && usedMostOfTime()) {
+      hardTmCounter = 0;
+      Threads::stopSearch();
+    }
 
     if (Threads::isSearchStopped())
       return SCORE_DRAW;
@@ -1268,6 +1271,8 @@ namespace Search {
     if (Threads::searchSettings.hasTimeLimit())
       TimeMan::calcOptimumTime(Threads::searchSettings, rootPos.sideToMove,
                               &optimumTime, &maximumTime);
+
+    hardTmCounter = 0;
 
     ply = 0;
 
