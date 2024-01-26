@@ -537,8 +537,7 @@ namespace Search {
     // Check time
     if ( this == Threads::mainThread() 
       && (nodesSearched & 16383) == 0
-      && usedMostOfTime())
-        Threads::stopSearch();
+      && usedMostOfTime()) {}
 
     if (Threads::isSearchStopped())
       return SCORE_DRAW;
