@@ -79,6 +79,8 @@ namespace Search {
     SearchThread();
 
     void resetHistories();
+
+    Score calcMoveEval(Position& pos, Move move);
     
   private:
     

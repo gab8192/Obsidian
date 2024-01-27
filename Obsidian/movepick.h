@@ -25,6 +25,8 @@ class MovePicker {
 public:
 
   MpStage stage;
+
+  Search::SearchThread* thread = nullptr;
   
   MovePicker(
     SearchType _searchType, Position& _pos,

@@ -2,6 +2,7 @@
 #include "cuckoo.h"
 #include "evaluate.h"
 #include "movepick.h"
+#include "nnue.h"
 #include "fathom/tbprobe.h"
 #include "timeman.h"
 #include "threads.h"
@@ -193,6 +194,21 @@ namespace Search {
     TT::prefetch(pos.key);
 
     newAcc.doUpdates(dirtyPieces, &oldAcc);
+  }
+
+  
+  Score SearchThread::calcMoveEval(Position& pos, Move move) {
+
+    NNUE::Accumulator& oldAcc = accumStack[accumStackHead];
+    NNUE::Accumulator& newAcc = accumStack[accumStackHead+1];
+
+    DirtyPieces dirtyPieces;
+
+    pos.calcDirtyPieces(move, dirtyPieces);
+
+    newAcc.doUpdates(dirtyPieces, &oldAcc);
+
+    return - NNUE::evaluate(newAcc, ~ pos.sideToMove);
   }
 
   void SearchThread::cancelMove() {
@@ -786,6 +802,8 @@ namespace Search {
       mainHistory, captureHistory,
       MpPvsSeeMargin,
       ss);
+
+    movePicker.thread = this;
 
     // Visit moves
 

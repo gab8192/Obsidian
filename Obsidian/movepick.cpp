@@ -56,6 +56,8 @@ int nextMoveIndex(MoveList& moveList, int scannedMoves) {
 
 void MovePicker::scoreQuiets() {
 
+  const bool useEval = !ttMove && !killerMove && !counterMove && thread != nullptr;
+
   int i = 0;
   while (i < quiets.size()) {
     Move move = quiets[i].move;
@@ -67,11 +69,16 @@ void MovePicker::scoreQuiets() {
 
     int chIndex = pieceTo(pos, move);
 
-    quiets[i++].score =
+    int score =
       mainHist[pos.sideToMove][move_from_to(move)]
       + (ss - 1)->contHistory()[chIndex]
       + (ss - 2)->contHistory()[chIndex]
       + (ss - 4)->contHistory()[chIndex]/2;
+    
+    if (useEval)
+      score += thread->calcMoveEval(pos, move);
+
+    quiets[i++].score = score;
   }
 }
 
