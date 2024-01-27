@@ -879,8 +879,8 @@ namespace Search {
 
       bool needFullSearch = false;
 
-      if (playedMoves <= 0) {
-        newDepth += improving;
+      if (playedMoves <= 0 && !ttMove) {
+        newDepth -= !improving;
       }
 
       if (depth >= 3 && playedMoves >= 1) {
@@ -921,7 +921,7 @@ namespace Search {
         R += 2 * cutNode;
 
         // Clamp to avoid a qsearch or an extension in the child search
-        int reducedDepth = std::min(std::max(newDepth - R, 1), newDepth + 1);
+        int reducedDepth = std::clamp(newDepth - R, 1, newDepth + 1);
 
         score = -negaMax<false>(newPos, -alpha - 1, -alpha, reducedDepth, true, ss + 1);
 
