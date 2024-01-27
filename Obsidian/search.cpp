@@ -803,7 +803,8 @@ namespace Search {
       MpPvsSeeMargin,
       ss);
 
-    movePicker.thread = this;
+    if (depth == 1)
+      movePicker.thread = this;
 
     // Visit moves
 
