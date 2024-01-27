@@ -879,7 +879,7 @@ namespace Search {
 
       bool needFullSearch = false;
 
-      if (playedMoves <= 0 && !ttMove) {
+      if (depth >= 3 && playedMoves <= 0 && !ttMove) {
         newDepth -= !improving;
       }
 
