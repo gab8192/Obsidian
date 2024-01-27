@@ -208,15 +208,17 @@ namespace NNUE {
     Vec sum = vecSetZero();
     Vec reg;
 
+    // Side to move
     for (int i = 0; i < HiddenWidth / WeightsPerVec; ++i) {
-      // Side to move
       reg = maxEpi16(stmAcc[i], vecZero); // clip
       reg = minEpi16(reg, vecQA); // clip
       reg = mulloEpi16(reg, reg); // square
       reg = maddEpi16(reg, stmWeights[i]); // multiply with output layer
       sum = addEpi32(sum, reg); // collect the result
+    }
 
-      // Non side to move
+    // Non side to move
+    for (int i = 0; i < HiddenWidth / WeightsPerVec; ++i) {
       reg = maxEpi16(oppAcc[i], vecZero);
       reg = minEpi16(reg, vecQA);
       reg = mulloEpi16(reg, reg);
