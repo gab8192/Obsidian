@@ -901,14 +901,16 @@ namespace Search {
           R += (moveStage == BAD_CAPTURES);
 
           R -= history / LmrCapHistoryDiv;
+
+          // Extend captures if this ever was a PV node
+          R -= ttPV;
         }
 
         // Extend moves that give check
         R -= (newPos.checkers != 0ULL);
 
-        // Extend if this position *was* in a PV node. Even further if it *is*
-        if (ttPV)
-          R -= (1 + IsPV);
+        // Extend if this is a PV node
+        R -= IsPV;
 
         // Reduce if evaluation is trending down
         R += !improving;
