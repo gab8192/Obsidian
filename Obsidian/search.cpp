@@ -895,7 +895,7 @@ namespace Search {
           R -= history / LmrQuietHistoryDiv;
         }
         else {
-          R = 0;
+          R = 1;
 
           R -= history / LmrCapHistoryDiv;
 
