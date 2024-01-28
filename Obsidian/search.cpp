@@ -901,6 +901,8 @@ namespace Search {
           R += (moveStage == BAD_CAPTURES);
 
           R -= history / LmrCapHistoryDiv;
+
+          R -= (ttPV && moveStage == GOOD_CAPTURES);
         }
 
         // Extend moves that give check
