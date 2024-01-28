@@ -56,8 +56,6 @@ int nextMoveIndex(MoveList& moveList, int scannedMoves) {
 
 void MovePicker::scoreQuiets() {
 
-  const bool useEval = !ttMove && !killerMove && !counterMove && accumulator != nullptr;
-
   int i = 0;
   while (i < quiets.size()) {
     Move move = quiets[i].move;
@@ -75,7 +73,7 @@ void MovePicker::scoreQuiets() {
       + (ss - 2)->contHistory()[chIndex]
       + (ss - 4)->contHistory()[chIndex]/2;
     
-    if (useEval) {
+    if (accumulator) {
       int addition = ss->staticEval;
 
       if (move_type(move) == MT_NORMAL) {

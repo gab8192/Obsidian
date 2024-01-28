@@ -788,7 +788,8 @@ namespace Search {
       MpPvsSeeMargin,
       ss);
 
-    movePicker.accumulator = & accumStack[accumStackHead];
+    if (!ttMove && !ss->killerMove && !counterMove && depth <= 2)
+      movePicker.accumulator = & accumStack[accumStackHead];
 
     // Visit moves
 
