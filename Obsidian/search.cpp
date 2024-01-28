@@ -788,7 +788,7 @@ namespace Search {
       MpPvsSeeMargin,
       ss);
 
-    if (ply <= rootDepth-3)
+    if (depth >= 3)
       movePicker.accumulator = & accumStack[accumStackHead];
 
     // Visit moves
