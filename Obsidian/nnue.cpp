@@ -9,6 +9,8 @@ INCBIN(EmbeddedNNUE, EvalFile);
 
 namespace NNUE {
 
+  constexpr int WeightsPerVec = sizeof(SIMD::Vec) / sizeof(weight_t);
+
   struct {
     alignas(SIMD::Alignment) weight_t OldFeatureWeights[2][6][64][HiddenWidth];
     alignas(SIMD::Alignment) weight_t FeatureBiases[HiddenWidth];

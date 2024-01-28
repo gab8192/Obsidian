@@ -24,8 +24,6 @@ namespace NNUE {
 
   using weight_t = int16_t;
 
-  constexpr int WeightsPerVec = sizeof(SIMD::Vec) / sizeof(weight_t);
-
   constexpr int FeaturesWidth = 768;
   constexpr int HiddenWidth = 1536;
 
@@ -50,8 +48,6 @@ namespace NNUE {
   };
 
   void init();
-
-  Accumulator* cachedDelta(Square from, Square to, Piece pc);
 
   Score evaluate(Accumulator& accumulator, Color sideToMove);
 
