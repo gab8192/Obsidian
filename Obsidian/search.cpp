@@ -196,21 +196,6 @@ namespace Search {
     newAcc.doUpdates(dirtyPieces, &oldAcc);
   }
 
-  
-  Score SearchThread::calcMoveEval(Position& pos, Move move) {
-
-    NNUE::Accumulator& oldAcc = accumStack[accumStackHead];
-    NNUE::Accumulator& newAcc = accumStack[accumStackHead+1];
-
-    DirtyPieces dirtyPieces;
-
-    pos.calcDirtyPieces(move, dirtyPieces);
-
-    newAcc.doUpdates(dirtyPieces, &oldAcc);
-
-    return - NNUE::evaluate(newAcc, ~ pos.sideToMove);
-  }
-
   void SearchThread::cancelMove() {
     ply--;
     keyStackHead--;
@@ -804,7 +789,7 @@ namespace Search {
       ss);
 
     if (depth == 1)
-      movePicker.thread = this;
+      movePicker.accumulator = & accumStack[accumStackHead];
 
     // Visit moves
 

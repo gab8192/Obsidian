@@ -56,7 +56,7 @@ int nextMoveIndex(MoveList& moveList, int scannedMoves) {
 
 void MovePicker::scoreQuiets() {
 
-  const bool useEval = !ttMove && !killerMove && !counterMove && thread != nullptr;
+  const bool useEval = !ttMove && !killerMove && !counterMove && accumulator != nullptr;
 
   int i = 0;
   while (i < quiets.size()) {
@@ -75,8 +75,18 @@ void MovePicker::scoreQuiets() {
       + (ss - 2)->contHistory()[chIndex]
       + (ss - 4)->contHistory()[chIndex]/2;
     
-    if (useEval)
-      score += thread->calcMoveEval(pos, move);
+    if (useEval) {
+      int addition = ss->staticEval;
+
+      if (move_type(move) == MT_NORMAL) {
+        Square from = move_from(move);
+        Square to = move_to(move);
+        Piece piece = pos.board[from];
+        addition = NNUE::evaluateWithMove(*accumulator, pos.sideToMove, from, to, piece);
+      }
+
+      score += addition;
+    }
 
     quiets[i++].score = score;
   }

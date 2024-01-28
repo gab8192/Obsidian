@@ -80,8 +80,6 @@ namespace Search {
 
     void resetHistories();
 
-    Score calcMoveEval(Position& pos, Move move);
-    
   private:
     
     clock_t optimumTime, maximumTime;

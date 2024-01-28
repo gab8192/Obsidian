@@ -2,6 +2,7 @@
 
 #include "history.h"
 #include "movegen.h"
+#include "nnue.h"
 #include "search.h"
 
 enum MpStage {
@@ -26,7 +27,7 @@ public:
 
   MpStage stage;
 
-  Search::SearchThread* thread = nullptr;
+  NNUE::Accumulator* accumulator = nullptr;
   
   MovePicker(
     SearchType _searchType, Position& _pos,

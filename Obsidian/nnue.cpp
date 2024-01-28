@@ -9,8 +9,6 @@ INCBIN(EmbeddedNNUE, EvalFile);
 
 namespace NNUE {
 
-  constexpr int WeightsPerVec = sizeof(SIMD::Vec) / sizeof(weight_t);
-
   struct {
     alignas(SIMD::Alignment) weight_t OldFeatureWeights[2][6][64][HiddenWidth];
     alignas(SIMD::Alignment) weight_t FeatureBiases[HiddenWidth];
@@ -27,7 +25,7 @@ namespace NNUE {
             [WHITE];
   }
 
-  NNUE::Accumulator deltaTable[6][SQUARE_NB][SQUARE_NB];
+  Accumulator deltaTable[6][SQUARE_NB][SQUARE_NB];
 
   Accumulator* cachedDelta(Square from, Square to, Piece pc) {
     if (colorOf(pc) == WHITE) {
@@ -229,4 +227,46 @@ namespace NNUE {
     return (unsquared * NetworkScale) / NetworkQAB;
   }
 
+  Score evaluateWithMove(Accumulator& accumulator, Color sideToMove, 
+                         Square from, Square to, Piece piece) 
+  {
+    Vec* stmAcc = (Vec*) accumulator.colors[sideToMove];
+    Vec* oppAcc = (Vec*) accumulator.colors[~sideToMove];
+
+    Vec* stmWeights = (Vec*) &Content.OutputWeights[0];
+    Vec* oppWeights = (Vec*) &Content.OutputWeights[HiddenWidth];
+
+    NNUE::Accumulator* moveDelta = NNUE::cachedDelta(from, to, piece);
+    Vec* moveDeltaWhite = (Vec*) moveDelta->colors[WHITE];
+    Vec* moveDeltaBlack = (Vec*) moveDelta->colors[BLACK];
+
+    const Vec vecZero = vecSetZero();
+    const Vec vecQA = vecSet1Epi16(NetworkQA);
+
+    Vec sum = vecSetZero();
+    Vec reg;
+
+    for (int i = 0; i < HiddenWidth / WeightsPerVec; ++i) {
+      // Side to move
+      reg = addEpi16(stmAcc[i], moveDeltaWhite[i]);
+      reg = maxEpi16(reg, vecZero); // clip
+      reg = minEpi16(reg, vecQA); // clip
+      reg = mulloEpi16(reg, reg); // square
+      reg = maddEpi16(reg, oppWeights[i]); // multiply with (flipped!) output layer
+      sum = addEpi32(sum, reg); // collect the result
+
+      // Non side to move
+      reg = addEpi16(oppAcc[i], moveDeltaBlack[i]);
+      reg = maxEpi16(reg, vecZero);
+      reg = minEpi16(reg, vecQA);
+      reg = mulloEpi16(reg, reg);
+      reg = maddEpi16(reg, stmWeights[i]);
+      sum = addEpi32(sum, reg);
+    }
+
+    int unsquared = vecHaddEpi32(sum) / NetworkQA + Content.OutputBias;
+
+    // flip sign
+    return - (unsquared * NetworkScale) / NetworkQAB;
+  }
 }
