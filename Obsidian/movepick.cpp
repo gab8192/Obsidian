@@ -85,7 +85,7 @@ void MovePicker::scoreQuiets() {
         addition = NNUE::evaluateWithMove(*accumulator, pos.sideToMove, from, to, piece);
       }
 
-      score += 32 * addition;
+      score += 16 * addition;
     }
 
     quiets[i++].score = score;
