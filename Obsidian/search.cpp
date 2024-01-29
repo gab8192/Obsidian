@@ -597,8 +597,11 @@ namespace Search {
     const bool ttMoveNoisy = ttMove && !pos.isQuiet(ttMove);
 
     const Score probcutBeta = beta + ProbcutBetaMargin;
+    Score rfpMargin;
 
     Score eval;
+    bool evalIsFromTT = false;
+
     Move bestMove = MOVE_NONE;
     Score bestScore = -SCORE_INFINITE;
     Score maxScore  =  SCORE_INFINITE; 
@@ -672,8 +675,10 @@ namespace Search {
         ss->staticEval = eval = Eval::evaluate(pos, accumStack[accumStackHead]);
 
       // When tt bound allows it, use ttScore as a better evaluation
-      if (ttBound & boundForTT(ttScore > eval))
+      if (ttBound & boundForTT(ttScore > eval)) {
         eval = ttScore;
+        evalIsFromTT = true;
+      }
     }
 
     // Calculate whether the evaluation here is worse or better than it was 2 plies ago
@@ -693,10 +698,14 @@ namespace Search {
 
     // Reverse futility pruning. When evaluation is far above beta, the opponent is unlikely
     // to catch up, thus cut off
+    rfpMargin = RfpDepthMul * (depth - improving);
+    if (evalIsFromTT)
+      rfpMargin += 4 * (depth - ttDepth) - 20;
     if ( !IsPV
       && depth <= RfpMaxDepth
       && eval < SCORE_TB_WIN_IN_MAX_PLY
-      && eval - RfpDepthMul * (depth - improving) >= beta)
+      && eval >= beta
+      && eval - rfpMargin >= beta)
       return eval;
 
     // Null move pruning. When our evaluation is above beta, we give the opponent
