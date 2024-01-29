@@ -612,6 +612,11 @@ namespace Search {
         return ttScore;
     }
 
+    if      (ttScore < alpha && ttDepth >= (depth+1)/2 && ttBound != TT::FLAG_LOWER)
+      cutNode = false;
+    else if (ttScore >= beta && ttDepth >= (depth+1)/2 && ttBound != TT::FLAG_UPPER)
+      cutNode = true;
+
     // Probe tablebases
     const TbResult tbResult = excludedMove ? TB_RESULT_FAILED : probeTB(pos);
 
