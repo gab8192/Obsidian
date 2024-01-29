@@ -700,7 +700,7 @@ namespace Search {
     // to catch up, thus cut off
     rfpMargin = RfpDepthMul * (depth - improving);
     if (evalIsFromTT)
-      rfpMargin += 4 * (depth - ttDepth - RfpMaxDepth);
+      rfpMargin += 8 * (depth - ttDepth - RfpMaxDepth);
     if ( !IsPV
       && depth <= RfpMaxDepth
       && eval < SCORE_TB_WIN_IN_MAX_PLY
