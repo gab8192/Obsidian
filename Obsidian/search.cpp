@@ -612,9 +612,9 @@ namespace Search {
         return ttScore;
     }
 
-    if      (ttScore < alpha && ttDepth >= (depth+1)/2 && ttBound != TT::FLAG_LOWER)
+    if      (ttScore < beta-15 && ttDepth >= (depth+1)/2 && ttBound != TT::FLAG_LOWER)
       cutNode = false;
-    else if (ttScore >= beta && ttDepth >= (depth+1)/2 && ttBound != TT::FLAG_UPPER)
+    else if (ttScore > beta+15 && ttDepth >= (depth+1)/2 && ttBound != TT::FLAG_UPPER)
       cutNode = true;
 
     // Probe tablebases
