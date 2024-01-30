@@ -884,9 +884,6 @@ namespace Search {
 
         if (isQuiet) {
           R = lmrTable[depth][seenMoves];
-          
-          // Reduce more if the expected best move is a capture
-          R += ttMoveNoisy;
 
           // Extend killer and counter move
           R -= (moveStage == KILLER || moveStage == COUNTER);
@@ -897,7 +894,7 @@ namespace Search {
           R -= ttPV;
         }
         else {
-          R = 0;
+          R = 1;
 
           // Reduce if this is a bad capture (=> loses material)
           R += (moveStage == BAD_CAPTURES);
@@ -911,6 +908,9 @@ namespace Search {
         R -= (newPos.checkers != 0ULL);
 
         R -= IsPV;
+
+        // Reduce more if the expected best move is a capture
+        R += ttMoveNoisy;
 
         // Reduce if evaluation is trending down
         R += !improving;
