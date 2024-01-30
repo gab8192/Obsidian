@@ -699,7 +699,7 @@ namespace Search {
     // Reverse futility pruning. When evaluation is far above beta, the opponent is unlikely
     // to catch up, thus cut off
     rfpMargin = RfpDepthMul * (depth - improving);
-    if (evalIsFromTT)
+    if (evalIsFromTT && ttBound != TT::FLAG_UPPER)
       rfpMargin += 8 * (depth - ttDepth - RfpMaxDepth);
     if ( !IsPV
       && depth <= RfpMaxDepth
