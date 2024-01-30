@@ -893,6 +893,8 @@ namespace Search {
 
           // Reduce or extend depending on history of this quiet move
           R -= history / LmrQuietHistoryDiv;
+
+          R -= ttPV;
         }
         else {
           R = 0;
@@ -901,14 +903,14 @@ namespace Search {
           R += (moveStage == BAD_CAPTURES);
 
           R -= history / LmrCapHistoryDiv;
+
+          R -= 2 * ttPV;
         }
 
         // Extend moves that give check
         R -= (newPos.checkers != 0ULL);
 
-        // Extend if this position *was* in a PV node. Even further if it *is*
-        if (ttPV)
-          R -= (1 + IsPV);
+        R -= IsPV;
 
         // Reduce if evaluation is trending down
         R += !improving;
