@@ -898,7 +898,7 @@ namespace Search {
           R = 0;
 
           // Reduce if this is a bad capture (=> loses material)
-          R += (moveStage == BAD_CAPTURES);
+          R += (moveStage == BAD_CAPTURES && !newPos.checkers);
 
           R -= history / LmrCapHistoryDiv;
         }
