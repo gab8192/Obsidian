@@ -66,7 +66,6 @@ inline int move_from_to(Move m) {
 struct MoveScored {
   Move move;
   int score;
-  int nodes;
 };
 
 struct MoveList {

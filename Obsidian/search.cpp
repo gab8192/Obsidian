@@ -1163,7 +1163,7 @@ namespace Search {
 
       playedMoves++;
       
-      rootMoves[rootMoves.indexOf(move)].nodes += nodesSearched - oldNodesCount;
+      rootMovesNodes[rootMoves.indexOf(move)] += nodesSearched - oldNodesCount;
 
       if (Threads::isSearchStopped())
         return SCORE_DRAW;
@@ -1318,8 +1318,7 @@ namespace Search {
       goto bestMoveDecided;
     }
 
-    for (int i = 0; i < rootMoves.size(); i++)
-      rootMoves[i].nodes = 0;
+    memset(rootMovesNodes, 0, sizeof(rootMovesNodes));
 
     for (rootDepth = 1; rootDepth <= settings.depth; rootDepth++) {
 
@@ -1425,7 +1424,7 @@ namespace Search {
         if (usedMostOfTime())
           goto bestMoveDecided;
 
-        int bmNodes = rootMoves[rootMoves.indexOf(bestMove)].nodes;
+        int bmNodes = rootMovesNodes[rootMoves.indexOf(bestMove)];
         double notBestNodes = 1.0 - (bmNodes / double(nodesSearched));
         double nodesFactor     = (tm1/100.0) + notBestNodes * (tm0/100.0);
 
