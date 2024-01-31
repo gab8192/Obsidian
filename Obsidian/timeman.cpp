@@ -8,7 +8,7 @@
 namespace TimeMan {
 
   /// Calcaulate how much of our time we should use
-  void calcOptimumTime(Search::Settings& settings, Color us,
+  void calcOptimumTime(const Search::Settings& settings, Color us,
                        clock_t* optimumTime, clock_t* maximumTime)
   {
     double optScale;

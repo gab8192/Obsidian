@@ -16,13 +16,11 @@
 #include <string>
 #include <vector>
 
-using namespace Threads;
-
-std::vector<uint64_t> prevPositions;
-
 namespace {
 
   const char* StartFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+
+  std::vector<uint64_t> prevPositions;
 
   void position(Position& pos, NNUE::Accumulator& acc, std::istringstream& is) {
     Move m;
@@ -67,14 +65,14 @@ namespace {
 
     TT::clear();
 
-    for (SearchThread* st : Threads::searchThreads)
+    for (Search::SearchThread* st : Threads::searchThreads)
       st->resetHistories();
   }
 
   void bench() {
     constexpr int posCount = sizeof(BenchPositions) / sizeof(char*);
 
-    setThreadCount(1);
+    Threads::setThreadCount(1);
 
     uint64_t totalNodes = 0;
     clock_t elapsed = 0;
@@ -84,7 +82,7 @@ namespace {
 
     for (int i = 0; i < posCount; i++) 
     {
-      searchSettings = Search::Settings();
+      Search::Settings searchSettings;
       searchSettings.depth = 13;
       
       std::istringstream posStr(BenchPositions[i]);
@@ -94,7 +92,7 @@ namespace {
 
       // Start search
       searchSettings.startTime = timeMillis();
-      startSearch();
+      Threads::startSearch(searchSettings);
 
       // And wait for it to finish..
       Threads::waitForSearch();
@@ -104,7 +102,7 @@ namespace {
 
         elapsed += timeMillis() - searchSettings.startTime;
 
-        totalNodes += mainThread()->nodesSearched;
+        totalNodes += Threads::mainThread()->nodesSearched;
       }
     }
 
@@ -148,7 +146,7 @@ namespace {
     std::string token;
 
     int perftPlies = 0;
-    searchSettings = Search::Settings();
+    Search::Settings searchSettings;
     searchSettings.startTime = time;
     searchSettings.position = pos;
     searchSettings.prevPositions = prevPositions;
@@ -175,7 +173,7 @@ namespace {
       return;
     }
     else {
-      Threads::startSearch();
+      Threads::startSearch(searchSettings);
     }
   }
 
@@ -205,8 +203,8 @@ void UCI::loop(int argc, char* argv[]) {
     if (token == "quit"
       || token == "stop") {
 
-      stopSearch();
-      waitForSearch();
+      Threads::stopSearch();
+      Threads::waitForSearch();
     }
 
     else if (token == "uci") {

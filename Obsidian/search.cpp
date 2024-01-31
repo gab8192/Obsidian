@@ -138,7 +138,7 @@ namespace Search {
   template int64_t perft<true>(Position&, int);
 
   clock_t elapsedTime() {
-    return timeMillis() - Threads::searchSettings.startTime;
+    return timeMillis() - Threads::getSearchSettings().startTime;
   }
 
   int stat_bonus(int d) {
@@ -147,11 +147,11 @@ namespace Search {
 
   bool SearchThread::usedMostOfTime() {
 
-    if (Threads::searchSettings.hasTimeLimit())
+    if (Threads::getSearchSettings().hasTimeLimit())
       return elapsedTime() >= maximumTime;
     
-    else if (Threads::searchSettings.movetime) {
-      clock_t timeLimit = Threads::searchSettings.movetime;
+    else if (Threads::getSearchSettings().movetime) {
+      clock_t timeLimit = Threads::getSearchSettings().movetime;
       return elapsedTime() >= (timeLimit - 50);
     }
 
@@ -1255,19 +1255,21 @@ namespace Search {
 
   void SearchThread::startSearch() {
 
-    Position rootPos = Threads::searchSettings.position;
+    const Settings& settings = Threads::getSearchSettings();
+
+    Position rootPos = settings.position;
 
     accumStackHead = 0;
     rootPos.updateAccumulator(accumStack[accumStackHead]);
 
     keyStackHead = 0;
-    for (int i = 0; i < Threads::searchSettings.prevPositions.size(); i++)
-      keyStack[keyStackHead++] = Threads::searchSettings.prevPositions[i];
+    for (int i = 0; i < settings.prevPositions.size(); i++)
+      keyStack[keyStackHead++] = settings.prevPositions[i];
 
     Move bestMove;
 
-    if (Threads::searchSettings.hasTimeLimit())
-      TimeMan::calcOptimumTime(Threads::searchSettings, rootPos.sideToMove,
+    if (settings.hasTimeLimit())
+      TimeMan::calcOptimumTime(settings, rootPos.sideToMove,
                               &optimumTime, &maximumTime);
 
     ply = 0;
@@ -1296,9 +1298,6 @@ namespace Search {
 
     SearchInfo* ss = &searchStack[SsOffset];
 
-    if (Threads::searchSettings.depth == 0)
-      Threads::searchSettings.depth = MAX_PLY-1;
-
     clock_t startTimeForBench = timeMillis();
 
     // Setup root moves
@@ -1322,9 +1321,9 @@ namespace Search {
     for (int i = 0; i < rootMoves.size(); i++)
       rootMoves[i].nodes = 0;
 
-    for (rootDepth = 1; rootDepth <= Threads::searchSettings.depth; rootDepth++) {
+    for (rootDepth = 1; rootDepth <= settings.depth; rootDepth++) {
 
-      if (Threads::searchSettings.nodes && nodesSearched >= Threads::searchSettings.nodes)
+      if (settings.nodes && nodesSearched >= settings.nodes)
         break;
 
       Score score;
@@ -1343,7 +1342,7 @@ namespace Search {
           if (Threads::isSearchStopped())
             goto bestMoveDecided;
 
-          if (Threads::searchSettings.nodes && nodesSearched >= Threads::searchSettings.nodes)
+          if (settings.nodes && nodesSearched >= settings.nodes)
             break; // only break, in order to print info about the partial search we've done
 
           if (score >= SCORE_MATE_IN_MAX_PLY) {
@@ -1407,8 +1406,8 @@ namespace Search {
 
       // When playing in movetime mode, stop if we've used 75% time of movetime,
       // because we will probably not hit the next depth in time
-      if (Threads::searchSettings.movetime)
-        if (elapsedTime() >= (Threads::searchSettings.movetime * 3) / 4)
+      if (settings.movetime)
+        if (elapsedTime() >= (settings.movetime * 3) / 4)
           goto bestMoveDecided;
 
       if (bestMove == iterDeepening[rootDepth - 1].bestMove)
@@ -1416,7 +1415,7 @@ namespace Search {
       else
         searchStability = 0;
 
-      if (Threads::searchSettings.hasTimeLimit() && rootDepth >= 4) {
+      if (settings.hasTimeLimit() && rootDepth >= 4) {
 
         // If the position is a dead draw, stop searching
         if (rootDepth >= 40 && abs(score) < 5) {

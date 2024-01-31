@@ -24,7 +24,8 @@ namespace Search {
 
     Settings() {
       time[WHITE] = time[BLACK] = inc[WHITE] = inc[BLACK] = movetime = 0;
-      movestogo = depth = 0;
+      movestogo = 0;
+      depth = MAX_PLY-4; // no depth limit by default
       nodes = 0;
     }
 

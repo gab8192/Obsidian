@@ -4,15 +4,11 @@
 #include "search.h"
 #include <vector>
 
-using namespace Search;
-
 namespace Threads {
 
-  extern Settings searchSettings;
+  extern std::vector<Search::SearchThread*> searchThreads;
 
-  extern std::vector<SearchThread*> searchThreads;
-
-  SearchThread* mainThread();
+  Search::SearchThread* mainThread();
 
   bool isSearchStopped();
 
@@ -22,7 +18,9 @@ namespace Threads {
 
   void waitForSearch();
 
-  void startSearch();
+  void startSearch(Search::Settings& settings);
+
+  Search::Settings& getSearchSettings();
 
   void stopSearch();
 
