@@ -696,6 +696,7 @@ namespace Search {
     if ( !IsPV
       && depth <= RfpMaxDepth
       && eval < SCORE_TB_WIN_IN_MAX_PLY
+      && eval - 15 >= beta
       && eval - RfpDepthMul * (depth - improving) >= beta)
       return eval;
 
