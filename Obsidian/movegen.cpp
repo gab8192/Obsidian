@@ -42,7 +42,7 @@ void getWhitePawnMoves(const Position& pos, Bitboard targets, MoveList* receiver
   }
 
   if (pos.epSquare != SQ_NONE && doEp) {
-    Bitboard ourPawnsTakeEp = wPawns & get_pawn_attacks(pos.epSquare, BLACK);
+    Bitboard ourPawnsTakeEp = wPawns & getPawnAttacks(pos.epSquare, BLACK);
 
     while (ourPawnsTakeEp) {
       Square src = popLsb(ourPawnsTakeEp);
@@ -80,7 +80,7 @@ void getBlackPawnMoves(const Position& pos, Bitboard targets, MoveList* receiver
   }
 
   if (pos.epSquare != SQ_NONE && doEp) {
-    Bitboard ourPawnsTakeEp = bPawns & get_pawn_attacks(pos.epSquare, WHITE);
+    Bitboard ourPawnsTakeEp = bPawns & getPawnAttacks(pos.epSquare, WHITE);
 
     while (ourPawnsTakeEp) {
       Square src = popLsb(ourPawnsTakeEp);
@@ -153,12 +153,12 @@ void getPseudoLegalMoves(const Position& pos, MoveList* moveList) {
   Bitboard targets      = ~ourPieces;
 
   if (pos.checkers) {
-    if (more_than_one(pos.checkers)) {
-      addNormalMovesToList(ourKing, get_king_attacks(ourKing) & targets, moveList);
+    if (moreThanOne(pos.checkers)) {
+      addNormalMovesToList(ourKing, getKingAttacks(ourKing) & targets, moveList);
       return;
     }
 
-    targets      &= BetweenBB[ourKing][getLsb(pos.checkers)];
+    targets      &= BETWEEN_BB[ourKing][getLsb(pos.checkers)];
   }
 
   const Bitboard pinned = pos.blockersForKing[us] & ourPieces;
@@ -175,7 +175,7 @@ void getPseudoLegalMoves(const Position& pos, MoveList* moveList) {
   Bitboard knights = ourPieces & pos.pieces(KNIGHT) & ~pinned;
   while (knights) {
     Square from = popLsb(knights);
-    addNormalMovesToList(from, get_knight_attacks(from) & targets, moveList);
+    addNormalMovesToList(from, getKnightAttacks(from) & targets, moveList);
   }
 
   if (!pos.checkers) {
@@ -208,22 +208,22 @@ void getPseudoLegalMoves(const Position& pos, MoveList* moveList) {
   Bitboard bishops = ourPieces & pos.pieces(BISHOP, QUEEN);
   while (bishops) {
     Square from = popLsb(bishops);
-    Bitboard attacks = get_bishop_attacks(from, allPieces) & targets;
+    Bitboard attacks = getBishopAttacks(from, allPieces) & targets;
     if (pinned & from)
-      attacks &= LineBB[ourKing][from];
+      attacks &= LINE_BB[ourKing][from];
     addNormalMovesToList(from, attacks, moveList);
   }
 
   Bitboard rooks = ourPieces & pos.pieces(ROOK, QUEEN);
   while (rooks) {
     Square from = popLsb(rooks);
-    Bitboard attacks = get_rook_attacks(from, allPieces) & targets;
+    Bitboard attacks = getRookAttacks(from, allPieces) & targets;
     if (pinned & from)
-      attacks &= LineBB[ourKing][from];
+      attacks &= LINE_BB[ourKing][from];
     addNormalMovesToList(from, attacks, moveList);
   }
 
-  addNormalMovesToList(ourKing, get_king_attacks(ourKing) & ~ourPieces, moveList);
+  addNormalMovesToList(ourKing, getKingAttacks(ourKing) & ~ourPieces, moveList);
 }
 
 void getStageMoves(const Position& pos, bool quiets, MoveList* moveList) {
@@ -241,13 +241,13 @@ void getStageMoves(const Position& pos, bool quiets, MoveList* moveList) {
   Bitboard promoTargets = ~ourPieces;
   
   if (pos.checkers) {
-    if (more_than_one(pos.checkers)) {
-      addNormalMovesToList(ourKing, get_king_attacks(ourKing) & targets, moveList);
+    if (moreThanOne(pos.checkers)) {
+      addNormalMovesToList(ourKing, getKingAttacks(ourKing) & targets, moveList);
       return;
     }
 
-    targets      &= BetweenBB[ourKing][getLsb(pos.checkers)];
-    promoTargets &= BetweenBB[ourKing][getLsb(pos.checkers)];
+    targets      &= BETWEEN_BB[ourKing][getLsb(pos.checkers)];
+    promoTargets &= BETWEEN_BB[ourKing][getLsb(pos.checkers)];
   }
 
   const Bitboard pinned = pos.blockersForKing[us] & ourPieces;
@@ -293,26 +293,26 @@ void getStageMoves(const Position& pos, bool quiets, MoveList* moveList) {
   Bitboard knights = ourPieces & pos.pieces(KNIGHT) & ~pinned;
   while (knights) {
     Square from = popLsb(knights);
-    addNormalMovesToList(from, get_knight_attacks(from) & targets, moveList);
+    addNormalMovesToList(from, getKnightAttacks(from) & targets, moveList);
   }
 
   Bitboard bishops = ourPieces & pos.pieces(BISHOP, QUEEN);
   while (bishops) {
     Square from = popLsb(bishops);
-    Bitboard attacks = get_bishop_attacks(from, allPieces) & targets;
+    Bitboard attacks = getBishopAttacks(from, allPieces) & targets;
     if (pinned & from)
-      attacks &= LineBB[ourKing][from];
+      attacks &= LINE_BB[ourKing][from];
     addNormalMovesToList(from, attacks, moveList);
   }
 
   Bitboard rooks = ourPieces & pos.pieces(ROOK, QUEEN);
   while (rooks) {
     Square from = popLsb(rooks);
-    Bitboard attacks = get_rook_attacks(from, allPieces) & targets;
+    Bitboard attacks = getRookAttacks(from, allPieces) & targets;
     if (pinned & from)
-      attacks &= LineBB[ourKing][from];
+      attacks &= LINE_BB[ourKing][from];
     addNormalMovesToList(from, attacks, moveList);
   }
 
-  addNormalMovesToList(ourKing, get_king_attacks(ourKing) & kingTargets, moveList);
+  addNormalMovesToList(ourKing, getKingAttacks(ourKing) & kingTargets, moveList);
 }

@@ -214,7 +214,7 @@ namespace Search {
   };
 
   int Thread::getCapHistory(Position& pos, Move move) {
-    PieceType captured = ptypeOf(pos.board[move_to(move)]);
+    PieceType captured = piece_type(pos.board[move_to(move)]);
     return captureHistory[pieceTo(pos, move)][captured];
   }
 
@@ -275,15 +275,15 @@ namespace Search {
       Move move = moves[i].move;
 
       MoveType mt = move_type(move);
-      PieceType captured = ptypeOf(pos.board[move_to(move)]);
+      PieceType captured = piece_type(pos.board[move_to(move)]);
 
       if (move == ttMove)
         moveScore = INT_MAX;
       else if (mt == MT_PROMOTION)
-        moveScore = promotionScores[promo_type(move)] + PieceValue[captured] * 128;
+        moveScore = promotionScores[promo_type(move)] + PIECE_VALUE[captured] * 128;
       else if (captured || mt == MT_EN_PASSANT) {
-        moveScore = pos.see_ge(move, MpPvsSeeMargin) ? 500000 : -500000;
-        moveScore += PieceValue[mt == MT_EN_PASSANT ? PAWN : captured] * 128;
+        moveScore = pos.seeGe(move, MpPvsSeeMargin) ? 500000 : -500000;
+        moveScore += PIECE_VALUE[mt == MT_EN_PASSANT ? PAWN : captured] * 128;
         moveScore += getCapHistory(pos, move);
       }
       else
@@ -338,7 +338,7 @@ namespace Search {
       Square to = move_to(move);
 
       // Check if the move is obstructed
-      if ((BetweenBB[from][to] ^ to) & occ)
+      if ((BETWEEN_BB[from][to] ^ to) & occ)
         continue;
 
       // Repetition after root
@@ -347,7 +347,7 @@ namespace Search {
       
       Piece pc = pos.board[ pos.board[from] ? from : to ];
 
-      if (colorOf(pc) != pos.sideToMove)
+      if (piece_color(pc) != pos.sideToMove)
         continue;
 
       // We want one more repetition before root
@@ -730,7 +730,7 @@ namespace Search {
         && !(ttDepth >= depth - 3 && ttScore < probcutBeta))
     {
       int pcSeeMargin = (probcutBeta - ss->staticEval) * 10 / 16;
-      bool visitTTMove = ttMove && !pos.isQuiet(ttMove) && pos.see_ge(ttMove, pcSeeMargin);
+      bool visitTTMove = ttMove && !pos.isQuiet(ttMove) && pos.seeGe(ttMove, pcSeeMargin);
 
       MovePicker pcMovePicker(
         PROBCUT, pos,
@@ -811,7 +811,7 @@ namespace Search {
         // SEE (Static Exchange Evalution) pruning
         if (moveStage > GOOD_CAPTURES) {
           int seeMargin = depth * (isQuiet ? PvsQuietSeeMargin : PvsCapSeeMargin);
-          if (!pos.see_ge(move, seeMargin))
+          if (!pos.seeGe(move, seeMargin))
             continue;
         }
 
@@ -990,7 +990,7 @@ namespace Search {
       }
       else {
         Piece captured = pos.board[move_to(bestMove)];
-        addToHistory(captureHistory[pieceTo(pos, bestMove)][ptypeOf(captured)], bonus);
+        addToHistory(captureHistory[pieceTo(pos, bestMove)][piece_type(captured)], bonus);
       }
 
       for (int i = 0; i < captureCount; i++) {
@@ -999,7 +999,7 @@ namespace Search {
           continue;
 
         Piece captured = pos.board[move_to(otherMove)];
-        addToHistory(captureHistory[pieceTo(pos, otherMove)][ptypeOf(captured)], -bonus);
+        addToHistory(captureHistory[pieceTo(pos, otherMove)][piece_type(captured)], -bonus);
       }
     }
 
@@ -1199,7 +1199,7 @@ namespace Search {
       }
       else {
         Piece captured = pos.board[move_to(bestMove)];
-        addToHistory(captureHistory[pieceTo(pos, bestMove)][ptypeOf(captured)], bonus);
+        addToHistory(captureHistory[pieceTo(pos, bestMove)][piece_type(captured)], bonus);
       }
 
       for (int i = 0; i < captureCount; i++) {
@@ -1208,7 +1208,7 @@ namespace Search {
           continue;
 
         Piece captured = pos.board[move_to(otherMove)];
-        addToHistory(captureHistory[pieceTo(pos, otherMove)][ptypeOf(captured)], -bonus);
+        addToHistory(captureHistory[pieceTo(pos, otherMove)][piece_type(captured)], -bonus);
       }
     }
 

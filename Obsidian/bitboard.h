@@ -18,20 +18,20 @@ inline Bitboard getLsb_bb(Bitboard bb) {
   return bb & (-int64_t(bb));
 }
 
-inline Bitboard square_bb(Square sq) {
+inline Bitboard squareBB(Square sq) {
   return 1ULL << sq;
 }
 
-inline Bitboard operator&(Bitboard d1, Square d2) { return d1 & square_bb(d2); }
+inline Bitboard operator&(Bitboard d1, Square d2) { return d1 & squareBB(d2); }
 inline Bitboard& operator&=(Bitboard& d1, Square d2) { return d1 = d1 & d2; }
 
-inline Bitboard operator|(Bitboard d1, Square d2) { return d1 | square_bb(d2); }
+inline Bitboard operator|(Bitboard d1, Square d2) { return d1 | squareBB(d2); }
 inline Bitboard& operator|=(Bitboard& d1, Square d2) { return d1 = d1 | d2; }
 
-inline Bitboard operator^(Bitboard d1, Square d2) { return d1 ^ square_bb(d2); }
+inline Bitboard operator^(Bitboard d1, Square d2) { return d1 ^ squareBB(d2); }
 inline Bitboard& operator^=(Bitboard& d1, Square d2) { return d1 = d1 ^ d2; }
 
-inline Bitboard operator|(Square d1, Square d2) { return square_bb(d1) | square_bb(d2); }
+inline Bitboard operator|(Square d1, Square d2) { return squareBB(d1) | squareBB(d2); }
 
 constexpr Bitboard Rank1BB = 0xffULL;
 constexpr Bitboard Rank2BB = Rank1BB << (8 * 1);
@@ -71,58 +71,50 @@ constexpr Bitboard RANKS_BB[FILE_NB] = {
     Rank7BB,
     Rank8BB };
 
-extern Bitboard BetweenBB[SQUARE_NB][SQUARE_NB];
-extern Bitboard LineBB[SQUARE_NB][SQUARE_NB];
+extern Bitboard BETWEEN_BB[SQUARE_NB][SQUARE_NB];
+extern Bitboard LINE_BB[SQUARE_NB][SQUARE_NB];
 
-constexpr bool more_than_one(Bitboard bb) {
+constexpr bool moreThanOne(Bitboard bb) {
   return bb & (bb - 1);
 }
 
-inline Bitboard file_bb(Square sqr) {
+inline Bitboard fileBB(Square sqr) {
   return FILES_BB[sqr & 0x7];
 }
 
-inline Bitboard rank_bb(Square sqr) {
+inline Bitboard rankBB(Square sqr) {
   return RANKS_BB[sqr >> 3];
 }
 
 void printBitboard(Bitboard bitboard);
 
-Bitboard get_bishop_attacks(Square s, Bitboard occupied) ;
+Bitboard getBishopAttacks(Square s, Bitboard occupied) ;
 
-Bitboard get_bishop_attacks(Square s);
+Bitboard getBishopAttacks(Square s);
 
-Bitboard get_rook_attacks(Square s, Bitboard occupied);
+Bitboard getRookAttacks(Square s, Bitboard occupied);
 
-Bitboard get_rook_attacks(Square s);
+Bitboard getRookAttacks(Square s);
 
-inline Bitboard get_queen_attacks(Square s) {
-  return get_bishop_attacks(s) | get_rook_attacks(s);
-}
+Bitboard getKingAttacks(Square square);
 
-inline Bitboard get_queen_attacks(Square s, Bitboard occupied) {
-  return get_bishop_attacks(s, occupied) | get_rook_attacks(s, occupied);
-}
+Bitboard getKnightAttacks(Square square);
 
-Bitboard get_king_attacks(Square square);
+Bitboard getPawnAttacks(Square square, Color pawnColor);
 
-Bitboard get_knight_attacks(Square square);
-
-Bitboard get_pawn_attacks(Square square, Color pawnColor);
-
-inline Bitboard get_piece_attacks(PieceType pt, Square s, Bitboard occupied) {
+inline Bitboard getPieceAttacks(PieceType pt, Square s, Bitboard occupied) {
   switch (pt) {
-  case KNIGHT: return get_knight_attacks(s);
-  case BISHOP: return get_bishop_attacks(s, occupied);
-  case ROOK:   return get_rook_attacks(s, occupied);
-  case QUEEN:  return get_queen_attacks(s, occupied);
-  case KING:   return get_king_attacks(s);
+  case KNIGHT: return getKnightAttacks(s);
+  case BISHOP: return getBishopAttacks(s, occupied);
+  case ROOK:   return getRookAttacks(s, occupied);
+  case QUEEN:  return getBishopAttacks(s, occupied) | getRookAttacks(s, occupied);
+  case KING:   return getKingAttacks(s);
   }
   return 0;
 }
 
 // rook magic numbers
-constexpr Bitboard RookMagics[64] = {
+constexpr Bitboard ROOK_MAGICS[64] = {
     0xa8002c000108020ULL,
     0x6c00049b0002001ULL,
     0x100200010090040ULL,
@@ -190,7 +182,7 @@ constexpr Bitboard RookMagics[64] = {
 };
 
 // bishop magic number
-constexpr Bitboard BishopMagics[64] = {
+constexpr Bitboard BISHOP_MAGICS[64] = {
     0x89a1121896040240ULL,
     0x2004844802002010ULL,
     0x2068080051921000ULL,

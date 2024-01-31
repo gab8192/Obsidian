@@ -70,7 +70,7 @@ namespace {
   }
 
   void bench() {
-    constexpr int posCount = sizeof(BenchPositions) / sizeof(char*);
+    constexpr int posCount = sizeof(BENCH_POSITIONS) / sizeof(char*);
 
     Threads::setThreadCount(1);
 
@@ -85,7 +85,7 @@ namespace {
       Search::Settings searchSettings;
       searchSettings.depth = 13;
       
-      std::istringstream posStr(BenchPositions[i]);
+      std::istringstream posStr(BENCH_POSITIONS[i]);
       position(searchSettings.position, tempAccumulator, posStr);
 
       newGame();
@@ -260,7 +260,7 @@ std::string UCI::scoreToString(Score v) {
 }
 
 std::string UCI::squareToString(Square s) {
-  return std::string{ char('a' + file_of(s)), char('1' + rank_of(s)) };
+  return std::string{ char('a' + fileOf(s)), char('1' + rankOf(s)) };
 }
 
 std::string UCI::moveToString(Move m) {

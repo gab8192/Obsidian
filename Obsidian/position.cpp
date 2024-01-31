@@ -10,9 +10,8 @@
 CastlingRights ROOK_SQR_TO_CR[SQUARE_NB];
 
 void positionInit() {
-  for (Square sq = SQ_A1; sq <= SQ_H8; ++sq) {
-    ROOK_SQR_TO_CR[sq] = CastlingRights(~0);
-  }
+  for (Square sq = SQ_A1; sq <= SQ_H8; ++sq)
+    ROOK_SQR_TO_CR[sq] = ALL_CASTLING;
 
   ROOK_SQR_TO_CR[SQ_A1] = ~WHITE_OOO;
   ROOK_SQR_TO_CR[SQ_H1] = ~WHITE_OO;
@@ -22,22 +21,22 @@ void positionInit() {
 
 Bitboard Position::attackersTo(Square s, Bitboard occupied) const {
 
-  return  (get_pawn_attacks(s, BLACK)      & pieces(WHITE, PAWN))
-        | (get_pawn_attacks(s, WHITE)      & pieces(BLACK, PAWN))
-        | (get_knight_attacks(s)           & pieces(KNIGHT))
-        | (get_rook_attacks(s, occupied)   & pieces(ROOK, QUEEN))
-        | (get_bishop_attacks(s, occupied) & pieces(BISHOP, QUEEN))
-        | (get_king_attacks(s)             & pieces(KING));
+  return  (getPawnAttacks(s, BLACK)      & pieces(WHITE, PAWN))
+        | (getPawnAttacks(s, WHITE)      & pieces(BLACK, PAWN))
+        | (getKnightAttacks(s)           & pieces(KNIGHT))
+        | (getRookAttacks(s, occupied)   & pieces(ROOK, QUEEN))
+        | (getBishopAttacks(s, occupied) & pieces(BISHOP, QUEEN))
+        | (getKingAttacks(s)             & pieces(KING));
 }
 
 Bitboard Position::attackersTo(Square square, Color attackerColor, Bitboard occupied) const {
   Bitboard attackers;
 
-  attackers  = get_knight_attacks(square)               &  pieces(KNIGHT);
-  attackers |= get_king_attacks(square)                 &  pieces(KING);
-  attackers |= get_bishop_attacks(square, occupied)     &  pieces(BISHOP, QUEEN);
-  attackers |= get_rook_attacks(square, occupied)       &  pieces(ROOK, QUEEN);
-  attackers |= get_pawn_attacks(square, ~attackerColor) &  pieces(PAWN);
+  attackers  = getKnightAttacks(square)               &  pieces(KNIGHT);
+  attackers |= getKingAttacks(square)                 &  pieces(KING);
+  attackers |= getBishopAttacks(square, occupied)     &  pieces(BISHOP, QUEEN);
+  attackers |= getRookAttacks(square, occupied)       &  pieces(ROOK, QUEEN);
+  attackers |= getPawnAttacks(square, ~attackerColor) &  pieces(PAWN);
 
   return attackers & pieces(attackerColor);
 }
@@ -45,8 +44,8 @@ Bitboard Position::attackersTo(Square square, Color attackerColor, Bitboard occu
 Bitboard Position::slidingAttackersTo(Square square, Color attackerColor, Bitboard occupied) const {
   Bitboard attackers;
 
-  attackers = get_bishop_attacks(square, occupied) & pieces(BISHOP, QUEEN);
-  attackers |= get_rook_attacks(square, occupied) & pieces(ROOK, QUEEN);
+  attackers = getBishopAttacks(square, occupied) & pieces(BISHOP, QUEEN);
+  attackers |= getRookAttacks(square, occupied) & pieces(ROOK, QUEEN);
 
   return attackers & pieces(attackerColor);
 }
@@ -59,15 +58,15 @@ void Position::updatePins(Color us) {
 
   Square ksq = kingSquare(us);
 
-  Bitboard snipers = ((get_rook_attacks(ksq) & pieces(QUEEN, ROOK))
-    | (get_bishop_attacks(ksq) & pieces(QUEEN, BISHOP))) & pieces(them);
+  Bitboard snipers = ((getRookAttacks(ksq) & pieces(QUEEN, ROOK))
+    | (getBishopAttacks(ksq) & pieces(QUEEN, BISHOP))) & pieces(them);
   Bitboard occupied = pieces() ^ snipers;
 
   while (snipers)
   {
     Square sniperSq = popLsb(snipers);
 
-    Bitboard b = BetweenBB[ksq][sniperSq] & occupied;
+    Bitboard b = BETWEEN_BB[ksq][sniperSq] & occupied;
 
     if (BitCount(b) == 1)
     {
@@ -86,16 +85,16 @@ void Position::updateKey() {
     Square sq = popLsb(allPieces);
     Piece pc = board[sq];
 
-    newKey ^= ZobristPsq[pc][sq];
+    newKey ^= ZOBRIST_PSQ[pc][sq];
   }
 
-  newKey ^= ZobristCastling[castlingRights];
+  newKey ^= ZOBRIST_CASTLING[castlingRights];
 
   if (epSquare != SQ_NONE)
-    newKey ^= ZobristEp[file_of(epSquare)];
+    newKey ^= ZOBRIST_EP[fileOf(epSquare)];
 
   if (sideToMove == WHITE)
-    newKey ^= ZobristTempo;
+    newKey ^= ZOBRIST_TEMPO;
 
   key = newKey;
 }
@@ -110,11 +109,11 @@ bool Position::isPseudoLegal(Move move) const {
   const Square from = move_from(move), to = move_to(move);
   const Piece pc = board[from];
 
-  if (pc == NO_PIECE || colorOf(pc) != us)
+  if (pc == NO_PIECE || piece_color(pc) != us)
     return false;
 
-  if (more_than_one(checkers))
-    return ptypeOf(pc) == KING && (get_king_attacks(from) & to & ~pieces(us));
+  if (moreThanOne(checkers))
+    return piece_type(pc) == KING && (getKingAttacks(from) & to & ~pieces(us));
 
   if (moveType == MT_CASTLING) {
     CastlingRights ct = castling_type(move);
@@ -126,24 +125,24 @@ bool Position::isPseudoLegal(Move move) const {
   else if (moveType == MT_EN_PASSANT) {
     return 
              epSquare != SQ_NONE
-          && ptypeOf(pc) == PAWN
-          && (get_pawn_attacks(epSquare, them) & from);
+          && piece_type(pc) == PAWN
+          && (getPawnAttacks(epSquare, them) & from);
   }
 
   Bitboard targets = ~pieces(us);
-  if (ptypeOf(pc) != KING) {
+  if (piece_type(pc) != KING) {
     if (checkers)
-      targets &= BetweenBB[kingSquare(us)][getLsb(checkers)];
+      targets &= BETWEEN_BB[kingSquare(us)][getLsb(checkers)];
     if (blockersForKing[us] & from)
-      targets &= LineBB[kingSquare(us)][from];
+      targets &= LINE_BB[kingSquare(us)][from];
   }
 
   if (!(targets & to))
     return false;
 
-  if (ptypeOf(pc) == PAWN) {
+  if (piece_type(pc) == PAWN) {
 
-    const Bitboard sqBB = square_bb(from);
+    const Bitboard sqBB = squareBB(from);
     Bitboard legalTo;
 
     if (us == WHITE) {
@@ -162,7 +161,7 @@ bool Position::isPseudoLegal(Move move) const {
     return legalTo & to;
   }
 
-  return get_piece_attacks(ptypeOf(pc), from, pieces()) & to;
+  return getPieceAttacks(piece_type(pc), from, pieces()) & to;
 }
 
 bool Position::isLegal(Move move) const {
@@ -181,11 +180,11 @@ bool Position::isLegal(Move move) const {
   const Square to = move_to(move);
   const Piece movedPc = board[from];
 
-  if (ptypeOf(movedPc) == KING)
+  if (piece_type(movedPc) == KING)
     return !attackersTo(to, ~sideToMove, pieces() ^ from);
 
   if (!checkers) {
-    if (LineBB[from][to] & kingSquare(sideToMove))
+    if (LINE_BB[from][to] & kingSquare(sideToMove))
       return true;
   }
 
@@ -194,7 +193,7 @@ bool Position::isLegal(Move move) const {
     return !slidingAttackersTo(kingSquare(sideToMove), ~sideToMove, pieces() ^ from ^ capSq ^ to);
   }
 
-  if (ptypeOf(movedPc) == PAWN)
+  if (piece_type(movedPc) == PAWN)
     return !(blockersForKing[sideToMove] & from);
 
   return true;
@@ -205,7 +204,7 @@ void Position::doNullMove() {
   const Color us = sideToMove, them = ~us;
 
   if (epSquare != SQ_NONE) {
-    key ^= ZobristEp[file_of(epSquare)];
+    key ^= ZOBRIST_EP[fileOf(epSquare)];
     epSquare = SQ_NONE;
   }
 
@@ -214,7 +213,7 @@ void Position::doNullMove() {
   halfMoveClock++;
 
   sideToMove = them;
-  key ^= ZobristTempo;
+  key ^= ZOBRIST_TEMPO;
 
   updateAttacksToKings();
 }
@@ -224,7 +223,7 @@ void Position::doMove(Move move, DirtyPieces& dp) {
   const Color us = sideToMove, them = ~us;
 
   if (epSquare != SQ_NONE) {
-    key ^= ZobristEp[file_of(epSquare)];
+    key ^= ZOBRIST_EP[fileOf(epSquare)];
     epSquare = SQ_NONE;
   }
 
@@ -252,7 +251,7 @@ void Position::doMove(Move move, DirtyPieces& dp) {
       removePiece(to, capturedPc);
       dp.sub1 = {to, capturedPc};
 
-      if (ptypeOf(capturedPc) == ROOK)
+      if (piece_type(capturedPc) == ROOK)
         newCastlingRights &= ROOK_SQR_TO_CR[to];
     }
 
@@ -260,17 +259,17 @@ void Position::doMove(Move move, DirtyPieces& dp) {
     dp.sub0 = {from, movedPc};
     dp.add0 = {to, movedPc};
 
-    switch (ptypeOf(movedPc)) {
+    switch (piece_type(movedPc)) {
     case PAWN: {
       halfMoveClock = 0;
 
       if (to == from + 16) { // black can take en passant
         epSquare = from + 8;
-        key ^= ZobristEp[file_of(epSquare)];
+        key ^= ZOBRIST_EP[fileOf(epSquare)];
       }
       else if (to == from - 16) { // white can take en passant
         epSquare = from - 8;
-        key ^= ZobristEp[file_of(epSquare)];
+        key ^= ZOBRIST_EP[fileOf(epSquare)];
       }
       break;
     }
@@ -293,8 +292,8 @@ void Position::doMove(Move move, DirtyPieces& dp) {
     const Square kingSrc = cd->kingSrc, kingDest = cd->kingDest,
                  rookSrc = cd->rookSrc, rookDest = cd->rookDest;
 
-    const Piece ourKingPc = make_piece(us, KING);
-    const Piece ourRookPc = make_piece(us, ROOK);
+    const Piece ourKingPc = makePiece(us, KING);
+    const Piece ourRookPc = makePiece(us, ROOK);
 
     movePiece(kingSrc, kingDest, ourKingPc);
     movePiece(rookSrc, rookDest, ourRookPc);
@@ -314,8 +313,8 @@ void Position::doMove(Move move, DirtyPieces& dp) {
     const Square from = move_from(move);
     const Square to = move_to(move);
 
-    const Piece ourPawnPc = make_piece(us, PAWN);
-    const Piece theirPawnPc = make_piece(them, PAWN);
+    const Piece ourPawnPc = makePiece(us, PAWN);
+    const Piece theirPawnPc = makePiece(them, PAWN);
     const Square capSq = (us == WHITE ? to-8 : to+8);
 
     removePiece(capSq, theirPawnPc);
@@ -336,7 +335,7 @@ void Position::doMove(Move move, DirtyPieces& dp) {
 
     const Piece movedPc = board[from];
     const Piece capturedPc = board[to];
-    const Piece promoteToPc = make_piece(us, promo_type(move));
+    const Piece promoteToPc = makePiece(us, promo_type(move));
 
     dp.type = capturedPc ? DirtyPieces::CAPTURE : DirtyPieces::NORMAL;
 
@@ -344,7 +343,7 @@ void Position::doMove(Move move, DirtyPieces& dp) {
       removePiece(to, capturedPc);
       dp.sub1 = {to, capturedPc};
       
-      if (ptypeOf(capturedPc) == ROOK)
+      if (piece_type(capturedPc) == ROOK)
         newCastlingRights &= ROOK_SQR_TO_CR[to];
     }
 
@@ -358,12 +357,12 @@ void Position::doMove(Move move, DirtyPieces& dp) {
   }
 
   sideToMove = them;
-  key ^= ZobristTempo;
+  key ^= ZOBRIST_TEMPO;
 
   updateAttacksToKings();
 
   if (newCastlingRights != castlingRights) {
-    key ^= ZobristCastling[castlingRights ^ newCastlingRights];
+    key ^= ZOBRIST_CASTLING[castlingRights ^ newCastlingRights];
     castlingRights = newCastlingRights;
   }
 }
@@ -376,7 +375,7 @@ Key Position::keyAfter(Move move) const {
   const Color us = sideToMove, them = ~us;
 
   if (epSquare != SQ_NONE)
-    newKey ^= ZobristEp[file_of(epSquare)];
+    newKey ^= ZOBRIST_EP[fileOf(epSquare)];
 
   CastlingRights newCastlingRights = castlingRights;
 
@@ -387,18 +386,18 @@ Key Position::keyAfter(Move move) const {
   const Piece capturedPc = board[to];
 
   if (capturedPc != NO_PIECE) {
-    newKey ^= ZobristPsq[capturedPc][to];
+    newKey ^= ZOBRIST_PSQ[capturedPc][to];
 
-    if (ptypeOf(capturedPc) == ROOK)
+    if (piece_type(capturedPc) == ROOK)
       newCastlingRights &= ROOK_SQR_TO_CR[to];
   }
 
-  newKey ^= ZobristPsq[movedPc][from] ^ ZobristPsq[movedPc][to];
+  newKey ^= ZOBRIST_PSQ[movedPc][from] ^ ZOBRIST_PSQ[movedPc][to];
 
-  switch (ptypeOf(movedPc)) {
+  switch (piece_type(movedPc)) {
   case PAWN: {
     if (to == from + 16 || to == from - 16)
-      newKey ^= ZobristEp[file_of(from)];
+      newKey ^= ZOBRIST_EP[fileOf(from)];
     break;
   }
   case ROOK: {
@@ -412,9 +411,9 @@ Key Position::keyAfter(Move move) const {
   }
   }
 
-  newKey ^= ZobristTempo;
+  newKey ^= ZOBRIST_TEMPO;
 
-  newKey ^= ZobristCastling[castlingRights ^ newCastlingRights];
+  newKey ^= ZOBRIST_CASTLING[castlingRights ^ newCastlingRights];
 
   return newKey;
 }
@@ -462,8 +461,8 @@ void Position::setToFen(const std::string& fen, NNUE::Accumulator& acc) {
         case 'K': pc = W_KING; break;
         }
         board[square] = pc;
-        byPieceBB[ptypeOf(pc)] |= square;
-        byColorBB[colorOf(pc)] |= square;
+        byPieceBB[piece_type(pc)] |= square;
+        byColorBB[piece_color(pc)] |= square;
         ++square;
       }
     }
@@ -493,7 +492,7 @@ void Position::setToFen(const std::string& fen, NNUE::Accumulator& acc) {
 
     File epFile = File(fen[idx++] - 'a');
     Rank epRank = Rank(fen[idx++] - '1');      // should always be RANK_2 or RANK_7
-    epSquare = make_square(epFile, epRank);
+    epSquare = makeSquare(epFile, epRank);
 
     idx++; // space
   }
@@ -521,7 +520,7 @@ std::string Position::toFenString() const {
   for (Rank r = RANK_8; r >= RANK_1; --r) {
     int emptyC = 0;
     for (File f = FILE_A; f <= FILE_H; ++f) {
-      Piece pc = board[make_square(f, r)];
+      Piece pc = board[makeSquare(f, r)];
       if (pc == NO_PIECE) {
         emptyC++;
       }
@@ -576,7 +575,7 @@ std::ostream& operator<<(std::ostream& stream, Position& pos) {
     ss << rowSeparator << '\n';
     for (File file = FILE_A; file <= FILE_H; ++file)
     {
-      ss << " | " << piecesChar[pos.board[make_square(file, rank)]];
+      ss << " | " << piecesChar[pos.board[makeSquare(file, rank)]];
     }
     ss << " | " << char('1' + rank);
   }
@@ -590,18 +589,18 @@ std::ostream& operator<<(std::ostream& stream, Position& pos) {
   return stream;
 }
 
-bool Position::see_ge(Move m, int threshold) const {
+bool Position::seeGe(Move m, int threshold) const {
 
   if (move_type(m) != MT_NORMAL)
     return SCORE_DRAW >= threshold;
 
   Square from = move_from(m), to = move_to(m);
 
-  int swap = PieceValue[board[to]] - threshold;
+  int swap = PIECE_VALUE[board[to]] - threshold;
   if (swap < 0)
     return false;
 
-  swap = PieceValue[board[from]] - swap;
+  swap = PIECE_VALUE[board[from]] - swap;
   if (swap <= 0)
     return true;
 
@@ -629,46 +628,46 @@ bool Position::see_ge(Move m, int threshold) const {
     res ^= 1;
     if ((bb = stmAttackers & pieces(PAWN)))
     {
-      if ((swap = PieceValue[PAWN] - swap) < res)
+      if ((swap = PIECE_VALUE[PAWN] - swap) < res)
         break;
       occupied ^= getLsb_bb(bb);
 
-      attackers |= get_bishop_attacks(to, occupied) & pieces(BISHOP, QUEEN);
+      attackers |= getBishopAttacks(to, occupied) & pieces(BISHOP, QUEEN);
     }
 
     else if ((bb = stmAttackers & pieces(KNIGHT)))
     {
-      if ((swap = PieceValue[KNIGHT] - swap) < res)
+      if ((swap = PIECE_VALUE[KNIGHT] - swap) < res)
         break;
       occupied ^= getLsb_bb(bb);
     }
 
     else if ((bb = stmAttackers & pieces(BISHOP)))
     {
-      if ((swap = PieceValue[BISHOP] - swap) < res)
+      if ((swap = PIECE_VALUE[BISHOP] - swap) < res)
         break;
       occupied ^= getLsb_bb(bb);
 
-      attackers |= get_bishop_attacks(to, occupied) & pieces(BISHOP, QUEEN);
+      attackers |= getBishopAttacks(to, occupied) & pieces(BISHOP, QUEEN);
     }
 
     else if ((bb = stmAttackers & pieces(ROOK)))
     {
-      if ((swap = PieceValue[ROOK] - swap) < res)
+      if ((swap = PIECE_VALUE[ROOK] - swap) < res)
         break;
       occupied ^= getLsb_bb(bb);
 
-      attackers |= get_rook_attacks(to, occupied) & pieces(ROOK, QUEEN);
+      attackers |= getRookAttacks(to, occupied) & pieces(ROOK, QUEEN);
     }
 
     else if ((bb = stmAttackers & pieces(QUEEN)))
     {
-      if ((swap = PieceValue[QUEEN] - swap) < res)
+      if ((swap = PIECE_VALUE[QUEEN] - swap) < res)
         break;
       occupied ^= getLsb_bb(bb);
 
-      attackers |= (get_bishop_attacks(to, occupied) & pieces(BISHOP, QUEEN))
-                 | (get_rook_attacks(to, occupied) & pieces(ROOK, QUEEN));
+      attackers |= (getBishopAttacks(to, occupied) & pieces(BISHOP, QUEEN))
+                 | (getRookAttacks(to, occupied) & pieces(ROOK, QUEEN));
     }
     else 
       return (attackers & ~pieces(stm)) ? res ^ 1 : res;

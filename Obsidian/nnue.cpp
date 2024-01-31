@@ -30,7 +30,7 @@ namespace NNUE {
   NNUE::Accumulator deltaTable[6][SQUARE_NB][SQUARE_NB];
 
   Accumulator* cachedDelta(Square from, Square to, Piece pc) {
-    if (colorOf(pc) == WHITE) {
+    if (piece_color(pc) == WHITE) {
       return & deltaTable[pc-1][from][to];
     }
     else {
@@ -123,7 +123,7 @@ namespace NNUE {
   }
 
   void Accumulator::doUpdates(DirtyPieces dp, Accumulator* input) {
-    const Color side = colorOf(dp.sub0.pc);
+    const Color side = piece_color(dp.sub0.pc);
     if (dp.type == DirtyPieces::CASTLING) {
       Accumulator* delta0 = cachedDelta(dp.sub0.sq, dp.add0.sq, dp.add0.pc);
       Accumulator* delta1 = cachedDelta(dp.sub1.sq, dp.add1.sq, dp.add1.pc);
@@ -168,8 +168,8 @@ namespace NNUE {
     for (Color pov : {WHITE, BLACK}) {
       for (PieceType pt : {PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING}) {
         for (Square sq = SQ_A1; sq < SQUARE_NB; ++sq) {
-          Piece whitePc = make_piece(WHITE, pt);
-          Piece blackPc = make_piece(BLACK, pt);
+          Piece whitePc = makePiece(WHITE, pt);
+          Piece blackPc = makePiece(BLACK, pt);
 
           constexpr int pieceWeightsSize = sizeof(NewFeatureWeights[0][0][0]);
 
@@ -188,7 +188,7 @@ namespace NNUE {
           Accumulator* target = & deltaTable[pt-1][s1][s2];
           memset(target, 0, sizeof(Accumulator));
 
-          target->movePiece(s1, s2, make_piece(WHITE, pt));
+          target->movePiece(s1, s2, makePiece(WHITE, pt));
         }
       }
     }

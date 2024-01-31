@@ -14,6 +14,7 @@ using Key = uint64_t;
 using Bitboard = uint64_t;
 using TbResult = uint32_t;
 using Score = int;
+using Move = int;
 
 const std::string piecesChar = " PNBRQK  pnbrqk";
 
@@ -45,9 +46,7 @@ constexpr Score
   SCORE_TB_WIN_IN_MAX_PLY = SCORE_TB_WIN - MAX_PLY,
   SCORE_TB_LOSS_IN_MAX_PLY = -SCORE_TB_WIN_IN_MAX_PLY;
 
-enum Move {
-  MOVE_NONE = 0
-};
+constexpr Move MOVE_NONE = 0;
 
 enum MoveType {
   MT_NORMAL, MT_CASTLING, MT_EN_PASSANT, MT_PROMOTION,
@@ -139,15 +138,15 @@ enum PieceType : int {
   PIECE_TYPE_NB = 8
 };
 
-constexpr Square make_square(File x, Rank y) {
+constexpr Square makeSquare(File x, Rank y) {
   return Square(x | (y << 3));
 }
 
-constexpr File file_of(Square sqr) {
+constexpr File fileOf(Square sqr) {
   return File(sqr & 0x7);
 }
 
-constexpr Rank rank_of(Square sqr) {
+constexpr Rank rankOf(Square sqr) {
   return Rank(sqr >> 3);
 }
 
@@ -155,44 +154,36 @@ constexpr Square relative_square(Color color, Square s) {
   return Square(s ^ (color * 56));
 }
 
-constexpr Rank relative_rank(Color color, Rank r) {
-  return Rank(r ^ (color * 7));
-}
-
-constexpr Rank relative_rank(Color color, Square s) {
-  return relative_rank(color, rank_of(s));
-}
-
 enum Piece : char;
 
-constexpr Piece make_piece(Color color, PieceType pt) {
+constexpr Piece makePiece(Color color, PieceType pt) {
   return Piece((color << 3) + pt);
 }
 
-constexpr PieceType ptypeOf(Piece piece) {
+constexpr PieceType piece_type(Piece piece) {
   return PieceType(piece & 7);
 }
 
-constexpr Color colorOf(Piece piece) {
+constexpr Color piece_color(Piece piece) {
   return Color(piece >> 3);
 }
 
 enum Piece : char {
   NO_PIECE,
 
-  W_PAWN = make_piece(WHITE, PAWN),
-  W_KNIGHT = make_piece(WHITE, KNIGHT),
-  W_BISHOP = make_piece(WHITE, BISHOP),
-  W_ROOK = make_piece(WHITE, ROOK),
-  W_QUEEN = make_piece(WHITE, QUEEN),
-  W_KING = make_piece(WHITE, KING),
+  W_PAWN = makePiece(WHITE, PAWN),
+  W_KNIGHT = makePiece(WHITE, KNIGHT),
+  W_BISHOP = makePiece(WHITE, BISHOP),
+  W_ROOK = makePiece(WHITE, ROOK),
+  W_QUEEN = makePiece(WHITE, QUEEN),
+  W_KING = makePiece(WHITE, KING),
   
-  B_PAWN = make_piece(BLACK, PAWN),
-  B_KNIGHT = make_piece(BLACK, KNIGHT),
-  B_BISHOP = make_piece(BLACK, BISHOP),
-  B_ROOK = make_piece(BLACK, ROOK),
-  B_QUEEN = make_piece(BLACK, QUEEN),
-  B_KING = make_piece(BLACK, KING),
+  B_PAWN = makePiece(BLACK, PAWN),
+  B_KNIGHT = makePiece(BLACK, KNIGHT),
+  B_BISHOP = makePiece(BLACK, BISHOP),
+  B_ROOK = makePiece(BLACK, ROOK),
+  B_QUEEN = makePiece(BLACK, QUEEN),
+  B_KING = makePiece(BLACK, KING),
 
   PIECE_NB = 16
 };
@@ -232,7 +223,7 @@ ENABLE_LOGIC_OPERATORS_ON(CastlingRights)
 
 constexpr Color operator~(Color d1) { return Color(int(d1) ^ 1); }
 
-constexpr int PieceValue[PIECE_NB] = { 0, 100, 370, 390, 610, 1210, 0, 0,
+constexpr int PIECE_VALUE[PIECE_NB] = { 0, 100, 370, 390, 610, 1210, 0, 0,
                                        0, 100, 370, 390, 610, 1210, 0, 0 };
 
 inline std::ostream& operator<<(std::ostream& stream, Color color) {

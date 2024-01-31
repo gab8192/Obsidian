@@ -92,14 +92,14 @@ void MovePicker::scoreCaptures() {
     moveScore = 0;
 
     MoveType mt = move_type(move);
-    PieceType captured = ptypeOf(pos.board[move_to(move)]);
+    PieceType captured = piece_type(pos.board[move_to(move)]);
 
-    moveScore += PieceValue[mt == MT_EN_PASSANT ? PAWN : captured] * 128;
+    moveScore += PIECE_VALUE[mt == MT_EN_PASSANT ? PAWN : captured] * 128;
 
     if (mt == MT_PROMOTION)
       moveScore += promotionScores[promo_type(move)];
     else {
-      if (pos.see_ge(move, seeMargin))
+      if (pos.seeGe(move, seeMargin))
         moveScore += 500000;
       else
         moveScore -= 500000;

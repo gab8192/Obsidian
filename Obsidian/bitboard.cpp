@@ -38,8 +38,8 @@ Bitboard knight_attacks[SQUARE_NB];
 
 // other stuff
 
-Bitboard BetweenBB[SQUARE_NB][SQUARE_NB];
-Bitboard LineBB[SQUARE_NB][SQUARE_NB];
+Bitboard BETWEEN_BB[SQUARE_NB][SQUARE_NB];
+Bitboard LINE_BB[SQUARE_NB][SQUARE_NB];
 
 
 // print bitboard
@@ -55,7 +55,7 @@ void printBitboard(Bitboard bitboard)
     for (File x = FILE_A; x < FILE_NB; ++x)
     {
       // init board square
-      Square square = make_square(x, y);
+      Square square = makeSquare(x, y);
 
       // print bit indexed by board square
       std::cout << " " << (bitboard & square ? 1 : 0);
@@ -119,14 +119,14 @@ Bitboard set_occupancy(int index, int bits_in_mask, Bitboard attack_mask)
 
 Bitboard gen_king_attacks(Square sqr) {
   Bitboard attacks = 0;
-  File xLeft   = (File) std::max<int>(file_of(sqr) - 1, 0);
-  File xRight  = (File) std::min<int>(file_of(sqr) + 1, 7);
-  Rank yTop    = (Rank) std::max<int>(rank_of(sqr) - 1, 0);
-  Rank yBottom = (Rank) std::min<int>(rank_of(sqr) + 1, 7);
+  File xLeft   = (File) std::max<int>(fileOf(sqr) - 1, 0);
+  File xRight  = (File) std::min<int>(fileOf(sqr) + 1, 7);
+  Rank yTop    = (Rank) std::max<int>(rankOf(sqr) - 1, 0);
+  Rank yBottom = (Rank) std::min<int>(rankOf(sqr) + 1, 7);
 
   for (Rank y = yTop; y <= yBottom; ++y) {
     for (File x = xLeft; x <= xRight; ++x) {
-      Square dest = make_square(x, y);
+      Square dest = makeSquare(x, y);
       if (sqr != dest)
         attacks |= dest;
     }
@@ -147,13 +147,13 @@ constexpr Direction BishopDirs[] = { NORTH_EAST, SOUTH_EAST, SOUTH_WEST, NORTH_W
 
 Bitboard gen_knight_attacks(Square sqr) {
   Bitboard attacks = 0;
-  File x = file_of(sqr);
-  Rank y = rank_of(sqr);
+  File x = fileOf(sqr);
+  Rank y = rankOf(sqr);
   for (int i = 0; i < 8; i++) {
     File destX = x + KnightMoves[i].offX;
     Rank destY = y + KnightMoves[i].offY;
     if (destX >= 0 && destX < 8 && destY >= 0 && destY < 8) {
-      attacks |= make_square(destX, destY);
+      attacks |= makeSquare(destX, destY);
     }
   }
   return attacks;
@@ -162,17 +162,17 @@ Bitboard gen_knight_attacks(Square sqr) {
 /*
 */
 Bitboard gen_pawn_attacks(Color pawnColor, Square sqr) {
-  if (pawnColor == WHITE && rank_of(sqr) == RANK_8)
+  if (pawnColor == WHITE && rankOf(sqr) == RANK_8)
     return 0;
-  if (pawnColor == BLACK && rank_of(sqr) == RANK_1)
+  if (pawnColor == BLACK && rankOf(sqr) == RANK_1)
     return 0;
 
   Bitboard attacks = 0;
 
-  if (file_of(sqr) != FILE_A) { // then we can attack towards west
+  if (fileOf(sqr) != FILE_A) { // then we can attack towards west
     attacks |= (pawnColor == WHITE ? (sqr + 7) : (sqr - 9));
   }
-  if (file_of(sqr) != FILE_H) { // then we can attack towards east
+  if (fileOf(sqr) != FILE_H) { // then we can attack towards east
     attacks |= (pawnColor == WHITE ? (sqr + 9) : (sqr - 7));
   }
   return attacks;
@@ -210,8 +210,8 @@ Bitboard sliding_attack(const Direction* dirs, Square s1, Bitboard occupied)
 
   for (int i = 0; i < 4; i++) {
 
-    File destX = file_of(s1);
-    Rank destY = rank_of(s1);
+    File destX = fileOf(s1);
+    Rank destY = rankOf(s1);
 
     int incX = calcIncX(dirs[i]);
     int incY = calcIncY(dirs[i]);
@@ -224,9 +224,9 @@ Bitboard sliding_attack(const Direction* dirs, Square s1, Bitboard occupied)
       if (destX < 0 || destX > 7 || destY < 0 || destY > 7)
         break;
 
-      attack |= make_square(destX, destY);
+      attack |= makeSquare(destX, destY);
 
-      if (occupied & make_square(destX, destY))
+      if (occupied & makeSquare(destX, destY))
         break;
     }
   }
@@ -257,32 +257,32 @@ uint32_t attack_index_rook(Square sq, Bitboard occupied) {
 }
 
 // lookup bishop attacks 
-Bitboard get_bishop_attacks(Square sq, Bitboard occupied) {
+Bitboard getBishopAttacks(Square sq, Bitboard occupied) {
 	return BishopAttacks[sq][attack_index_bishop(sq, occupied)];
 }
 
 // lookup rook attacks 
-Bitboard get_rook_attacks(Square sq, Bitboard occupied) {  
+Bitboard getRookAttacks(Square sq, Bitboard occupied) {  
 	return RookAttacks[sq][attack_index_rook(sq, occupied)];
 }
 
-Bitboard get_bishop_attacks(Square sq) {
+Bitboard getBishopAttacks(Square sq) {
   return BishopAttacks[sq][0];
 }
 
-Bitboard get_rook_attacks(Square sq) {
+Bitboard getRookAttacks(Square sq) {
   return RookAttacks[sq][0];
 }
 
-Bitboard get_king_attacks(Square sq) {
+Bitboard getKingAttacks(Square sq) {
   return king_attacks[sq];
 }
 
-Bitboard get_knight_attacks(Square sq) {
+Bitboard getKnightAttacks(Square sq) {
   return knight_attacks[sq];
 }
 
-Bitboard get_pawn_attacks(Square sq, Color pawnColor) {
+Bitboard getPawnAttacks(Square sq, Color pawnColor) {
   return pawn_attacks[pawnColor][sq];
 }
 
@@ -351,7 +351,7 @@ namespace Bitboards {
       pawn_attacks[BLACK][sq] = gen_pawn_attacks(BLACK, sq);
 
       // Board edges are not considered in the relevant occupancies
-      Bitboard edges = ((Rank1BB | Rank8BB) & ~rank_bb(sq)) | ((FILE_ABB | FILE_HBB) & ~file_bb(sq));
+      Bitboard edges = ((Rank1BB | Rank8BB) & ~rankBB(sq)) | ((FILE_ABB | FILE_HBB) & ~fileBB(sq));
 
       BishopMasks[sq] = sliding_attack(BishopDirs, sq, 0) & ~edges;
       RookMasks[sq] = sliding_attack(RookDirs, sq, 0) & ~edges;
@@ -368,22 +368,22 @@ namespace Bitboards {
     #endif
     
 
-    memset(LineBB, 0, sizeof(LineBB));
-    memset(BetweenBB, 0, sizeof(BetweenBB));
+    memset(LINE_BB, 0, sizeof(LINE_BB));
+    memset(BETWEEN_BB, 0, sizeof(BETWEEN_BB));
 
     for (Square s1 = SQ_A1; s1 < SQUARE_NB; ++s1) {
       for (Square s2 = SQ_A1; s2 < SQUARE_NB; ++s2) {
-        if (get_bishop_attacks(s1) & s2) {
-          BetweenBB[s1][s2] = get_bishop_attacks(s1, square_bb(s2)) & get_bishop_attacks(s2, square_bb(s1));
+        if (getBishopAttacks(s1) & s2) {
+          BETWEEN_BB[s1][s2] = getBishopAttacks(s1, squareBB(s2)) & getBishopAttacks(s2, squareBB(s1));
 
-          LineBB[s1][s2] = (get_bishop_attacks(s1) & get_bishop_attacks(s2)) | s1 | s2;
+          LINE_BB[s1][s2] = (getBishopAttacks(s1) & getBishopAttacks(s2)) | s1 | s2;
         }
-        else  if (get_rook_attacks(s1) & s2) {
-          BetweenBB[s1][s2] = get_rook_attacks(s1, square_bb(s2)) & get_rook_attacks(s2, square_bb(s1));
+        else  if (getRookAttacks(s1) & s2) {
+          BETWEEN_BB[s1][s2] = getRookAttacks(s1, squareBB(s2)) & getRookAttacks(s2, squareBB(s1));
 
-          LineBB[s1][s2] = (get_rook_attacks(s1) & get_rook_attacks(s2)) | s1 | s2;
+          LINE_BB[s1][s2] = (getRookAttacks(s1) & getRookAttacks(s2)) | s1 | s2;
         }
-        BetweenBB[s1][s2] |= s2;
+        BETWEEN_BB[s1][s2] |= s2;
       }
     }
   }

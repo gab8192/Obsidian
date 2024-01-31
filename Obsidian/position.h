@@ -43,10 +43,6 @@ struct alignas(32) Position {
     return byColorBB[c] & byPieceBB[pt];
   }
 
-  inline Bitboard pieces(Color c, PieceType pt0, PieceType pt1) const {
-    return byColorBB[c] & (byPieceBB[pt0] | byPieceBB[pt1]);
-  }
-
   inline Bitboard pieces(PieceType pt0, PieceType pt1) const {
     return byPieceBB[pt0] | byPieceBB[pt1];
   }
@@ -99,22 +95,22 @@ struct alignas(32) Position {
   /// Call this if you already know what piece was there
   /// </summary>
   inline void removePiece(Square sq, Piece pc) {
-    key ^= ZobristPsq[pc][sq];
+    key ^= ZOBRIST_PSQ[pc][sq];
 
     board[sq] = NO_PIECE;
-    byColorBB[colorOf(pc)] ^= sq;
-    byPieceBB[ptypeOf(pc)] ^= sq;
+    byColorBB[piece_color(pc)] ^= sq;
+    byPieceBB[piece_type(pc)] ^= sq;
   }
 
   /// <summary>
   /// Assmue there is not any piece in the given square
   /// </summary>
   inline void putPiece(Square sq, Piece pc) {
-    key ^= ZobristPsq[pc][sq];
+    key ^= ZOBRIST_PSQ[pc][sq];
 
     board[sq] = pc;
-    byColorBB[colorOf(pc)] ^= sq;
-    byPieceBB[ptypeOf(pc)] ^= sq;
+    byColorBB[piece_color(pc)] ^= sq;
+    byPieceBB[piece_type(pc)] ^= sq;
   }
 
   /// <summary>
@@ -123,13 +119,13 @@ struct alignas(32) Position {
   /// </summary>
   inline void movePiece(Square from, Square to, Piece pc) {
 
-    key ^= ZobristPsq[pc][from] ^ ZobristPsq[pc][to];
+    key ^= ZOBRIST_PSQ[pc][from] ^ ZOBRIST_PSQ[pc][to];
 
     board[from] = NO_PIECE;
     board[to] = pc;
     const Bitboard fromTo = from | to;
-    byColorBB[colorOf(pc)] ^= fromTo;
-    byPieceBB[ptypeOf(pc)] ^= fromTo;
+    byColorBB[piece_color(pc)] ^= fromTo;
+    byPieceBB[piece_type(pc)] ^= fromTo;
   }
 
   inline bool isQuiet(Move move) const {
@@ -150,7 +146,7 @@ struct alignas(32) Position {
   /// Only works for MT_NORMAL moves
   Key keyAfter(Move move) const;
 
-  bool see_ge(Move m, int threshold) const;
+  bool seeGe(Move m, int threshold) const;
 
   void setToFen(const std::string& fen, NNUE::Accumulator& acc);
 

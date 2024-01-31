@@ -1,6 +1,6 @@
 #pragma once
 
-const char* BenchPositions[] = {
+const char* BENCH_POSITIONS[] = {
   "fen rnbqnrk1/ppp3bp/3p2p1/3Ppp2/2P1P3/2N1BP2/PP1Q2PP/R3KBNR w KQ f6 0 9",
   "fen r1bq1rk1/1pp2ppp/2n1pn2/p2p2B1/2PP4/P1Q2N2/1P2PPPP/R3KB1R w KQ a6 0 9",
   "fen rn1q1rk1/pbp1bppp/1p3n2/3p4/3PP3/2NB1N2/PP3PPP/R1BQK2R w KQ - 0 9",

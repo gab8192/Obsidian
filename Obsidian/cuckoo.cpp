@@ -19,15 +19,15 @@ namespace Cuckoo {
     for (PieceType pt : {KNIGHT, BISHOP, ROOK, QUEEN, KING}) {
       for (Color color : {WHITE, BLACK}) {
 
-        Piece piece = make_piece(color, pt);
+        Piece piece = makePiece(color, pt);
 
         for (Square s1 = SQ_A1; s1 < SQUARE_NB; ++s1) {
           for (Square s2 = s1+1; s2 < SQUARE_NB; ++s2) {
-            if (get_piece_attacks(pt, s1, 0) & s2) {
+            if (getPieceAttacks(pt, s1, 0) & s2) {
 
               Move move = createMove(s1, s2, MT_NORMAL);
 
-              Key key = ZobristPsq[piece][s1] ^ ZobristPsq[piece][s2] ^ ZobristTempo;
+              Key key = ZOBRIST_PSQ[piece][s1] ^ ZOBRIST_PSQ[piece][s2] ^ ZOBRIST_TEMPO;
 
               int slot = h1(key);
 
