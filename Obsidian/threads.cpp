@@ -4,11 +4,11 @@ namespace Threads {
 
   Search::Settings searchSettings;
 
-  std::vector<Search::SearchThread*> searchThreads;
+  std::vector<Search::Thread*> searchThreads;
 
   volatile bool searchStopped;
 
-  Search::SearchThread* mainThread() {
+  Search::Thread* mainThread() {
     return searchThreads[0];
   }
 
@@ -32,7 +32,7 @@ namespace Threads {
 
   void waitForSearch() {
     for (int i = 0; i < searchThreads.size(); i++) {
-      Search::SearchThread* st = searchThreads[i];
+      Search::Thread* st = searchThreads[i];
       std::unique_lock lock(st->mutex);
       st->cv.wait(lock, [&] { return !st->searching; });
     }
@@ -42,7 +42,7 @@ namespace Threads {
     searchSettings = settings;
     searchStopped = false;
     for (int i = 0; i < searchThreads.size(); i++) {
-      Search::SearchThread* st = searchThreads[i];
+      Search::Thread* st = searchThreads[i];
       st->searching = true;
       st->cv.notify_all();
     }
@@ -70,7 +70,7 @@ namespace Threads {
     searchThreads.clear();
 
     for (int i = 0; i < threadCount; i++) {
-      searchThreads.push_back(new Search::SearchThread());
+      searchThreads.push_back(new Search::Thread());
     }
   }
 

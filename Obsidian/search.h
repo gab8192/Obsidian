@@ -63,7 +63,7 @@ namespace Search {
   // it's easier to determine conthist score, improving, ...
   constexpr int SsOffset = 4;
 
-  class SearchThread {
+  class Thread {
 
   public:
 
@@ -77,7 +77,7 @@ namespace Search {
     uint64_t nodesSearched;
     uint64_t tbHits;
 
-    SearchThread();
+    Thread();
 
     void resetHistories();
     

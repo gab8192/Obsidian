@@ -15,9 +15,9 @@ int main(int argc, char** argv)
 {
   std::cout << "Obsidian " << engineVersion << " by gabe" << std::endl;
 
-  zobristInit();
+  Zobrist::init();
 
-  bitboardsInit();
+  Bitboards::init();
 
   positionInit();
 

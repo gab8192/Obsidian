@@ -87,15 +87,15 @@ namespace Search {
     initLmrTable();
   }
 
-  void SearchThread::resetHistories() {
+  void Thread::resetHistories() {
     memset(mainHistory, 0, sizeof(mainHistory));
     memset(captureHistory, 0, sizeof(captureHistory));
     memset(counterMoveHistory, 0, sizeof(counterMoveHistory));
     memset(contHistory, 0, sizeof(contHistory));
   }
 
-  SearchThread::SearchThread() :
-    thread(std::thread(&SearchThread::idleLoop, this))
+  Thread::Thread() :
+    thread(std::thread(&Thread::idleLoop, this))
   {
     resetHistories();
   }
@@ -145,7 +145,7 @@ namespace Search {
     return std::min(StatBonusQuad * d * d + StatBonusLinear * d, (int)StatBonusMax);
   }
 
-  bool SearchThread::usedMostOfTime() {
+  bool Thread::usedMostOfTime() {
 
     if (Threads::getSearchSettings().hasTimeLimit())
       return elapsedTime() >= maximumTime;
@@ -158,7 +158,7 @@ namespace Search {
     return false;
   }
 
-  void SearchThread::playNullMove(Position& pos, SearchInfo* ss) {
+  void Thread::playNullMove(Position& pos, SearchInfo* ss) {
     nodesSearched++;
 
     ss->mContHistory = &contHistory[false][0];
@@ -169,12 +169,12 @@ namespace Search {
     pos.doNullMove();
   }
 
-  void SearchThread::cancelNullMove() {
+  void Thread::cancelNullMove() {
     ply--;
     keyStackHead--;
   }
 
-  void SearchThread::playMove(Position& pos, Move move, SearchInfo* ss) {
+  void Thread::playMove(Position& pos, Move move, SearchInfo* ss) {
     nodesSearched++;
 
     bool isCap = pos.board[move_to(move)] != NO_PIECE;
@@ -195,7 +195,7 @@ namespace Search {
     newAcc.doUpdates(dirtyPieces, &oldAcc);
   }
 
-  void SearchThread::cancelMove() {
+  void Thread::cancelMove() {
     ply--;
     keyStackHead--;
     accumStackHead--;
@@ -213,12 +213,12 @@ namespace Search {
     0, 0, 400000, -100001, -100000, 410000
   };
 
-  int SearchThread::getCapHistory(Position& pos, Move move) {
+  int Thread::getCapHistory(Position& pos, Move move) {
     PieceType captured = ptypeOf(pos.board[move_to(move)]);
     return captureHistory[pieceTo(pos, move)][captured];
   }
 
-  int SearchThread::getQuietHistory(Position& pos, Move move, SearchInfo* ss) {
+  int Thread::getQuietHistory(Position& pos, Move move, SearchInfo* ss) {
     int chIndex = pieceTo(pos, move);
     return    mainHistory[pos.sideToMove][move_from_to(move)]
             + (ss - 1)->contHistory()[chIndex]
@@ -236,7 +236,7 @@ namespace Search {
       addToHistory((ss - 4)->contHistory()[chIndex], bonus);
   }
 
-  void SearchThread::updateHistories(Position& pos, int bonus, Move bestMove, Score bestScore,
+  void Thread::updateHistories(Position& pos, int bonus, Move bestMove, Score bestScore,
                        Score beta, Move* quiets, int quietCount, SearchInfo* ss) {
     // Butterfly history
     addToHistory(mainHistory[pos.sideToMove][move_from_to(bestMove)], bonus);
@@ -265,7 +265,7 @@ namespace Search {
     ss->killerMove = bestMove;
   }
 
-  void SearchThread::scoreRootMoves(Position& pos, MoveList& moves, Move ttMove, SearchInfo* ss) {
+  void Thread::scoreRootMoves(Position& pos, MoveList& moves, Move ttMove, SearchInfo* ss) {
     for (int i = 0; i < moves.size(); i++) {
       int& moveScore = moves[i].score;
 
@@ -315,7 +315,7 @@ namespace Search {
     return failsHigh ? TT::FLAG_LOWER : TT::FLAG_UPPER;
   }
 
-  bool SearchThread::hasUpcomingRepetition(Position& pos, int ply) {
+  bool Thread::hasUpcomingRepetition(Position& pos, int ply) {
 
     const Bitboard occ = pos.pieces();
     const int maxDist = std::min(pos.halfMoveClock, keyStackHead);
@@ -360,7 +360,7 @@ namespace Search {
     return false;
   }
 
-  bool SearchThread::isRepetition(Position& pos, int ply) {
+  bool Thread::isRepetition(Position& pos, int ply) {
 
     const int maxDist = std::min(pos.halfMoveClock, keyStackHead);
 
@@ -379,12 +379,12 @@ namespace Search {
     return false;
   }
 
-  Score SearchThread::makeDrawScore() {
+  Score Thread::makeDrawScore() {
     return int(nodesSearched & 2) - 1;
   }
 
   template<bool IsPV>
-  Score SearchThread::qsearch(Position& pos, Score alpha, Score beta, SearchInfo* ss) {
+  Score Thread::qsearch(Position& pos, Score alpha, Score beta, SearchInfo* ss) {
     
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY-4)
@@ -532,7 +532,7 @@ namespace Search {
   }
 
   template<bool IsPV>
-  Score SearchThread::negaMax(Position& pos, Score alpha, Score beta, int depth, bool cutNode, SearchInfo* ss) {
+  Score Thread::negaMax(Position& pos, Score alpha, Score beta, int depth, bool cutNode, SearchInfo* ss) {
 
     // Check time
     if ( this == Threads::mainThread() 
@@ -1019,7 +1019,7 @@ namespace Search {
     return bestScore;
   }
 
-  Score SearchThread::rootNegaMax(Position& pos, Score alpha, Score beta, int depth, SearchInfo* ss) {
+  Score Thread::rootNegaMax(Position& pos, Score alpha, Score beta, int depth, SearchInfo* ss) {
 
     // init node
     ss->pvLength = ply;
@@ -1253,7 +1253,7 @@ namespace Search {
   DEFINE_PARAM_B(lol0, -12, -150, 0);
   DEFINE_PARAM_B(lol1, 56,   0,  150);
 
-  void SearchThread::startSearch() {
+  void Thread::startSearch() {
 
     const Settings& settings = Threads::getSearchSettings();
 
@@ -1445,7 +1445,7 @@ namespace Search {
       std::cout << "bestmove " << UCI::moveToString(bestMove) << std::endl;
   }
 
-  void SearchThread::idleLoop() {
+  void Thread::idleLoop() {
     while (true) {
       std::unique_lock lock(mutex);
       cv.wait(lock, [&] { return searching; });

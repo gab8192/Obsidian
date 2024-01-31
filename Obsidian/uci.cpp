@@ -65,7 +65,7 @@ namespace {
 
     TT::clear();
 
-    for (Search::SearchThread* st : Threads::searchThreads)
+    for (Search::Thread* st : Threads::searchThreads)
       st->resetHistories();
   }
 

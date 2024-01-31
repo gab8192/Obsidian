@@ -121,8 +121,6 @@ inline Bitboard get_piece_attacks(PieceType pt, Square s, Bitboard occupied) {
   return 0;
 }
 
-void bitboardsInit();
-
 // rook magic numbers
 constexpr Bitboard RookMagics[64] = {
     0xa8002c000108020ULL,
@@ -258,3 +256,7 @@ constexpr Bitboard BishopMagics[64] = {
     0x2520081090008908ULL,
     0x40102000a0a60140ULL,
 };
+
+namespace Bitboards {
+  void init();
+}

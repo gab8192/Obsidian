@@ -6,9 +6,9 @@
 
 namespace Threads {
 
-  extern std::vector<Search::SearchThread*> searchThreads;
+  extern std::vector<Search::Thread*> searchThreads;
 
-  Search::SearchThread* mainThread();
+  Search::Thread* mainThread();
 
   bool isSearchStopped();
 

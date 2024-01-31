@@ -339,49 +339,53 @@ void init_fancy_magic_attacks(Bitboard masks[],
 
 #endif
 
-void bitboardsInit() {
-  for (Square sq = SQ_A1; sq < SQUARE_NB; ++sq) {
-    king_attacks[sq] = gen_king_attacks(sq);
+namespace Bitboards {
 
-    knight_attacks[sq] = gen_knight_attacks(sq);
+  void init() {
+    for (Square sq = SQ_A1; sq < SQUARE_NB; ++sq) {
+      king_attacks[sq] = gen_king_attacks(sq);
 
-    pawn_attacks[WHITE][sq] = gen_pawn_attacks(WHITE, sq);
-    pawn_attacks[BLACK][sq] = gen_pawn_attacks(BLACK, sq);
+      knight_attacks[sq] = gen_knight_attacks(sq);
 
-    // Board edges are not considered in the relevant occupancies
-    Bitboard edges = ((Rank1BB | Rank8BB) & ~rank_bb(sq)) | ((FILE_ABB | FILE_HBB) & ~file_bb(sq));
+      pawn_attacks[WHITE][sq] = gen_pawn_attacks(WHITE, sq);
+      pawn_attacks[BLACK][sq] = gen_pawn_attacks(BLACK, sq);
 
-    BishopMasks[sq] = sliding_attack(BishopDirs, sq, 0) & ~edges;
-    RookMasks[sq] = sliding_attack(RookDirs, sq, 0) & ~edges;
-  }
+      // Board edges are not considered in the relevant occupancies
+      Bitboard edges = ((Rank1BB | Rank8BB) & ~rank_bb(sq)) | ((FILE_ABB | FILE_HBB) & ~file_bb(sq));
 
-  // Init sliding attacks
+      BishopMasks[sq] = sliding_attack(BishopDirs, sq, 0) & ~edges;
+      RookMasks[sq] = sliding_attack(RookDirs, sq, 0) & ~edges;
+    }
 
-  #if defined(USE_PEXT)
-  init_pext_attacks(RookTable, RookAttacks, RookMasks, RookDirs, attack_index_rook);
-  init_pext_attacks(BishopTable, BishopAttacks, BishopMasks, BishopDirs, attack_index_bishop);
-  #else
-  init_fancy_magic_attacks(BishopMasks, BishopDirs, BISHOP); // bishop
-  init_fancy_magic_attacks(RookMasks, RookDirs, ROOK); // rook
-  #endif
-  
+    // Init sliding attacks
 
-  memset(LineBB, 0, sizeof(LineBB));
-  memset(BetweenBB, 0, sizeof(BetweenBB));
+    #if defined(USE_PEXT)
+    init_pext_attacks(RookTable, RookAttacks, RookMasks, RookDirs, attack_index_rook);
+    init_pext_attacks(BishopTable, BishopAttacks, BishopMasks, BishopDirs, attack_index_bishop);
+    #else
+    init_fancy_magic_attacks(BishopMasks, BishopDirs, BISHOP); // bishop
+    init_fancy_magic_attacks(RookMasks, RookDirs, ROOK); // rook
+    #endif
+    
 
-  for (Square s1 = SQ_A1; s1 < SQUARE_NB; ++s1) {
-    for (Square s2 = SQ_A1; s2 < SQUARE_NB; ++s2) {
-      if (get_bishop_attacks(s1) & s2) {
-        BetweenBB[s1][s2] = get_bishop_attacks(s1, square_bb(s2)) & get_bishop_attacks(s2, square_bb(s1));
+    memset(LineBB, 0, sizeof(LineBB));
+    memset(BetweenBB, 0, sizeof(BetweenBB));
 
-        LineBB[s1][s2] = (get_bishop_attacks(s1) & get_bishop_attacks(s2)) | s1 | s2;
+    for (Square s1 = SQ_A1; s1 < SQUARE_NB; ++s1) {
+      for (Square s2 = SQ_A1; s2 < SQUARE_NB; ++s2) {
+        if (get_bishop_attacks(s1) & s2) {
+          BetweenBB[s1][s2] = get_bishop_attacks(s1, square_bb(s2)) & get_bishop_attacks(s2, square_bb(s1));
+
+          LineBB[s1][s2] = (get_bishop_attacks(s1) & get_bishop_attacks(s2)) | s1 | s2;
+        }
+        else  if (get_rook_attacks(s1) & s2) {
+          BetweenBB[s1][s2] = get_rook_attacks(s1, square_bb(s2)) & get_rook_attacks(s2, square_bb(s1));
+
+          LineBB[s1][s2] = (get_rook_attacks(s1) & get_rook_attacks(s2)) | s1 | s2;
+        }
+        BetweenBB[s1][s2] |= s2;
       }
-      else  if (get_rook_attacks(s1) & s2) {
-        BetweenBB[s1][s2] = get_rook_attacks(s1, square_bb(s2)) & get_rook_attacks(s2, square_bb(s1));
-
-        LineBB[s1][s2] = (get_rook_attacks(s1) & get_rook_attacks(s2)) | s1 | s2;
-      }
-      BetweenBB[s1][s2] |= s2;
     }
   }
+
 }
