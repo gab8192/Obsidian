@@ -674,8 +674,10 @@ namespace Search {
     }
 
     // IIR. Decrement the depth if we expect this search to have bad move ordering
-    if ((IsPV || cutNode) && depth >= 2+2*cutNode && !ttMove)
-      depth--;
+    if (!ttMove && depth >= 4) {
+        depth--;
+        if (IsPV) depth--;
+    }
 
     if (   !IsPV
         && !excludedMove
