@@ -893,7 +893,7 @@ namespace Search {
         R -= ttPV + IsPV;
 
         // Extend if this move is killer or counter
-        R -= (moveStage == KILLER || moveStage == COUNTER);
+        R -= (moveStage == KILLER);
 
         // Reduce if this is a bad capture (=> loses material)
         R += (moveStage == BAD_CAPTURES);
