@@ -818,6 +818,8 @@ namespace Search {
           return singularBeta;
         else if (ttScore >= beta) // Negative extensions
           extension = -2 + IsPV;
+        else if (ttScore <= alpha)
+          extension = -1;
         else if (cutNode)
           extension = -1;
       }
