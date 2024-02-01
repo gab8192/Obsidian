@@ -880,32 +880,23 @@ namespace Search {
       bool needFullSearch = false;
 
       if (depth >= 2 && playedMoves >= 1) {
-        int R;
 
-        if (isQuiet) {
-          R = lmrTable[depth][seenMoves];
+        int R = isQuiet ? lmrTable[depth][seenMoves] : 0;
 
-          // Extend killer and counter move
-          R -= (moveStage == KILLER || moveStage == COUNTER);
-
-          // Reduce or extend depending on history of this quiet move
-          R -= history / LmrQuietHistoryDiv;
-        }
-        else {
-          R = 0;
-
-          // Reduce if this is a bad capture (=> loses material)
-          R += (moveStage == BAD_CAPTURES);
-
-          R -= history / LmrCapHistoryDiv;
-        }
+        // Reduce or extend depending on history of this move
+        R -= history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv);
 
         // Extend moves that give check
         R -= (newPos.checkers != 0ULL);
 
         // Extend if this position *was* in a PV node. Even further if it *is*
-        if (ttPV)
-          R -= (1 + IsPV);
+        R -= ttPV + IsPV;
+
+        // Extend if this move is killer or counter
+        R -= (moveStage == KILLER || moveStage == COUNTER);
+
+        // Reduce if this is a bad capture (=> loses material)
+        R += (moveStage == BAD_CAPTURES);
 
         // Reduce more if the expected best move is a capture
         R += ttMoveNoisy;
