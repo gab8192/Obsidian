@@ -26,7 +26,8 @@ namespace Search {
   DEFINE_PARAM_S(StatBonusMax, 1159, 50);
   DEFINE_PARAM_S(StatBonusBoostAt, 120, 10);
 
-  DEFINE_PARAM_S(RazoringDepthMul, 415, 10);
+  DEFINE_PARAM_S(RazoringBase, 115, 10);
+  DEFINE_PARAM_S(RazoringDepthMul, 300, 10);
 
   DEFINE_PARAM_S(RfpMaxDepth, 9, 1);
   DEFINE_PARAM_S(RfpDepthMul, 123, 6);
@@ -639,7 +640,7 @@ namespace Search {
     // Razoring. When evaluation is far below alpha, we could probably only catch up with a capture,
     // thus do a qsearch. If the qsearch still can't hit alpha, cut off
     if ( !IsPV
-      && eval < alpha - RazoringDepthMul * depth) {
+      && eval < alpha - RazoringBase - RazoringDepthMul * depth) {
       Score score = qsearch<IsPV>(pos, alpha, beta, ss);
       if (score <= alpha)
         return score;
