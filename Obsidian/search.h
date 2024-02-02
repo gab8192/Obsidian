@@ -92,6 +92,8 @@ namespace Search {
     int keyStackHead;
     Key keyStack[100 + MAX_PLY];
 
+    Score rootScore;
+
     int accumStackHead;
     NNUE::Accumulator accumStack[MAX_PLY];
 

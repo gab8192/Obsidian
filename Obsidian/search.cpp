@@ -1299,12 +1299,12 @@ namespace Search {
 
           if (score <= alpha) {
             beta = (alpha + beta) / 2;
-            alpha = std::max(-SCORE_INFINITE, alpha - windowSize);
+            alpha = std::max(-SCORE_INFINITE, score - windowSize);
 
             failedHighCnt = 0;
           }
           else if (score >= beta) {
-            beta = std::min(SCORE_INFINITE, beta + windowSize);
+            beta = std::min(SCORE_INFINITE, score + windowSize);
 
             failedHighCnt = std::min((int)AspFailHighReductionMax, failedHighCnt + 1);
           }
