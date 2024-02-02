@@ -858,7 +858,7 @@ namespace Search {
         // Reduce if evaluation is trending down
         R += !improving;
 
-        if (ss->staticEval != SCORE_NONE)
+        if (isQuiet && ss->staticEval != SCORE_NONE)
           R += ss->staticEval+200 < alpha;
 
         // Reduce if we expect to fail high
