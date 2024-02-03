@@ -678,7 +678,6 @@ namespace Search {
       depth--;
 
     if (   !IsPV
-        && !excludedMove
         && depth >= 5
         && std::abs(beta) < SCORE_TB_WIN_IN_MAX_PLY
         && !(ttDepth >= depth - 3 && ttScore < probcutBeta))
