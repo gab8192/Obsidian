@@ -849,7 +849,7 @@ namespace Search {
         R -= (moveStage == KILLER || moveStage == COUNTER);
 
         // Reduce if this is a bad capture (=> loses material)
-        R += (moveStage == BAD_CAPTURES);
+        R += ttMoveNoisy && moveStage == BAD_CAPTURES;
 
         // Reduce more if the expected best move is a capture
         R += ttMoveNoisy;
