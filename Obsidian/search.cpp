@@ -648,6 +648,7 @@ namespace Search {
     // Reverse futility pruning. When evaluation is far above beta, the opponent is unlikely
     // to catch up, thus cut off
     if ( !IsPV
+      && !excludedMove
       && depth <= RfpMaxDepth
       && eval < SCORE_TB_WIN_IN_MAX_PLY
       && eval - RfpDepthMul * (depth - improving) >= beta)
@@ -794,7 +795,7 @@ namespace Search {
         && !excludedMove
         && move == ttMove
         && abs(ttScore) < SCORE_TB_WIN_IN_MAX_PLY
-        && ttBound & TT::FLAG_LOWER
+        && (ttBound & TT::FLAG_LOWER)
         && ttDepth >= depth - 3) 
       {
         Score singularBeta = ttScore - depth;
