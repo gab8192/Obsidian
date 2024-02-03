@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "net7.bin"
+#define EvalFile "mar2023-100m-epoch13.bin"
 
 using namespace SIMD;
 
@@ -25,7 +25,7 @@ namespace NNUE {
   using weight_t = int16_t;
 
   constexpr int FeaturesWidth = 768;
-  constexpr int HiddenWidth = 1536;
+  constexpr int HiddenWidth = 32;
 
   constexpr int NetworkScale = 400;
   constexpr int NetworkQA = 181;
