@@ -648,6 +648,7 @@ namespace Search {
     // Reverse futility pruning. When evaluation is far above beta, the opponent is unlikely
     // to catch up, thus cut off
     if ( !IsPV
+      && !excludedMove
       && depth <= RfpMaxDepth
       && eval < SCORE_TB_WIN_IN_MAX_PLY
       && eval - RfpDepthMul * (depth - improving) >= beta)
