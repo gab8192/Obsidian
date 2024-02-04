@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "mar2023-100m-epoch13.bin"
+#define EvalFile "mar2023-100m-wdl01-epoch13.bin"
 
 using namespace SIMD;
 
