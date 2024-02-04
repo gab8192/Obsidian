@@ -834,7 +834,7 @@ namespace Search {
 
       if (depth >= 2 && playedMoves >= 1) {
 
-        int R = isQuiet ? lmrTable[depth][seenMoves] : 0;
+        int R = (moveStage == GOOD_CAPTURES) ? 0 : lmrTable[depth][seenMoves];
 
         // Reduce or extend depending on history of this move
         R -= history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv);
@@ -847,9 +847,6 @@ namespace Search {
 
         // Extend if this move is killer or counter
         R -= (moveStage == KILLER || moveStage == COUNTER);
-
-        // Reduce if this is a bad capture (=> loses material)
-        R += (moveStage == BAD_CAPTURES);
 
         // Reduce more if the expected best move is a capture
         R += ttMoveNoisy;
