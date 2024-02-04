@@ -834,7 +834,9 @@ namespace Search {
 
       if (depth >= 2 && playedMoves >= 1) {
 
-        int R = (moveStage == GOOD_CAPTURES) ? 0 : lmrTable[depth][seenMoves];
+        int R = (moveStage == GOOD_CAPTURES) ? 0 : 
+                (moveStage == BAD_CAPTURES ) ? lmrTable[depth][seenMoves]/4 :
+                                               lmrTable[depth][seenMoves];
 
         // Reduce or extend depending on history of this move
         R -= history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv);
