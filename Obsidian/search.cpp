@@ -1023,8 +1023,7 @@ namespace Search {
 
     // Generate moves and score them
 
-    bool foundLegalMove = false;
-
+    int seenMoves = 0;
     int playedMoves = 0;
 
     Move quiets[64];
@@ -1051,16 +1050,7 @@ namespace Search {
 
       bool isQuiet = pos.isQuiet(move);
 
-      if (isQuiet) {
-        if (quietCount < 64)
-          quiets[quietCount++] = move;
-      }
-      else {
-        if (captureCount < 64)
-          captures[captureCount++] = move;
-      }
-
-      foundLegalMove = true;
+      seenMoves++;
 
       int oldNodesCount = nodesSearched;
 
@@ -1079,7 +1069,7 @@ namespace Search {
         int R;
 
         if (isQuiet) {
-          R = lmrTable[depth][playedMoves + 1];
+          R = lmrTable[depth][seenMoves];
         }
         else {
           R = 0;
@@ -1109,6 +1099,15 @@ namespace Search {
       cancelMove();
 
       playedMoves++;
+
+      if (isQuiet) {
+        if (quietCount < 64)
+          quiets[quietCount++] = move;
+      }
+      else {
+        if (captureCount < 64)
+          captures[captureCount++] = move;
+      }
       
       rootMovesNodes[rootMoves.indexOf(move)] += nodesSearched - oldNodesCount;
 
@@ -1132,7 +1131,7 @@ namespace Search {
       }
     }
 
-    if (!foundLegalMove)
+    if (!seenMoves)
       return pos.checkers ? ply - SCORE_MATE : SCORE_DRAW;
 
     // Update histories
