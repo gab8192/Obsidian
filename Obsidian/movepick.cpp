@@ -56,6 +56,8 @@ int nextMoveIndex(MoveList& moveList, int scannedMoves) {
 
 void MovePicker::scoreQuiets() {
 
+  const Color us = pos.sideToMove, them = ~us;
+
   int i = 0;
   while (i < quiets.size()) {
     Move move = quiets[i].move;
@@ -65,13 +67,21 @@ void MovePicker::scoreQuiets() {
       continue;
     }
 
+    Square from = move_from(move), to = move_to(move);
+
     int chIndex = pieceTo(pos, move);
 
-    quiets[i++].score =
-      mainHist[pos.sideToMove][move_from_to(move)]
-      + (ss - 1)->contHistory()[chIndex]
-      + (ss - 2)->contHistory()[chIndex]
-      + (ss - 4)->contHistory()[chIndex]/2;
+    int& score = quiets[i++].score;
+
+    score =  mainHist[pos.sideToMove][move_from_to(move)]
+           + (ss - 1)->contHistory()[chIndex]
+           + (ss - 2)->contHistory()[chIndex]
+           + (ss - 4)->contHistory()[chIndex]/2;
+
+    if (piece_type(pos.board[from]) != PAWN) {
+      if (getPawnAttacks(to, us) & pos.pieces(them, PAWN))
+        score -= 8192;
+    }
   }
 }
 
