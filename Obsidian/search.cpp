@@ -1065,20 +1065,13 @@ namespace Search {
 
       bool needFullSearch;
 
-      if (depth >= 3 && playedMoves > 3) {
-        int R;
+      if (depth >= 3 && playedMoves >= 4) {
 
-        if (isQuiet) {
-          R = lmrTable[depth][seenMoves];
-        }
-        else {
-          R = 0;
+        int R = isQuiet ? lmrTable[depth][seenMoves] : 0;
 
-          R += (moveStage == BAD_CAPTURES);
-        }
+        R -= (newPos.checkers != 0ULL);
 
-        if (newPos.checkers)
-          R--;
+        R += (moveStage == BAD_CAPTURES);
 
         // Do the clamp to avoid a qsearch or an extension in the child search
         int reducedDepth = std::clamp(newDepth - R, 1, newDepth + 1);
