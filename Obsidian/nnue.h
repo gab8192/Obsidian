@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "mar2023-100m-nopromocap-epoch13.bin"
+#define EvalFile "mar2023-100m-nopromo-epoch13.bin"
 
 using namespace SIMD;
 
