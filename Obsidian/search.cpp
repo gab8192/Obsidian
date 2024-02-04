@@ -989,10 +989,7 @@ namespace Search {
     else
       ttMove = ttHit ? ttEntry->getMove() : MOVE_NONE;
 
-    if (!pos.isPseudoLegal(ttMove))
-      ttMove = MOVE_NONE;
-
-    bool ttMoveNoisy = ttMove && !pos.isQuiet(ttMove);
+    const bool ttMoveNoisy = ttMove && !pos.isQuiet(ttMove);
 
     Score eval;
     Move bestMove = MOVE_NONE;
@@ -1048,9 +1045,11 @@ namespace Search {
       if (!pos.isLegal(move))
         continue;
 
+      seenMoves++;
+
       bool isQuiet = pos.isQuiet(move);
 
-      seenMoves++;
+      int history = isQuiet ? getQuietHistory(pos, move, ss) : getCapHistory(pos, move);
 
       int oldNodesCount = nodesSearched;
 
@@ -1069,9 +1068,13 @@ namespace Search {
 
         int R = isQuiet ? lmrTable[depth][seenMoves] : 0;
 
+        R -= history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv);
+
         R -= (newPos.checkers != 0ULL);
 
         R += (moveStage == BAD_CAPTURES);
+
+        R += ttMoveNoisy;
 
         // Do the clamp to avoid a qsearch or an extension in the child search
         int reducedDepth = std::clamp(newDepth - R, 1, newDepth + 1);
