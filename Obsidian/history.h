@@ -9,9 +9,6 @@ using MainHistory  = int[COLOR_NB][SQUARE_NB * SQUARE_NB];
 using CaptureHistory = int[PIECE_NB * SQUARE_NB][PIECE_TYPE_NB];
 
 // [piece to]
-using PieceToHistory = int[PIECE_NB * SQUARE_NB];
-
-// [piece to]
 using CounterMoveHistory = Move[PIECE_NB * SQUARE_NB];
 
 // [isCap][piece to][piece to]

@@ -52,11 +52,8 @@ namespace Search {
 
     Move excludedMove;
 
-    PieceToHistory* mContHistory;
-
-    PieceToHistory& contHistory() {
-      return *mContHistory;
-    }
+    // [piece to]
+    int* contHistory;
   };
 
   // A sort of header of the search stack, so that plies behind 0 are accessible and

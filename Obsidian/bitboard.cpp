@@ -241,7 +241,7 @@ uint32_t attack_index_bishop(Square sq, Bitboard occupied) {
   return (uint32_t)_pext_u64(occupied, BishopMasks[sq]);
 #else
   occupied &= BishopMasks[sq];
-  occupied *= BishopMagics[sq];
+  occupied *= BISHOP_MAGICS[sq];
   return occupied >> (64 - BishopRelevantBits[sq]);
 #endif
 }
@@ -251,7 +251,7 @@ uint32_t attack_index_rook(Square sq, Bitboard occupied) {
   return (uint32_t)_pext_u64(occupied, RookMasks[sq]);
 #else
   occupied &= RookMasks[sq];
-  occupied *= RookMagics[sq];
+  occupied *= ROOK_MAGICS[sq];
   return occupied >> (64 - RookRelevantBits[sq]);
 #endif
 }
@@ -327,10 +327,10 @@ void init_fancy_magic_attacks(Bitboard masks[],
             Bitboard occupancy = set_occupancy(count, bit_count, masks[sq]);
 
             if (pt == BISHOP) {
-              Bitboard magic_index = occupancy * BishopMagics[sq] >> 64 - BishopRelevantBits[sq]; 
+              Bitboard magic_index = occupancy * BISHOP_MAGICS[sq] >> 64 - BishopRelevantBits[sq]; 
               BishopAttacks[sq][magic_index] = sliding_attack(deltas, sq, occupancy); 
             } else {
-              Bitboard magic_index = occupancy * RookMagics[sq] >> 64 - RookRelevantBits[sq]; 
+              Bitboard magic_index = occupancy * ROOK_MAGICS[sq] >> 64 - RookRelevantBits[sq]; 
               RookAttacks[sq][magic_index] = sliding_attack(deltas, sq, occupancy); 
             }
         }

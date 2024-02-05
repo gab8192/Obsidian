@@ -161,7 +161,7 @@ namespace Search {
   void Thread::playNullMove(Position& pos, SearchInfo* ss) {
     nodesSearched++;
 
-    ss->mContHistory = &contHistory[false][0];
+    ss->contHistory = contHistory[false][0];
     ss->playedMove = MOVE_NONE;
     keyStack[keyStackHead++] = pos.key;
 
@@ -178,7 +178,7 @@ namespace Search {
     nodesSearched++;
 
     bool isCap = pos.board[move_to(move)] != NO_PIECE;
-    ss->mContHistory = &contHistory[isCap][pieceTo(pos, move)];
+    ss->contHistory = contHistory[isCap][pieceTo(pos, move)];
     ss->playedMove = move;
     keyStack[keyStackHead++] = pos.key;
 
@@ -201,18 +201,6 @@ namespace Search {
     accumStackHead--;
   }
 
-  //        TT move:  MAX
-  // Good promotion:  400K
-  //   Good capture:  300K
-  //        Killers:  200K
-  //   Counter-move:  100K
-  // Dumb promotion: -100K
-  //    Bad capture: -200K
-
-  constexpr int promotionScores[] = {
-    0, 0, 400000, -100001, -100000, 410000
-  };
-
   int Thread::getCapHistory(Position& pos, Move move) {
     PieceType captured = piece_type(pos.board[move_to(move)]);
     return captureHistory[pieceTo(pos, move)][captured];
@@ -221,19 +209,19 @@ namespace Search {
   int Thread::getQuietHistory(Position& pos, Move move, SearchInfo* ss) {
     int chIndex = pieceTo(pos, move);
     return    mainHistory[pos.sideToMove][move_from_to(move)]
-            + (ss - 1)->contHistory()[chIndex]
-            + (ss - 2)->contHistory()[chIndex]
-            + (ss - 4)->contHistory()[chIndex];
+            + (ss - 1)->contHistory[chIndex]
+            + (ss - 2)->contHistory[chIndex]
+            + (ss - 4)->contHistory[chIndex];
   }
 
   void addToContHistory(Position& pos, int bonus, Move move, SearchInfo* ss) {
     int chIndex = pieceTo(pos, move);
     if ((ss - 1)->playedMove)
-      addToHistory((ss - 1)->contHistory()[chIndex], bonus);
+      addToHistory((ss - 1)->contHistory[chIndex], bonus);
     if ((ss - 2)->playedMove)              
-      addToHistory((ss - 2)->contHistory()[chIndex], bonus);
+      addToHistory((ss - 2)->contHistory[chIndex], bonus);
     if ((ss - 4)->playedMove)              
-      addToHistory((ss - 4)->contHistory()[chIndex], bonus);
+      addToHistory((ss - 4)->contHistory[chIndex], bonus);
   }
 
   void Thread::updateHistories(Position& pos, int bonus, Move bestMove, Score bestScore,
@@ -515,7 +503,7 @@ namespace Search {
       return qsearch<IsPV>(pos, alpha, beta, ss);
 
     // Detect draw
-    if (isRepetition(pos, ply) || pos.halfMoveClock >= 100)
+    if (!IsRoot && (isRepetition(pos, ply) || pos.halfMoveClock >= 100))
       return makeDrawScore();
 
     // Quit if we are close to reaching max ply
@@ -1042,7 +1030,7 @@ namespace Search {
       searchStack[i].excludedMove = MOVE_NONE;
       searchStack[i].playedMove   = MOVE_NONE;
 
-      searchStack[i].mContHistory = &contHistory[false][0];
+      searchStack[i].contHistory = contHistory[false][0];
 
       searchStack[i].doubleExt = 0;
     }
