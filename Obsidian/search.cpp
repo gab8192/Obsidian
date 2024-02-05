@@ -486,7 +486,9 @@ namespace Search {
   }
 
   template<bool IsPV>
-  Score Thread::negaMax(Position& pos, Score alpha, Score beta, int depth, bool cutNode, SearchInfo* ss) {
+  Score Thread::negamax(Position& pos, Score alpha, Score beta, int depth, bool cutNode, SearchInfo* ss) {
+
+    const bool IsRoot = IsPV && ply == 0;
 
     // Check time
     if ( this == Threads::mainThread() 
@@ -502,7 +504,7 @@ namespace Search {
       ss->pvLength = ply;
 
     // Detect upcoming draw
-    if (alpha < SCORE_DRAW && hasUpcomingRepetition(pos, ply)) {
+    if (!IsRoot && alpha < SCORE_DRAW && hasUpcomingRepetition(pos, ply)) {
       alpha = makeDrawScore();
       if (alpha >= beta)
         return alpha;
@@ -548,6 +550,9 @@ namespace Search {
       ttPV |= ttEntry->wasPV();
     }
 
+    if (IsRoot && depth > 1)
+      ttMove = ss->pv[0];
+
     const bool ttMoveNoisy = ttMove && !pos.isQuiet(ttMove);
 
     const Score probcutBeta = beta + ProbcutBetaMargin;
@@ -567,7 +572,7 @@ namespace Search {
     }
 
     // Probe tablebases
-    const TbResult tbResult = excludedMove ? TB_RESULT_FAILED : probeTB(pos);
+    const TbResult tbResult = (IsRoot || excludedMove) ? TB_RESULT_FAILED : probeTB(pos);
 
     if (tbResult != TB_RESULT_FAILED) {
 
@@ -606,6 +611,7 @@ namespace Search {
     (ss + 1)->killerMove = MOVE_NONE;
     ss->doubleExt = (ss - 1)->doubleExt;
 
+    // At root we always assume improving, for lmr purposes
     bool improving = false;
 
     // Do the static evaluation
@@ -666,7 +672,7 @@ namespace Search {
 
       Position newPos = pos;
       playNullMove(newPos, ss);
-      Score score = -negaMax<false>(newPos, -beta, -beta + 1, depth - R, !cutNode, ss + 1);
+      Score score = -negamax<false>(newPos, -beta, -beta + 1, depth - R, !cutNode, ss + 1);
       cancelNullMove();
 
       if (score >= beta)
@@ -706,7 +712,7 @@ namespace Search {
 
         // Do a normal search if qsearch was positive
         if (score >= probcutBeta)
-          score = -negaMax<false>(newPos, -probcutBeta, -probcutBeta + 1, depth - 4, !cutNode, ss + 1);
+          score = -negamax<false>(newPos, -probcutBeta, -probcutBeta + 1, depth - 4, !cutNode, ss + 1);
 
         cancelMove();
 
@@ -733,6 +739,9 @@ namespace Search {
       counterMove = counterMoveHistory[pos.board[prevSq] * SQUARE_NB + prevSq];
     }
 
+    if (IsRoot)
+      ss->killerMove = MOVE_NONE;
+
     MovePicker movePicker(
       PVS, pos,
       ttMove, ss->killerMove, counterMove,
@@ -758,8 +767,11 @@ namespace Search {
 
       int history = isQuiet ? getQuietHistory(pos, move, ss) : getCapHistory(pos, move);
 
-      if ( pos.hasNonPawns(pos.sideToMove)
-        && bestScore > SCORE_TB_LOSS_IN_MAX_PLY)
+      int oldNodesSearched = nodesSearched;
+
+      if ( !IsRoot
+        && bestScore > SCORE_TB_LOSS_IN_MAX_PLY
+        && pos.hasNonPawns(pos.sideToMove))
       {
         // SEE (Static Exchange Evalution) pruning
         if (moveStage > GOOD_CAPTURES) {
@@ -788,7 +800,8 @@ namespace Search {
       int extension = 0;
       
       // Singular extension
-      if ( ply < 2 * rootDepth
+      if ( !IsRoot
+        && ply < 2 * rootDepth
         && depth >= 6
         && !excludedMove
         && move == ttMove
@@ -799,7 +812,7 @@ namespace Search {
         Score singularBeta = ttScore - depth;
         
         ss->excludedMove = move;
-        Score seScore = negaMax<false>(pos, singularBeta - 1, singularBeta, (depth - 1) / 2, cutNode, ss);
+        Score seScore = negamax<false>(pos, singularBeta - 1, singularBeta, (depth - 1) / 2, cutNode, ss);
         ss->excludedMove = MOVE_NONE;
         
         if (seScore < singularBeta) {
@@ -832,7 +845,7 @@ namespace Search {
 
       bool needFullSearch = false;
 
-      if (depth >= 2 && playedMoves >= 1) {
+      if (depth >= 2 + IsRoot && playedMoves >= 1 + 3 * IsRoot) {
 
         int R = isQuiet ? lmrTable[depth][seenMoves] : 0;
 
@@ -863,13 +876,11 @@ namespace Search {
         // Clamp to avoid a qsearch or an extension in the child search
         int reducedDepth = std::clamp(newDepth - R, 1, newDepth + 1);
 
-        score = -negaMax<false>(newPos, -alpha - 1, -alpha, reducedDepth, true, ss + 1);
+        score = -negamax<false>(newPos, -alpha - 1, -alpha, reducedDepth, true, ss + 1);
 
         if (score > alpha && reducedDepth < newDepth) {
-          if (score > bestScore + ZwsDeeperMargin) 
-            newDepth++;
-          else if (score < bestScore + newDepth)
-            newDepth--;
+          newDepth += (score > bestScore + ZwsDeeperMargin && !IsRoot);
+          newDepth -= (score < bestScore + newDepth        && !IsRoot);
           needFullSearch = reducedDepth < newDepth;
         }
       }
@@ -877,12 +888,15 @@ namespace Search {
         needFullSearch = !IsPV || playedMoves >= 1;
 
       if (needFullSearch)
-        score = -negaMax<false>(newPos, -alpha - 1, -alpha, newDepth, !cutNode, ss + 1);
+        score = -negamax<false>(newPos, -alpha - 1, -alpha, newDepth, !cutNode, ss + 1);
 
       if (IsPV && (playedMoves == 0 || score > alpha))
-        score = -negaMax<true>(newPos, -beta, -alpha, newDepth, false, ss + 1);
+        score = -negamax<true>(newPos, -beta, -alpha, newDepth, false, ss + 1);
 
       cancelMove();
+
+      if (Threads::isSearchStopped())
+        return SCORE_DRAW;
 
       playedMoves++;
       
@@ -895,8 +909,8 @@ namespace Search {
           captures[captureCount++] = move;
       }
 
-      if (Threads::isSearchStopped())
-        return SCORE_DRAW;
+      if (IsRoot)
+        rootMovesNodes[rootMoves.indexOf(move)] += nodesSearched - oldNodesSearched;
 
       if (score > bestScore) {
         bestScore = score;
@@ -959,211 +973,6 @@ namespace Search {
 
       ttEntry->store(pos.key, flag, depth, bestMove, bestScore, ss->staticEval, ttPV, ply);
     }
-
-    return bestScore;
-  }
-
-  Score Thread::rootNegaMax(Position& pos, Score alpha, Score beta, int depth, SearchInfo* ss) {
-
-    // init node
-    ss->pvLength = ply;
-
-    // Probe TT
-    bool ttHit;
-    TT::Entry* ttEntry = TT::probe(pos.key, ttHit);
-
-    TT::Flag ttBound = TT::NO_FLAG;
-    Score ttScore = SCORE_NONE;
-    Score ttStaticEval = SCORE_NONE;
-
-    if (ttHit) {
-      ttBound = ttEntry->getBound();
-      ttScore = ttEntry->getScore(ply);
-      ttStaticEval = ttEntry->getStaticEval();
-    }
-
-    Move ttMove;
-
-    if (depth > 1)
-      ttMove = ss->pv[0];
-    else
-      ttMove = ttHit ? ttEntry->getMove() : MOVE_NONE;
-
-    const bool ttMoveNoisy = ttMove && !pos.isQuiet(ttMove);
-
-    Score eval;
-    Move bestMove = MOVE_NONE;
-    Score bestScore = -SCORE_INFINITE;
-
-    (ss + 1)->killerMove = MOVE_NONE;
-    ss->doubleExt = 0;
-
-    // Do the static evaluation
-
-    if (pos.checkers) {
-      // When in check avoid evaluating and skip pruning
-      ss->staticEval = eval = SCORE_NONE;
-      goto moves_loop;
-    }
-    else {
-      if (ttStaticEval != SCORE_NONE)
-        ss->staticEval = eval = ttStaticEval;
-      else
-        ss->staticEval = eval = Eval::evaluate(pos, accumStack[accumStackHead]);
-
-      // When tt bound allows it, use ttScore as a better evaluation
-      if (ttBound & boundForTT(ttScore > eval))
-        eval = ttScore;
-    }
-
-  moves_loop:
-
-    // Generate moves and score them
-
-    int seenMoves = 0;
-    int playedMoves = 0;
-
-    Move quiets[64];
-    int quietCount = 0;
-    Move captures[64];
-    int captureCount = 0;
-
-    MovePicker movePicker(
-      PVS, pos,
-      ttMove, MOVE_NONE, MOVE_NONE,
-      mainHistory, captureHistory,
-      MpPvsSeeMargin,
-      ss);
-
-    // Visit moves
-
-    Move move;
-    MpStage moveStage;
-
-    while (move = movePicker.nextMove(&moveStage)) {
-
-      if (!pos.isLegal(move))
-        continue;
-
-      seenMoves++;
-
-      bool isQuiet = pos.isQuiet(move);
-
-      int history = isQuiet ? getQuietHistory(pos, move, ss) : getCapHistory(pos, move);
-
-      int oldNodesCount = nodesSearched;
-
-      Position newPos = pos;
-      playMove(newPos, move, ss);
-
-      int newDepth = depth - 1;
-
-      Score score;
-
-      // Late move reductions. Search at a reduced depth, moves that are late in the move list
-
-      bool needFullSearch;
-
-      if (depth >= 3 && playedMoves >= 4) {
-
-        int R = isQuiet ? lmrTable[depth][seenMoves] : 0;
-
-        R -= history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv);
-
-        R -= (newPos.checkers != 0ULL);
-        
-        R -= 1;
-
-        R += (moveStage == BAD_CAPTURES);
-
-        R += ttMoveNoisy;
-
-        // Do the clamp to avoid a qsearch or an extension in the child search
-        int reducedDepth = std::clamp(newDepth - R, 1, newDepth + 1);
-
-        score = -negaMax<false>(newPos, -alpha - 1, -alpha, reducedDepth, true, ss + 1);
-
-        needFullSearch = score > alpha && reducedDepth < newDepth;
-      }
-      else
-        needFullSearch = playedMoves >= 1;
-
-      if (needFullSearch)
-        score = -negaMax<false>(newPos, -alpha - 1, -alpha, newDepth, true, ss + 1);
-
-      if (playedMoves == 0 || score > alpha)
-        score = -negaMax<true>(newPos, -beta, -alpha, newDepth, false, ss + 1);
-
-      cancelMove();
-
-      playedMoves++;
-
-      if (isQuiet) {
-        if (quietCount < 64)
-          quiets[quietCount++] = move;
-      }
-      else {
-        if (captureCount < 64)
-          captures[captureCount++] = move;
-      }
-      
-      rootMovesNodes[rootMoves.indexOf(move)] += nodesSearched - oldNodesCount;
-
-      if (Threads::isSearchStopped())
-        return SCORE_DRAW;
-
-      if (score > bestScore) {
-        bestScore = score;
-
-        if (bestScore > alpha) {
-          bestMove = move;
-
-          updatePV(ss, ply, bestMove);
-
-          // Always true in NonPV nodes
-          if (bestScore >= beta)
-            break;
-
-          alpha = bestScore;
-        }
-      }
-    }
-
-    if (!seenMoves)
-      return pos.checkers ? ply - SCORE_MATE : SCORE_DRAW;
-
-    // Update histories
-    if (bestScore >= beta)
-    {
-      int bonus = stat_bonus(depth + (bestScore > beta + StatBonusBoostAt));
-
-      if (pos.isQuiet(bestMove))
-      {
-        updateHistories(pos, bonus, bestMove, bestScore, beta, quiets, quietCount, ss);
-      }
-      else {
-        Piece captured = pos.board[move_to(bestMove)];
-        addToHistory(captureHistory[pieceTo(pos, bestMove)][piece_type(captured)], bonus);
-      }
-
-      for (int i = 0; i < captureCount; i++) {
-        Move otherMove = captures[i];
-        if (otherMove == bestMove)
-          continue;
-
-        Piece captured = pos.board[move_to(otherMove)];
-        addToHistory(captureHistory[pieceTo(pos, otherMove)][piece_type(captured)], -bonus);
-      }
-    }
-
-    // Store to TT
-    TT::Flag flag;
-    if (bestScore >= beta)
-      flag = TT::FLAG_LOWER;
-    else
-      flag = bestMove ? TT::FLAG_EXACT : TT::FLAG_UPPER;
-
-    ttEntry->store(pos.key, flag, depth, bestMove, bestScore, ss->staticEval, true, ply);
 
     return bestScore;
   }
@@ -1280,7 +1089,7 @@ namespace Search {
 
           int adjustedDepth = std::max(1, rootDepth - failedHighCnt);
 
-          score = rootNegaMax(rootPos, alpha, beta, adjustedDepth, ss);
+          score = negamax<true>(rootPos, alpha, beta, adjustedDepth, false, ss);
 
           if (Threads::isSearchStopped())
             goto bestMoveDecided;
@@ -1311,7 +1120,7 @@ namespace Search {
         }
       }
       else {
-        score = rootNegaMax(rootPos, -SCORE_INFINITE, SCORE_INFINITE, rootDepth, ss);
+        score = negamax<true>(rootPos, -SCORE_INFINITE, SCORE_INFINITE, rootDepth, false, ss);
       }
 
       // It's super important to not update the best move if the search was abruptly stopped
