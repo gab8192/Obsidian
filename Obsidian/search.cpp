@@ -739,12 +739,11 @@ namespace Search {
       counterMove = counterMoveHistory[pos.board[prevSq] * SQUARE_NB + prevSq];
     }
 
-    if (IsRoot)
-      ss->killerMove = MOVE_NONE;
+    Move killerMove = IsRoot ? MOVE_NONE : ss->killerMove;
 
     MovePicker movePicker(
       PVS, pos,
-      ttMove, ss->killerMove, counterMove,
+      ttMove, killerMove, counterMove,
       mainHistory, captureHistory,
       MpPvsSeeMargin,
       ss);
@@ -801,37 +800,45 @@ namespace Search {
       
       // Singular extension
       if ( !IsRoot
-        && ply < 2 * rootDepth
-        && depth >= 6
-        && !excludedMove
-        && move == ttMove
-        && abs(ttScore) < SCORE_TB_WIN_IN_MAX_PLY
-        && ttBound & TT::FLAG_LOWER
-        && ttDepth >= depth - 3) 
+        && ply < 2 * rootDepth) 
       {
-        Score singularBeta = ttScore - depth;
-        
-        ss->excludedMove = move;
-        Score seScore = negamax<false>(pos, singularBeta - 1, singularBeta, (depth - 1) / 2, cutNode, ss);
-        ss->excludedMove = MOVE_NONE;
-        
-        if (seScore < singularBeta) {
-          extension = 1;
-          // Extend even more if s. value is smaller than s. beta by some margin
-          if (   !IsPV 
-              && ss->doubleExt <= DoubleExtMax 
-              && seScore < singularBeta - DoubleExtMargin)
-          {
-            extension = 2;
-            ss->doubleExt = (ss - 1)->doubleExt + 1;
+        if ( depth >= 6
+          && !excludedMove
+          && move == ttMove
+          && abs(ttScore) < SCORE_TB_WIN_IN_MAX_PLY
+          && ttBound & TT::FLAG_LOWER
+          && ttDepth >= depth - 3) 
+        {
+          Score singularBeta = ttScore - depth;
+          
+          ss->excludedMove = move;
+          Score seScore = negamax<false>(pos, singularBeta - 1, singularBeta, (depth - 1) / 2, cutNode, ss);
+          ss->excludedMove = MOVE_NONE;
+          
+          if (seScore < singularBeta) {
+            extension = 1;
+            // Extend even more if s. value is smaller than s. beta by some margin
+            if (   !IsPV 
+                && ss->doubleExt <= DoubleExtMax 
+                && seScore < singularBeta - DoubleExtMargin)
+            {
+              extension = 2;
+              ss->doubleExt = (ss - 1)->doubleExt + 1;
+            }
           }
+          else if (singularBeta >= beta) // Multicut
+            return singularBeta;
+          else if (ttScore >= beta) // Negative extensions
+            extension = -2 + IsPV;
+          else if (cutNode)
+            extension = -1;
         }
-        else if (singularBeta >= beta) // Multicut
-          return singularBeta;
-        else if (ttScore >= beta) // Negative extensions
-          extension = -2 + IsPV;
-        else if (cutNode)
-          extension = -1;
+        else if ( depth >= 6
+               && !excludedMove
+               && move == ttMove
+               && move == killerMove
+               && move == counterMove)
+          extension = 1;
       }
 
       Position newPos = pos;
