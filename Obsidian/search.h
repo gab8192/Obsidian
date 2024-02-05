@@ -133,9 +133,7 @@ namespace Search {
     Score qsearch(Position& position, Score alpha, Score beta, SearchInfo* ss);
 
     template<bool IsPV>
-    Score negaMax(Position& position, Score alpha, Score beta, int depth, bool cutNode, SearchInfo* ss);
-
-    Score rootNegaMax(Position& position, Score alpha, Score beta, int depth, SearchInfo* ss);
+    Score negamax(Position& position, Score alpha, Score beta, int depth, bool cutNode, SearchInfo* ss);
 
     void startSearch();
 
