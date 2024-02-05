@@ -989,10 +989,7 @@ namespace Search {
     else
       ttMove = ttHit ? ttEntry->getMove() : MOVE_NONE;
 
-    if (!pos.isPseudoLegal(ttMove))
-      ttMove = MOVE_NONE;
-
-    bool ttMoveNoisy = ttMove && !pos.isQuiet(ttMove);
+    const bool ttMoveNoisy = ttMove && !pos.isQuiet(ttMove);
 
     Score eval;
     Move bestMove = MOVE_NONE;
@@ -1023,8 +1020,7 @@ namespace Search {
 
     // Generate moves and score them
 
-    bool foundLegalMove = false;
-
+    int seenMoves = 0;
     int playedMoves = 0;
 
     Move quiets[64];
@@ -1049,18 +1045,11 @@ namespace Search {
       if (!pos.isLegal(move))
         continue;
 
+      seenMoves++;
+
       bool isQuiet = pos.isQuiet(move);
 
-      if (isQuiet) {
-        if (quietCount < 64)
-          quiets[quietCount++] = move;
-      }
-      else {
-        if (captureCount < 64)
-          captures[captureCount++] = move;
-      }
-
-      foundLegalMove = true;
+      int history = isQuiet ? getQuietHistory(pos, move, ss) : getCapHistory(pos, move);
 
       int oldNodesCount = nodesSearched;
 
@@ -1075,20 +1064,19 @@ namespace Search {
 
       bool needFullSearch;
 
-      if (depth >= 3 && playedMoves > 3) {
-        int R;
+      if (depth >= 3 && playedMoves >= 4) {
 
-        if (isQuiet) {
-          R = lmrTable[depth][playedMoves + 1];
-        }
-        else {
-          R = 0;
+        int R = isQuiet ? lmrTable[depth][seenMoves] : 0;
 
-          R += (moveStage == BAD_CAPTURES);
-        }
+        R -= history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv);
 
-        if (newPos.checkers)
-          R--;
+        R -= (newPos.checkers != 0ULL);
+        
+        R -= 1;
+
+        R += (moveStage == BAD_CAPTURES);
+
+        R += ttMoveNoisy;
 
         // Do the clamp to avoid a qsearch or an extension in the child search
         int reducedDepth = std::clamp(newDepth - R, 1, newDepth + 1);
@@ -1109,6 +1097,15 @@ namespace Search {
       cancelMove();
 
       playedMoves++;
+
+      if (isQuiet) {
+        if (quietCount < 64)
+          quiets[quietCount++] = move;
+      }
+      else {
+        if (captureCount < 64)
+          captures[captureCount++] = move;
+      }
       
       rootMovesNodes[rootMoves.indexOf(move)] += nodesSearched - oldNodesCount;
 
@@ -1132,7 +1129,7 @@ namespace Search {
       }
     }
 
-    if (!foundLegalMove)
+    if (!seenMoves)
       return pos.checkers ? ply - SCORE_MATE : SCORE_DRAW;
 
     // Update histories
