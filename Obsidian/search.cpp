@@ -1071,6 +1071,8 @@ namespace Search {
         R -= history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv);
 
         R -= (newPos.checkers != 0ULL);
+        
+        R -= 1;
 
         R += (moveStage == BAD_CAPTURES);
 
