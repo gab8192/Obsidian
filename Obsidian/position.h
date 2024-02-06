@@ -11,6 +11,14 @@
 /// </summary>
 void positionInit();
 
+struct Threats {
+  Bitboard byPawns;
+  Bitboard byMinors;
+  Bitboard byRooks;
+  // those pawns, minors, rooks, what pieces are they threatening?
+  Bitboard capSquares;
+};
+
 struct alignas(32) Position {
   Color sideToMove;
   Square epSquare;
@@ -47,6 +55,10 @@ struct alignas(32) Position {
     return byPieceBB[pt0] | byPieceBB[pt1];
   }
 
+  inline Bitboard pieces(Color c, PieceType pt0, PieceType pt1) const {
+    return byColorBB[c] & (byPieceBB[pt0] | byPieceBB[pt1]);
+  }
+
   inline Bitboard pieces() const {
     return byColorBB[WHITE] | byColorBB[BLACK];
   }
@@ -77,15 +89,47 @@ struct alignas(32) Position {
 
   void updatePins(Color color);
 
+
   /// <summary>
   /// Invoke AFTER the side to move has been updated.
   /// Refreshes blockersForKing, pinners, checkers
   /// </summary>
   inline void updateAttacksToKings() {
+
+    const Color us = sideToMove, them = ~us;
+
     updatePins(WHITE);
     updatePins(BLACK);
 
-    checkers = attackersTo(kingSquare(sideToMove), ~sideToMove);
+    checkers = attackersTo(kingSquare(us), them);
+  }
+
+  inline void getThreats(Threats* threats) {
+
+    const Color us = sideToMove, them = ~us;
+    const Bitboard occupied = pieces();
+    
+    threats->byPawns = getPawnsAttacks(pieces(them, PAWN), them);
+
+    threats->byMinors = threats->byPawns;
+
+    Bitboard knightsIter = pieces(them, KNIGHT);
+    while (knightsIter)
+      threats->byMinors |= getKnightAttacks(popLsb(knightsIter));
+
+    Bitboard bishopsIter = pieces(them, BISHOP);
+    while (bishopsIter)
+      threats->byMinors |= getBishopAttacks(popLsb(bishopsIter), occupied);
+
+    threats->byRooks = threats->byMinors;
+
+    Bitboard rooksIter = pieces(them, ROOK);
+    while (rooksIter)
+      threats->byRooks |= getRookAttacks(popLsb(rooksIter), occupied);
+
+    threats->capSquares =  (pieces(us, QUEEN) & threats->byRooks)
+                           | (pieces(us, ROOK) & threats->byMinors)
+                           | (pieces(us, KNIGHT, BISHOP) & threats->byPawns);
   }
 
   void updateKey();

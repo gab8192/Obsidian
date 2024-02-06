@@ -286,6 +286,14 @@ Bitboard getPawnAttacks(Square sq, Color pawnColor) {
   return pawn_attacks[pawnColor][sq];
 }
 
+Bitboard getPawnsAttacks(Bitboard bb, Color pawnsColor) {
+  if (pawnsColor == WHITE)
+    return ((bb & ~FILE_HBB) << 9) | ((bb & ~FILE_ABB) << 7);
+  else 
+    return ((bb & ~FILE_HBB) >> 7) | ((bb & ~FILE_ABB) >> 9);
+}
+
+
 #if defined(USE_PEXT)
 
 void init_pext_attacks(Bitboard table[], Bitboard* attacks[], Bitboard masks[],

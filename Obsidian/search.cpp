@@ -630,6 +630,9 @@ namespace Search {
     else if ((ss - 4)->staticEval != SCORE_NONE)
       improving = ss->staticEval > (ss - 4)->staticEval;
 
+    Threats oppThreats;
+    pos.getThreats(&oppThreats);
+
     // Razoring. When evaluation is far below alpha, we could probably only catch up with a capture,
     // thus do a qsearch. If the qsearch still can't hit alpha, cut off
     if ( !IsPV
@@ -644,7 +647,7 @@ namespace Search {
     if ( !IsPV
       && depth <= RfpMaxDepth
       && eval < SCORE_TB_WIN_IN_MAX_PLY
-      && eval - RfpDepthMul * (depth - improving) >= beta)
+      && eval - RfpDepthMul * (depth + BitCount(oppThreats.capSquares) - improving) >= beta)
       return eval;
 
     // Null move pruning. When our evaluation is above beta, we give the opponent
