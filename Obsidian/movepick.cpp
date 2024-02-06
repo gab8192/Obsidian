@@ -139,8 +139,12 @@ Move MovePicker::nextMove(MpStage* outStage) {
       }
     }
 
-    if (  (searchType == QSEARCH && !pos.checkers)
-        || searchType == PROBCUT)
+    if (searchType == QSEARCH && !pos.checkers) {
+      stage = BAD_CAPTURES;
+      goto select;
+    }
+    
+    if (searchType == PROBCUT)
       return MOVE_NONE;
 
     ++stage;
