@@ -55,7 +55,7 @@ int nextMoveIndex(MoveList& moveList, int scannedMoves) {
 }
 
 void MovePicker::scoreQuiets() {
-
+  Threats& threats = pos.threats();
   int i = 0;
   while (i < quiets.size()) {
     Move move = quiets[i].move;
@@ -65,13 +65,21 @@ void MovePicker::scoreQuiets() {
       continue;
     }
 
+    Square from = move_from(move), to = move_to(move);
     int chIndex = pieceTo(pos, move);
 
-    quiets[i++].score =
-      mainHist[pos.sideToMove][move_from_to(move)]
-      + (ss - 1)->contHistory[chIndex]
-      + (ss - 2)->contHistory[chIndex]
-      + (ss - 4)->contHistory[chIndex]/2;
+    int& score = quiets[i++].score;
+
+    score =  mainHist[pos.sideToMove][move_from_to(move)]
+           + (ss - 1)->contHistory[chIndex]
+           + (ss - 2)->contHistory[chIndex]
+           + (ss - 4)->contHistory[chIndex]/2;
+
+    if (threats.dangerBB & from) {
+      PieceType movedType = piece_type(pos.board[from]);
+      score += 16384 * (movedType == KNIGHT || movedType == BISHOP || movedType == ROOK);
+      score += 32768 * (movedType == QUEEN);
+    }
   }
 }
 
@@ -86,27 +94,22 @@ void MovePicker::scoreCaptures() {
       continue;
     }
 
-    int& moveScore = captures[i].score;
-
-    // initial score
-    moveScore = 0;
-
     MoveType mt = move_type(move);
     PieceType captured = piece_type(pos.board[move_to(move)]);
 
-    moveScore += PIECE_VALUE[mt == MT_EN_PASSANT ? PAWN : captured] * 128;
+    int& score = captures[i++].score;
+
+    score = PIECE_VALUE[mt == MT_EN_PASSANT ? PAWN : captured] * 128;
 
     if (mt == MT_PROMOTION)
-      moveScore += promotionScores[promo_type(move)];
+      score += promotionScores[promo_type(move)];
     else {
       if (pos.seeGe(move, seeMargin))
-        moveScore += 500000;
+        score += 500000;
       else
-        moveScore -= 500000;
-      moveScore += capHist[pieceTo(pos, move)][captured];
+        score -= 500000;
+      score += capHist[pieceTo(pos, move)][captured];
     }
-
-    i++;
   }
 }
 

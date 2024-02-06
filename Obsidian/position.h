@@ -16,7 +16,7 @@ struct Threats {
   Bitboard byMinors;
   Bitboard byRooks;
   // those pawns, minors, rooks, what pieces are they threatening?
-  Bitboard capSquares;
+  Bitboard dangerBB;
 };
 
 struct alignas(32) Position {
@@ -38,6 +38,9 @@ struct alignas(32) Position {
 
   // What pieces of the opponent are attacking the king of the side to move
   Bitboard checkers;
+
+  bool threatsUpdated;
+  Threats threatsCache;
 
   inline Bitboard pieces(PieceType pt) const {
     return byPieceBB[pt];
@@ -102,34 +105,42 @@ struct alignas(32) Position {
     updatePins(BLACK);
 
     checkers = attackersTo(kingSquare(us), them);
+
+    threatsUpdated = false;
   }
 
-  inline void getThreats(Threats* threats) {
+  inline Threats& threats() {
+    if (threatsUpdated)
+      return threatsCache;
 
     const Color us = sideToMove, them = ~us;
     const Bitboard occupied = pieces();
-    
-    threats->byPawns = getPawnsAttacks(pieces(them, PAWN), them);
 
-    threats->byMinors = threats->byPawns;
+    threatsCache.byPawns = getPawnsAttacks(pieces(them, PAWN), them);
+
+    threatsCache.byMinors = threatsCache.byPawns;
 
     Bitboard knightsIter = pieces(them, KNIGHT);
     while (knightsIter)
-      threats->byMinors |= getKnightAttacks(popLsb(knightsIter));
+      threatsCache.byMinors |= getKnightAttacks(popLsb(knightsIter));
 
     Bitboard bishopsIter = pieces(them, BISHOP);
     while (bishopsIter)
-      threats->byMinors |= getBishopAttacks(popLsb(bishopsIter), occupied);
+      threatsCache.byMinors |= getBishopAttacks(popLsb(bishopsIter), occupied);
 
-    threats->byRooks = threats->byMinors;
+    threatsCache.byRooks = threatsCache.byMinors;
 
     Bitboard rooksIter = pieces(them, ROOK);
     while (rooksIter)
-      threats->byRooks |= getRookAttacks(popLsb(rooksIter), occupied);
+      threatsCache.byRooks |= getRookAttacks(popLsb(rooksIter), occupied);
 
-    threats->capSquares =  (pieces(us, QUEEN) & threats->byRooks)
-                           | (pieces(us, ROOK) & threats->byMinors)
-                           | (pieces(us, KNIGHT, BISHOP) & threats->byPawns);
+    threatsCache.dangerBB =  (pieces(us, QUEEN) & threatsCache.byRooks)
+                           | (pieces(us, ROOK) & threatsCache.byMinors)
+                           | (pieces(us, KNIGHT, BISHOP) & threatsCache.byPawns);
+
+    threatsUpdated = true;
+
+    return threatsCache;
   }
 
   void updateKey();
