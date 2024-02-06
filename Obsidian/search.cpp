@@ -647,7 +647,7 @@ namespace Search {
     if ( !IsPV
       && depth <= RfpMaxDepth
       && eval < SCORE_TB_WIN_IN_MAX_PLY
-      && eval - RfpDepthMul * (depth + BitCount(oppThreats.capSquares) - improving) >= beta)
+      && eval - RfpDepthMul * (depth + moreThanOne(oppThreats.capSquares) - improving) >= beta)
       return eval;
 
     // Null move pruning. When our evaluation is above beta, we give the opponent
