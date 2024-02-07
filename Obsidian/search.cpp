@@ -190,8 +190,6 @@ namespace Search {
     ply++;
     pos.doMove(move, dirtyPieces);
 
-    TT::prefetch(pos.key);
-
     newAcc.doUpdates(dirtyPieces, &oldAcc);
   }
 
