@@ -43,6 +43,10 @@ struct alignas(32) Position {
     return byColorBB[c] & byPieceBB[pt];
   }
 
+  inline Bitboard pieces(Color c, PieceType pt0, PieceType pt1) const {
+    return byColorBB[c] & (byPieceBB[pt0] | byPieceBB[pt1]);
+  }
+
   inline Bitboard pieces(PieceType pt0, PieceType pt1) const {
     return byPieceBB[pt0] | byPieceBB[pt1];
   }
@@ -138,6 +142,8 @@ struct alignas(32) Position {
   bool isPseudoLegal(Move move) const;
 
   bool isLegal(Move move) const;
+
+  void wasteTime();
 
   void doNullMove();
 

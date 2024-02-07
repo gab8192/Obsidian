@@ -218,6 +218,50 @@ void Position::doNullMove() {
   updateAttacksToKings();
 }
 
+
+Bitboard getPawnsAttacks(Bitboard bb, Color pawnsColor) {
+  if (pawnsColor == WHITE)
+    return ((bb & ~FILE_HBB) << 9) | ((bb & ~FILE_ABB) << 7);
+  else 
+    return ((bb & ~FILE_HBB) >> 7) | ((bb & ~FILE_ABB) >> 9);
+}
+
+struct Threats {
+  Bitboard byPawns;
+  Bitboard byMinors;
+  Bitboard byRooks;
+  // those pawns, minors, rooks, what pieces are they threatening?
+  Bitboard dangerBB;
+};
+
+void Position::wasteTime() {
+  Threats threatsCache;
+  const Color us = sideToMove, them = ~us;
+    const Bitboard occupied = pieces();
+
+    threatsCache.byPawns = getPawnsAttacks(pieces(them, PAWN), them);
+
+    threatsCache.byMinors = threatsCache.byPawns;
+
+    Bitboard knightsIter = pieces(them, KNIGHT);
+    while (knightsIter)
+      threatsCache.byMinors |= getKnightAttacks(popLsb(knightsIter));
+
+    Bitboard bishopsIter = pieces(them, BISHOP);
+    while (bishopsIter)
+      threatsCache.byMinors |= getBishopAttacks(popLsb(bishopsIter), occupied);
+
+    threatsCache.byRooks = threatsCache.byMinors;
+
+    Bitboard rooksIter = pieces(them, ROOK);
+    while (rooksIter)
+      threatsCache.byRooks |= getRookAttacks(popLsb(rooksIter), occupied);
+
+    threatsCache.dangerBB =  (pieces(us, QUEEN) & threatsCache.byRooks)
+                           | (pieces(us, ROOK) & threatsCache.byMinors)
+                           | (pieces(us, KNIGHT, BISHOP) & threatsCache.byPawns);
+}
+
 void Position::doMove(Move move, DirtyPieces& dp) {
 
   const Color us = sideToMove, them = ~us;
@@ -360,6 +404,8 @@ void Position::doMove(Move move, DirtyPieces& dp) {
   key ^= ZOBRIST_TEMPO;
 
   updateAttacksToKings();
+
+  wasteTime();
 
   if (newCastlingRights != castlingRights) {
     key ^= ZOBRIST_CASTLING[castlingRights ^ newCastlingRights];

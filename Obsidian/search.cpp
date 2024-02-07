@@ -174,7 +174,7 @@ namespace Search {
     keyStackHead--;
   }
 
-  void Thread::playMove(Position& pos, Move move, SearchInfo* ss) {
+  void Thread:: playMove(Position& pos, Move move, SearchInfo* ss) {
     nodesSearched++;
 
     bool isCap = pos.board[move_to(move)] != NO_PIECE;
@@ -418,8 +418,6 @@ namespace Search {
         if (moveStage > QUIETS)
           break;
       }
-
-     
 
       if (!pos.isLegal(move))
         continue;
