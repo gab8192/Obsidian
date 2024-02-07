@@ -148,7 +148,7 @@ namespace Search {
   bool Thread::usedMostOfTime() {
 
     if (Threads::getSearchSettings().hasTimeLimit())
-      return elapsedTime() >= maximumTime;
+      return elapsedTime() >= maxTime;
     
     else if (Threads::getSearchSettings().movetime) {
       clock_t timeLimit = Threads::getSearchSettings().movetime;
@@ -480,8 +480,9 @@ namespace Search {
     const bool IsRoot = IsPV && ply == 0;
 
     // Check time
+    ++maxTimeCounter;
     if ( this == Threads::mainThread() 
-      && (nodesSearched & 16383) == 0
+      && (maxTimeCounter & 16383) == 0
       && usedMostOfTime())
         Threads::stopSearch();
 
@@ -1012,7 +1013,7 @@ namespace Search {
 
     if (settings.hasTimeLimit())
       TimeMan::calcOptimumTime(settings, rootPos.sideToMove,
-                              &optimumTime, &maximumTime);
+                              &optimumTime, &maxTime);
 
     ply = 0;
 
