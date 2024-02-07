@@ -263,13 +263,13 @@ void Position::doMove(Move move, DirtyPieces& dp) {
     case PAWN: {
       halfMoveClock = 0;
 
-      if (to == from + 16) { // black can take en passant
-        epSquare = from + 8;
-        key ^= ZOBRIST_EP[fileOf(epSquare)];
-      }
-      else if (to == from - 16) { // white can take en passant
-        epSquare = from - 8;
-        key ^= ZOBRIST_EP[fileOf(epSquare)];
+      int push = (us == WHITE ? 8 : -8);
+
+      if (to == from + 2*push) {
+        if (getPawnAttacks(from + push, us) & pieces(them, PAWN)) {
+          epSquare = from + push;
+          key ^= ZOBRIST_EP[fileOf(epSquare)];
+        }
       }
       break;
     }
@@ -493,6 +493,9 @@ void Position::setToFen(const std::string& fen, NNUE::Accumulator& acc) {
     File epFile = File(fen[idx++] - 'a');
     Rank epRank = Rank(fen[idx++] - '1');      // should always be RANK_2 or RANK_7
     epSquare = makeSquare(epFile, epRank);
+
+    if (! (getPawnAttacks(epSquare, ~sideToMove) & pieces(sideToMove, PAWN)))
+      epSquare = SQ_NONE;
 
     idx++; // space
   }
