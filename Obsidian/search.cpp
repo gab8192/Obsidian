@@ -419,12 +419,12 @@ namespace Search {
           break;
       }
 
+      TT::prefetch(pos.keyAfter(move));
+
       if (!pos.isLegal(move))
         continue;
 
       foundLegalMoves = true;
-
-      TT::prefetch(pos.keyAfter(move));
 
       Position newPos = pos;
       playMove(newPos, move, ss);
@@ -701,10 +701,11 @@ namespace Search {
       MpStage moveStage;
 
       while (move = pcMovePicker.nextMove(&moveStage)) {
-        if (!pos.isLegal(move))
-          continue;
 
         TT::prefetch(pos.keyAfter(move));
+
+        if (!pos.isLegal(move))
+          continue;
 
         Position newPos = pos;
         playMove(newPos, move, ss);
@@ -758,10 +759,11 @@ namespace Search {
     while (move = movePicker.nextMove(& moveStage)) {
       if (move == excludedMove)
         continue;
+      
 
       if (!pos.isLegal(move))
         continue;
-      
+
       seenMoves++;
       
       bool isQuiet = pos.isQuiet(move);

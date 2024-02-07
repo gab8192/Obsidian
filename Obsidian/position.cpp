@@ -377,43 +377,22 @@ Key Position::keyAfter(Move move) const {
   if (epSquare != SQ_NONE)
     newKey ^= ZOBRIST_EP[fileOf(epSquare)];
 
-  CastlingRights newCastlingRights = castlingRights;
-
   const Square from = move_from(move);
   const Square to = move_to(move);
 
   const Piece movedPc = board[from];
   const Piece capturedPc = board[to];
 
-  if (capturedPc != NO_PIECE) {
+  if (capturedPc != NO_PIECE)
     newKey ^= ZOBRIST_PSQ[capturedPc][to];
-
-    if (piece_type(capturedPc) == ROOK)
-      newCastlingRights &= ROOK_SQR_TO_CR[to];
-  }
 
   newKey ^= ZOBRIST_PSQ[movedPc][from] ^ ZOBRIST_PSQ[movedPc][to];
 
-  switch (piece_type(movedPc)) {
-  case PAWN: {
+  if (piece_type(movedPc) == PAWN)
     if (to == from + 16 || to == from - 16)
       newKey ^= ZOBRIST_EP[fileOf(from)];
-    break;
-  }
-  case ROOK: {
-    newCastlingRights &= ROOK_SQR_TO_CR[from];
-    break;
-  }
-  case KING: {
-    if (us == WHITE) newCastlingRights &= ~WHITE_CASTLING;
-    else             newCastlingRights &= ~BLACK_CASTLING;
-    break;
-  }
-  }
 
   newKey ^= ZOBRIST_TEMPO;
-
-  newKey ^= ZOBRIST_CASTLING[castlingRights ^ newCastlingRights];
 
   return newKey;
 }
