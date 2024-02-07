@@ -66,6 +66,7 @@ void MovePicker::scoreQuiets() {
     }
 
     Square from = move_from(move), to = move_to(move);
+    PieceType movedType = piece_type(pos.board[from]);
     int chIndex = pieceTo(pos, move);
 
     int& score = quiets[i++].score;
@@ -75,10 +76,15 @@ void MovePicker::scoreQuiets() {
            + (ss - 2)->contHistory[chIndex]
            + (ss - 4)->contHistory[chIndex]/2;
 
-    if (threats.dangerBB & from) {
-      PieceType movedType = piece_type(pos.board[from]);
-      score += 16384 * (movedType == KNIGHT || movedType == BISHOP || movedType == ROOK);
-      score += 32768 * (movedType == QUEEN);
+    if (movedType == KNIGHT || movedType == BISHOP) {
+      score += 16384 * bool(threats.dangerBB & from);
+      score -= 16384 * bool(threats.byPawns & to);
+    } else if (movedType == ROOK) {
+      score += 16384 * bool(threats.dangerBB & from);
+      score -= 16384 * bool(threats.byMinors & to);
+    } else if (movedType == QUEEN) {
+      score += 32768 * bool(threats.dangerBB & from);
+      score -= 32768 * bool(threats.byRooks & to);
     }
   }
 }
