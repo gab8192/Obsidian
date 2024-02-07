@@ -55,7 +55,9 @@ int nextMoveIndex(MoveList& moveList, int scannedMoves) {
 }
 
 void MovePicker::scoreQuiets() {
+ 
   Threats& threats = pos.threats();
+  
   int i = 0;
   while (i < quiets.size()) {
     Move move = quiets[i].move;
@@ -77,14 +79,20 @@ void MovePicker::scoreQuiets() {
            + (ss - 4)->contHistory[chIndex]/2;
 
     if (movedType == KNIGHT || movedType == BISHOP) {
-      score += 16384 * bool(threats.dangerBB & from);
-      score -= 16384 * bool(threats.byPawns & to);
+      if (threats.byPawns & to)
+        score -= 15000;
+      else if (threats.dangerBB & from)
+        score += 15000;
     } else if (movedType == ROOK) {
-      score += 16384 * bool(threats.dangerBB & from);
-      score -= 16384 * bool(threats.byMinors & to);
+      if (threats.byMinors & to)
+        score -= 20000;
+      else if (threats.dangerBB & from)
+        score += 20000;
     } else if (movedType == QUEEN) {
-      score += 32768 * bool(threats.dangerBB & from);
-      score -= 32768 * bool(threats.byRooks & to);
+      if (threats.byRooks & to)
+        score -= 40000;
+      else if (threats.dangerBB & from)
+        score += 40000;
     }
   }
 }
