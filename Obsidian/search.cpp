@@ -419,10 +419,12 @@ namespace Search {
           break;
       }
 
-      TT::prefetch(pos.keyAfter(move));
+     
 
       if (!pos.isLegal(move))
         continue;
+
+         TT::prefetch(pos.keyAfter(move));
 
       foundLegalMoves = true;
 
@@ -702,10 +704,12 @@ namespace Search {
 
       while (move = pcMovePicker.nextMove(&moveStage)) {
 
-        TT::prefetch(pos.keyAfter(move));
+        
 
         if (!pos.isLegal(move))
           continue;
+
+          TT::prefetch(pos.keyAfter(move));
 
         Position newPos = pos;
         playMove(newPos, move, ss);
