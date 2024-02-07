@@ -182,17 +182,11 @@ namespace Search {
     ss->playedMove = move;
     keyStack[keyStackHead++] = pos.key;
 
-    NNUE::Accumulator& oldAcc = accumStack[accumStackHead];
     NNUE::Accumulator& newAcc = accumStack[++accumStackHead];
-
-    DirtyPieces dirtyPieces;
+    newAcc.updated = false;
 
     ply++;
-    pos.doMove(move, dirtyPieces);
-
-    TT::prefetch(pos.key);
-
-    newAcc.doUpdates(dirtyPieces, &oldAcc);
+    pos.doMove(move, newAcc.dirtyPieces);
   }
 
   void Thread::cancelMove() {
@@ -325,12 +319,27 @@ namespace Search {
     return int(nodesSearched & 2) - 1;
   }
 
+  Score Thread::doEvaluation(Position& pos) {
+    NNUE::Accumulator* head = & accumStack[accumStackHead];
+    NNUE::Accumulator* lastUpdated = head;
+
+    while (! lastUpdated->updated)
+      --lastUpdated;
+
+    while (lastUpdated != head) {
+      (lastUpdated+1)->doUpdates(lastUpdated);
+      ++lastUpdated;
+    }
+
+    return Eval::evaluate(pos, *head);
+  }
+
   template<bool IsPV>
   Score Thread::qsearch(Position& pos, Score alpha, Score beta, SearchInfo* ss) {
     
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY-4)
-      return pos.checkers ? SCORE_DRAW : Eval::evaluate(pos, accumStack[accumStackHead]);
+      return pos.checkers ? SCORE_DRAW : doEvaluation(pos);
 
     // Detect draw
     if (isRepetition(pos, ply) || pos.halfMoveClock >= 100)
@@ -371,7 +380,7 @@ namespace Search {
       if (ttStaticEval != SCORE_NONE)
         bestScore = ss->staticEval = ttStaticEval;
       else
-        bestScore = ss->staticEval = Eval::evaluate(pos, accumStack[accumStackHead]);
+        bestScore = ss->staticEval = doEvaluation(pos);
 
       // When tt bound allows it, use ttScore as a better standing pat
       if (ttBound & boundForTT(ttScore > bestScore))
@@ -414,6 +423,8 @@ namespace Search {
         continue;
 
       foundLegalMoves = true;
+
+      TT::prefetch(pos.keyAfter(move));
 
       Position newPos = pos;
       playMove(newPos, move, ss);
@@ -508,7 +519,7 @@ namespace Search {
 
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY - 4)
-      return pos.checkers ? SCORE_DRAW : Eval::evaluate(pos, accumStack[accumStackHead]);
+      return pos.checkers ? SCORE_DRAW : doEvaluation(pos);
 
     // Mate distance pruning
     alpha = std::max(alpha, ply - SCORE_MATE);
@@ -617,7 +628,7 @@ namespace Search {
       if (ttStaticEval != SCORE_NONE)
         ss->staticEval = eval = ttStaticEval;
       else
-        ss->staticEval = eval = Eval::evaluate(pos, accumStack[accumStackHead]);
+        ss->staticEval = eval = doEvaluation(pos);
 
       // When tt bound allows it, use ttScore as a better evaluation
       if (ttBound & boundForTT(ttScore > eval))
@@ -692,6 +703,8 @@ namespace Search {
       while (move = pcMovePicker.nextMove(&moveStage)) {
         if (!pos.isLegal(move))
           continue;
+
+        TT::prefetch(pos.keyAfter(move));
 
         Position newPos = pos;
         playMove(newPos, move, ss);
@@ -821,6 +834,8 @@ namespace Search {
         else if (cutNode)
           extension = -1;
       }
+
+      TT::prefetch(pos.keyAfter(move));
 
       Position newPos = pos;
       playMove(newPos, move, ss);
@@ -1002,6 +1017,7 @@ namespace Search {
 
     accumStackHead = 0;
     rootPos.updateAccumulator(accumStack[accumStackHead]);
+    accumStack[accumStackHead].updated = true;
 
     keyStackHead = 0;
     for (int i = 0; i < settings.prevPositions.size(); i++)

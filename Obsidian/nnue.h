@@ -38,13 +38,16 @@ namespace NNUE {
       alignas(Alignment) weight_t both[COLOR_NB * HiddenWidth];
     };
 
+    DirtyPieces dirtyPieces;
+    bool updated;
+
     void reset();
 
     void addPiece(Square sq, Piece pc);
 
     void movePiece(Square from, Square to, Piece pc);
 
-    void doUpdates(DirtyPieces dp, Accumulator* input);
+    void doUpdates(Accumulator* input);
   };
 
   void init();

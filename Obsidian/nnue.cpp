@@ -122,7 +122,8 @@ namespace NNUE {
     multiSubAdd<HiddenWidth*2>(both, both, featureAddress(pc, from), featureAddress(pc, to));
   }
 
-  void Accumulator::doUpdates(DirtyPieces dp, Accumulator* input) {
+  void Accumulator::doUpdates(Accumulator* input) {
+    const DirtyPieces dp = this->dirtyPieces;
     const Color side = piece_color(dp.sub0.pc);
     if (dp.type == DirtyPieces::CASTLING) {
       Accumulator* delta0 = cachedDelta(dp.sub0.sq, dp.add0.sq, dp.add0.pc);
@@ -158,6 +159,8 @@ namespace NNUE {
           featureAddress(dp.add0.pc, dp.add0.sq));
       }  
     }
+
+    updated = true;
   }
 
   void init() {
