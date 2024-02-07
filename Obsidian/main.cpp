@@ -13,7 +13,7 @@
 
 int main(int argc, char** argv)
 {
-  std::cout << "Obsidian " << engineVersion << " by gabe" << std::endl;
+  std::cout << "Obsidian " << engineVersion << " by Gabriele Lombardo" << std::endl;
 
   Zobrist::init();
 

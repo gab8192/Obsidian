@@ -344,12 +344,14 @@ namespace Search {
     Score ttScore = SCORE_NONE;
     Move ttMove = MOVE_NONE;
     Score ttStaticEval = SCORE_NONE;
+    bool ttPV = false;
 
     if (ttHit) {
       ttBound = ttEntry->getBound();
       ttScore = ttEntry->getScore(ply);
       ttMove = ttEntry->getMove();
       ttStaticEval = ttEntry->getStaticEval();
+      ttPV = ttEntry->wasPV();
     }
 
     // In non PV nodes, if tt bound allows it, return ttScore
@@ -443,7 +445,7 @@ namespace Search {
 
     ttEntry->store(pos.key,
       bestScore >= beta ? TT::FLAG_LOWER : TT::FLAG_UPPER,
-      0, bestMove, bestScore, ss->staticEval, ttHit && ttEntry->wasPV(), ply);
+      0, bestMove, bestScore, ss->staticEval, ttPV, ply);
 
     return bestScore;
   }
