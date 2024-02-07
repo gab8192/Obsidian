@@ -159,6 +159,7 @@ namespace Search {
   }
 
   void Thread::playNullMove(Position& pos, SearchInfo* ss) {
+    TT::prefetch(pos.key ^ ZOBRIST_TEMPO);
     nodesSearched++;
 
     ss->contHistory = contHistory[false][0];
