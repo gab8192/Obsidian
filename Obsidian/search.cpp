@@ -193,7 +193,7 @@ namespace Search {
 
     TT::prefetch(pos.key);
 
-    newAcc.doUpdates(dirtyPieces, &oldAcc);
+    newAcc.doUpdates(dirtyPieces, oldAcc);
   }
 
   void Thread::cancelMove() {

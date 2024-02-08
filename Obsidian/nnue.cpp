@@ -122,27 +122,27 @@ namespace NNUE {
     multiSubAdd<HiddenWidth*2>(both, both, featureAddress(pc, from), featureAddress(pc, to));
   }
 
-  void Accumulator::doUpdates(DirtyPieces dp, Accumulator* input) {
+  void Accumulator::doUpdates(DirtyPieces& dp, Accumulator& input) {
     const Color side = piece_color(dp.sub0.pc);
     if (dp.type == DirtyPieces::CASTLING) {
       Accumulator* delta0 = cachedDelta(dp.sub0.sq, dp.add0.sq, dp.add0.pc);
       Accumulator* delta1 = cachedDelta(dp.sub1.sq, dp.add1.sq, dp.add1.pc);
 
-      multiAdd<HiddenWidth>(colors[WHITE], input->colors[WHITE], delta0->colors[side]);
-      multiAdd<HiddenWidth>(colors[BLACK], input->colors[BLACK], delta0->colors[~side]);
+      multiAdd<HiddenWidth>(colors[WHITE], input.colors[WHITE], delta0->colors[side]);
+      multiAdd<HiddenWidth>(colors[BLACK], input.colors[BLACK], delta0->colors[~side]);
       multiAdd<HiddenWidth>(colors[WHITE], colors[WHITE], delta1->colors[side]);
       multiAdd<HiddenWidth>(colors[BLACK], colors[BLACK], delta1->colors[~side]);
 
     } else if (dp.type == DirtyPieces::CAPTURE) {
       if (dp.add0.pc == dp.sub0.pc) {
         Accumulator* delta = cachedDelta(dp.sub0.sq, dp.add0.sq, dp.add0.pc);
-        multiAdd<HiddenWidth>(colors[WHITE], input->colors[WHITE], delta->colors[side]);
-        multiAdd<HiddenWidth>(colors[BLACK], input->colors[BLACK], delta->colors[~side]);
+        multiAdd<HiddenWidth>(colors[WHITE], input.colors[WHITE], delta->colors[side]);
+        multiAdd<HiddenWidth>(colors[BLACK], input.colors[BLACK], delta->colors[~side]);
         
         multiSub<HiddenWidth*2>(both, both,
           featureAddress(dp.sub1.pc, dp.sub1.sq));
       } else {
-        multiSubAddSub<HiddenWidth*2>(both, input->both, 
+        multiSubAddSub<HiddenWidth*2>(both, input.both, 
           featureAddress(dp.sub0.pc, dp.sub0.sq),
           featureAddress(dp.add0.pc, dp.add0.sq),
           featureAddress(dp.sub1.pc, dp.sub1.sq));
@@ -150,10 +150,10 @@ namespace NNUE {
     } else {
       if (dp.add0.pc == dp.sub0.pc) {
         Accumulator* delta = cachedDelta(dp.sub0.sq, dp.add0.sq, dp.add0.pc);
-        multiAdd<HiddenWidth>(colors[WHITE], input->colors[WHITE], delta->colors[side]);
-        multiAdd<HiddenWidth>(colors[BLACK], input->colors[BLACK], delta->colors[~side]);
+        multiAdd<HiddenWidth>(colors[WHITE], input.colors[WHITE], delta->colors[side]);
+        multiAdd<HiddenWidth>(colors[BLACK], input.colors[BLACK], delta->colors[~side]);
       } else {
-        multiSubAdd<HiddenWidth*2>(both, input->both, 
+        multiSubAdd<HiddenWidth*2>(both, input.both, 
           featureAddress(dp.sub0.pc, dp.sub0.sq),
           featureAddress(dp.add0.pc, dp.add0.sq));
       }  

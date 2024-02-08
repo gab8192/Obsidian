@@ -44,7 +44,7 @@ namespace NNUE {
 
     void movePiece(Square from, Square to, Piece pc);
 
-    void doUpdates(DirtyPieces dp, Accumulator* input);
+    void doUpdates(DirtyPieces& dp, Accumulator& input);
   };
 
   void init();
