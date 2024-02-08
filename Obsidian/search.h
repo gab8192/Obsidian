@@ -71,6 +71,8 @@ namespace Search {
     volatile bool exitThread = false;
     std::thread thread;
 
+    SearchLoopInfo iterDeepening[MAX_PLY];
+    int completeDepth;
     uint64_t nodesSearched;
     uint64_t tbHits;
 

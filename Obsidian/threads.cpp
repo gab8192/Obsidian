@@ -43,6 +43,7 @@ namespace Threads {
     searchStopped = false;
     for (int i = 0; i < searchThreads.size(); i++) {
       Search::Thread* st = searchThreads[i];
+      st->completeDepth = 0; // set completeDepth to 0 as soon as possible
       st->searching = true;
       st->cv.notify_all();
     }

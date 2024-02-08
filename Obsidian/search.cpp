@@ -1023,8 +1023,6 @@ namespace Search {
 
     tbHits = 0;
 
-    SearchLoopInfo iterDeepening[MAX_PLY];
-
     for (int i = 0; i < MAX_PLY + SsOffset; i++) {
       searchStack[i].staticEval = SCORE_NONE;
 
@@ -1121,6 +1119,7 @@ namespace Search {
 
       iterDeepening[rootDepth].score = score;
       iterDeepening[rootDepth].bestMove = bestMove = ss->pv[0];
+      completeDepth = rootDepth;
 
       if (this != Threads::mainThread())
         continue;
@@ -1185,8 +1184,36 @@ namespace Search {
 
   bestMoveDecided:
 
-    if (this == Threads::mainThread() && !doingBench) 
-      std::cout << "bestmove " << UCI::moveToString(bestMove) << std::endl;
+    if (this == Threads::mainThread() && !doingBench) {
+      // Make sure other threads are stopped
+      Threads::stopSearch();
+
+      // Should I wait that all threads actually stop searching?
+
+      int bestDepth = completeDepth;
+      SearchLoopInfo* bestSli = & this->iterDeepening[completeDepth];
+
+      for (int i = 1; i < Threads::searchThreads.size(); i++) {
+        Search::Thread* st = Threads::searchThreads[i];
+        SearchLoopInfo* otherSli = & st->iterDeepening[st->completeDepth];
+
+        const bool cond1 =  st->completeDepth == bestDepth
+                         && otherSli->score > bestSli->score;
+
+        const bool cond2 =  otherSli->score >= SCORE_TB_WIN_IN_MAX_PLY
+                         && otherSli->score > bestSli->score;
+
+        const bool cond3 = st->completeDepth > bestDepth
+                         && (otherSli->score > bestSli->score || bestSli->score < SCORE_TB_WIN_IN_MAX_PLY);
+
+        if (cond1 || cond2 || cond3) {
+          bestDepth = st->completeDepth;
+          bestSli = otherSli;
+        }
+      }
+      
+      std::cout << "bestmove " << UCI::moveToString(bestSli->bestMove) << std::endl;
+    }
   }
 
   void Thread::idleLoop() {
