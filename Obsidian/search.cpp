@@ -1057,7 +1057,8 @@ namespace Search {
     }
     // When we have only 1 legal move, play it instantly
     if (rootMoves.size() == 1) {
-      bestMove = rootMoves[0].move;
+      completeDepth = 1;
+      iterDeepening[completeDepth].bestMove = bestMove = rootMoves[0].move;
       goto bestMoveDecided;
     }
 
