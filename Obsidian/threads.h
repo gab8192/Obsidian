@@ -16,6 +16,8 @@ namespace Threads {
 
   uint64_t totalTbHits();
 
+  void waitForHelpers();
+
   void waitForSearch();
 
   void startSearch(Search::Settings& settings);

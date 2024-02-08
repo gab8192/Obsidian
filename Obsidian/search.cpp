@@ -1189,6 +1189,8 @@ namespace Search {
       // Make sure other threads are stopped
       Threads::stopSearch();
 
+      Threads::waitForHelpers();
+
       // Should I wait that all threads actually stop searching?
 
       int bestDepth = completeDepth;
