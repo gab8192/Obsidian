@@ -64,55 +64,32 @@ void addPawnMoves(const Position& pos, Bitboard targets, MoveList* receiver, boo
   }
 }
 
-void addBlackPawnPromotions(const Position& pos, Bitboard targets, MoveList* receiver) {
+template<Color Us>
+void addPawnPromotions(const Position& pos, Bitboard targets, MoveList* receiver) {
+  constexpr Bitboard OurRank7BB = Us == WHITE ? Rank7BB : Rank2BB;
+  constexpr int Push = Us == WHITE ? 8 : -8;
+  constexpr int Diag0 = Us == WHITE ? 9 : -7;
+  constexpr int Diag1 = Us == WHITE ? 7 : -9;
+
   const Bitboard occupied = pos.pieces();
-  const Bitboard bPawns = pos.pieces(BLACK, PAWN) & Rank2BB;
+  const Bitboard ourPawns = pos.pieces(Us, PAWN) & OurRank7BB;
 
-  if (bPawns == 0)
-    return;
+  Bitboard push1 = shl<Push>(ourPawns) & (~occupied) & targets;
 
-  Bitboard advance1 = (bPawns >> 8) & (~occupied) & targets;
+  Bitboard cap0 = shl<Diag0>(ourPawns & ~FILE_HBB) & pos.pieces(~Us) & targets;
+  Bitboard cap1 = shl<Diag1>(ourPawns & ~FILE_ABB) & pos.pieces(~Us) & targets;
 
-  Bitboard captureEast = ((bPawns & ~FILE_HBB) >> 7) & pos.pieces(WHITE) & targets;
-  Bitboard captureWest = ((bPawns & ~FILE_ABB) >> 9) & pos.pieces(WHITE) & targets;
-
-  while (captureEast) {
-    Square dest = popLsb(captureEast);
-    addPromotionTypes(dest + 7, dest, receiver);
+  while (cap0) {
+    Square to = popLsb(cap0);
+    addPromotionTypes(to - Diag0, to, receiver);
   }
-  while (captureWest) {
-    Square dest = popLsb(captureWest);
-    addPromotionTypes(dest + 9, dest, receiver);
+  while (cap1) {
+    Square to = popLsb(cap1);
+    addPromotionTypes(to - Diag1, to, receiver);
   }
-  while (advance1) {
-    Square dest = popLsb(advance1);
-    addPromotionTypes(dest + 8, dest, receiver);
-  }
-}
-
-void addWhitePawnPromotions(const Position& pos, Bitboard targets, MoveList* receiver) {
-  const Bitboard occupied = pos.pieces();
-  const Bitboard wPawns = pos.pieces(WHITE, PAWN) & Rank7BB;
-
-  if (wPawns == 0)
-    return;
-
-  Bitboard advance1 = (wPawns << 8) & (~occupied) & targets;
-
-  Bitboard captureEast = ((wPawns & ~FILE_HBB) << 9) & pos.pieces(BLACK) & targets;
-  Bitboard captureWest = ((wPawns & ~FILE_ABB) << 7) & pos.pieces(BLACK) & targets;
-
-  while (captureEast) {
-    Square dest = popLsb(captureEast);
-    addPromotionTypes(dest - 9, dest, receiver);
-  }
-  while (captureWest) {
-    Square dest = popLsb(captureWest);
-    addPromotionTypes(dest - 7, dest, receiver);
-  }
-  while (advance1) {
-    Square dest = popLsb(advance1);
-    addPromotionTypes(dest - 8, dest, receiver);
+  while (push1) {
+    Square to = popLsb(push1);
+    addPromotionTypes(to - Push, to, receiver);
   }
 }
 
@@ -140,11 +117,11 @@ void getPseudoLegalMoves(const Position& pos, MoveList* moveList) {
 
   if (us == WHITE) {
     addPawnMoves<WHITE>(pos, targets, moveList);
-    addWhitePawnPromotions(pos, targets, moveList);
+    addPawnPromotions<WHITE>(pos, targets, moveList);
   }
   else {
     addPawnMoves<BLACK>(pos, targets, moveList);
-    addBlackPawnPromotions(pos, targets, moveList);
+    addPawnPromotions<BLACK>(pos, targets, moveList);
   }
 
   Bitboard knights = ourPieces & pos.pieces(KNIGHT) & ~pinned;
@@ -230,12 +207,12 @@ void getStageMoves(const Position& pos, bool quiets, MoveList* moveList) {
   if (us == WHITE) {
     addPawnMoves<WHITE>(pos, targets, moveList, !quiets);
     if (!quiets)
-      addWhitePawnPromotions(pos, promoTargets, moveList);
+      addPawnPromotions<WHITE>(pos, promoTargets, moveList);
   }
   else {
     addPawnMoves<BLACK>(pos, targets, moveList, !quiets);
     if (!quiets)
-      addBlackPawnPromotions(pos, promoTargets, moveList);
+      addPawnPromotions<BLACK>(pos, promoTargets, moveList);
   }
 
   if (quiets && !pos.checkers) {
