@@ -600,7 +600,7 @@ namespace Search {
       }
     }
 
-    (ss + 1)->killerMove = MOVE_NONE;
+    (ss + 2)->killerMove = MOVE_NONE;
     ss->doubleExt = (ss - 1)->doubleExt;
 
     // At root we always assume improving, for lmr purposes
