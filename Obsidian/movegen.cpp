@@ -23,14 +23,14 @@ Bitboard shl(Bitboard bb) {
 
 template<Color Us>
 void addPawnMoves(const Position& pos, Bitboard targets, MoveList* receiver, MoveGenFlags flags) {
+  constexpr Bitboard OurRank3BB = Us == WHITE ? Rank3BB : Rank6BB;
+  constexpr Bitboard OurRank7BB = Us == WHITE ? Rank7BB : Rank2BB;
+  constexpr int Push = Us == WHITE ? 8 : -8;
+  constexpr int Diag0 = Us == WHITE ? 9 : -7;
+  constexpr int Diag1 = Us == WHITE ? 7 : -9;
+  const Bitboard occupied = pos.pieces();
+  
   if (true) {
-    constexpr Bitboard OurRank3BB = Us == WHITE ? Rank3BB : Rank6BB;
-    constexpr Bitboard OurRank7BB = Us == WHITE ? Rank7BB : Rank2BB;
-    constexpr int Push = Us == WHITE ? 8 : -8;
-    constexpr int Diag0 = Us == WHITE ? 9 : -7;
-    constexpr int Diag1 = Us == WHITE ? 7 : -9;
-
-    const Bitboard occupied = pos.pieces();
     const Bitboard ourPawns = pos.pieces(Us, PAWN) & ~OurRank7BB;  
 
     Bitboard push1 = shl<Push>(ourPawns) & (~occupied);
@@ -65,12 +65,6 @@ void addPawnMoves(const Position& pos, Bitboard targets, MoveList* receiver, Mov
     }
   }
   if (flags & ADD_CAPTURES) {
-    constexpr Bitboard OurRank7BB = Us == WHITE ? Rank7BB : Rank2BB;
-    constexpr int Push = Us == WHITE ? 8 : -8;
-    constexpr int Diag0 = Us == WHITE ? 9 : -7;
-    constexpr int Diag1 = Us == WHITE ? 7 : -9;
-
-    const Bitboard occupied = pos.pieces();
     const Bitboard ourPawns = pos.pieces(Us, PAWN) & OurRank7BB;
 
     Bitboard push1 = shl<Push>(ourPawns) & (~occupied) & targets;
