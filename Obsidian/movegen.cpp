@@ -113,7 +113,7 @@ void getStageMoves(const Position& pos, MoveGenFlags flags, MoveList* moveList) 
     targets |= theirPieces;
 
   Bitboard kingTargets = targets;
-  Bitboard pawnTargets = targets | ourRank8BB;
+  Bitboard evasionFilter = ~0;
   
   if (pos.checkers) {
     if (moreThanOne(pos.checkers)) {
@@ -121,16 +121,16 @@ void getStageMoves(const Position& pos, MoveGenFlags flags, MoveList* moveList) 
       return;
     }
 
-    targets      &= BETWEEN_BB[ourKing][getLsb(pos.checkers)];
-    pawnTargets  &= BETWEEN_BB[ourKing][getLsb(pos.checkers)];
+    evasionFilter = BETWEEN_BB[ourKing][getLsb(pos.checkers)];
+    targets &= evasionFilter;
   }
 
   const Bitboard pinned = pos.blockersForKing[us] & ourPieces;
 
   if (us == WHITE)
-    addPawnMoves<WHITE>(pos, pawnTargets, moveList, flags);
+    addPawnMoves<WHITE>(pos, evasionFilter, moveList, flags);
   else
-    addPawnMoves<BLACK>(pos, pawnTargets, moveList, flags);
+    addPawnMoves<BLACK>(pos, evasionFilter, moveList, flags);
 
   if ((flags & ADD_QUIETS) && !pos.checkers) {
     if (us == WHITE) {
