@@ -28,14 +28,14 @@ void addPawnMoves(const Position& pos, Bitboard targets, MoveList* receiver, Mov
   constexpr int Push = Us == WHITE ? 8 : -8;
   constexpr int Diag0 = Us == WHITE ? 9 : -7;
   constexpr int Diag1 = Us == WHITE ? 7 : -9;
-  const Bitboard occupied = pos.pieces();
+  const Bitboard emptySquares = ~ pos.pieces();
   const Bitboard ourPawnsNot7 = pos.pieces(Us, PAWN) & ~OurRank7BB;  
   const Bitboard ourPawns7 = pos.pieces(Us, PAWN) & OurRank7BB;
 
   if (flags & ADD_QUIETS) {
     // Normal pushes
-    Bitboard push1 = shl<Push>(ourPawnsNot7) & (~occupied);
-    Bitboard push2 = shl<Push>(push1 & OurRank3BB) & (~occupied) & targets;
+    Bitboard push1 = shl<Push>(ourPawnsNot7) & emptySquares;
+    Bitboard push2 = shl<Push>(push1 & OurRank3BB) & emptySquares & targets;
     push1 &= targets;
 
     while (push1) {
@@ -75,7 +75,7 @@ void addPawnMoves(const Position& pos, Bitboard targets, MoveList* receiver, Mov
 
     // Promotions
     {
-      Bitboard push1 = shl<Push>(ourPawns7) & (~occupied) & targets;
+      Bitboard push1 = shl<Push>(ourPawns7) & emptySquares & targets;
 
       Bitboard cap0 = shl<Diag0>(ourPawns7 & ~FILE_HBB) & pos.pieces(~Us) & targets;
       Bitboard cap1 = shl<Diag1>(ourPawns7 & ~FILE_ABB) & pos.pieces(~Us) & targets;
