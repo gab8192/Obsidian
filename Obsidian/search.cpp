@@ -104,7 +104,7 @@ namespace Search {
   int64_t perft(Position& pos, int depth) {
 
     MoveList moves;
-    getPseudoLegalMoves(pos, &moves);
+    getStageMoves(pos, ADD_ALL_MOVES, &moves);
 
     if (depth <= 1) {
       int n = 0;
@@ -1049,7 +1049,7 @@ namespace Search {
     rootMoves = MoveList();
     {
       MoveList pseudoRootMoves;
-      getPseudoLegalMoves(rootPos, &pseudoRootMoves);
+      getStageMoves(rootPos, ADD_ALL_MOVES, &pseudoRootMoves);
 
       for (int i = 0; i < pseudoRootMoves.size(); i++) {
         Move move = pseudoRootMoves[i].move;

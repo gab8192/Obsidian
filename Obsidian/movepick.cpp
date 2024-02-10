@@ -122,7 +122,7 @@ Move MovePicker::nextMove(Stage* outStage) {
   }
   case GEN_CAPTURES: 
   {
-    getStageMoves(pos, false, &captures);
+    getStageMoves(pos, ADD_CAPTURES, &captures);
     scoreCaptures();
     ++stage;
     [[fallthrough]];
@@ -166,7 +166,7 @@ Move MovePicker::nextMove(Stage* outStage) {
   }
   case GEN_QUIETS: 
   {
-    getStageMoves(pos, true, &quiets);
+    getStageMoves(pos, ADD_QUIETS, &quiets);
     scoreQuiets();
 
     ++stage;

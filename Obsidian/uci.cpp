@@ -282,7 +282,7 @@ Move UCI::stringToMove(const Position& pos, std::string& str) {
     str[4] = char(tolower(str[4]));
 
   MoveList moves;
-  getPseudoLegalMoves(pos, &moves);
+  getStageMoves(pos, ADD_ALL_MOVES, &moves);
 
   for (const auto& m : moves)
     if (str == UCI::moveToString(m.move))
