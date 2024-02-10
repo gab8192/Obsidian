@@ -22,7 +22,7 @@ Bitboard shl(Bitboard bb) {
 }
 
 template<Color Us>
-void addPawnMoves(const Position& pos, Bitboard targets, MoveList* receiver, MoveGenFlags flags) {
+void addPawnMoves(const Position& pos, Bitboard inCheckFilter, MoveList* receiver, MoveGenFlags flags) {
   constexpr Bitboard OurRank3BB = Us == WHITE ? Rank3BB : Rank6BB;
   constexpr Bitboard OurRank7BB = Us == WHITE ? Rank7BB : Rank2BB;
   constexpr int Push = Us == WHITE ? 8 : -8;
@@ -35,8 +35,8 @@ void addPawnMoves(const Position& pos, Bitboard targets, MoveList* receiver, Mov
   if (flags & ADD_QUIETS) {
     // Normal pushes
     Bitboard push1 = shl<Push>(ourPawnsNot7) & emptySquares;
-    Bitboard push2 = shl<Push>(push1 & OurRank3BB) & emptySquares & targets;
-    push1 &= targets;
+    Bitboard push2 = shl<Push>(push1 & OurRank3BB) & emptySquares & inCheckFilter;
+    push1 &= inCheckFilter;
 
     while (push1) {
       Square to = popLsb(push1);
@@ -51,8 +51,8 @@ void addPawnMoves(const Position& pos, Bitboard targets, MoveList* receiver, Mov
   if (flags & ADD_CAPTURES) {
     // Normal captures
     {
-      Bitboard cap0 = shl<Diag0>(ourPawnsNot7 & ~FILE_HBB) & pos.pieces(~Us) & targets;
-      Bitboard cap1 = shl<Diag1>(ourPawnsNot7 & ~FILE_ABB) & pos.pieces(~Us) & targets;
+      Bitboard cap0 = shl<Diag0>(ourPawnsNot7 & ~FILE_HBB) & pos.pieces(~Us) & inCheckFilter;
+      Bitboard cap1 = shl<Diag1>(ourPawnsNot7 & ~FILE_ABB) & pos.pieces(~Us) & inCheckFilter;
       
       while (cap0) {
         Square to = popLsb(cap0);
@@ -75,10 +75,10 @@ void addPawnMoves(const Position& pos, Bitboard targets, MoveList* receiver, Mov
 
     // Promotions
     {
-      Bitboard push1 = shl<Push>(ourPawns7) & emptySquares & targets;
+      Bitboard push1 = shl<Push>(ourPawns7) & emptySquares & inCheckFilter;
 
-      Bitboard cap0 = shl<Diag0>(ourPawns7 & ~FILE_HBB) & pos.pieces(~Us) & targets;
-      Bitboard cap1 = shl<Diag1>(ourPawns7 & ~FILE_ABB) & pos.pieces(~Us) & targets;
+      Bitboard cap0 = shl<Diag0>(ourPawns7 & ~FILE_HBB) & pos.pieces(~Us) & inCheckFilter;
+      Bitboard cap1 = shl<Diag1>(ourPawns7 & ~FILE_ABB) & pos.pieces(~Us) & inCheckFilter;
 
       while (cap0) {
         Square to = popLsb(cap0);
@@ -99,12 +99,12 @@ void addPawnMoves(const Position& pos, Bitboard targets, MoveList* receiver, Mov
 void getStageMoves(const Position& pos, MoveGenFlags flags, MoveList* moveList) {
   
   const Color us = pos.sideToMove, them = ~us;
-
   const Square ourKing = pos.kingSquare(us);
   const Bitboard ourRank8BB = (us == WHITE ? Rank8BB : Rank1BB);
   const Bitboard ourPieces = pos.pieces(us);
   const Bitboard theirPieces = pos.pieces(them);
   const Bitboard occupied = ourPieces | theirPieces;
+  const Bitboard pinned = ourPieces & pos.blockersForKing[us];
 
   Bitboard targets = 0;
   if (flags & ADD_QUIETS)
@@ -112,8 +112,7 @@ void getStageMoves(const Position& pos, MoveGenFlags flags, MoveList* moveList) 
   if (flags & ADD_CAPTURES)
     targets |= theirPieces;
 
-  Bitboard kingTargets = targets;
-  Bitboard evasionFilter = ~0;
+  Bitboard inCheckFilter = ~0; // Normally all squares are allowed
   
   if (pos.checkers) {
     if (moreThanOne(pos.checkers)) {
@@ -121,16 +120,13 @@ void getStageMoves(const Position& pos, MoveGenFlags flags, MoveList* moveList) 
       return;
     }
 
-    evasionFilter = BETWEEN_BB[ourKing][getLsb(pos.checkers)];
-    targets &= evasionFilter;
+    inCheckFilter = BETWEEN_BB[ourKing][getLsb(pos.checkers)];
   }
 
-  const Bitboard pinned = pos.blockersForKing[us] & ourPieces;
-
   if (us == WHITE)
-    addPawnMoves<WHITE>(pos, evasionFilter, moveList, flags);
+    addPawnMoves<WHITE>(pos, inCheckFilter, moveList, flags);
   else
-    addPawnMoves<BLACK>(pos, evasionFilter, moveList, flags);
+    addPawnMoves<BLACK>(pos, inCheckFilter, moveList, flags);
 
   if ((flags & ADD_QUIETS) && !pos.checkers) {
     if (us == WHITE) {
@@ -159,16 +155,18 @@ void getStageMoves(const Position& pos, MoveGenFlags flags, MoveList* moveList) 
     }
   }
 
+  const Bitboard pieceTargets = targets & inCheckFilter;
+
   Bitboard knights = ourPieces & pos.pieces(KNIGHT) & ~pinned;
   while (knights) {
     Square from = popLsb(knights);
-    addNormalMovesToList(from, getKnightAttacks(from) & targets, moveList);
+    addNormalMovesToList(from, getKnightAttacks(from) & pieceTargets, moveList);
   }
 
   Bitboard bishops = ourPieces & pos.pieces(BISHOP, QUEEN);
   while (bishops) {
     Square from = popLsb(bishops);
-    Bitboard attacks = getBishopAttacks(from, occupied) & targets;
+    Bitboard attacks = getBishopAttacks(from, occupied) & pieceTargets;
     if (pinned & from)
       attacks &= LINE_BB[ourKing][from];
     addNormalMovesToList(from, attacks, moveList);
@@ -177,11 +175,11 @@ void getStageMoves(const Position& pos, MoveGenFlags flags, MoveList* moveList) 
   Bitboard rooks = ourPieces & pos.pieces(ROOK, QUEEN);
   while (rooks) {
     Square from = popLsb(rooks);
-    Bitboard attacks = getRookAttacks(from, occupied) & targets;
+    Bitboard attacks = getRookAttacks(from, occupied) & pieceTargets;
     if (pinned & from)
       attacks &= LINE_BB[ourKing][from];
     addNormalMovesToList(from, attacks, moveList);
   }
 
-  addNormalMovesToList(ourKing, getKingAttacks(ourKing) & kingTargets, moveList);
+  addNormalMovesToList(ourKing, getKingAttacks(ourKing) & targets, moveList);
 }
