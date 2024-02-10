@@ -4,27 +4,25 @@
 #include "movegen.h"
 #include "search.h"
 
-enum MpStage {
-  TT_MOVE,
-  GEN_CAPTURES,
-  GOOD_CAPTURES,
-  KILLER,
-  COUNTER,
-  GEN_QUIETS,
-  QUIETS,
-  BAD_CAPTURES,
-};
-
-enum SearchType {
-  PVS, QSEARCH, PROBCUT
-};
-
-ENABLE_INCR_OPERATORS_ON(MpStage);
-
 class MovePicker {
 public:
 
-  MpStage stage;
+  enum SearchType {
+    PVS, QSEARCH, PROBCUT
+  };
+
+  enum Stage {
+    PLAY_TT_MOVE,
+    GEN_CAPTURES,
+    PLAY_GOOD_CAPTURES,
+    PLAY_KILLER,
+    PLAY_COUNTER,
+    GEN_QUIETS,
+    PLAY_QUIETS,
+    PLAY_BAD_CAPTURES,
+  };
+
+  Stage stage;
   
   MovePicker(
     SearchType _searchType, Position& _pos,
@@ -33,7 +31,7 @@ public:
     int _seeMargin,
     Search::SearchInfo* _ss);
 
-  Move nextMove(MpStage* outStage);
+  Move nextMove(Stage* outStage);
 
 private:
   SearchType searchType;
@@ -59,3 +57,5 @@ private:
 
   void scoreQuiets();
 };
+
+ENABLE_INCR_OPERATORS_ON(MovePicker::Stage);
