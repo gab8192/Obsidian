@@ -23,73 +23,73 @@ Bitboard shl(Bitboard bb) {
 
 template<Color Us>
 void addPawnMoves(const Position& pos, Bitboard targets, MoveList* receiver, MoveGenFlags flags) {
-  constexpr Bitboard OurRank3BB = Us == WHITE ? Rank3BB : Rank6BB;
-  constexpr Bitboard OurRank7BB = Us == WHITE ? Rank7BB : Rank2BB;
-  constexpr int Push = Us == WHITE ? 8 : -8;
-  constexpr int Diag0 = Us == WHITE ? 9 : -7;
-  constexpr int Diag1 = Us == WHITE ? 7 : -9;
+  if (true) {
+    constexpr Bitboard OurRank3BB = Us == WHITE ? Rank3BB : Rank6BB;
+    constexpr Bitboard OurRank7BB = Us == WHITE ? Rank7BB : Rank2BB;
+    constexpr int Push = Us == WHITE ? 8 : -8;
+    constexpr int Diag0 = Us == WHITE ? 9 : -7;
+    constexpr int Diag1 = Us == WHITE ? 7 : -9;
 
-  const Bitboard occupied = pos.pieces();
-  const Bitboard ourPawns = pos.pieces(Us, PAWN) & ~OurRank7BB;  
+    const Bitboard occupied = pos.pieces();
+    const Bitboard ourPawns = pos.pieces(Us, PAWN) & ~OurRank7BB;  
 
-  Bitboard push1 = shl<Push>(ourPawns) & (~occupied);
-  Bitboard push2 = shl<Push>(push1 & OurRank3BB) & (~occupied) & targets;
-  push1 &= targets;
+    Bitboard push1 = shl<Push>(ourPawns) & (~occupied);
+    Bitboard push2 = shl<Push>(push1 & OurRank3BB) & (~occupied) & targets;
+    push1 &= targets;
 
-  Bitboard cap0 = shl<Diag0>(ourPawns & ~FILE_HBB) & pos.pieces(~Us) & targets;
-  Bitboard cap1 = shl<Diag1>(ourPawns & ~FILE_ABB) & pos.pieces(~Us) & targets;
+    Bitboard cap0 = shl<Diag0>(ourPawns & ~FILE_HBB) & pos.pieces(~Us) & targets;
+    Bitboard cap1 = shl<Diag1>(ourPawns & ~FILE_ABB) & pos.pieces(~Us) & targets;
 
-  while (push1) {
-    Square to = popLsb(push1);
-    receiver->add(createMove(to - Push, to, MT_NORMAL));
-  }
-  while (push2) {
-    Square to = popLsb(push2);
-    receiver->add(createMove(to - 2*Push, to, MT_NORMAL));
-  }
-  while (cap0) {
-    Square to = popLsb(cap0);
-    receiver->add(createMove(to - Diag0, to, MT_NORMAL));
-  }
-  while (cap1) {
-    Square to = popLsb(cap1);
-    receiver->add(createMove(to - Diag1, to, MT_NORMAL));
-  }
-  if (pos.epSquare != SQ_NONE && (flags & ADD_CAPTURES)) {
-    Bitboard ourPawnsTakeEp = ourPawns & getPawnAttacks(pos.epSquare, ~Us);
-    while (ourPawnsTakeEp) {
-      Square from = popLsb(ourPawnsTakeEp);
-      receiver->add(createMove(from, pos.epSquare, MT_EN_PASSANT));
+    while (push1) {
+      Square to = popLsb(push1);
+      receiver->add(createMove(to - Push, to, MT_NORMAL));
+    }
+    while (push2) {
+      Square to = popLsb(push2);
+      receiver->add(createMove(to - 2*Push, to, MT_NORMAL));
+    }
+    while (cap0) {
+      Square to = popLsb(cap0);
+      receiver->add(createMove(to - Diag0, to, MT_NORMAL));
+    }
+    while (cap1) {
+      Square to = popLsb(cap1);
+      receiver->add(createMove(to - Diag1, to, MT_NORMAL));
+    }
+    if (pos.epSquare != SQ_NONE && (flags & ADD_CAPTURES)) {
+      Bitboard ourPawnsTakeEp = ourPawns & getPawnAttacks(pos.epSquare, ~Us);
+      while (ourPawnsTakeEp) {
+        Square from = popLsb(ourPawnsTakeEp);
+        receiver->add(createMove(from, pos.epSquare, MT_EN_PASSANT));
+      }
     }
   }
-}
+  if (flags & ADD_CAPTURES) {
+    constexpr Bitboard OurRank7BB = Us == WHITE ? Rank7BB : Rank2BB;
+    constexpr int Push = Us == WHITE ? 8 : -8;
+    constexpr int Diag0 = Us == WHITE ? 9 : -7;
+    constexpr int Diag1 = Us == WHITE ? 7 : -9;
 
-template<Color Us>
-void addPawnPromotions(const Position& pos, Bitboard targets, MoveList* receiver) {
-  constexpr Bitboard OurRank7BB = Us == WHITE ? Rank7BB : Rank2BB;
-  constexpr int Push = Us == WHITE ? 8 : -8;
-  constexpr int Diag0 = Us == WHITE ? 9 : -7;
-  constexpr int Diag1 = Us == WHITE ? 7 : -9;
+    const Bitboard occupied = pos.pieces();
+    const Bitboard ourPawns = pos.pieces(Us, PAWN) & OurRank7BB;
 
-  const Bitboard occupied = pos.pieces();
-  const Bitboard ourPawns = pos.pieces(Us, PAWN) & OurRank7BB;
+    Bitboard push1 = shl<Push>(ourPawns) & (~occupied) & targets;
 
-  Bitboard push1 = shl<Push>(ourPawns) & (~occupied) & targets;
+    Bitboard cap0 = shl<Diag0>(ourPawns & ~FILE_HBB) & pos.pieces(~Us) & targets;
+    Bitboard cap1 = shl<Diag1>(ourPawns & ~FILE_ABB) & pos.pieces(~Us) & targets;
 
-  Bitboard cap0 = shl<Diag0>(ourPawns & ~FILE_HBB) & pos.pieces(~Us) & targets;
-  Bitboard cap1 = shl<Diag1>(ourPawns & ~FILE_ABB) & pos.pieces(~Us) & targets;
-
-  while (cap0) {
-    Square to = popLsb(cap0);
-    addPromotionTypes(to - Diag0, to, receiver);
-  }
-  while (cap1) {
-    Square to = popLsb(cap1);
-    addPromotionTypes(to - Diag1, to, receiver);
-  }
-  while (push1) {
-    Square to = popLsb(push1);
-    addPromotionTypes(to - Push, to, receiver);
+    while (cap0) {
+      Square to = popLsb(cap0);
+      addPromotionTypes(to - Diag0, to, receiver);
+    }
+    while (cap1) {
+      Square to = popLsb(cap1);
+      addPromotionTypes(to - Diag1, to, receiver);
+    }
+    while (push1) {
+      Square to = popLsb(push1);
+      addPromotionTypes(to - Push, to, receiver);
+    }
   }
 }
 
@@ -98,7 +98,7 @@ void getStageMoves(const Position& pos, MoveGenFlags flags, MoveList* moveList) 
   const Color us = pos.sideToMove, them = ~us;
 
   const Square ourKing = pos.kingSquare(us);
-
+  const Bitboard ourRank8BB = (us == WHITE ? Rank8BB : Rank1BB);
   const Bitboard ourPieces = pos.pieces(us);
   const Bitboard theirPieces = pos.pieces(them);
   const Bitboard occupied = ourPieces | theirPieces;
@@ -110,7 +110,7 @@ void getStageMoves(const Position& pos, MoveGenFlags flags, MoveList* moveList) 
     targets |= theirPieces;
 
   Bitboard kingTargets = targets;
-  Bitboard promoTargets = ~ourPieces;
+  Bitboard pawnTargets = targets | ourRank8BB;
   
   if (pos.checkers) {
     if (moreThanOne(pos.checkers)) {
@@ -119,21 +119,15 @@ void getStageMoves(const Position& pos, MoveGenFlags flags, MoveList* moveList) 
     }
 
     targets      &= BETWEEN_BB[ourKing][getLsb(pos.checkers)];
-    promoTargets &= BETWEEN_BB[ourKing][getLsb(pos.checkers)];
+    pawnTargets  &= BETWEEN_BB[ourKing][getLsb(pos.checkers)];
   }
 
   const Bitboard pinned = pos.blockersForKing[us] & ourPieces;
 
-  if (us == WHITE) {
-    addPawnMoves<WHITE>(pos, targets, moveList, flags);
-    if (flags & ADD_CAPTURES)
-      addPawnPromotions<WHITE>(pos, promoTargets, moveList);
-  }
-  else {
-    addPawnMoves<BLACK>(pos, targets, moveList, flags);
-    if (flags & ADD_CAPTURES)
-      addPawnPromotions<BLACK>(pos, promoTargets, moveList);
-  }
+  if (us == WHITE)
+    addPawnMoves<WHITE>(pos, pawnTargets, moveList, flags);
+  else
+    addPawnMoves<BLACK>(pos, pawnTargets, moveList, flags);
 
   if ((flags & ADD_QUIETS) && !pos.checkers) {
     if (us == WHITE) {
