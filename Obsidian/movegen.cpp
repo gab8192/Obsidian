@@ -29,16 +29,14 @@ void addPawnMoves(const Position& pos, Bitboard targets, MoveList* receiver, Mov
   constexpr int Diag0 = Us == WHITE ? 9 : -7;
   constexpr int Diag1 = Us == WHITE ? 7 : -9;
   const Bitboard occupied = pos.pieces();
-  
-  if (true) {
-    const Bitboard ourPawns = pos.pieces(Us, PAWN) & ~OurRank7BB;  
+  const Bitboard ourPawnsNot7 = pos.pieces(Us, PAWN) & ~OurRank7BB;  
+  const Bitboard ourPawns7 = pos.pieces(Us, PAWN) & OurRank7BB;
 
-    Bitboard push1 = shl<Push>(ourPawns) & (~occupied);
+  if (flags & ADD_QUIETS) {
+    // Normal pushes
+    Bitboard push1 = shl<Push>(ourPawnsNot7) & (~occupied);
     Bitboard push2 = shl<Push>(push1 & OurRank3BB) & (~occupied) & targets;
     push1 &= targets;
-
-    Bitboard cap0 = shl<Diag0>(ourPawns & ~FILE_HBB) & pos.pieces(~Us) & targets;
-    Bitboard cap1 = shl<Diag1>(ourPawns & ~FILE_ABB) & pos.pieces(~Us) & targets;
 
     while (push1) {
       Square to = popLsb(push1);
@@ -48,41 +46,52 @@ void addPawnMoves(const Position& pos, Bitboard targets, MoveList* receiver, Mov
       Square to = popLsb(push2);
       receiver->add(createMove(to - 2*Push, to, MT_NORMAL));
     }
-    while (cap0) {
-      Square to = popLsb(cap0);
-      receiver->add(createMove(to - Diag0, to, MT_NORMAL));
+  }
+
+  if (flags & ADD_CAPTURES) {
+    // Normal captures
+    {
+      Bitboard cap0 = shl<Diag0>(ourPawnsNot7 & ~FILE_HBB) & pos.pieces(~Us) & targets;
+      Bitboard cap1 = shl<Diag1>(ourPawnsNot7 & ~FILE_ABB) & pos.pieces(~Us) & targets;
+      
+      while (cap0) {
+        Square to = popLsb(cap0);
+        receiver->add(createMove(to - Diag0, to, MT_NORMAL));
+      }
+      while (cap1) {
+        Square to = popLsb(cap1);
+        receiver->add(createMove(to - Diag1, to, MT_NORMAL));
+      }
     }
-    while (cap1) {
-      Square to = popLsb(cap1);
-      receiver->add(createMove(to - Diag1, to, MT_NORMAL));
-    }
-    if (pos.epSquare != SQ_NONE && (flags & ADD_CAPTURES)) {
-      Bitboard ourPawnsTakeEp = ourPawns & getPawnAttacks(pos.epSquare, ~Us);
+
+    // En passant
+    if (pos.epSquare != SQ_NONE) {
+      Bitboard ourPawnsTakeEp = ourPawnsNot7 & getPawnAttacks(pos.epSquare, ~Us);
       while (ourPawnsTakeEp) {
         Square from = popLsb(ourPawnsTakeEp);
         receiver->add(createMove(from, pos.epSquare, MT_EN_PASSANT));
       }
     }
-  }
-  if (flags & ADD_CAPTURES) {
-    const Bitboard ourPawns = pos.pieces(Us, PAWN) & OurRank7BB;
 
-    Bitboard push1 = shl<Push>(ourPawns) & (~occupied) & targets;
+    // Promotions
+    {
+      Bitboard push1 = shl<Push>(ourPawns7) & (~occupied) & targets;
 
-    Bitboard cap0 = shl<Diag0>(ourPawns & ~FILE_HBB) & pos.pieces(~Us) & targets;
-    Bitboard cap1 = shl<Diag1>(ourPawns & ~FILE_ABB) & pos.pieces(~Us) & targets;
+      Bitboard cap0 = shl<Diag0>(ourPawns7 & ~FILE_HBB) & pos.pieces(~Us) & targets;
+      Bitboard cap1 = shl<Diag1>(ourPawns7 & ~FILE_ABB) & pos.pieces(~Us) & targets;
 
-    while (cap0) {
-      Square to = popLsb(cap0);
-      addPromotionTypes(to - Diag0, to, receiver);
-    }
-    while (cap1) {
-      Square to = popLsb(cap1);
-      addPromotionTypes(to - Diag1, to, receiver);
-    }
-    while (push1) {
-      Square to = popLsb(push1);
-      addPromotionTypes(to - Push, to, receiver);
+      while (cap0) {
+        Square to = popLsb(cap0);
+        addPromotionTypes(to - Diag0, to, receiver);
+      }
+      while (cap1) {
+        Square to = popLsb(cap1);
+        addPromotionTypes(to - Diag1, to, receiver);
+      }
+      while (push1) {
+        Square to = popLsb(push1);
+        addPromotionTypes(to - Push, to, receiver);
+      }
     }
   }
 }
