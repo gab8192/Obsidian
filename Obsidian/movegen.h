@@ -3,9 +3,10 @@
 #include "move.h"
 #include "position.h"
 
-/*
-* All legal moves, plus ones that could make the side to move fall in check
-*/
-void getPseudoLegalMoves(const Position& pos, MoveList* moveList);
+enum MoveGenFlags {
+    ADD_QUIETS = 1,
+    ADD_CAPTURES = 2, 
+    ADD_ALL_MOVES = ADD_QUIETS | ADD_CAPTURES
+};
 
-void getStageMoves(const Position& pos, bool quiets, MoveList* moveList);
+void getStageMoves(const Position& pos, MoveGenFlags flags, MoveList* moveList);

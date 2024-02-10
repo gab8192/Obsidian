@@ -104,7 +104,7 @@ namespace Search {
   int64_t perft(Position& pos, int depth) {
 
     MoveList moves;
-    getPseudoLegalMoves(pos, &moves);
+    getStageMoves(pos, ADD_ALL_MOVES, &moves);
 
     if (depth <= 1) {
       int n = 0;
@@ -391,7 +391,7 @@ namespace Search {
     bool visitTTMove = (pos.checkers || !pos.isQuiet(ttMove));
 
     MovePicker movePicker(
-      QSEARCH, pos,
+      MovePicker::QSEARCH, pos,
       visitTTMove ? ttMove : MOVE_NONE,
       MOVE_NONE, MOVE_NONE,
       mainHistory, captureHistory,
@@ -401,15 +401,14 @@ namespace Search {
     bool foundLegalMoves = false;
 
     // Visit moves
-
-    MpStage moveStage;
+    MovePicker::Stage moveStage;
     Move move;
 
     while (move = movePicker.nextMove(&moveStage)) {
 
       // Prevent qsearch from visiting bad captures and under-promotions
       if (bestScore > SCORE_TB_LOSS_IN_MAX_PLY) {
-        if (moveStage > QUIETS)
+        if (moveStage > MovePicker::PLAY_QUIETS)
           break;
       }
 
@@ -684,14 +683,14 @@ namespace Search {
       bool visitTTMove = ttMove && !pos.isQuiet(ttMove) && pos.seeGe(ttMove, pcSeeMargin);
 
       MovePicker pcMovePicker(
-        PROBCUT, pos,
+        MovePicker::PROBCUT, pos,
         visitTTMove ? ttMove : MOVE_NONE, MOVE_NONE, MOVE_NONE,
         mainHistory, captureHistory,
         pcSeeMargin,
         ss);
 
       Move move;
-      MpStage moveStage;
+      MovePicker::Stage moveStage;
 
       while (move = pcMovePicker.nextMove(&moveStage)) {
         if (!pos.isLegal(move))
@@ -735,7 +734,7 @@ namespace Search {
       ss->killerMove = MOVE_NONE;
 
     MovePicker movePicker(
-      PVS, pos,
+      MovePicker::PVS, pos,
       ttMove, ss->killerMove, counterMove,
       mainHistory, captureHistory,
       MpPvsSeeMargin,
@@ -744,7 +743,7 @@ namespace Search {
     // Visit moves
 
     Move move;
-    MpStage moveStage;
+    MovePicker::Stage moveStage;
 
     while (move = movePicker.nextMove(& moveStage)) {
       if (move == excludedMove)
@@ -766,7 +765,7 @@ namespace Search {
         && pos.hasNonPawns(pos.sideToMove))
       {
         // SEE (Static Exchange Evalution) pruning
-        if (moveStage > GOOD_CAPTURES) {
+        if (moveStage > MovePicker::PLAY_GOOD_CAPTURES) {
           int seeMargin = depth * (isQuiet ? PvsQuietSeeMargin : PvsCapSeeMargin);
           if (!pos.seeGe(move, seeMargin))
             continue;
@@ -775,7 +774,7 @@ namespace Search {
         if (isQuiet) {
           // Late move pruning. At low depths, only visit a few quiet moves
           if (seenMoves >= (depth * depth + LmpBase) / (2 - improving))
-            movePicker.stage = BAD_CAPTURES;
+            movePicker.stage = MovePicker::PLAY_BAD_CAPTURES;
 
           int lmrRed = lmrTable[depth][seenMoves] + !improving - history / EarlyLmrHistoryDiv;
           int lmrDepth = std::max(0, depth - lmrRed);
@@ -785,7 +784,7 @@ namespace Search {
           if (   lmrDepth <= FpMaxDepth 
               && !pos.checkers 
               && ss->staticEval + FpBase + FpDepthMul * lmrDepth <= alpha)
-            movePicker.stage = BAD_CAPTURES;
+            movePicker.stage = MovePicker::PLAY_BAD_CAPTURES;
         }
       }
 
@@ -851,10 +850,11 @@ namespace Search {
         R -= ttPV + IsPV;
 
         // Extend if this move is killer or counter
-        R -= (moveStage == KILLER || moveStage == COUNTER);
+        R -= (   moveStage == MovePicker::PLAY_KILLER 
+              || moveStage == MovePicker::PLAY_COUNTER);
 
         // Reduce if this is a bad capture (=> loses material)
-        R += (moveStage == BAD_CAPTURES);
+        R += (moveStage == MovePicker::PLAY_BAD_CAPTURES);
 
         // Reduce more if the expected best move is a capture
         R += ttMoveNoisy;
@@ -1049,7 +1049,7 @@ namespace Search {
     rootMoves = MoveList();
     {
       MoveList pseudoRootMoves;
-      getPseudoLegalMoves(rootPos, &pseudoRootMoves);
+      getStageMoves(rootPos, ADD_ALL_MOVES, &pseudoRootMoves);
 
       for (int i = 0; i < pseudoRootMoves.size(); i++) {
         Move move = pseudoRootMoves[i].move;

@@ -14,7 +14,7 @@ MovePicker::MovePicker(
   seeMargin(_seeMargin),
   ss(_ss)
 {
-  this->stage = pos.isPseudoLegal(ttMove) ? TT_MOVE : GEN_CAPTURES;
+  this->stage = pos.isPseudoLegal(ttMove) ? PLAY_TT_MOVE : GEN_CAPTURES;
 
   // Ensure tt, killer, and counter, are all different
 
@@ -110,31 +110,31 @@ void MovePicker::scoreCaptures() {
   }
 }
 
-Move MovePicker::nextMove(MpStage* outStage) {
+Move MovePicker::nextMove(Stage* outStage) {
   select:
   switch (stage)
   {
-  case TT_MOVE:
+  case PLAY_TT_MOVE:
   {
     ++stage;
-    *outStage = TT_MOVE;
+    *outStage = PLAY_TT_MOVE;
     return ttMove;
   }
   case GEN_CAPTURES: 
   {
-    getStageMoves(pos, false, &captures);
+    getStageMoves(pos, ADD_CAPTURES, &captures);
     scoreCaptures();
     ++stage;
     [[fallthrough]];
   }
-  case GOOD_CAPTURES:
+  case PLAY_GOOD_CAPTURES:
   {
     if (capIndex < captures.size()) {
       int moveI = nextMoveIndex(captures, capIndex);
       MoveScored move = captures[moveI];
       if (move.score > 0) { // good capture
         captures[moveI] = captures[capIndex++];
-        *outStage = GOOD_CAPTURES;
+        *outStage = PLAY_GOOD_CAPTURES;
         return move.move;
       }
     }
@@ -146,53 +146,53 @@ Move MovePicker::nextMove(MpStage* outStage) {
     ++stage;
     [[fallthrough]];
   }
-  case KILLER:
+  case PLAY_KILLER:
   {
     ++stage;
     if (pos.isQuiet(killerMove) && pos.isPseudoLegal(killerMove)) {
-      *outStage = KILLER;
+      *outStage = PLAY_KILLER;
       return killerMove;
     }
     [[fallthrough]];
   }
-  case COUNTER:
+  case PLAY_COUNTER:
   {
     ++stage;
     if (pos.isQuiet(counterMove) && pos.isPseudoLegal(counterMove)) {
-      *outStage = COUNTER;
+      *outStage = PLAY_COUNTER;
       return counterMove;
     }
     [[fallthrough]];
   }
   case GEN_QUIETS: 
   {
-    getStageMoves(pos, true, &quiets);
+    getStageMoves(pos, ADD_QUIETS, &quiets);
     scoreQuiets();
 
     ++stage;
     [[fallthrough]];
   }
-  case QUIETS: 
+  case PLAY_QUIETS: 
   {
     if (quietIndex < quiets.size()) {
       int moveI = nextMoveIndex(quiets, quietIndex);
       MoveScored move = quiets[moveI];
       quiets[moveI] = quiets[quietIndex++];
-      *outStage = QUIETS;
+      *outStage = PLAY_QUIETS;
       return move.move;
     }
 
     ++stage;
     [[fallthrough]];
   }
-  case BAD_CAPTURES:
+  case PLAY_BAD_CAPTURES:
   {
     // If any captures are left, they are all bad
     if (capIndex < captures.size()) {
       int moveI = nextMoveIndex(captures, capIndex);
       MoveScored move = captures[moveI];
       captures[moveI] = captures[capIndex++];
-      *outStage = BAD_CAPTURES;
+      *outStage = PLAY_BAD_CAPTURES;
       return move.move;
     }
   }
