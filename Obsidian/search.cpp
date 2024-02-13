@@ -1018,12 +1018,11 @@ namespace Search {
                               &optimumTime, &maxTime);
 
     ply = 0;
-
-    nodesSearched = 0;
-
     tbHits = 0;
+    nodesSearched = 0;
+    maxTimeCounter = 0;
 
-    SearchLoopInfo iterDeepening[MAX_PLY];
+    SearchLoopInfo idStack[MAX_PLY];
 
     for (int i = 0; i < MAX_PLY + SsOffset; i++) {
       searchStack[i].staticEval = SCORE_NONE;
@@ -1071,56 +1070,53 @@ namespace Search {
         break;
 
       Score score;
+      int window = AspWindowStartDelta;
+      Score alpha = -SCORE_INFINITE;
+      Score beta  = SCORE_INFINITE;
+      int failHighCount = 0;
+
       if (rootDepth >= AspWindowStartDepth) {
-        int windowSize = AspWindowStartDelta;
-        Score alpha = std::max(-SCORE_INFINITE, iterDeepening[rootDepth - 1].score - windowSize);
-        Score beta  = std::min( SCORE_INFINITE, iterDeepening[rootDepth - 1].score + windowSize);
+        alpha = std::max(-SCORE_INFINITE, idStack[rootDepth - 1].score - window);
+        beta  = std::min( SCORE_INFINITE, idStack[rootDepth - 1].score + window);
+      }
 
-        int failedHighCnt = 0;
-        while (true) {
+      while (true) {
 
-          int adjustedDepth = std::max(1, rootDepth - failedHighCnt);
+        int adjustedDepth = std::max(1, rootDepth - failHighCount);
 
-          score = negamax<true>(rootPos, alpha, beta, adjustedDepth, false, ss);
+        score = negamax<true>(rootPos, alpha, beta, adjustedDepth, false, ss);
 
-          if (Threads::isSearchStopped())
-            goto bestMoveDecided;
+        // Discard any result if search was abruptly stopped
+        if (Threads::isSearchStopped())
+          goto bestMoveDecided;
 
-          if (settings.nodes && nodesSearched >= settings.nodes)
-            break; // only break, in order to print info about the partial search we've done
+        if (settings.nodes && nodesSearched >= settings.nodes)
+          break; // only break, in order to print info about the partial search we've done
 
-          if (score >= SCORE_MATE_IN_MAX_PLY) {
-            beta = SCORE_INFINITE;
-            failedHighCnt = 0;
-          }
-
-          if (score <= alpha) {
-            beta = (alpha + beta) / 2;
-            alpha = std::max(-SCORE_INFINITE, alpha - windowSize);
-
-            failedHighCnt = 0;
-          }
-          else if (score >= beta) {
-            beta = std::min(SCORE_INFINITE, beta + windowSize);
-
-            failedHighCnt = std::min((int)AspFailHighReductionMax, failedHighCnt + 1);
-          }
-          else
-            break;
-
-          windowSize += windowSize / 3;
+        if (score >= SCORE_MATE_IN_MAX_PLY) {
+          beta = SCORE_INFINITE;
+          failHighCount = 0;
         }
-      }
-      else {
-        score = negamax<true>(rootPos, -SCORE_INFINITE, SCORE_INFINITE, rootDepth, false, ss);
+
+        if (score <= alpha) {
+          beta = (alpha + beta) / 2;
+          alpha = std::max(-SCORE_INFINITE, alpha - window);
+
+          failHighCount = 0;
+        }
+        else if (score >= beta) {
+          beta = std::min(SCORE_INFINITE, beta + window);
+
+          failHighCount = std::min((int)AspFailHighReductionMax, failHighCount + 1);
+        }
+        else
+          break;
+
+        window += window / 3;
       }
 
-      // It's super important to not update the best move if the search was abruptly stopped
-      if (Threads::isSearchStopped())
-        goto bestMoveDecided;
-
-      iterDeepening[rootDepth].score = score;
-      iterDeepening[rootDepth].bestMove = bestMove = ss->pv[0];
+      idStack[rootDepth].score = score;
+      idStack[rootDepth].bestMove = bestMove = ss->pv[0];
 
       if (this != Threads::mainThread())
         continue;
@@ -1154,7 +1150,7 @@ namespace Search {
         if (elapsedTime() >= (settings.movetime * 3) / 4)
           goto bestMoveDecided;
 
-      if (bestMove == iterDeepening[rootDepth - 1].bestMove)
+      if (bestMove == idStack[rootDepth - 1].bestMove)
         searchStability = std::min(searchStability + 1, 8);
       else
         searchStability = 0;
@@ -1175,7 +1171,7 @@ namespace Search {
 
         double stabilityFactor = (tm2/100.0) - searchStability * (tm3/100.0);
 
-        int scoreLoss = std::clamp<int>(iterDeepening[rootDepth - 1].score - score, lol0, lol1);
+        int scoreLoss = std::clamp<int>(idStack[rootDepth - 1].score - score, lol0, lol1);
         double scoreFactor     = (tm4/100.0) + scoreLoss * (tm5/1000.0);
 
         if (elapsed > stabilityFactor * nodesFactor * scoreFactor * optimumTime)
