@@ -131,7 +131,7 @@ Move MovePicker::nextMove(Stage* outStage) {
   {
     if (capIndex < captures.size()) {
       int moveI = nextMoveIndex(captures, capIndex);
-      MoveScored move = captures[moveI];
+      Move_Score move = captures[moveI];
       if (move.score > 0) { // good capture
         captures[moveI] = captures[capIndex++];
         *outStage = PLAY_GOOD_CAPTURES;
@@ -176,7 +176,7 @@ Move MovePicker::nextMove(Stage* outStage) {
   {
     if (quietIndex < quiets.size()) {
       int moveI = nextMoveIndex(quiets, quietIndex);
-      MoveScored move = quiets[moveI];
+      Move_Score move = quiets[moveI];
       quiets[moveI] = quiets[quietIndex++];
       *outStage = PLAY_QUIETS;
       return move.move;
@@ -190,7 +190,7 @@ Move MovePicker::nextMove(Stage* outStage) {
     // If any captures are left, they are all bad
     if (capIndex < captures.size()) {
       int moveI = nextMoveIndex(captures, capIndex);
-      MoveScored move = captures[moveI];
+      Move_Score move = captures[moveI];
       captures[moveI] = captures[capIndex++];
       *outStage = PLAY_BAD_CAPTURES;
       return move.move;

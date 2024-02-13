@@ -902,7 +902,7 @@ namespace Search {
       }
 
       if (IsRoot)
-        rootMovesNodes[rootMoves.indexOf(move)] += nodesSearched - oldNodesSearched;
+        rootMoves[rootMoves.indexOf(move)].nodes += nodesSearched - oldNodesSearched;
 
       if (score > bestScore) {
         bestScore = score;
@@ -1045,7 +1045,7 @@ namespace Search {
     clock_t startTimeForBench = timeMillis();
 
     // Setup root moves
-    rootMoves = MoveList();
+    rootMoves = RootMoveList();
     {
       MoveList pseudoRootMoves;
       getStageMoves(rootPos, ADD_ALL_MOVES, &pseudoRootMoves);
@@ -1056,14 +1056,17 @@ namespace Search {
           rootMoves.add(move);
       }
     }
+
+    for (int i = 0; i < rootMoves.size(); i++) {
+      rootMoves[i].nodes = 0;
+    }
+
     // When we have only 1 legal move, play it instantly
     if (rootMoves.size() == 1) {
       bestMove = rootMoves[0].move;
       goto bestMoveDecided;
     }
-
-    memset(rootMovesNodes, 0, sizeof(rootMovesNodes));
-
+    
     for (rootDepth = 1; rootDepth <= settings.depth; rootDepth++) {
 
       if (settings.nodes && nodesSearched >= settings.nodes)
@@ -1165,7 +1168,7 @@ namespace Search {
         if (usedMostOfTime())
           goto bestMoveDecided;
 
-        int bmNodes = rootMovesNodes[rootMoves.indexOf(bestMove)];
+        int bmNodes = rootMoves[rootMoves.indexOf(bestMove)].nodes;
         double notBestNodes = 1.0 - (bmNodes / double(nodesSearched));
         double nodesFactor     = (tm1/100.0) + notBestNodes * (tm0/100.0);
 

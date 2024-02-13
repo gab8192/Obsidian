@@ -95,8 +95,7 @@ namespace Search {
 
     SearchInfo searchStack[MAX_PLY + SsOffset];
 
-    MoveList rootMoves;
-    int rootMovesNodes[MAX_MOVES];
+    RootMoveList rootMoves;
 
     MainHistory mainHistory;
     CaptureHistory captureHistory;

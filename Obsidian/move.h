@@ -63,13 +63,21 @@ inline int move_from_to(Move m) {
   return m & 4095;
 }
 
-struct MoveScored {
+struct Move_Score {
   Move move;
   int score;
 };
 
+struct Move_Score_Nodes {
+  Move move;
+  int score;
+  int nodes;
+};
+
+// This is very poorly written. TODO merge the following 2 structs
+
 struct MoveList {
-  MoveScored moves[MAX_MOVES];
+  Move_Score moves[MAX_MOVES];
   int head;
 
   MoveList() : head(0) {
@@ -91,7 +99,7 @@ struct MoveList {
     return head;
   }
 
-  inline MoveScored& operator[](int index) {
+  inline Move_Score& operator[](int index) {
     return moves[index];
   }
 
@@ -99,11 +107,39 @@ struct MoveList {
     moves[index] = moves[--head];
   }
 
-  inline const MoveScored* begin() const {
+  inline const Move_Score* begin() const {
     return &moves[0];
   }
 
-  inline const MoveScored* end() const {
+  inline const Move_Score* end() const {
     return &moves[head];
+  }
+};
+
+struct RootMoveList {
+  Move_Score_Nodes moves[MAX_MOVES];
+  int head;
+
+  RootMoveList() : head(0) {
+  }
+
+  inline void add(Move move) {
+    moves[head++].move = move;
+  }
+
+  inline int indexOf(Move move) const {
+    for (int i = 0; i < size(); i++) {
+      if (moves[i].move == move)
+        return i;
+    }
+    return -1;
+  }
+
+  inline int size() const {
+    return head;
+  }
+
+  inline Move_Score_Nodes& operator[](int index) {
+    return moves[index];
   }
 };
