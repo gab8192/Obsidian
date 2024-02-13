@@ -64,6 +64,14 @@ namespace Search {
 
   int lmrTable[MAX_PLY][MAX_MOVES];
 
+  Settings::Settings() {
+    time[WHITE] = time[BLACK] = inc[WHITE] = inc[BLACK] = movetime = 0;
+    movestogo = 0;
+    depth = MAX_PLY-4; // no depth limit by default
+    multiPV = Options["MultiPV"];
+    nodes = 0;
+  }
+
   int pieceTo(Position& pos, Move m) {
     return pos.board[move_from(m)] * SQUARE_NB + move_to(m);
   }
@@ -143,6 +151,27 @@ namespace Search {
 
   int stat_bonus(int d) {
     return std::min(StatBonusQuad * d * d + StatBonusLinear * d, (int)StatBonusMax);
+  }
+
+  void Thread::sortRootMoves(int offset) {
+    for (int i = offset; i < rootMoves.size(); i++) {
+      int best = i;
+
+      for (int j = i + 1; j < rootMoves.size(); j++)
+        if (rootMoves[j].score > rootMoves[best].score)
+          best = j;
+
+      if (best != i)
+        std::swap(rootMoves[i], rootMoves[best]);
+    }
+  }
+
+  bool Thread::visitRootMove(Move move) {
+    for (int i = pvIdx; i < rootMoves.size(); i++) {
+      if (move == rootMoves[i].move)
+        return true;
+    }
+    return false;
   }
 
   bool Thread::usedMostOfTime() {
@@ -450,15 +479,15 @@ namespace Search {
   }
 
   void updatePV(SearchInfo* ss, int ply, Move move) {
+
+    ss->pvLength = (ss + 1)->pvLength;
+
     // set the move in the pv
     ss->pv[ply] = move;
 
     // copy all the moves that follow, from the child pv
-    for (int i = ply + 1; i < (ss + 1)->pvLength; i++) {
+    for (int i = ply + 1; i < (ss + 1)->pvLength; i++)
       ss->pv[i] = (ss + 1)->pv[i];
-    }
-
-    ss->pvLength = (ss + 1)->pvLength;
   }
 
   TbResult probeTB(Position& pos) {
@@ -541,8 +570,8 @@ namespace Search {
       ttPV |= ttEntry->wasPV();
     }
 
-    if (IsRoot && depth > 1)
-      ttMove = ss->pv[0];
+    if (IsRoot)
+      ttMove = rootMoves[pvIdx].move;
 
     const bool ttMoveNoisy = ttMove && !pos.isQuiet(ttMove);
 
@@ -751,6 +780,9 @@ namespace Search {
 
       if (!pos.isLegal(move))
         continue;
+
+      if (IsRoot && !visitRootMove(move))
+        continue;
       
       seenMoves++;
       
@@ -901,8 +933,21 @@ namespace Search {
           captures[captureCount++] = move;
       }
 
-      if (IsRoot)
-        rootMoves[rootMoves.indexOf(move)].nodes += nodesSearched - oldNodesSearched;
+      if (IsRoot) {
+        RootMove& rm = rootMoves[rootMoves.indexOf(move)];
+        rm.nodes += nodesSearched - oldNodesSearched;
+
+        if (playedMoves == 1 || score > alpha) {
+          rm.score = score;
+
+          rm.pvLength = (ss+1)->pvLength;
+          rm.pv[0] = move;
+          for (int i = 1; i < (ss+1)->pvLength; i++)
+            rm.pv[i] = (ss+1)->pv[i];
+        }
+        else // this move gave an upper bound, so we don't know how to sort it
+          rm.score = - SCORE_INFINITE; 
+      }
 
       if (score > bestScore) {
         bestScore = score;
@@ -910,7 +955,7 @@ namespace Search {
         if (bestScore > alpha) {
           bestMove = move;
 
-          if (IsPV)
+          if (IsPV && !IsRoot)
             updatePV(ss, ply, bestMove);
 
           // Always true in NonPV nodes
@@ -956,7 +1001,7 @@ namespace Search {
     bestScore = std::min(bestScore, maxScore);
 
     // Store to TT
-    if (!excludedMove) {
+    if (!excludedMove && !(IsRoot && pvIdx > 0)) {
       TT::Flag flag;
       if (bestScore >= beta)
         flag = TT::FLAG_LOWER;
@@ -969,14 +1014,14 @@ namespace Search {
     return bestScore;
   }
 
-  std::string getPvString(SearchInfo* ss) {
+  std::string getPvString(RootMove& rm) {
 
     std::ostringstream output;
 
-    output << UCI::moveToString(ss->pv[0]);
+    output << UCI::moveToString(rm.move);
 
-    for (int i = 1; i < ss->pvLength; i++) {
-      Move move = ss->pv[i];
+    for (int i = 1; i < rm.pvLength; i++) {
+      Move move = rm.pv[i];
       if (!move)
         break;
 
@@ -1010,8 +1055,6 @@ namespace Search {
     keyStackHead = 0;
     for (int i = 0; i < settings.prevPositions.size(); i++)
       keyStack[keyStackHead++] = settings.prevPositions[i];
-
-    Move bestMove;
 
     if (settings.hasTimeLimit())
       TimeMan::calcOptimumTime(settings, rootPos.sideToMove,
@@ -1057,89 +1100,97 @@ namespace Search {
       }
     }
 
-    for (int i = 0; i < rootMoves.size(); i++) {
+    // Search starting. Zero out the nodes of each root move
+    for (int i = 0; i < rootMoves.size(); i++)
       rootMoves[i].nodes = 0;
-    }
 
-    // When we have only 1 legal move, play it instantly
-    if (rootMoves.size() == 1) {
-      bestMove = rootMoves[0].move;
-      goto bestMoveDecided;
-    }
-    
+    const int multiPV = std::min(settings.multiPV, rootMoves.size());
+
     for (rootDepth = 1; rootDepth <= settings.depth; rootDepth++) {
 
-      if (settings.nodes && nodesSearched >= settings.nodes)
+      // Only one legal move? For analysis purposes search, but with a limited depth
+      if (rootDepth > 10 && rootMoves.size() == 1)
         break;
 
-      Score score;
-      int window = AspWindowStartDelta;
-      Score alpha = -SCORE_INFINITE;
-      Score beta  = SCORE_INFINITE;
-      int failHighCount = 0;
+      for (pvIdx = 0; pvIdx < multiPV; pvIdx++) {
+        Score score;
+        int window = AspWindowStartDelta;
+        Score alpha = -SCORE_INFINITE;
+        Score beta  = SCORE_INFINITE;
+        int failHighCount = 0;
 
-      if (rootDepth >= AspWindowStartDepth) {
-        alpha = std::max(-SCORE_INFINITE, idStack[rootDepth - 1].score - window);
-        beta  = std::min( SCORE_INFINITE, idStack[rootDepth - 1].score + window);
+        if (rootDepth >= AspWindowStartDepth) {
+          alpha = std::max(-SCORE_INFINITE, rootMoves[pvIdx].score - window);
+          beta  = std::min( SCORE_INFINITE, rootMoves[pvIdx].score + window);
+        }
+
+        while (true) {
+
+          int adjustedDepth = std::max(1, rootDepth - failHighCount);
+
+          score = negamax<true>(rootPos, alpha, beta, adjustedDepth, false, ss);
+
+          // Discard any result if search was abruptly stopped
+          if (Threads::isSearchStopped())
+            goto bestMoveDecided;
+
+          sortRootMoves(pvIdx);
+
+          if (score >= SCORE_MATE_IN_MAX_PLY) {
+            beta = SCORE_INFINITE;
+            failHighCount = 0;
+          }
+
+          if (score <= alpha) {
+            beta = (alpha + beta) / 2;
+            alpha = std::max(-SCORE_INFINITE, alpha - window);
+
+            failHighCount = 0;
+          }
+          else if (score >= beta) {
+            beta = std::min(SCORE_INFINITE, beta + window);
+
+            failHighCount = std::min((int)AspFailHighReductionMax, failHighCount + 1);
+          }
+          else
+            break;
+
+          window += window / 3;
+        }
+
+        sortRootMoves(0);
       }
 
-      while (true) {
-
-        int adjustedDepth = std::max(1, rootDepth - failHighCount);
-
-        score = negamax<true>(rootPos, alpha, beta, adjustedDepth, false, ss);
-
-        // Discard any result if search was abruptly stopped
-        if (Threads::isSearchStopped())
-          goto bestMoveDecided;
-
-        if (settings.nodes && nodesSearched >= settings.nodes)
-          break; // only break, in order to print info about the partial search we've done
-
-        if (score >= SCORE_MATE_IN_MAX_PLY) {
-          beta = SCORE_INFINITE;
-          failHighCount = 0;
-        }
-
-        if (score <= alpha) {
-          beta = (alpha + beta) / 2;
-          alpha = std::max(-SCORE_INFINITE, alpha - window);
-
-          failHighCount = 0;
-        }
-        else if (score >= beta) {
-          beta = std::min(SCORE_INFINITE, beta + window);
-
-          failHighCount = std::min((int)AspFailHighReductionMax, failHighCount + 1);
-        }
-        else
-          break;
-
-        window += window / 3;
-      }
+      const Move bestMove = rootMoves[0].move;
+      const Score score = rootMoves[0].score;
 
       idStack[rootDepth].score = score;
-      idStack[rootDepth].bestMove = bestMove = ss->pv[0];
+      idStack[rootDepth].bestMove = bestMove;
 
       if (this != Threads::mainThread())
         continue;
 
-      clock_t elapsed = elapsedTime();
-      clock_t elapsedStrict = timeMillis() - startTimeForBench;
+      const clock_t elapsed = elapsedTime();
+      const clock_t elapsedStrict = timeMillis() - startTimeForBench;
 
-      if (!doingBench) {
+      for (int i = 0; i < multiPV; i++) {
+        if (doingBench)
+          break; // save indentation
+
         std::ostringstream infoStr;
         infoStr
           << "info"
           << " depth " << rootDepth
-          << " score " << UCI::scoreToString(score)
+          << " score " << UCI::scoreToString(rootMoves[i].score)
           << " nodes " << Threads::totalNodes()
           << " nps " << (Threads::totalNodes() * 1000ULL) / std::max(elapsedStrict, 1L)
           << " tbhits " << Threads::totalTbHits()
           << " time " << elapsed
-          << " pv " << getPvString(ss);
+          << " pv " << getPvString(rootMoves[i]);
+
         std::cout << infoStr.str() << std::endl;
       }
+        
 
       // Stop searching if we can deliver a forced checkmate.
       // No need to stop if we are getting checkmated, instead keep searching,
@@ -1185,7 +1236,7 @@ namespace Search {
   bestMoveDecided:
 
     if (this == Threads::mainThread() && !doingBench) 
-      std::cout << "bestmove " << UCI::moveToString(bestMove) << std::endl;
+      std::cout << "bestmove " << UCI::moveToString(rootMoves[0].move) << std::endl;
   }
 
   void Thread::idleLoop() {

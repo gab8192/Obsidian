@@ -46,11 +46,12 @@ void init(OptionsMap& o) {
 
   constexpr int MaxHashMB = 33554432;
 
-  o["Hash"]                  << Option(64, 1, MaxHashMB, hashChanged);
-  o["Clear Hash"]            << Option(clearHashClicked);
-  o["Threads"]               << Option(1, 1, 1024, threadsChanged);
-  o["Move Overhead"]         << Option(10, 0, 1000);
-  o["SyzygyPath"]            << Option("", syzygyPathChanged);
+  o["Hash"]              << Option(64, 1, MaxHashMB, hashChanged);
+  o["Clear Hash"]        << Option(clearHashClicked);
+  o["Threads"]           << Option(1, 1, 1024, threadsChanged);
+  o["Move Overhead"]     << Option(10, 0, 1000);
+  o["SyzygyPath"]        << Option("", syzygyPathChanged);
+  o["MultiPV"]           << Option(1, 1, MAX_MOVES);
 }
 
 

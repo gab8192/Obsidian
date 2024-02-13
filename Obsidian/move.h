@@ -68,10 +68,13 @@ struct Move_Score {
   int score;
 };
 
-struct Move_Score_Nodes {
+struct RootMove {
   Move move;
   int score;
   int nodes;
+
+  Move pv[MAX_PLY];
+  int pvLength;
 };
 
 // This is very poorly written. TODO merge the following 2 structs
@@ -117,7 +120,7 @@ struct MoveList {
 };
 
 struct RootMoveList {
-  Move_Score_Nodes moves[MAX_MOVES];
+  RootMove moves[MAX_MOVES];
   int head;
 
   RootMoveList() : head(0) {
@@ -139,7 +142,15 @@ struct RootMoveList {
     return head;
   }
 
-  inline Move_Score_Nodes& operator[](int index) {
+  inline RootMove& operator[](int index) {
     return moves[index];
+  }
+
+  inline const RootMove* begin() const {
+    return &moves[0];
+  }
+
+  inline const RootMove* end() const {
+    return &moves[head];
   }
 };

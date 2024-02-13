@@ -16,18 +16,14 @@ namespace Search {
 
     clock_t time[COLOR_NB], inc[COLOR_NB], movetime, startTime;
     int movestogo, depth;
+    int multiPV;
     int64_t nodes;
 
     Position position;
 
     std::vector<uint64_t> prevPositions;
 
-    Settings() {
-      time[WHITE] = time[BLACK] = inc[WHITE] = inc[BLACK] = movetime = 0;
-      movestogo = 0;
-      depth = MAX_PLY-4; // no depth limit by default
-      nodes = 0;
-    }
+    Settings();
 
     inline bool hasTimeLimit() const {
       return time[WHITE] || time[BLACK];
@@ -96,11 +92,16 @@ namespace Search {
     SearchInfo searchStack[MAX_PLY + SsOffset];
 
     RootMoveList rootMoves;
+    int pvIdx;
 
     MainHistory mainHistory;
     CaptureHistory captureHistory;
     ContinuationHistory contHistory;
     CounterMoveHistory counterMoveHistory;
+
+    void sortRootMoves(int offset);
+
+    bool visitRootMove(Move move);
 
     bool usedMostOfTime();
 
