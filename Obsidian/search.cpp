@@ -68,7 +68,6 @@ namespace Search {
     time[WHITE] = time[BLACK] = inc[WHITE] = inc[BLACK] = movetime = 0;
     movestogo = 0;
     depth = MAX_PLY-4; // no depth limit by default
-    multiPV = Options["MultiPV"];
     nodes = 0;
   }
 
@@ -1104,7 +1103,7 @@ namespace Search {
     for (int i = 0; i < rootMoves.size(); i++)
       rootMoves[i].nodes = 0;
 
-    const int multiPV = std::min(settings.multiPV, rootMoves.size());
+    const int multiPV = std::min(int(Options["MultiPV"]), rootMoves.size());
 
     for (rootDepth = 1; rootDepth <= settings.depth; rootDepth++) {
 

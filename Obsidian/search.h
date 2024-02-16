@@ -16,7 +16,6 @@ namespace Search {
 
     clock_t time[COLOR_NB], inc[COLOR_NB], movetime, startTime;
     int movestogo, depth;
-    int multiPV;
     int64_t nodes;
 
     Position position;
