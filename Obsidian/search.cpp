@@ -1236,13 +1236,6 @@ namespace Search {
 
         std::cout << infoStr.str() << std::endl;
       }
-        
-
-      // Stop searching if we can deliver a forced checkmate.
-      // No need to stop if we are getting checkmated, instead keep searching,
-      // because we may have overlooked a way out of checkmate due to pruning
-      if (score >= SCORE_MATE_IN_MAX_PLY)
-        goto bestMoveDecided;
 
       // When playing in movetime mode, stop if we've used 75% time of movetime,
       // because we will probably not hit the next depth in time
