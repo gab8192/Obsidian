@@ -71,6 +71,29 @@ namespace Search {
     nodes = 0;
   }
 
+  Move moveFromTbProbeRoot(Position& pos, unsigned tbResult) {
+
+    constexpr PieceType PROMO_TYPE_TABLE[5] = {
+      NO_PIECE_TYPE,
+      QUEEN,
+      ROOK,
+      BISHOP,
+      KNIGHT
+    };
+
+    const Square from = (Square) TB_GET_FROM(tbResult);
+    const Square to = (Square) TB_GET_TO(tbResult);
+    const PieceType promoType = PROMO_TYPE_TABLE[TB_GET_PROMOTES(tbResult)];
+
+    if (promoType)
+      return createPromoMove(from, to, promoType);
+
+    if (TB_GET_EP(tbResult))
+      return createMove(from, to, MT_EN_PASSANT);
+
+    return createMove(from, to, MT_NORMAL);
+  }
+
   int pieceTo(Position& pos, Move m) {
     return pos.board[move_from(m)] * SQUARE_NB + move_to(m);
   }
@@ -493,13 +516,13 @@ namespace Search {
     if (BitCount(pos.pieces()) > TB_LARGEST)
         return TB_RESULT_FAILED;
 
-    const Square epSquare = pos.epSquare == SQ_NONE ? SQ_A1 : pos.epSquare;
-
     return tb_probe_wdl(
       pos.pieces(WHITE), pos.pieces(BLACK),
       pos.pieces(KING), pos.pieces(QUEEN), pos.pieces(ROOK),
       pos.pieces(BISHOP), pos.pieces(KNIGHT), pos.pieces(PAWN),
-      pos.halfMoveClock, pos.castlingRights, epSquare,
+      pos.halfMoveClock, 
+      pos.castlingRights, 
+      pos.epSquare == SQ_NONE ? 0 : pos.epSquare,
       pos.sideToMove == WHITE);
   }
 
@@ -1099,6 +1122,29 @@ namespace Search {
       }
     }
 
+    if ( this == Threads::mainThread()
+      && BitCount(rootPos.pieces()) <= TB_LARGEST) {
+
+      unsigned result = tb_probe_root(
+          rootPos.pieces(WHITE), rootPos.pieces(BLACK),
+          rootPos.pieces(KING), rootPos.pieces(QUEEN), rootPos.pieces(ROOK),
+          rootPos.pieces(BISHOP), rootPos.pieces(KNIGHT), rootPos.pieces(PAWN),
+          rootPos.halfMoveClock, 
+          rootPos.castlingRights, 
+          rootPos.epSquare == SQ_NONE ? 0 : rootPos.epSquare,
+          rootPos.sideToMove == WHITE,
+          nullptr);
+
+      if (result != TB_RESULT_FAILED) {
+        Move tbBestMove = moveFromTbProbeRoot(rootPos, result);
+
+        // Clear all the root moves, and set the only root move as the tablebases best move
+        // For analysis purposes, we don't want to instantly just print the move (though we could)
+        rootMoves = RootMoveList();
+        rootMoves.add(tbBestMove);
+      }
+    }
+
     // Search starting. Zero out the nodes of each root move
     for (int i = 0; i < rootMoves.size(); i++)
       rootMoves[i].nodes = 0;
@@ -1234,6 +1280,8 @@ namespace Search {
     }
 
   bestMoveDecided:
+
+  // NOTE: When implementing best thread selection, don't mess up with tablebases dtz stuff
 
     if (this == Threads::mainThread() && !doingBench) 
       std::cout << "bestmove " << UCI::moveToString(rootMoves[0].move) << std::endl;
