@@ -12,30 +12,17 @@ namespace NNUE {
   constexpr int WeightsPerVec = sizeof(SIMD::Vec) / sizeof(weight_t);
 
   struct {
-    alignas(SIMD::Alignment) weight_t OldFeatureWeights[2][6][64][HiddenWidth];
+    alignas(SIMD::Alignment) weight_t FeatureWeights[2][6][64][HiddenWidth];
     alignas(SIMD::Alignment) weight_t FeatureBiases[HiddenWidth];
     alignas(SIMD::Alignment) weight_t OutputWeights[2 * HiddenWidth];
                              weight_t OutputBias;
   } Content;
 
-  alignas(SIMD::Alignment) weight_t NewFeatureWeights[PIECE_NB][64][2][HiddenWidth];
-
-  inline weight_t* featureAddress(Piece pc, Square sq) {
-    return NewFeatureWeights
-            [pc]
-            [sq]
-            [WHITE];
-  }
-
-  NNUE::Accumulator deltaTable[6][SQUARE_NB][SQUARE_NB];
-
-  Accumulator* cachedDelta(Square from, Square to, Piece pc) {
-    if (piece_color(pc) == WHITE) {
-      return & deltaTable[pc-1][from][to];
-    }
-    else {
-      return & deltaTable[pc-9][from^56][to^56];
-    }
+  inline weight_t* featureAddress(Color pov, Piece pc, Square sq) {
+    return Content.FeatureWeights
+            [pov != piece_color(pc)]
+            [piece_type(pc)-1]
+            [relative_square(pov, sq)];
   }
 
   template <int InputSize>
@@ -114,49 +101,38 @@ namespace NNUE {
   }
 
   void Accumulator::addPiece(Square sq, Piece pc) {
-    multiAdd<HiddenWidth*2>(both, both, featureAddress(pc, sq));
+    for (Color c = WHITE; c <= BLACK; ++c)
+      multiAdd<HiddenWidth>(colors[c], colors[c], featureAddress(c, pc, sq));
   }
-
   
   void Accumulator::movePiece(Square from, Square to, Piece pc) {
-    multiSubAdd<HiddenWidth*2>(both, both, featureAddress(pc, from), featureAddress(pc, to));
+    for (Color c = WHITE; c <= BLACK; ++c)
+      multiSubAdd<HiddenWidth>(colors[c], colors[c], featureAddress(c, pc, from), featureAddress(c, pc, to));
   }
 
   void Accumulator::doUpdates(DirtyPieces& dp, Accumulator& input) {
     const Color side = piece_color(dp.sub0.pc);
-    if (dp.type == DirtyPieces::CASTLING) {
-      Accumulator* delta0 = cachedDelta(dp.sub0.sq, dp.add0.sq, dp.add0.pc);
-      Accumulator* delta1 = cachedDelta(dp.sub1.sq, dp.add1.sq, dp.add1.pc);
-
-      multiAdd<HiddenWidth>(colors[WHITE], input.colors[WHITE], delta0->colors[side]);
-      multiAdd<HiddenWidth>(colors[BLACK], input.colors[BLACK], delta0->colors[~side]);
-      multiAdd<HiddenWidth>(colors[WHITE], colors[WHITE], delta1->colors[side]);
-      multiAdd<HiddenWidth>(colors[BLACK], colors[BLACK], delta1->colors[~side]);
-
-    } else if (dp.type == DirtyPieces::CAPTURE) {
-      if (dp.add0.pc == dp.sub0.pc) {
-        Accumulator* delta = cachedDelta(dp.sub0.sq, dp.add0.sq, dp.add0.pc);
-        multiAdd<HiddenWidth>(colors[WHITE], input.colors[WHITE], delta->colors[side]);
-        multiAdd<HiddenWidth>(colors[BLACK], input.colors[BLACK], delta->colors[~side]);
-        
-        multiSub<HiddenWidth*2>(both, both,
-          featureAddress(dp.sub1.pc, dp.sub1.sq));
-      } else {
-        multiSubAddSub<HiddenWidth*2>(both, input.both, 
-          featureAddress(dp.sub0.pc, dp.sub0.sq),
-          featureAddress(dp.add0.pc, dp.add0.sq),
-          featureAddress(dp.sub1.pc, dp.sub1.sq));
-      }
-    } else {
-      if (dp.add0.pc == dp.sub0.pc) {
-        Accumulator* delta = cachedDelta(dp.sub0.sq, dp.add0.sq, dp.add0.pc);
-        multiAdd<HiddenWidth>(colors[WHITE], input.colors[WHITE], delta->colors[side]);
-        multiAdd<HiddenWidth>(colors[BLACK], input.colors[BLACK], delta->colors[~side]);
-      } else {
-        multiSubAdd<HiddenWidth*2>(both, input.both, 
-          featureAddress(dp.sub0.pc, dp.sub0.sq),
-          featureAddress(dp.add0.pc, dp.add0.sq));
-      }  
+    if (dp.type == DirtyPieces::CASTLING) 
+    {
+       for (Color c = WHITE; c <= BLACK; ++c)
+        multiSubAddSubAdd<HiddenWidth>(colors[c], input.colors[c], 
+          featureAddress(c, dp.sub0.pc, dp.sub0.sq),
+          featureAddress(c, dp.add0.pc, dp.add0.sq),
+          featureAddress(c, dp.sub1.pc, dp.sub1.sq),
+          featureAddress(c, dp.add1.pc, dp.add1.sq));
+    } else if (dp.type == DirtyPieces::CAPTURE) 
+    { 
+      for (Color c = WHITE; c <= BLACK; ++c)
+        multiSubAddSub<HiddenWidth>(colors[c], input.colors[c], 
+          featureAddress(c, dp.sub0.pc, dp.sub0.sq),
+          featureAddress(c, dp.add0.pc, dp.add0.sq),
+          featureAddress(c, dp.sub1.pc, dp.sub1.sq));
+    } else
+    {
+      for (Color c = WHITE; c <= BLACK; ++c)
+        multiSubAdd<HiddenWidth>(colors[c], input.colors[c], 
+          featureAddress(c, dp.sub0.pc, dp.sub0.sq),
+          featureAddress(c, dp.add0.pc, dp.add0.sq));
     }
   }
 
@@ -164,34 +140,6 @@ namespace NNUE {
 
     memcpy(&Content, gEmbeddedNNUEData, sizeof(Content));
 
-    // Rebuild the features weights array such that black pov weights are right after their white counterpart
-    for (Color pov : {WHITE, BLACK}) {
-      for (PieceType pt : {PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING}) {
-        for (Square sq = SQ_A1; sq < SQUARE_NB; ++sq) {
-          Piece whitePc = makePiece(WHITE, pt);
-          Piece blackPc = makePiece(BLACK, pt);
-
-          constexpr int pieceWeightsSize = sizeof(NewFeatureWeights[0][0][0]);
-
-          memcpy(NewFeatureWeights[whitePc][sq][pov], 
-            Content.OldFeatureWeights[pov != WHITE][pt-1][relative_square(pov, sq)], pieceWeightsSize);
-
-          memcpy(NewFeatureWeights[blackPc][sq][pov], 
-            Content.OldFeatureWeights[pov != BLACK][pt-1][relative_square(pov, sq)], pieceWeightsSize);
-        }
-      }
-    }
-
-    for (PieceType pt : {PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING}) {
-      for (Square s1 = SQ_A1; s1 < SQUARE_NB; ++s1) {
-        for (Square s2 = SQ_A1; s2 < SQUARE_NB; ++s2) {
-          Accumulator* target = & deltaTable[pt-1][s1][s2];
-          memset(target, 0, sizeof(Accumulator));
-
-          target->movePiece(s1, s2, makePiece(WHITE, pt));
-        }
-      }
-    }
   }
 
   Score evaluate(Accumulator& accumulator, Color sideToMove) {
