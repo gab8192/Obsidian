@@ -1179,6 +1179,11 @@ namespace Search {
           if (Threads::isSearchStopped())
             goto bestMoveDecided;
 
+          if ( rootDepth > 1 
+            && Threads::getSearchSettings().nodes
+            && Threads::totalNodes() >= Threads::getSearchSettings().nodes)
+            goto bestMoveDecided;
+
           sortRootMoves(pvIdx);
 
           if (score >= SCORE_MATE_IN_MAX_PLY) {
