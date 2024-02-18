@@ -12,14 +12,20 @@ namespace NNUE {
   constexpr int WeightsPerVec = sizeof(SIMD::Vec) / sizeof(weight_t);
 
   struct {
-    alignas(SIMD::Alignment) weight_t FeatureWeights[2][6][64][HiddenWidth];
+    alignas(SIMD::Alignment) weight_t FeatureWeights[KingBucketsCount][2][6][64][HiddenWidth];
     alignas(SIMD::Alignment) weight_t FeatureBiases[HiddenWidth];
     alignas(SIMD::Alignment) weight_t OutputWeights[2 * HiddenWidth];
                              weight_t OutputBias;
   } Content;
 
-  inline weight_t* featureAddress(Color pov, Piece pc, Square sq) {
+  inline weight_t* featureAddress(Square kingSq, Color pov, Piece pc, Square sq) {
+    sizeof(Content);
+    if (fileOf(kingSq) >= FILE_E) {
+      kingSq = Square(kingSq ^ 7);
+      sq = Square(sq ^ 7);
+    }
     return Content.FeatureWeights
+            [KingBucketsScheme[relative_square(pov, kingSq)]]
             [pov != piece_color(pc)]
             [piece_type(pc)-1]
             [relative_square(pov, sq)];
@@ -100,17 +106,13 @@ namespace NNUE {
       memcpy(colors[c], Content.FeatureBiases, sizeof(Content.FeatureBiases));
   }
 
-  void Accumulator::addPiece(Square sq, Piece pc) {
-    for (Color c = WHITE; c <= BLACK; ++c)
-      multiAdd<HiddenWidth>(colors[c], colors[c], featureAddress(c, pc, sq));
-  }
-  
-  void Accumulator::movePiece(Square from, Square to, Piece pc) {
-    for (Color c = WHITE; c <= BLACK; ++c)
-      multiSubAdd<HiddenWidth>(colors[c], colors[c], featureAddress(c, pc, from), featureAddress(c, pc, to));
+  void Accumulator::addPiece(Square whiteKing, Square blackKing, Piece pc, Square sq) {
+    multiAdd<HiddenWidth>(colors[WHITE], colors[WHITE], featureAddress(whiteKing, WHITE, pc, sq));
+    multiAdd<HiddenWidth>(colors[BLACK], colors[BLACK], featureAddress(blackKing, BLACK, pc, sq));
   }
 
   void Accumulator::doUpdates(DirtyPieces& dp, Accumulator& input) {
+    /*
     const Color side = piece_color(dp.sub0.pc);
     if (dp.type == DirtyPieces::CASTLING) 
     {
@@ -133,7 +135,7 @@ namespace NNUE {
         multiSubAdd<HiddenWidth>(colors[c], input.colors[c], 
           featureAddress(c, dp.sub0.pc, dp.sub0.sq),
           featureAddress(c, dp.add0.pc, dp.add0.sq));
-    }
+    }*/
   }
 
   void init() {
