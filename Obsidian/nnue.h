@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "net7.bin"
+#define EvalFile "net8.bin"
 
 using namespace SIMD;
 
@@ -28,7 +28,7 @@ namespace NNUE {
   constexpr int HiddenWidth = 1536;
 
   constexpr int NetworkScale = 400;
-  constexpr int NetworkQA = 181;
+  constexpr int NetworkQA = 255;
   constexpr int NetworkQB = 64;
   constexpr int NetworkQAB = NetworkQA * NetworkQB;
 
