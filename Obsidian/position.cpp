@@ -514,7 +514,8 @@ void Position::setToFen(const std::string& fen, NNUE::Accumulator& acc) {
 
   updateAttacksToKings();
   updateKey();
-  updateAccumulator(acc);
+  acc.refresh(*this, WHITE);
+  acc.refresh(*this, BLACK);
 }
 
 std::string Position::toFenString() const {
@@ -677,17 +678,4 @@ bool Position::seeGe(Move m, int threshold) const {
   }
 
   return bool(res);
-}
-
-void Position::updateAccumulator(NNUE::Accumulator& acc) const {
-  acc.reset();
-
-  const Square whiteKing = kingSquare(WHITE);
-  const Square blackKing = kingSquare(BLACK);
-
-  Bitboard b0 = pieces();
-  while (b0) {
-    Square sq = popLsb(b0);
-    acc.addPiece(whiteKing, blackKing, board[sq], sq);
-  }
 }

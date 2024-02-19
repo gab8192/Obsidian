@@ -3,9 +3,11 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "net9-epoch4.bin"
+#define EvalFile "net9-epoch5.bin"
 
 using namespace SIMD;
+
+struct Position;
 
 struct SquarePiece {
   Square sq;
@@ -44,17 +46,19 @@ namespace NNUE {
   constexpr int NetworkQB = 64;
   constexpr int NetworkQAB = NetworkQA * NetworkQB;
 
+  bool needRefresh(Color side, Square oldKing, Square newKing);
+
   struct Accumulator {
     union {
       alignas(Alignment) weight_t colors[COLOR_NB][HiddenWidth];
       alignas(Alignment) weight_t both[COLOR_NB * HiddenWidth];
     };
 
-    void reset();
-
     void addPiece(Square whiteKing, Square blackKing, Piece pc, Square sq);
 
-    void doUpdates(DirtyPieces& dp, Accumulator& input);
+    void doUpdates(Square kingSq, Color side, DirtyPieces& dp, Accumulator& input);
+
+    void refresh(Position& pos, Color side);
   };
 
   void init();

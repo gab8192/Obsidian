@@ -1,6 +1,7 @@
 #include "nnue.h"
 #include "bitboard.h"
 #include "incbin.h"
+#include "position.h"
 
 #include <iostream>
 #include <fstream>
@@ -18,17 +19,26 @@ namespace NNUE {
                              weight_t OutputBias;
   } Content;
 
-  inline weight_t* featureAddress(Square kingSq, Color pov, Piece pc, Square sq) {
-    sizeof(Content);
-    if (fileOf(kingSq) >= FILE_E) {
-      kingSq = Square(kingSq ^ 7);
+  bool needRefresh(Color side, Square oldKing, Square newKing) {
+    const bool oldMirrored = fileOf(oldKing) >= FILE_E;
+    const bool newMirrored = fileOf(newKing) >= FILE_E;
+
+    if (oldMirrored != newMirrored)
+      return true;
+
+    return   KingBucketsScheme[relative_square(side, oldKing)]
+          != KingBucketsScheme[relative_square(side, newKing)];
+  }
+
+  inline weight_t* featureAddress(Square kingSq, Color side, Piece pc, Square sq) {
+    if (fileOf(kingSq) >= FILE_E)
       sq = Square(sq ^ 7);
-    }
+    
     return Content.FeatureWeights
-            [KingBucketsScheme[relative_square(pov, kingSq)]]
-            [pov != piece_color(pc)]
+            [KingBucketsScheme[relative_square(side, kingSq)]]
+            [side != piece_color(pc)]
             [piece_type(pc)-1]
-            [relative_square(pov, sq)];
+            [relative_square(side, sq)];
   }
 
   template <int InputSize>
@@ -101,47 +111,48 @@ namespace NNUE {
       outputVec[i] = addEpi16(subEpi16(subEpi16(addEpi16(inputVec[i], add0Vec[i]), sub0Vec[i]), sub1Vec[i]), add1Vec[i]);
   }
 
-  void Accumulator::reset() {
-    for (Color c = WHITE; c <= BLACK; ++c)
-      memcpy(colors[c], Content.FeatureBiases, sizeof(Content.FeatureBiases));
-  }
-
   void Accumulator::addPiece(Square whiteKing, Square blackKing, Piece pc, Square sq) {
     multiAdd<HiddenWidth>(colors[WHITE], colors[WHITE], featureAddress(whiteKing, WHITE, pc, sq));
     multiAdd<HiddenWidth>(colors[BLACK], colors[BLACK], featureAddress(blackKing, BLACK, pc, sq));
   }
 
-  void Accumulator::doUpdates(DirtyPieces& dp, Accumulator& input) {
-    /*
-    const Color side = piece_color(dp.sub0.pc);
+  void Accumulator::doUpdates(Square kingSq, Color side, DirtyPieces& dp, Accumulator& input) {
+    
     if (dp.type == DirtyPieces::CASTLING) 
     {
-       for (Color c = WHITE; c <= BLACK; ++c)
-        multiSubAddSubAdd<HiddenWidth>(colors[c], input.colors[c], 
-          featureAddress(c, dp.sub0.pc, dp.sub0.sq),
-          featureAddress(c, dp.add0.pc, dp.add0.sq),
-          featureAddress(c, dp.sub1.pc, dp.sub1.sq),
-          featureAddress(c, dp.add1.pc, dp.add1.sq));
+      multiSubAddSubAdd<HiddenWidth>(colors[side], input.colors[side], 
+        featureAddress(kingSq, side, dp.sub0.pc, dp.sub0.sq),
+        featureAddress(kingSq, side, dp.add0.pc, dp.add0.sq),
+        featureAddress(kingSq, side, dp.sub1.pc, dp.sub1.sq),
+        featureAddress(kingSq, side, dp.add1.pc, dp.add1.sq));
     } else if (dp.type == DirtyPieces::CAPTURE) 
     { 
-      for (Color c = WHITE; c <= BLACK; ++c)
-        multiSubAddSub<HiddenWidth>(colors[c], input.colors[c], 
-          featureAddress(c, dp.sub0.pc, dp.sub0.sq),
-          featureAddress(c, dp.add0.pc, dp.add0.sq),
-          featureAddress(c, dp.sub1.pc, dp.sub1.sq));
+      multiSubAddSub<HiddenWidth>(colors[side], input.colors[side], 
+        featureAddress(kingSq, side, dp.sub0.pc, dp.sub0.sq),
+        featureAddress(kingSq, side, dp.add0.pc, dp.add0.sq),
+        featureAddress(kingSq, side, dp.sub1.pc, dp.sub1.sq));
     } else
     {
-      for (Color c = WHITE; c <= BLACK; ++c)
-        multiSubAdd<HiddenWidth>(colors[c], input.colors[c], 
-          featureAddress(c, dp.sub0.pc, dp.sub0.sq),
-          featureAddress(c, dp.add0.pc, dp.add0.sq));
-    }*/
+      multiSubAdd<HiddenWidth>(colors[side], input.colors[side], 
+        featureAddress(kingSq, side, dp.sub0.pc, dp.sub0.sq),
+        featureAddress(kingSq, side, dp.add0.pc, dp.add0.sq));
+    }
+  }
+
+  void Accumulator::refresh(Position& pos, Color side) {
+    memcpy(colors[side], Content.FeatureBiases, sizeof(Content.FeatureBiases));
+
+    const Square kingSq = pos.kingSquare(side);
+
+    Bitboard occupied = pos.pieces();
+    while (occupied) {
+      const Square sq = popLsb(occupied);
+      multiAdd<HiddenWidth>(colors[side], colors[side], featureAddress(kingSq, side, pos.board[sq], sq));
+    }
   }
 
   void init() {
-
     memcpy(&Content, gEmbeddedNNUEData, sizeof(Content));
-
   }
 
   Score evaluate(Accumulator& accumulator, Color sideToMove) {
