@@ -1279,7 +1279,7 @@ namespace Search {
 
   bestMoveDecided:
 
-  // NOTE: When implementing best thread selection, don't mess up with tablebases dtz stuff
+    // NOTE: When implementing best thread selection, don't mess up with tablebases dtz stuff
 
     if (this == Threads::mainThread() && !doingBench) 
       std::cout << "bestmove " << UCI::moveToString(rootMoves[0].move) << std::endl;
