@@ -43,11 +43,7 @@ COMMAND = g++ $(OPTIMIZE) $(FLAGS) $(FILES) -o $(EXE)
 
 make: $(FILES)
 	$(COMMAND) -fprofile-generate="obs_pgo"
-ifeq ($(OS),Windows_NT)
 	$(EXE) bench
-else
-	./$(EXE) bench
-endif
 	$(COMMAND) -fprofile-use="obs_pgo"
 	rm -rf obs_pgo
 
