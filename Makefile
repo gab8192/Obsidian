@@ -45,11 +45,10 @@ make: $(FILES)
 	$(COMMAND) -fprofile-generate="obs_pgo"
 ifeq ($(OS),Windows_NT)
 	$(EXE) bench
-	del /f $(EXE)
 else
 	./$(EXE) bench
-	rm -f $(EXE)
 endif
+	rm -f $(EXE)
 	$(COMMAND) -fprofile-use="obs_pgo"
 	rm -rf obs_pgo
 
