@@ -39,17 +39,15 @@ else ifeq ($(findstring pext, $(build)), pext)
 	FLAGS += -DUSE_PEXT -mbmi2
 endif
 
-COMMAND = g++ $(OPTIMIZE) $(FLAGS) $(FILES) -o $(EXE)
-
 make: $(FILES)
-	$(COMMAND) -fprofile-generate="obs_pgo"
+	g++ $(OPTIMIZE) $(FLAGS) $(FILES) -o prof_gen_$(EXE) -fprofile-generate="obs_pgo"
 ifeq ($(OS),Windows_NT)
-	$(EXE) bench
+	prof_gen_$(EXE) bench
 else
-	./$(EXE) bench
+	./prof_gen_$(EXE) bench
 endif
-	$(COMMAND) -fprofile-use="obs_pgo"
+	g++ $(OPTIMIZE) $(FLAGS) $(FILES) -o $(EXE) -fprofile-use="obs_pgo"
 	rm -rf obs_pgo
 
 nopgo: $(FILES)
-	$(COMMAND)
+	g++ $(OPTIMIZE) $(FLAGS) $(FILES) -o $(EXE)
