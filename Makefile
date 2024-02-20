@@ -49,7 +49,11 @@ else
 	./$(EXE) bench
 endif
 	$(COMMAND) -fprofile-use="obs_pgo"
+ifeq ($(OS),Windows_NT)
 	rm -rf obs_pgo
+else
+	rmdir /s /q obs_pgo
+endif
 
 nopgo: $(FILES)
 	$(COMMAND)
