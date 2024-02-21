@@ -50,9 +50,9 @@ else
 endif
 	$(COMMAND) -fprofile-use="obs_pgo"
 ifeq ($(OS),Windows_NT)
-	rm -rf obs_pgo
-else
 	rmdir /s /q obs_pgo
+else
+	rm -rf obs_pgo
 endif
 
 nopgo: $(FILES)
