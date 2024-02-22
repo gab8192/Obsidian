@@ -1169,6 +1169,11 @@ namespace Search {
 
         while (true) {
 
+          if (beta >= 4000) {
+            beta = SCORE_INFINITE;
+            failHighCount = 0;
+          }
+
           int adjustedDepth = std::max(1, rootDepth - failHighCount);
 
           Score score = negamax<true>(rootPos, alpha, beta, adjustedDepth, false, ss);
@@ -1183,11 +1188,6 @@ namespace Search {
             goto bestMoveDecided;
 
           sortRootMoves(pvIdx);
-
-          if (score >= SCORE_MATE_IN_MAX_PLY) {
-            beta = SCORE_INFINITE;
-            failHighCount = 0;
-          }
 
           if (score <= alpha) {
             beta = (alpha + beta) / 2;
