@@ -428,7 +428,7 @@ int readNumberTillSpace(const std::string& str, int& i) {
   return num;
 }
 
-void Position::setToFen(const std::string& fen, NNUE::Accumulator& acc) {
+void Position::setToFen(const std::string& fen) {
 
   memset(this, 0, sizeof(Position));
 
@@ -514,7 +514,6 @@ void Position::setToFen(const std::string& fen, NNUE::Accumulator& acc) {
 
   updateAttacksToKings();
   updateKey();
-  updateAccumulator(acc);
 }
 
 std::string Position::toFenString() const {

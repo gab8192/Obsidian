@@ -22,7 +22,7 @@ namespace {
 
   std::vector<uint64_t> prevPositions;
 
-  void position(Position& pos, NNUE::Accumulator& acc, std::istringstream& is) {
+  void position(Position& pos, std::istringstream& is) {
     Move m;
     std::string token, fen;
 
@@ -39,7 +39,7 @@ namespace {
     else
       return;
 
-    pos.setToFen(fen, acc);
+    pos.setToFen(fen);
 
     prevPositions.clear();
     prevPositions.push_back(pos.key);
@@ -78,15 +78,13 @@ namespace {
     clock_t elapsed = 0;
     Search::doingBench = true;
 
-    NNUE::Accumulator tempAccumulator;
-
     for (int i = 0; i < posCount; i++) 
     {
       Search::Settings searchSettings;
       searchSettings.depth = 13;
       
       std::istringstream posStr(BENCH_POSITIONS[i]);
-      position(searchSettings.position, tempAccumulator, posStr);
+      position(searchSettings.position, posStr);
 
       newGame();
 
@@ -183,10 +181,9 @@ void UCI::loop(int argc, char* argv[]) {
 
   std::string token, cmd;
 
-  NNUE::Accumulator tempAccumulator;
+  
   Position pos;
-
-  pos.setToFen(StartFEN, tempAccumulator);
+  pos.setToFen(StartFEN);
 
   for (int i = 1; i < argc; ++i)
     cmd += std::string(argv[i]) + " ";
@@ -217,14 +214,15 @@ void UCI::loop(int argc, char* argv[]) {
     else if (token == "bench")      bench();
     else if (token == "setoption")  setoption(is);
     else if (token == "go")         go(pos, is);
-    else if (token == "position")   position(pos, tempAccumulator, is);
+    else if (token == "position")   position(pos, is);
     else if (token == "ucinewgame") newGame();
     else if (token == "isready")    std::cout << "readyok" << std::endl;
     else if (token == "d")          std::cout << pos << std::endl;
     else if (token == "tune")       std::cout << paramsToSpsaInput();
     else if (token == "eval") {
-      pos.updateAccumulator(tempAccumulator);
-      Score eval = Eval::evaluate(pos, tempAccumulator);
+      NNUE::Accumulator tempAcc;
+      pos.updateAccumulator(tempAcc);
+      Score eval = Eval::evaluate(pos, tempAcc);
       if (pos.sideToMove == BLACK)
         eval = -eval;
       std::cout << "Evaluation: " << UCI::normalizeToCp(eval) 

@@ -148,7 +148,7 @@ struct alignas(32) Position {
 
   bool seeGe(Move m, int threshold) const;
 
-  void setToFen(const std::string& fen, NNUE::Accumulator& acc);
+  void setToFen(const std::string& fen);
 
   std::string toFenString() const;
 

@@ -1158,7 +1158,6 @@ namespace Search {
         break;
 
       for (pvIdx = 0; pvIdx < multiPV; pvIdx++) {
-        Score score;
         int window = AspWindowStartDelta;
         Score alpha = -SCORE_INFINITE;
         Score beta  = SCORE_INFINITE;
@@ -1173,7 +1172,7 @@ namespace Search {
 
           int adjustedDepth = std::max(1, rootDepth - failHighCount);
 
-          score = negamax<true>(rootPos, alpha, beta, adjustedDepth, false, ss);
+          Score score = negamax<true>(rootPos, alpha, beta, adjustedDepth, false, ss);
 
           // Discard any result if search was abruptly stopped
           if (Threads::isSearchStopped())
