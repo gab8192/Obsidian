@@ -58,7 +58,6 @@ namespace Search {
 
   DEFINE_PARAM_B(AspWindowStartDepth, 4, 4, 34);
   DEFINE_PARAM_B(AspWindowStartDelta, 11, 5, 45);
-  DEFINE_PARAM_B(AspFailHighReductionMax, 11, 1, 21);
   
   bool doingBench = false;
 
@@ -1199,7 +1198,7 @@ namespace Search {
           else if (score >= beta) {
             beta = std::min(SCORE_INFINITE, beta + window);
 
-            failHighCount = std::min((int)AspFailHighReductionMax, failHighCount + 1);
+            failHighCount++;
           }
           else
             break;
