@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "net64.bin"
+#define EvalFile "net64-score15k.bin"
 
 using namespace SIMD;
 
