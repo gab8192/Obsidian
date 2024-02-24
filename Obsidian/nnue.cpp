@@ -12,7 +12,7 @@ namespace NNUE {
 
   constexpr int WeightsPerVec = sizeof(SIMD::Vec) / sizeof(weight_t);
 
-  constexpr int OutputBucketsCount = 8;
+  constexpr int OutputBucketsCount = 9;
 
   struct {
     alignas(SIMD::Alignment) weight_t OldFeatureWeights[2][6][64][HiddenWidth];
@@ -199,8 +199,8 @@ namespace NNUE {
 
   Score evaluate(Position& pos, Accumulator& accumulator) {
 
-    const int pieceCount = BitCount(pos.pieces());
-    const int outputBucket = (pieceCount - 1) / (32 / OutputBucketsCount);
+    const int pawnCount = BitCount(pos.pieces(PAWN));
+    const int outputBucket = (pawnCount + 1) / 2;
 
     Vec* stmAcc = (Vec*) accumulator.colors[pos.sideToMove];
     Vec* oppAcc = (Vec*) accumulator.colors[~pos.sideToMove];

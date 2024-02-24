@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "net64-piecebuckets.bin"
+#define EvalFile "net64-pawnbuckets.bin"
 
 using namespace SIMD;
 
