@@ -1,6 +1,7 @@
 #include "nnue.h"
 #include "bitboard.h"
 #include "incbin.h"
+#include "position.h"
 
 #include <iostream>
 #include <fstream>
@@ -11,11 +12,13 @@ namespace NNUE {
 
   constexpr int WeightsPerVec = sizeof(SIMD::Vec) / sizeof(weight_t);
 
+  constexpr int OutputBucketsCount = 8;
+
   struct {
     alignas(SIMD::Alignment) weight_t OldFeatureWeights[2][6][64][HiddenWidth];
     alignas(SIMD::Alignment) weight_t FeatureBiases[HiddenWidth];
-    alignas(SIMD::Alignment) weight_t OutputWeights[2 * HiddenWidth];
-                             weight_t OutputBias;
+    alignas(SIMD::Alignment) weight_t OutputWeights[OutputBucketsCount][2 * HiddenWidth];
+                             weight_t OutputBias[OutputBucketsCount];
   } Content;
 
   alignas(SIMD::Alignment) weight_t NewFeatureWeights[PIECE_NB][64][2][HiddenWidth];
@@ -194,13 +197,16 @@ namespace NNUE {
     }
   }
 
-  Score evaluate(Accumulator& accumulator, Color sideToMove) {
+  Score evaluate(Position& pos, Accumulator& accumulator) {
 
-    Vec* stmAcc = (Vec*) accumulator.colors[sideToMove];
-    Vec* oppAcc = (Vec*) accumulator.colors[~sideToMove];
+    const int pieceCount = BitCount(pos.pieces());
+    const int outputBucket = (pieceCount - 1) / (32 / OutputBucketsCount);
 
-    Vec* stmWeights = (Vec*) &Content.OutputWeights[0];
-    Vec* oppWeights = (Vec*) &Content.OutputWeights[HiddenWidth];
+    Vec* stmAcc = (Vec*) accumulator.colors[pos.sideToMove];
+    Vec* oppAcc = (Vec*) accumulator.colors[~pos.sideToMove];
+
+    Vec* stmWeights = (Vec*) &Content.OutputWeights[outputBucket][0];
+    Vec* oppWeights = (Vec*) &Content.OutputWeights[outputBucket][HiddenWidth];
 
     const Vec vecZero = vecSetZero();
     const Vec vecQA = vecSet1Epi16(NetworkQA);
@@ -224,7 +230,7 @@ namespace NNUE {
       sum = addEpi32(sum, v1);
     }
 
-    int unsquared = vecHaddEpi32(sum) / NetworkQA + Content.OutputBias;
+    int unsquared = vecHaddEpi32(sum) / NetworkQA + Content.OutputBias[outputBucket];
 
     return (unsquared * NetworkScale) / NetworkQAB;
   }

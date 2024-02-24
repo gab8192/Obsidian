@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "net64.bin"
+#define EvalFile "net64-piecebuckets.bin"
 
 using namespace SIMD;
 
@@ -19,6 +19,8 @@ struct DirtyPieces {
     NORMAL, CAPTURE, CASTLING
   } type;
 };
+
+struct Position;
 
 namespace NNUE {
 
@@ -49,5 +51,5 @@ namespace NNUE {
 
   void init();
 
-  Score evaluate(Accumulator& accumulator, Color sideToMove);
+  Score evaluate(Position& pos, Accumulator& accumulator);
 }
