@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "net8.bin"
+#define EvalFile "net10-epoch2.bin"
 
 using namespace SIMD;
 
@@ -20,12 +20,16 @@ struct DirtyPieces {
   } type;
 };
 
+struct Position;
+
 namespace NNUE {
 
   using weight_t = int16_t;
 
   constexpr int FeaturesWidth = 768;
   constexpr int HiddenWidth = 1536;
+
+  constexpr int OutputBucketCount = 9;
 
   constexpr int NetworkScale = 400;
   constexpr int NetworkQA = 255;
@@ -49,5 +53,5 @@ namespace NNUE {
 
   void init();
 
-  Score evaluate(Accumulator& accumulator, Color sideToMove);
+  Score evaluate(Position& pos, Accumulator& accumulator);
 }
