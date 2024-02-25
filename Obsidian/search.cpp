@@ -544,13 +544,6 @@ namespace Search {
     if (IsPV)
       ss->pvLength = ply;
 
-    // Detect upcoming draw
-    if (!IsRoot && alpha < SCORE_DRAW && hasUpcomingRepetition(pos, ply)) {
-      alpha = makeDrawScore();
-      if (alpha >= beta)
-        return alpha;
-    }
-
     // Enter qsearch when depth is 0
     if (depth <= 0)
       return qsearch<IsPV>(pos, alpha, beta, ss);
@@ -881,12 +874,19 @@ namespace Search {
       playMove(newPos, move, ss);
 
       int newDepth = depth + extension - 1;
-
       Score score;
+      bool needFullSearch = false;
+
+      // Original speedup idea: check for upcoming repetition in parent node
+      if (alpha >= SCORE_DRAW  && hasUpcomingRepetition(newPos, ply)) {
+        Score randScore = - makeDrawScore();
+        if (randScore <= alpha) {
+          score = randScore;
+          goto afterMoveSearch;
+        }
+      }
 
       // Late move reductions. Search at a reduced depth, moves that are late in the move list
-
-      bool needFullSearch = false;
 
       if (depth >= 2 && seenMoves > 1 + 3 * IsRoot) {
 
@@ -936,6 +936,8 @@ namespace Search {
 
       if (IsPV && (seenMoves == 1 || score > alpha))
         score = -negamax<true>(newPos, -beta, -alpha, newDepth, false, ss + 1);
+
+      afterMoveSearch:
 
       cancelMove();
 
