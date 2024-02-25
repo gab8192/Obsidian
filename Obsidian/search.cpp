@@ -767,7 +767,6 @@ namespace Search {
     // Generate moves and score them
 
     int seenMoves = 0;
-    int playedMoves = 0;
 
     Move quiets[64];
     int quietCount = 0;
@@ -889,7 +888,7 @@ namespace Search {
 
       bool needFullSearch = false;
 
-      if (depth >= 2 && playedMoves >= 1 + 3 * IsRoot) {
+      if (depth >= 2 && seenMoves > 1 + 3 * IsRoot) {
 
         int R = isQuiet ? lmrTable[depth][seenMoves] : 0;
 
@@ -930,12 +929,12 @@ namespace Search {
         }
       }
       else
-        needFullSearch = !IsPV || playedMoves >= 1;
+        needFullSearch = !IsPV || seenMoves > 1;
 
       if (needFullSearch)
         score = -negamax<false>(newPos, -alpha - 1, -alpha, newDepth, !cutNode, ss + 1);
 
-      if (IsPV && (playedMoves == 0 || score > alpha))
+      if (IsPV && (seenMoves == 1 || score > alpha))
         score = -negamax<true>(newPos, -beta, -alpha, newDepth, false, ss + 1);
 
       cancelMove();
@@ -943,8 +942,6 @@ namespace Search {
       if (Threads::isSearchStopped())
         return SCORE_DRAW;
 
-      playedMoves++;
-      
       if (isQuiet) {
         if (quietCount < 64)
           quiets[quietCount++] = move;
@@ -958,7 +955,7 @@ namespace Search {
         RootMove& rm = rootMoves[rootMoves.indexOf(move)];
         rm.nodes += nodesSearched - oldNodesSearched;
 
-        if (playedMoves == 1 || score > alpha) {
+        if (seenMoves == 1 || score > alpha) {
           rm.score = score;
 
           rm.pvLength = (ss+1)->pvLength;
