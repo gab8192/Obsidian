@@ -40,7 +40,6 @@ namespace Search {
     bool playedNoisy;
 
     Move killerMove;
-    Position bruh;
 
     Move pv[MAX_PLY];
     int pvLength;

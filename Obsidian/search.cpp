@@ -230,10 +230,9 @@ namespace Search {
     nodesSearched++;
     
     ss->playedNoisy = !pos.isQuiet(move);
-    bool isNormalCap = pos.board[move_to(move)] != NO_PIECE;
-    ss->contHistory = contHistory[isNormalCap][pieceTo(pos, move)];
+    bool isCap = pos.board[move_to(move)] != NO_PIECE;
+    ss->contHistory = contHistory[isCap][pieceTo(pos, move)];
     ss->playedMove = move;
-    ss->bruh = pos;
     keyStack[keyStackHead++] = pos.key;
 
     NNUE::Accumulator& oldAcc = accumStack[accumStackHead];
