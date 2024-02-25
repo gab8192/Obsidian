@@ -890,7 +890,7 @@ namespace Search {
 
       if (depth >= 2 && seenMoves > 1 + 3 * IsRoot) {
 
-        int R = isQuiet ? lmrTable[depth][seenMoves] : 0;
+        int R = lmrTable[depth][seenMoves];
 
         // Reduce or extend depending on history of this move
         R -= history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv);
@@ -905,8 +905,8 @@ namespace Search {
         R -= (   moveStage == MovePicker::PLAY_KILLER 
               || moveStage == MovePicker::PLAY_COUNTER);
 
-        // Reduce if this is a bad capture (=> loses material)
-        R += (moveStage == MovePicker::PLAY_BAD_CAPTURES);
+        // Extend if this is a capture
+        R -= !isQuiet;
 
         // Reduce more if the expected best move is a capture
         R += ttMoveNoisy;
