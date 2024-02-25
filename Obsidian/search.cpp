@@ -689,7 +689,7 @@ namespace Search {
     // That would be unexpected. Increase depth
     if ( (ss - 1)->staticEval != SCORE_NONE 
      && !(ss - 1)->playedNoisy
-     && depth < 6
+     && depth < 4
      && (- ss->staticEval) - (ss-1)->staticEval > 110)
       depth++;
 
