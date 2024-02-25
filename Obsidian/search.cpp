@@ -214,6 +214,7 @@ namespace Search {
 
     ss->contHistory = contHistory[false][0];
     ss->playedMove = MOVE_NONE;
+    ss->playedNoisy = false;
     keyStack[keyStackHead++] = pos.key;
 
     ply++;
@@ -227,10 +228,12 @@ namespace Search {
 
   void Thread::playMove(Position& pos, Move move, SearchInfo* ss) {
     nodesSearched++;
-
-    bool isCap = pos.board[move_to(move)] != NO_PIECE;
-    ss->contHistory = contHistory[isCap][pieceTo(pos, move)];
+    
+    ss->playedNoisy = !pos.isQuiet(move);
+    bool isNormalCap = pos.board[move_to(move)] != NO_PIECE;
+    ss->contHistory = contHistory[isNormalCap][pieceTo(pos, move)];
     ss->playedMove = move;
+    ss->bruh = pos;
     keyStack[keyStackHead++] = pos.key;
 
     NNUE::Accumulator& oldAcc = accumStack[accumStackHead];
@@ -683,6 +686,14 @@ namespace Search {
     else if ((ss - 4)->staticEval != SCORE_NONE)
       improving = ss->staticEval > (ss - 4)->staticEval;
 
+    // Did the opponent play a quiet move and their evaluation increased?
+    // That would be unexpected. Increase depth
+    if ( (ss - 1)->staticEval != SCORE_NONE 
+     && !(ss - 1)->playedNoisy
+     && depth < 6
+     && (- ss->staticEval) - (ss-1)->staticEval > 110)
+      depth++;
+
     // Razoring. When evaluation is far below alpha, we could probably only catch up with a capture,
     // thus do a qsearch. If the qsearch still can't hit alpha, cut off
     if ( !IsPV
@@ -1093,6 +1104,7 @@ namespace Search {
       searchStack[i].killerMove   = MOVE_NONE;
       searchStack[i].excludedMove = MOVE_NONE;
       searchStack[i].playedMove   = MOVE_NONE;
+      searchStack[i].playedNoisy    = false;
 
       searchStack[i].contHistory = contHistory[false][0];
 
