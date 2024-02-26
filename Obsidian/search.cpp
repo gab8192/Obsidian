@@ -890,32 +890,39 @@ namespace Search {
 
       if (depth >= 2 && seenMoves > 1 + 3 * IsRoot) {
 
-        int R = isQuiet ? lmrTable[depth][seenMoves] : 0;
+        int R = 64 * (isQuiet ? lmrTable[depth][seenMoves] : 0);
 
         // Reduce or extend depending on history of this move
-        R -= history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv);
+        R -= 64 * (history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv));
 
         // Extend moves that give check
-        R -= (newPos.checkers != 0ULL);
+        R -= 64 * (newPos.checkers != 0ULL);
 
         // Extend if this position *was* in a PV node. Even further if it *is*
-        R -= ttPV + IsPV;
+        R -= 64 * ttPV;
+        
+        R -= 64 * IsPV;
 
         // Extend if this move is killer or counter
-        R -= (   moveStage == MovePicker::PLAY_KILLER 
+        R -= 64 * (   moveStage == MovePicker::PLAY_KILLER 
               || moveStage == MovePicker::PLAY_COUNTER);
 
         // Reduce if this is a bad capture (=> loses material)
-        R += (moveStage == MovePicker::PLAY_BAD_CAPTURES);
+        R += 64 * (moveStage == MovePicker::PLAY_BAD_CAPTURES);
 
         // Reduce more if the expected best move is a capture
-        R += ttMoveNoisy;
+        R += 64 * ttMoveNoisy;
 
         // Reduce if evaluation is trending down
-        R += !improving;
+        R += 64 * !improving;
 
         // Reduce if we expect to fail high
-        R += 2 * cutNode;
+        R += 128 * cutNode;
+
+        if (R >= 0)
+          R = R/64;
+        else
+          R = (R-63)/64;
 
         // Clamp to avoid a qsearch or an extension in the child search
         int reducedDepth = std::clamp(newDepth - R, 1, newDepth + 1);
