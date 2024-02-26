@@ -56,6 +56,17 @@ namespace Search {
   DEFINE_PARAM_S(LmrCapHistoryDiv, 8003, 300);
   DEFINE_PARAM_S(ZwsDeeperMargin, 79, 5);
 
+  DEFINE_PARAM_S(LmrW0, 64, 16);
+  DEFINE_PARAM_S(LmrW1, 64, 16);
+  DEFINE_PARAM_S(LmrW2, 64, 16);
+  DEFINE_PARAM_S(LmrW3, 64, 16);
+  DEFINE_PARAM_S(LmrW4, 64, 16);
+  DEFINE_PARAM_S(LmrW5, 64, 16);
+  DEFINE_PARAM_S(LmrW6, 64, 16);
+  DEFINE_PARAM_S(LmrW7, 64, 16);
+  DEFINE_PARAM_S(LmrW8, 128, 16);
+  
+
   DEFINE_PARAM_B(AspWindowStartDepth, 4, 4, 34);
   DEFINE_PARAM_B(AspWindowStartDelta, 11, 5, 45);
   
@@ -896,28 +907,31 @@ namespace Search {
         R -= 64 * (history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv));
 
         // Extend moves that give check
-        R -= 64 * (newPos.checkers != 0ULL);
+        R -= LmrW0 * (newPos.checkers != 0ULL);
 
         // Extend if this position *was* in a PV node. Even further if it *is*
-        R -= 64 * ttPV;
+        R -= LmrW1 * ttPV;
         
-        R -= 64 * IsPV;
+        R -= LmrW2 * IsPV;
 
         // Extend if this move is killer or counter
-        R -= 64 * (   moveStage == MovePicker::PLAY_KILLER 
-              || moveStage == MovePicker::PLAY_COUNTER);
+        if (moveStage == MovePicker::PLAY_KILLER)
+          R -= LmrW3;
 
-        // Reduce if this is a bad capture (=> loses material)
-        R += 64 * (moveStage == MovePicker::PLAY_BAD_CAPTURES);
+        else if (moveStage == MovePicker::PLAY_COUNTER)
+          R -= LmrW4;
+
+        else if (moveStage == MovePicker::PLAY_BAD_CAPTURES)
+          R += LmrW5;
 
         // Reduce more if the expected best move is a capture
-        R += 64 * ttMoveNoisy;
+        R += LmrW6 * ttMoveNoisy;
 
         // Reduce if evaluation is trending down
-        R += 64 * !improving;
+        R += LmrW7 * !improving;
 
         // Reduce if we expect to fail high
-        R += 128 * cutNode;
+        R += LmrW8 * cutNode;
 
         if (R >= 0)
           R = R/64;
