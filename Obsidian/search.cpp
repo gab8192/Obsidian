@@ -18,8 +18,8 @@ namespace Search {
   DEFINE_PARAM_S(MpPvsSeeMargin, -30, 15);
   DEFINE_PARAM_S(MpQsSeeMargin, -25, 15);
 
-  DEFINE_PARAM_S(LmrBase, 55, 10);
-  DEFINE_PARAM_S(LmrDiv, 208, 10);
+  DEFINE_PARAM_S(LmrBase, 55, 16);
+  DEFINE_PARAM_S(LmrDiv, 208, 20);
 
   DEFINE_PARAM_S(StatBonusQuad, 3, 1);
   DEFINE_PARAM_S(StatBonusLinear, 116, 10);
@@ -905,8 +905,6 @@ namespace Search {
 
         R += redFraction;
 
-       // std::cout << redFraction << std::endl;
-
         // Reduce or extend depending on history of this move
         R -= 64 * history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv);
 
@@ -959,10 +957,10 @@ namespace Search {
         needFullSearch = !IsPV || seenMoves > 1;
 
       if (needFullSearch)
-        score = -negamax<false>(newPos, -alpha - 1, -alpha, newDepth, !cutNode, ss + 1);
+        score = -negamax<false>(newPos, -alpha - 1, -alpha, newDepth, !cutNode, ss + 1, redFraction);
 
       if (IsPV && (seenMoves == 1 || score > alpha))
-        score = -negamax<true>(newPos, -beta, -alpha, newDepth, false, ss + 1);
+        score = -negamax<true>(newPos, -beta, -alpha, newDepth, false, ss + 1, redFraction);
 
       cancelMove();
 
