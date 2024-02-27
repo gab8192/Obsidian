@@ -47,8 +47,6 @@ namespace Search {
 
     Move excludedMove;
 
-    int redFraction;
-
     // [piece to]
     int* contHistory;
   };
@@ -132,7 +130,7 @@ namespace Search {
     Score qsearch(Position& position, Score alpha, Score beta, SearchInfo* ss);
 
     template<bool IsPV>
-    Score negamax(Position& position, Score alpha, Score beta, int depth, bool cutNode, SearchInfo* ss);
+    Score negamax(Position& position, Score alpha, Score beta, int depth, bool cutNode, SearchInfo* ss, const int redFraction = 0);
 
     void startSearch();
 

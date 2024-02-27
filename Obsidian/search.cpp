@@ -225,7 +225,6 @@ namespace Search {
 
     ss->contHistory = contHistory[false][0];
     ss->playedMove = MOVE_NONE;
-    (ss+1)->redFraction = 0;
     keyStack[keyStackHead++] = pos.key;
 
     ply++;
@@ -243,7 +242,6 @@ namespace Search {
     bool isCap = pos.board[move_to(move)] != NO_PIECE;
     ss->contHistory = contHistory[isCap][pieceTo(pos, move)];
     ss->playedMove = move;
-    (ss+1)->redFraction = 0;
     keyStack[keyStackHead++] = pos.key;
 
     NNUE::Accumulator& oldAcc = accumStack[accumStackHead];
@@ -539,7 +537,7 @@ namespace Search {
   }
 
   template<bool IsPV>
-  Score Thread::negamax(Position& pos, Score alpha, Score beta, int depth, bool cutNode, SearchInfo* ss) {
+  Score Thread::negamax(Position& pos, Score alpha, Score beta, int depth, bool cutNode, SearchInfo* ss, const int redFraction) {
 
     const bool IsRoot = IsPV && ply == 0;
 
@@ -868,7 +866,7 @@ namespace Search {
         Score singularBeta = ttScore - depth;
         
         ss->excludedMove = move;
-        Score seScore = negamax<false>(pos, singularBeta - 1, singularBeta, (depth - 1) / 2, cutNode, ss);
+        Score seScore = negamax<false>(pos, singularBeta - 1, singularBeta, (depth - 1) / 2, cutNode, ss, redFraction);
         ss->excludedMove = MOVE_NONE;
         
         if (seScore < singularBeta) {
@@ -905,7 +903,9 @@ namespace Search {
 
         int R = isQuiet ? lmrTable[depth][seenMoves] : 0;
 
-        R += ss->redFraction;
+        R += redFraction;
+
+       // std::cout << redFraction << std::endl;
 
         // Reduce or extend depending on history of this move
         R -= 64 * history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv);
@@ -944,14 +944,10 @@ namespace Search {
         else
           intR = (R-63)/64;
 
-        (ss+1)->redFraction = R - 64*intR;
-
         // Clamp to avoid a qsearch or an extension in the child search
         int reducedDepth = std::clamp(newDepth - intR, 1, newDepth + 1);
 
-        score = -negamax<false>(newPos, -alpha - 1, -alpha, reducedDepth, true, ss + 1);
-
-        (ss+1)->redFraction = 0;
+        score = -negamax<false>(newPos, -alpha - 1, -alpha, reducedDepth, true, ss + 1, R - 64*intR);
 
         if (score > alpha && reducedDepth < newDepth) {
           newDepth += (score > bestScore + ZwsDeeperMargin && !IsRoot);
@@ -1122,7 +1118,6 @@ namespace Search {
       searchStack[i].killerMove   = MOVE_NONE;
       searchStack[i].excludedMove = MOVE_NONE;
       searchStack[i].playedMove   = MOVE_NONE;
-      searchStack[i].redFraction = 0;
       searchStack[i].contHistory = contHistory[false][0];
       searchStack[i].doubleExt = 0;
     }
