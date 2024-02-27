@@ -117,7 +117,7 @@ namespace Search {
 
     for (int i = 1; i < MAX_PLY; i++) {
       for (int m = 1; m < MAX_MOVES; m++) {
-        lmrTable[i][m] = dBase + log(i) * log(m) / dDiv;
+        lmrTable[i][m] = 64.0 * (dBase + log(i) * log(m) / dDiv);
       }
     }
   }
@@ -841,7 +841,7 @@ namespace Search {
           if (seenMoves >= (depth * depth + LmpBase) / (2 - improving))
             movePicker.stage = MovePicker::PLAY_BAD_CAPTURES;
 
-          int lmrRed = lmrTable[depth][seenMoves] + !improving - history / EarlyLmrHistoryDiv;
+          int lmrRed = lmrTable[depth][seenMoves]/64 + !improving - history / EarlyLmrHistoryDiv;
           int lmrDepth = std::max(0, depth - lmrRed);
 
           // Futility pruning. If our evaluation is far below alpha,
@@ -903,12 +903,12 @@ namespace Search {
 
       if (depth >= 2 && seenMoves > 1 + 3 * IsRoot) {
 
-        int R = 64 * (isQuiet ? lmrTable[depth][seenMoves] : 0);
+        int R = isQuiet ? lmrTable[depth][seenMoves] : 0;
 
         R += ss->redFraction;
 
         // Reduce or extend depending on history of this move
-        R -= 64 * (history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv));
+        R -= 64 * history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv);
 
         // Extend moves that give check
         R -= LmrW0 * (newPos.checkers != 0ULL);
