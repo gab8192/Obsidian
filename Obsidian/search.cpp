@@ -225,6 +225,7 @@ namespace Search {
 
     ss->contHistory = contHistory[false][0];
     ss->playedMove = MOVE_NONE;
+    (ss+1)->redFraction = 0;
     keyStack[keyStackHead++] = pos.key;
 
     ply++;
@@ -242,6 +243,7 @@ namespace Search {
     bool isCap = pos.board[move_to(move)] != NO_PIECE;
     ss->contHistory = contHistory[isCap][pieceTo(pos, move)];
     ss->playedMove = move;
+    (ss+1)->redFraction = 0;
     keyStack[keyStackHead++] = pos.key;
 
     NNUE::Accumulator& oldAcc = accumStack[accumStackHead];
@@ -903,6 +905,8 @@ namespace Search {
 
         int R = 64 * (isQuiet ? lmrTable[depth][seenMoves] : 0);
 
+        R += ss->redFraction;
+
         // Reduce or extend depending on history of this move
         R -= 64 * (history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv));
 
@@ -933,15 +937,21 @@ namespace Search {
         // Reduce if we expect to fail high
         R += LmrW8 * cutNode;
 
+        int intR;
+
         if (R >= 0)
-          R = R/64;
+          intR = R/64;
         else
-          R = (R-63)/64;
+          intR = (R-63)/64;
+
+        (ss+1)->redFraction = R - 64*intR;
 
         // Clamp to avoid a qsearch or an extension in the child search
-        int reducedDepth = std::clamp(newDepth - R, 1, newDepth + 1);
+        int reducedDepth = std::clamp(newDepth - intR, 1, newDepth + 1);
 
         score = -negamax<false>(newPos, -alpha - 1, -alpha, reducedDepth, true, ss + 1);
+
+        (ss+1)->redFraction = 0;
 
         if (score > alpha && reducedDepth < newDepth) {
           newDepth += (score > bestScore + ZwsDeeperMargin && !IsRoot);
@@ -1108,15 +1118,12 @@ namespace Search {
 
     for (int i = 0; i < MAX_PLY + SsOffset; i++) {
       searchStack[i].staticEval = SCORE_NONE;
-
       searchStack[i].pvLength = 0;
-
       searchStack[i].killerMove   = MOVE_NONE;
       searchStack[i].excludedMove = MOVE_NONE;
       searchStack[i].playedMove   = MOVE_NONE;
-
+      searchStack[i].redFraction = 0;
       searchStack[i].contHistory = contHistory[false][0];
-
       searchStack[i].doubleExt = 0;
     }
 

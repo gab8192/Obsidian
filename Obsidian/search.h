@@ -47,6 +47,8 @@ namespace Search {
 
     Move excludedMove;
 
+    int redFraction;
+
     // [piece to]
     int* contHistory;
   };
