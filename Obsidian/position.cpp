@@ -133,7 +133,7 @@ bool Position::isPseudoLegal(Move move) const {
   if (piece_type(pc) != KING) {
     if (checkers)
       targets &= BETWEEN_BB[kingSquare(us)][getLsb(checkers)];
-    if (blockersForKing[us] & from)
+    if ((blockersForKing[us] & from) && piece_type(pc) != PAWN)
       targets &= LINE_BB[kingSquare(us)][from];
   }
 
