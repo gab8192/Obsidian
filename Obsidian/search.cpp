@@ -18,8 +18,8 @@ namespace Search {
   DEFINE_PARAM_S(MpPvsSeeMargin, -30, 15);
   DEFINE_PARAM_S(MpQsSeeMargin, -25, 15);
 
-  DEFINE_PARAM_S(LmrBase, 55, 16);
-  DEFINE_PARAM_S(LmrDiv, 208, 20);
+  DEFINE_PARAM_S(LmrBase, 56, 16);
+  DEFINE_PARAM_S(LmrDiv, 221, 20);
 
   DEFINE_PARAM_S(StatBonusQuad, 3, 1);
   DEFINE_PARAM_S(StatBonusLinear, 116, 10);
@@ -52,19 +52,19 @@ namespace Search {
   DEFINE_PARAM_S(DoubleExtMargin, 16, 2);
   DEFINE_PARAM_S(DoubleExtMax, 6, 1);
 
-  DEFINE_PARAM_S(LmrQuietHistoryDiv, 10622, 300);
-  DEFINE_PARAM_S(LmrCapHistoryDiv, 7945, 300);
+  DEFINE_PARAM_S(LmrQuietHistoryDiv, 10678, 300);
+  DEFINE_PARAM_S(LmrCapHistoryDiv, 7918, 300);
   DEFINE_PARAM_S(ZwsDeeperMargin, 79, 5);
 
-  DEFINE_PARAM_S(LmrW0, 66, 16);
-  DEFINE_PARAM_S(LmrW1, 62, 16);
-  DEFINE_PARAM_S(LmrW2, 71, 16);
-  DEFINE_PARAM_S(LmrW3, 63, 16);
-  DEFINE_PARAM_S(LmrW4, 69, 16);
+  DEFINE_PARAM_S(LmrW0, 72, 16);
+  DEFINE_PARAM_S(LmrW1, 60, 16);
+  DEFINE_PARAM_S(LmrW2, 73, 16);
+  DEFINE_PARAM_S(LmrW3, 55, 16);
+  DEFINE_PARAM_S(LmrW4, 59, 16);
   DEFINE_PARAM_S(LmrW5, 68, 16);
-  DEFINE_PARAM_S(LmrW6, 64, 16);
-  DEFINE_PARAM_S(LmrW7, 70, 16);
-  DEFINE_PARAM_S(LmrW8, 120, 16);
+  DEFINE_PARAM_S(LmrW6, 67, 16);
+  DEFINE_PARAM_S(LmrW7, 61, 16);
+  DEFINE_PARAM_S(LmrW8, 123, 16);
   
 
   DEFINE_PARAM_B(AspWindowStartDepth, 4, 4, 34);
