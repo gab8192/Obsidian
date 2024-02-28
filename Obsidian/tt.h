@@ -20,7 +20,7 @@ namespace TT {
     void store(Key _key, Flag _bound, int _depth, Move _move, Score _score, Score _eval, bool isPV, int ply);
 
     inline bool matches(Key key) const {
-      return this->key32 == (uint32_t) key;
+      return this->key16 == (uint16_t) key;
     }
 
     inline Score getStaticEval() const {
@@ -56,7 +56,7 @@ namespace TT {
     }
 
   private:
-    uint32_t key32;
+    uint16_t key16;
     int16_t staticEval;
     Flag flags;
     uint8_t depth;

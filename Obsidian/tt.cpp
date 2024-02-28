@@ -42,6 +42,10 @@ namespace TT {
   }
 
   void Entry::store(Key _key, Flag _bound, int _depth, Move _move, Score _score, Score _eval, bool isPV, int ply) {
+
+    if (!matches(_key) || _move)
+      this->move = _move;
+
     if ( _bound == FLAG_EXACT
       || !matches(_key)
       || _depth + 4 + 2*isPV > this->depth) {
@@ -51,10 +55,7 @@ namespace TT {
         else if (score <= SCORE_TB_LOSS_IN_MAX_PLY)
           _score -= ply;
 
-        if (!matches(_key) || _move)
-          this->move = _move;
-
-        this->key32 = (uint32_t) _key;
+        this->key16 = (uint16_t) _key;
         this->depth = _depth;
         this->score = _score;
         this->staticEval = _eval;
