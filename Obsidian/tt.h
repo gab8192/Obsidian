@@ -17,30 +17,7 @@ namespace TT {
 #pragma pack(1)
   struct Entry {
 
-    inline void store(Key _key, Flag _bound, int _depth, Move _move, Score _score, Score _eval, bool isPV, int ply) {
-
-      if (   _bound == FLAG_EXACT
-          || !matches(_key)
-          || _depth + 4 + 2*isPV > this->depth) {
-
-        if (_score >= SCORE_TB_WIN_IN_MAX_PLY)
-          _score += ply;
-        else if (score <= SCORE_TB_LOSS_IN_MAX_PLY)
-          _score -= ply;
-
-        if (!matches(_key) || _move)
-          this->move = _move;
-
-        this->key32 = (uint32_t) _key;
-        this->depth = _depth;
-        this->score = _score;
-        this->staticEval = _eval;
-        this->flags = _bound;
-        if (isPV)
-          this->flags |= FLAG_PV;
-      }
-
-    }
+    void store(Key _key, Flag _bound, int _depth, Move _move, Score _score, Score _eval, bool isPV, int ply);
 
     inline bool matches(Key key) const {
       return this->key32 == (uint32_t) key;

@@ -1016,7 +1016,9 @@ namespace Search {
       }
     }
 
-    bestScore = std::min(bestScore, maxScore);
+    // Only in pv nodes we could probe tt and not cut off immediately
+    if (IsPV)
+      bestScore = std::min(bestScore, maxScore);
 
     // Store to TT
     if (!excludedMove && !(IsRoot && pvIdx > 0)) {
