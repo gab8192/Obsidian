@@ -19,6 +19,11 @@ namespace TT {
 
     void store(Key _key, Flag _bound, int _depth, Move _move, Score _score, Score _eval, bool isPV, int ply);
 
+    inline void age() {
+      if (this->depth > 0)
+        this->depth --;
+    }
+
     inline bool matches(Key key) const {
       return this->key32 == (uint32_t) key;
     }
@@ -64,6 +69,8 @@ namespace TT {
     int16_t score;
   };
 #pragma pack()
+
+  void ageEntries();
 
   // Initialize/clear the TT
   void clear();

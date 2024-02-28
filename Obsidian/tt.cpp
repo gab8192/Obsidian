@@ -11,6 +11,12 @@ namespace TT {
     memset(entries, 0, sizeof(Entry) * entryCount);
   }
 
+  void ageEntries() {
+    for (uint64_t i = 0; i < entryCount; i++) {
+      entries[i].age();
+    }
+  }
+
   void resize(size_t megaBytes) {
     size_t bytes = megaBytes * 1024ULL * 1024ULL;
     entryCount = bytes / sizeof(Entry);

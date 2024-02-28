@@ -171,6 +171,7 @@ namespace {
       return;
     }
     else {
+      TT::ageEntries();
       Threads::startSearch(searchSettings);
     }
   }
