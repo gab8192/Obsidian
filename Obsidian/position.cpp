@@ -105,40 +105,44 @@ bool Position::isPseudoLegal(Move move) const {
 
   const Color us = sideToMove, them = ~us;
   const MoveType moveType = move_type(move);
-  const Bitboard allPieces = pieces();
+  const Bitboard occupied = pieces();
+  const Bitboard emptySquares = ~occupied;
   const Square from = move_from(move), to = move_to(move);
   const Piece pc = board[from];
 
   if (pc == NO_PIECE || piece_color(pc) != us)
     return false;
 
+  if (pieces(us) & to)
+    return false;
+
   if (moreThanOne(checkers))
-    return piece_type(pc) == KING && (getKingAttacks(from) & to & ~pieces(us));
+    return moveType == MT_NORMAL && piece_type(pc) == KING && (getKingAttacks(from) & to);
 
   if (moveType == MT_CASTLING) {
     CastlingRights ct = castling_type(move);
     return
              !checkers
           && (castlingRights & ct)
-          && !(CASTLING_PATH[ct] & allPieces);
+          && !(CASTLING_PATH[ct] & occupied);
   }
-  else if (moveType == MT_EN_PASSANT) {
+
+  if (moveType == MT_EN_PASSANT) {
     return 
              epSquare != SQ_NONE
           && piece_type(pc) == PAWN
           && (getPawnAttacks(epSquare, them) & from);
   }
 
-  Bitboard targets = ~pieces(us);
-  if (piece_type(pc) != KING) {
-    if (checkers)
-      targets &= BETWEEN_BB[kingSquare(us)][getLsb(checkers)];
-    if (blockersForKing[us] & from)
-      targets &= LINE_BB[kingSquare(us)][from];
-  }
-
-  if (!(targets & to))
+  if (moveType == MT_PROMOTION && piece_type(pc) != PAWN)
     return false;
+
+  if (piece_type(pc) == KING)
+    return getKingAttacks(from) & to;
+
+  if (checkers)
+    if (! (BETWEEN_BB[kingSquare(us)][getLsb(checkers)] & to))
+      return false;
 
   if (piece_type(pc) == PAWN) {
 
@@ -146,13 +150,13 @@ bool Position::isPseudoLegal(Move move) const {
     Bitboard legalTo;
 
     if (us == WHITE) {
-      legalTo = (sqBB << 8) & ~allPieces;
-      legalTo |= ((legalTo & Rank3BB) << 8) & ~allPieces;
+      legalTo = (sqBB << 8) & emptySquares;
+      legalTo |= ((legalTo & Rank3BB) << 8) & emptySquares;
       legalTo |= (((sqBB & ~FILE_HBB) << 9) | ((sqBB & ~FILE_ABB) << 7)) & pieces(BLACK);
     }
     else {
-      legalTo = (sqBB >> 8) & ~allPieces;
-      legalTo |= ((legalTo & Rank6BB) >> 8) & ~allPieces;
+      legalTo = (sqBB >> 8) & emptySquares;
+      legalTo |= ((legalTo & Rank6BB) >> 8) & emptySquares;
       legalTo |= (((sqBB & ~FILE_HBB) >> 7) | ((sqBB & ~FILE_ABB) >> 9)) & pieces(WHITE);
     }
     if (moveType != MT_PROMOTION)
@@ -160,6 +164,10 @@ bool Position::isPseudoLegal(Move move) const {
 
     return legalTo & to;
   }
+
+  if ((blockersForKing[us] & from))
+    if (! (LINE_BB[kingSquare(us)][from] & to))
+      return false;
 
   return getPieceAttacks(piece_type(pc), from, pieces()) & to;
 }
