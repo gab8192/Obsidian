@@ -2,7 +2,13 @@
 
 #include <iostream>
 
+#if defined(__linux__)
+#include <sys/mman.h>
+#endif
+
 namespace TT {
+
+  constexpr size_t Mega = 1024 * 1024;
 
   Entry* entries = nullptr;
   uint64_t entryCount;
@@ -12,13 +18,19 @@ namespace TT {
   }
 
   void resize(size_t megaBytes) {
-    size_t bytes = megaBytes * 1024ULL * 1024ULL;
+    if (entries)
+      free(entries);
+
+    size_t bytes = megaBytes * Mega;
     entryCount = bytes / sizeof(Entry);
 
-    if (entries != nullptr)
-      delete[] entries;
+#if defined(__linux__)
+    entries = (Entry*) aligned_alloc(2 * Mega, bytes);
+    madvise(entries, bytes, MADV_HUGEPAGE);
+#else
+    exit(-1);
+#endif 
 
-    entries = new Entry[entryCount];
     clear();
   }
 
