@@ -161,6 +161,9 @@ bool Position::isPseudoLegal(Move move) const {
     return legalTo & to;
   }
 
+  if (moveType == MT_PROMOTION)
+    return false;
+
   return getPieceAttacks(piece_type(pc), from, pieces()) & to;
 }
 
