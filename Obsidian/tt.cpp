@@ -54,7 +54,7 @@ namespace TT {
         if (!matches(_key) || _move)
           this->move = _move;
 
-        this->key32 = (uint32_t) _key;
+        this->key16 = (uint16_t) _key;
         this->depth = _depth;
         this->score = _score;
         this->staticEval = _eval;
