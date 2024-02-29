@@ -6,9 +6,9 @@ endif
 
 FILES = Obsidian/*.cpp Obsidian/fathom/tbprobe.c
 
-OPTIMIZE = -O3 -fno-stack-protector -fno-math-errno -funroll-loops -fno-exceptions
+OPTIMIZE = -O3 -fno-stack-protector -fno-math-errno -funroll-loops -fno-exceptions -flto -flto-partition=one
 
-FLAGS = -s -pthread -std=c++17 -flto -DNDEBUG
+FLAGS = -s -pthread -std=c++17 -DNDEBUG
 
 ifeq ($(build),)
 	build = native
