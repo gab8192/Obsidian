@@ -14,7 +14,8 @@ namespace TT {
     FLAG_EXACT = FLAG_LOWER | FLAG_UPPER,
     FLAG_PV = 4;
 
-#pragma pack(1)
+  constexpr int EntriesPerBucket = 5;
+
   struct Entry {
 
     void store(Key _key, Flag _bound, int _depth, Move _move, Score _score, Score _eval, bool isPV, int ply);
@@ -55,6 +56,14 @@ namespace TT {
       return flags & FLAG_PV;
     }
 
+    inline bool isEmpty() const {
+      return flags == NO_FLAG;
+    }
+
+    inline int quality() const {
+      return this->depth + 8 * (getBound() == FLAG_EXACT);
+    }
+
   private:
     uint32_t key32;
     int16_t staticEval;
@@ -63,7 +72,11 @@ namespace TT {
     uint16_t move;
     int16_t score;
   };
-#pragma pack()
+
+  struct Bucket {
+    Entry entries[EntriesPerBucket];
+    int32_t padding;
+  };
 
   // Initialize/clear the TT
   void clear();

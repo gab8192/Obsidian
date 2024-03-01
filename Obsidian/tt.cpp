@@ -4,41 +4,62 @@
 
 namespace TT {
 
-  Entry* entries = nullptr;
-  uint64_t entryCount;
+  Bucket* buckets = nullptr;
+  uint64_t bucketCount;
 
   void clear() {
-    memset(entries, 0, sizeof(Entry) * entryCount);
+    memset(buckets, 0, sizeof(Bucket) * bucketCount);
   }
 
   void resize(size_t megaBytes) {
     size_t bytes = megaBytes * 1024ULL * 1024ULL;
-    entryCount = bytes / sizeof(Entry);
+    bucketCount = bytes / sizeof(Bucket);
 
-    if (entries != nullptr)
-      delete[] entries;
+    if (buckets != nullptr)
+      delete[] buckets;
 
-    entries = new Entry[entryCount];
+    buckets = new Bucket[bucketCount];
     clear();
   }
 
-  uint64_t index(Key key) {
+  Bucket* getBucket(Key key) {
     using uint128 = unsigned __int128;
-    return (uint128(key) * uint128(entryCount)) >> 64;
+    uint64_t index = (uint128(key) * uint128(bucketCount)) >> 64;
+    return & buckets[index];
   }
 
   void prefetch(Key key) {
-#if defined(_MSC_VER)
-    _mm_prefetch((char*)&entries[index(key)], _MM_HINT_T0);
-#else
-    __builtin_prefetch(&entries[index(key)]);
-#endif
+    __builtin_prefetch(getBucket(key));
   }
 
   Entry* probe(Key key, bool& hit) {
-    Entry* entry = &entries[index(key)];
-    hit = entry->matches(key);
-    return entry;
+
+    Entry* entries = getBucket(key)->entries;
+
+    for (int i = 0; i < EntriesPerBucket; i++) {
+      if (entries[i].matches(key)) {
+        hit = true;
+        return & entries[i];
+      }
+    }
+    
+    hit = false;
+
+    Entry* worstEntry = & entries[0];
+    int worstQuality = worstEntry->quality();
+
+    for (int i = 1; i < EntriesPerBucket; i++) {
+      if (entries[i].isEmpty())
+        return & entries[i];
+
+      int quality = entries[i].quality();
+      if (quality < worstQuality) {
+        worstQuality = quality;
+        worstEntry = & entries[i];
+      }
+    }
+    
+    return worstEntry;
   }
 
   void Entry::store(Key _key, Flag _bound, int _depth, Move _move, Score _score, Score _eval, bool isPV, int ply) {
