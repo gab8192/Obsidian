@@ -72,7 +72,7 @@ namespace TT {
         else if (score <= SCORE_TB_LOSS_IN_MAX_PLY)
           _score -= ply;
 
-        this->key32 = (uint32_t) _key;
+        this->key16 = (uint16_t) _key;
         this->depth = _depth;
         this->score = _score;
         this->staticEval = _eval;
