@@ -37,21 +37,16 @@ namespace TT {
     Entry* entries = getBucket(key)->entries;
 
     for (int i = 0; i < EntriesPerBucket; i++) {
-      if (entries[i].matches(key)) {
-        hit = true;
+      if (entries[i].matches(key) || entries[i].isEmpty()) {
+        hit = ! entries[i].isEmpty();
         return & entries[i];
       }
     }
-    
-    hit = false;
 
     Entry* worstEntry = & entries[0];
     int worstQuality = worstEntry->quality();
 
     for (int i = 1; i < EntriesPerBucket; i++) {
-      if (entries[i].isEmpty())
-        return & entries[i];
-
       int quality = entries[i].quality();
       if (quality < worstQuality) {
         worstQuality = quality;
@@ -59,6 +54,7 @@ namespace TT {
       }
     }
     
+    hit = false;
     return worstEntry;
   }
 
