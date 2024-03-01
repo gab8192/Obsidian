@@ -60,10 +60,6 @@ namespace TT {
       return flags == NO_FLAG;
     }
 
-    inline int quality() const {
-      return this->depth + 8 * (getBound() == FLAG_EXACT);
-    }
-
   private:
     uint16_t key16;
     int16_t staticEval;

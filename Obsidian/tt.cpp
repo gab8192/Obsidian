@@ -44,14 +44,10 @@ namespace TT {
     }
 
     Entry* worstEntry = & entries[0];
-    int worstQuality = worstEntry->quality();
 
     for (int i = 1; i < EntriesPerBucket; i++) {
-      int quality = entries[i].quality();
-      if (quality < worstQuality) {
-        worstQuality = quality;
+      if (entries[i].getDepth() < worstEntry->getDepth())
         worstEntry = & entries[i];
-      }
     }
     
     hit = false;
