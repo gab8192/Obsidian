@@ -8,7 +8,7 @@
 #include <nmmintrin.h>
 #include <thread>
 
-const std::string engineVersion = "dev-10.33";
+const std::string engineVersion = "11.0";
 
 using Key = uint64_t;
 using Bitboard = uint64_t;
