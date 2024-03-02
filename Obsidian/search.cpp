@@ -1182,8 +1182,8 @@ namespace Search {
             goto bestMoveDecided;
 
           if ( rootDepth > 1 
-            && Threads::getSearchSettings().nodes
-            && Threads::totalNodes() >= Threads::getSearchSettings().nodes)
+            && settings.nodes
+            && Threads::totalNodes() > settings.nodes)
             goto bestMoveDecided;
 
           sortRootMoves(pvIdx);
