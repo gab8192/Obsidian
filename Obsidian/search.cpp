@@ -15,11 +15,11 @@
 
 namespace Search {
 
-  DEFINE_PARAM_S(MpPvsSeeMargin, -30, 15);
+  DEFINE_PARAM_S(MpPvsSeeMargin, -110, 15);
   DEFINE_PARAM_S(MpQsSeeMargin, -25, 15);
 
-  DEFINE_PARAM_S(LmrBase, 39, 10);
-  DEFINE_PARAM_S(LmrDiv, 211, 10);
+  DEFINE_PARAM_S(LmrBase, 25, 10);
+  DEFINE_PARAM_S(LmrDiv, 225, 10);
 
   DEFINE_PARAM_S(StatBonusQuad, 3, 1);
   DEFINE_PARAM_S(StatBonusLinear, 116, 10);
