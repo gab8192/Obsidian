@@ -15,7 +15,7 @@
 
 namespace Search {
 
-  DEFINE_PARAM_S(MpPvsSeeMargin, -110, 15);
+  DEFINE_PARAM_S(MpPvsSeeMargin, -150, 15);
   DEFINE_PARAM_S(MpQsSeeMargin, -25, 15);
 
   DEFINE_PARAM_S(LmrBase, 25, 10);
@@ -904,9 +904,6 @@ namespace Search {
         // Extend if this move is killer or counter
         R -= (   moveStage == MovePicker::PLAY_KILLER 
               || moveStage == MovePicker::PLAY_COUNTER);
-
-        // Reduce if this is a bad capture (=> loses material)
-        R -= !isQuiet;
 
         // Reduce more if the expected best move is a capture
         R += ttMoveNoisy;
