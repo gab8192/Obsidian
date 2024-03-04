@@ -16,7 +16,7 @@
 namespace Search {
 
   DEFINE_PARAM_S(MpPvsSeeMargin, -41, 20);
-  DEFINE_PARAM_S(MpQsSeeMargin, -1, 20);
+  DEFINE_PARAM_S(MpQsSeeMargin, -30, 20);
 
   DEFINE_PARAM_S(LmrBase, 42, 10);
   DEFINE_PARAM_S(LmrDiv, 215, 10);
