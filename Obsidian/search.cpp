@@ -1194,11 +1194,6 @@ namespace Search {
 
             failHighCount = 0;
           }
-          else if (score >= beta) {
-            beta = std::min(SCORE_INFINITE, beta + window);
-
-            failHighCount++;
-          }
           else
             break;
 
