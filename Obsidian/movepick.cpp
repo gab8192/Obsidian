@@ -99,10 +99,6 @@ void MovePicker::scoreCaptures() {
     if (mt == MT_PROMOTION)
       moveScore += promotionScores[promo_type(move)];
     else {
-      if (pos.seeGe(move, seeMargin))
-        moveScore += 500000;
-      else
-        moveScore -= 500000;
       moveScore += capHist[pieceTo(pos, move)][captured];
     }
 
@@ -129,13 +125,17 @@ Move MovePicker::nextMove(Stage* outStage) {
   }
   case PLAY_GOOD_CAPTURES:
   {
+    nextGoodCap:
     if (capIndex < captures.size()) {
       int moveI = nextMoveIndex(captures, capIndex);
       Move_Score move = captures[moveI];
-      if (move.score > 0) { // good capture
-        captures[moveI] = captures[capIndex++];
+      captures[moveI] = captures[capIndex++];
+      if (pos.seeGe(move.move, seeMargin)) { // good capture
         *outStage = PLAY_GOOD_CAPTURES;
         return move.move;
+      } else {
+        badCaptures.add(move);
+        goto nextGoodCap;
       }
     }
 
@@ -188,10 +188,10 @@ Move MovePicker::nextMove(Stage* outStage) {
   case PLAY_BAD_CAPTURES:
   {
     // If any captures are left, they are all bad
-    if (capIndex < captures.size()) {
-      int moveI = nextMoveIndex(captures, capIndex);
-      Move_Score move = captures[moveI];
-      captures[moveI] = captures[capIndex++];
+    if (badCapIndex < badCaptures.size()) {
+      int moveI = nextMoveIndex(badCaptures, badCapIndex);
+      Move_Score move = badCaptures[moveI];
+      badCaptures[moveI] = badCaptures[badCapIndex++];
       *outStage = PLAY_BAD_CAPTURES;
       return move.move;
     }

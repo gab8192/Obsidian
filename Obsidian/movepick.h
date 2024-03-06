@@ -50,8 +50,9 @@ private:
 
   MoveList captures;
   MoveList quiets;
+  MoveList badCaptures;
 
-  int capIndex = 0, quietIndex = 0;
+  int capIndex = 0, quietIndex = 0, badCapIndex = 0;
 
   void scoreCaptures();
 
