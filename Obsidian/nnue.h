@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "net8.bin"
+#define EvalFile "gabnet-epoch6.bin"
 
 using namespace SIMD;
 
@@ -25,7 +25,7 @@ namespace NNUE {
   using weight_t = int16_t;
 
   constexpr int FeaturesWidth = 768;
-  constexpr int HiddenWidth = 1536;
+  constexpr int HiddenWidth = 1024;
 
   constexpr int NetworkScale = 400;
   constexpr int NetworkQA = 255;
