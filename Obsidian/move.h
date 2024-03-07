@@ -90,6 +90,10 @@ struct MoveList {
     moves[head++].move = move;
   }
 
+  inline void add(Move_Score move) {
+    moves[head++] = move;
+  }
+
   inline int indexOf(Move move) const {
     for (int i = 0; i < size(); i++) {
       if (moves[i].move == move)
