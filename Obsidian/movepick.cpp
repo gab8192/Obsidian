@@ -37,13 +37,12 @@ constexpr int promotionScores[] = {
     0, 0, 200000, -300000, -200000, 300000
 };
 
-int nextMoveIndex(MoveList& moveList, int scannedMoves) {
-  int bestMoveI = scannedMoves;
-
+Move_Score nextMove0(MoveList& moveList, const int visitedCount) {
+  int bestMoveI = visitedCount;
   int bestMoveScore = moveList[bestMoveI].score;
 
-  int size = moveList.size();
-  for (int i = scannedMoves + 1; i < size; i++) {
+  const int size = moveList.size();
+  for (int i = visitedCount + 1; i < size; i++) {
     int thisScore = moveList[i].score;
     if (thisScore > bestMoveScore) {
       bestMoveScore = thisScore;
@@ -51,7 +50,9 @@ int nextMoveIndex(MoveList& moveList, int scannedMoves) {
     }
   }
 
-  return bestMoveI;
+  Move_Score result = moveList[bestMoveI];
+  moveList[bestMoveI] = moveList[visitedCount];
+  return result;
 }
 
 void MovePicker::scoreQuiets() {
@@ -127,9 +128,7 @@ Move MovePicker::nextMove(Stage* outStage) {
   {
     nextGoodCap:
     if (capIndex < captures.size()) {
-      int moveI = nextMoveIndex(captures, capIndex);
-      Move_Score move = captures[moveI];
-      captures[moveI] = captures[capIndex++];
+      Move_Score move = nextMove0(captures, capIndex++);
       if (pos.seeGe(move.move, seeMargin)) { // good capture
         *outStage = PLAY_GOOD_CAPTURES;
         return move.move;
@@ -175,9 +174,7 @@ Move MovePicker::nextMove(Stage* outStage) {
   case PLAY_QUIETS: 
   {
     if (quietIndex < quiets.size()) {
-      int moveI = nextMoveIndex(quiets, quietIndex);
-      Move_Score move = quiets[moveI];
-      quiets[moveI] = quiets[quietIndex++];
+      Move_Score move = nextMove0(quiets, quietIndex++);
       *outStage = PLAY_QUIETS;
       return move.move;
     }
@@ -189,9 +186,7 @@ Move MovePicker::nextMove(Stage* outStage) {
   {
     // If any captures are left, they are all bad
     if (badCapIndex < badCaptures.size()) {
-      int moveI = nextMoveIndex(badCaptures, badCapIndex);
-      Move_Score move = badCaptures[moveI];
-      badCaptures[moveI] = badCaptures[badCapIndex++];
+      Move_Score move = nextMove0(badCaptures, badCapIndex++);
       *outStage = PLAY_BAD_CAPTURES;
       return move.move;
     }
