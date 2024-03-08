@@ -286,11 +286,7 @@ namespace Search {
     // Decrease score of other quiet moves
     for (int i = 0; i < quietCount; i++) {
       Move otherMove = quiets[i];
-      if (otherMove == bestMove)
-        continue;
-
       addToContHistory(pos, -bonus, otherMove, ss);
-
       addToHistory(mainHistory[pos.sideToMove][move_from_to(otherMove)], -bonus);
     }
 
@@ -942,15 +938,6 @@ namespace Search {
       if (Threads::isSearchStopped())
         return SCORE_DRAW;
 
-      if (isQuiet) {
-        if (quietCount < 64)
-          quiets[quietCount++] = move;
-      }
-      else {
-        if (captureCount < 64)
-          captures[captureCount++] = move;
-      }
-
       if (IsRoot) {
         RootMove& rm = rootMoves[rootMoves.indexOf(move)];
         rm.nodes += nodesSearched - oldNodesSearched;
@@ -983,6 +970,18 @@ namespace Search {
           alpha = bestScore;
         }
       }
+
+      // Register the move to decrease its history later. Unless it raised alpha
+      if (move != bestMove) {
+        if (isQuiet) {
+          if (quietCount < 64)
+            quiets[quietCount++] = move;
+        }
+        else {
+          if (captureCount < 64)
+            captures[captureCount++] = move;
+        }
+      }
     }
 
     if (!seenMoves) {
@@ -1008,9 +1007,6 @@ namespace Search {
 
       for (int i = 0; i < captureCount; i++) {
         Move otherMove = captures[i];
-        if (otherMove == bestMove)
-          continue;
-
         Piece captured = pos.board[move_to(otherMove)];
         addToHistory(captureHistory[pieceTo(pos, otherMove)][piece_type(captured)], -bonus);
       }
