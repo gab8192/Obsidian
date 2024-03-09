@@ -33,10 +33,6 @@ int pieceTo(Position& pos, Move m) {
   return pos.board[move_from(m)] * SQUARE_NB + move_to(m);
 }
 
-constexpr int promotionScores[] = {
-    0, 0, 200000, -300000, -200000, 300000
-};
-
 Move_Score nextMove0(MoveList& moveList, const int visitedCount) {
   int bestMoveI = visitedCount;
   int bestMoveScore = moveList[bestMoveI].score;
@@ -56,7 +52,6 @@ Move_Score nextMove0(MoveList& moveList, const int visitedCount) {
 }
 
 void MovePicker::scoreQuiets() {
-
   int i = 0;
   while (i < quiets.size()) {
     Move move = quiets[i].move;
@@ -79,7 +74,6 @@ void MovePicker::scoreQuiets() {
 void MovePicker::scoreCaptures() {
   int i = 0;
   while (i < captures.size()) {
-
     Move move = captures[i].move;
 
     if (move == ttMove) {
@@ -87,23 +81,13 @@ void MovePicker::scoreCaptures() {
       continue;
     }
 
-    int& moveScore = captures[i].score;
-
-    // initial score
-    moveScore = 0;
-
     MoveType mt = move_type(move);
     PieceType captured = piece_type(pos.board[move_to(move)]);
 
-    moveScore += PIECE_VALUE[mt == MT_EN_PASSANT ? PAWN : captured] * 128;
-
-    if (mt == MT_PROMOTION)
-      moveScore += promotionScores[promo_type(move)];
-    else {
-      moveScore += capHist[pieceTo(pos, move)][captured];
-    }
-
-    i++;
+    captures[i++].score = 
+        PIECE_VALUE[mt == MT_EN_PASSANT ? PAWN : captured] * 128
+      + (mt == MT_PROMOTION) * 131072
+      + capHist[pieceTo(pos, move)][captured];
   }
 }
 
@@ -129,7 +113,7 @@ Move MovePicker::nextMove(Stage* outStage) {
     nextGoodCap:
     if (capIndex < captures.size()) {
       Move_Score move = nextMove0(captures, capIndex++);
-      if (pos.seeGe(move.move, seeMargin)) { // good capture
+      if (pos.seeGe(move.move, seeMargin) && !isUnderPromo(move.move)) { // good capture
         *outStage = PLAY_GOOD_CAPTURES;
         return move.move;
       } else {
