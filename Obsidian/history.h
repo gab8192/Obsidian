@@ -5,7 +5,7 @@
 // [color][from to]
 using MainHistory  = int[COLOR_NB][SQUARE_NB * SQUARE_NB];
 
-// [piece to][piece to]
+// [piece to][piece_type]
 using CaptureHistory = int[PIECE_NB * SQUARE_NB][PIECE_TYPE_NB];
 
 // [piece to]

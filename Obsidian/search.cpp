@@ -1001,14 +1001,14 @@ namespace Search {
         updateHistories(pos, bonus, bestMove, bestScore, beta, quiets, quietCount, ss);
       }
       else {
-        Piece captured = pos.board[move_to(bestMove)];
-        addToHistory(captureHistory[pieceTo(pos, bestMove)][piece_type(captured)], bonus);
+        PieceType captured = piece_type(pos.board[move_to(bestMove)]);
+        addToHistory(captureHistory[pieceTo(pos, bestMove)][captured], bonus);
       }
 
       for (int i = 0; i < captureCount; i++) {
         Move otherMove = captures[i];
-        Piece captured = pos.board[move_to(otherMove)];
-        addToHistory(captureHistory[pieceTo(pos, otherMove)][piece_type(captured)], -bonus);
+        PieceType captured = piece_type(pos.board[move_to(otherMove)]);
+        addToHistory(captureHistory[pieceTo(pos, otherMove)][captured], -bonus);
       }
     }
 
