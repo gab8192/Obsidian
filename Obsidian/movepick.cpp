@@ -85,19 +85,13 @@ void MovePicker::scoreCaptures() {
 
     int& moveScore = captures[i].score;
 
-    // initial score
-    moveScore = 0;
-
     MoveType mt = move_type(move);
     PieceType captured = piece_type(pos.board[move_to(move)]);
 
-    moveScore += PIECE_VALUE[mt == MT_EN_PASSANT ? PAWN : captured] * 128;
-
+    moveScore = PIECE_VALUE[mt == MT_EN_PASSANT ? PAWN : captured] * 128;
+    moveScore += capHist[pieceTo(pos, move)][captured];
     if (mt == MT_PROMOTION)
       moveScore += PIECE_VALUE[promo_type(move)] * 128;
-    else {
-      moveScore += capHist[pieceTo(pos, move)][captured];
-    }
 
     i++;
   }
