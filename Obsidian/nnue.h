@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "net8.bin"
+#define EvalFile "iguana-epoch10.bin"
 
 using namespace SIMD;
 
