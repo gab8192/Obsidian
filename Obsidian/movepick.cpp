@@ -116,14 +116,16 @@ Move MovePicker::nextMove(Stage* outStage) {
       if (pos.seeGe(move.move, seeMargin) && !isUnderPromo(move.move)) { // good capture
         *outStage = PLAY_GOOD_CAPTURES;
         return move.move;
-      } else {
-        badCaptures.add(move);
-        goto nextGoodCap;
       }
+      badCaptures.add(move);
+      goto nextGoodCap;
     }
 
-    if (  (searchType == QSEARCH && !pos.checkers)
-        || searchType == PROBCUT)
+    if (searchType == QSEARCH && !pos.checkers) {
+      stage = PLAY_BAD_CAPTURES;
+      goto select;
+    }
+    if (searchType == PROBCUT)
       return MOVE_NONE;
 
     ++stage;
@@ -168,7 +170,6 @@ Move MovePicker::nextMove(Stage* outStage) {
   }
   case PLAY_BAD_CAPTURES:
   {
-    // If any captures are left, they are all bad
     if (badCapIndex < badCaptures.size()) {
       Move_Score move = nextMove0(badCaptures, badCapIndex++);
       *outStage = PLAY_BAD_CAPTURES;
