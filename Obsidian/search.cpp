@@ -460,12 +460,6 @@ namespace Search {
 
       if (!pos.isLegal(move))
         continue;
-      
-      if (bestScore > SCORE_TB_LOSS_IN_MAX_PLY) {
-        // This implies that we are in check too
-        if (moveStage == MovePicker::PLAY_QUIETS)
-          movePicker.stage = MovePicker::PLAY_BAD_CAPTURES;
-      }
 
       foundLegalMoves = true;
 
@@ -488,6 +482,12 @@ namespace Search {
 
           alpha = bestScore;
         }
+      }
+
+      if (bestScore > SCORE_TB_LOSS_IN_MAX_PLY) {
+        // This implies that we are in check too
+        if (moveStage == MovePicker::PLAY_QUIETS)
+          break;
       }
     }
 
