@@ -19,6 +19,8 @@ namespace TT {
 
     void store(Key _key, Flag _bound, int _depth, Move _move, Score _score, Score _eval, bool isPV, int ply);
 
+    void updateAge();
+
     inline bool matches(Key key) const {
       return this->key32 == (uint32_t) key;
     }
@@ -32,7 +34,7 @@ namespace TT {
     }
 
     inline Flag getBound() const {
-      return flags & FLAG_EXACT;
+      return agePvBound & FLAG_EXACT;
     }
 
     inline Move getMove() const {
@@ -52,13 +54,17 @@ namespace TT {
     }
 
     inline bool wasPV() const {
-      return flags & FLAG_PV;
+      return agePvBound & FLAG_PV;
+    }
+
+    inline uint8_t getAge() const {
+      return agePvBound >> 3;
     }
 
   private:
     uint32_t key32;
     int16_t staticEval;
-    Flag flags;
+    uint8_t agePvBound;
     uint8_t depth;
     uint16_t move;
     int16_t score;
@@ -67,6 +73,8 @@ namespace TT {
 
   // Initialize/clear the TT
   void clear();
+
+  void nextSearch();
 
   void resize(size_t megaBytes);
 
