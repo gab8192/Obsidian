@@ -907,9 +907,6 @@ namespace Search {
         R -= (   moveStage == MovePicker::PLAY_KILLER 
               || moveStage == MovePicker::PLAY_COUNTER);
 
-        // Reduce if this is a bad capture (=> loses material)
-        R += (moveStage == MovePicker::PLAY_BAD_CAPTURES);
-
         // Reduce more if the expected best move is a capture
         R += ttMoveNoisy;
 
