@@ -171,6 +171,7 @@ namespace {
       return;
     }
     else {
+      TT::nextSearch();
       Threads::startSearch(searchSettings);
     }
   }

@@ -4,11 +4,19 @@
 
 namespace TT {
 
+  constexpr uint8_t MAX_AGE = 1 << 5;
+
+  uint8_t tableAge;
   Bucket* buckets = nullptr;
   uint64_t bucketCount;
 
   void clear() {
     memset(buckets, 0, sizeof(Bucket) * bucketCount);
+    tableAge = 1;
+  }
+
+  void nextSearch() {
+    tableAge = (tableAge+1) % MAX_AGE;
   }
 
   void resize(size_t megaBytes) {
@@ -39,6 +47,7 @@ namespace TT {
     for (int i = 0; i < EntriesPerBucket; i++) {
       if (entries[i].matches(key) || entries[i].isEmpty()) {
         hit = ! entries[i].isEmpty();
+        entries[i].updateAge();
         return & entries[i];
       }
     }
@@ -46,7 +55,7 @@ namespace TT {
     Entry* worstEntry = & entries[0];
 
     for (int i = 1; i < EntriesPerBucket; i++) {
-      if (entries[i].getDepth() < worstEntry->getDepth())
+      if (entries[i].getQuality() < worstEntry->getQuality())
         worstEntry = & entries[i];
     }
     
@@ -72,9 +81,16 @@ namespace TT {
         this->depth = _depth;
         this->score = _score;
         this->staticEval = _eval;
-        this->flags = _bound;
-        if (isPV)
-          this->flags |= FLAG_PV;
+        this->agePvBound = _bound | (isPV << 2) | (tableAge << 3);
       }
+  }
+
+  void Entry::updateAge() {
+    agePvBound = (agePvBound & (FLAG_EXACT | FLAG_PV)) | tableAge;
+  }
+
+  int Entry::getQuality() {
+    int ageDistance = (MAX_AGE + tableAge - getAge()) % MAX_AGE;
+    return depth - 2 * ageDistance;
   }
 }
