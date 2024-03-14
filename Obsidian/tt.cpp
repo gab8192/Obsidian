@@ -12,7 +12,7 @@ namespace TT {
 
   void clear() {
     memset(buckets, 0, sizeof(Bucket) * bucketCount);
-    tableAge = 1;
+    tableAge = 0;
   }
 
   void nextSearch() {
@@ -86,7 +86,7 @@ namespace TT {
   }
 
   void Entry::updateAge() {
-    agePvBound = (agePvBound & (FLAG_EXACT | FLAG_PV)) | tableAge;
+    agePvBound = (agePvBound & (FLAG_EXACT | FLAG_PV)) | (tableAge << 3);
   }
 
   int Entry::getQuality() {
