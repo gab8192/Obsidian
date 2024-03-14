@@ -91,6 +91,6 @@ namespace TT {
 
   int Entry::getQuality() {
     int ageDistance = (MAX_AGE + tableAge - getAge()) % MAX_AGE;
-    return depth - 16 * ageDistance;
+    return depth - 8 * ageDistance;
   }
 }

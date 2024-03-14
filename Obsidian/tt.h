@@ -65,7 +65,7 @@ namespace TT {
     }
 
     inline bool isEmpty() const {
-      return agePvBound == NO_FLAG;
+      return (agePvBound & (FLAG_EXACT | FLAG_PV)) == NO_FLAG;
     }
 
   private:
