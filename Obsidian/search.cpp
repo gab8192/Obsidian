@@ -854,7 +854,7 @@ namespace Search {
         && ttBound & TT::FLAG_LOWER
         && ttDepth >= depth - 3) 
       {
-        Score singularBeta = ttScore - depth;
+        Score singularBeta = ttScore - 2 * depth;
         
         ss->excludedMove = move;
         Score seScore = negamax<false>(pos, singularBeta - 1, singularBeta, (depth - 1) / 2, cutNode, ss);
