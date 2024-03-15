@@ -49,6 +49,8 @@ namespace Search {
 
     // [piece to]
     int* contHistory;
+
+    bool ttPV;
   };
 
   // A sort of header of the search stack, so that plies behind 0 are accessible and

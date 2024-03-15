@@ -593,6 +593,8 @@ namespace Search {
       ttPV |= ttEntry->wasPV();
     }
 
+    ss->ttPV = ttPV;
+
     if (IsRoot)
       ttMove = rootMoves[pvIdx].move;
 
@@ -1030,7 +1032,9 @@ namespace Search {
       else
         flag = (IsPV && bestMove) ? TT::FLAG_EXACT : TT::FLAG_UPPER;
 
-      ttEntry->store(pos.key, flag, depth, bestMove, bestScore, ss->staticEval, ttPV, ply);
+      ttEntry->store(pos.key, 
+        flag, depth, bestMove, bestScore, ss->staticEval,
+        ttPV || ((ss-1)->ttPV && depth > 3 && !bestMove),  ply);
     }
 
     return bestScore;
@@ -1091,16 +1095,13 @@ namespace Search {
 
     for (int i = 0; i < MAX_PLY + SsOffset; i++) {
       searchStack[i].staticEval = SCORE_NONE;
-
       searchStack[i].pvLength = 0;
-
       searchStack[i].killerMove   = MOVE_NONE;
       searchStack[i].excludedMove = MOVE_NONE;
       searchStack[i].playedMove   = MOVE_NONE;
-
       searchStack[i].contHistory = contHistory[false][0];
-
       searchStack[i].doubleExt = 0;
+      searchStack[i].ttPV = false;
     }
 
     int searchStability = 0;
