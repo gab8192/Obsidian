@@ -810,7 +810,7 @@ namespace Search {
       
       bool isQuiet = pos.isQuiet(move);
 
-      int history = isQuiet ? getQuietHistory(pos, move, ss) : getCapHistory(pos, move);
+      int history = getQuietHistory(pos, move, ss);
 
       int oldNodesSearched = nodesSearched;
 
@@ -895,7 +895,7 @@ namespace Search {
         int R = isQuiet ? lmrTable[depth][seenMoves] : 0;
 
         // Reduce or extend depending on history of this move
-        R -= history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv);
+        R -= history / LmrQuietHistoryDiv;
 
         // Extend moves that give check
         R -= (newPos.checkers != 0ULL);
@@ -906,9 +906,6 @@ namespace Search {
         // Extend if this move is killer or counter
         R -= (   moveStage == MovePicker::PLAY_KILLER 
               || moveStage == MovePicker::PLAY_COUNTER);
-
-        // Reduce if this is a bad capture (=> loses material)
-        R += (moveStage == MovePicker::PLAY_BAD_CAPTURES);
 
         // Reduce more if the expected best move is a capture
         R += ttMoveNoisy;
