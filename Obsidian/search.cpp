@@ -837,8 +837,10 @@ namespace Search {
           // only visit a few quiet moves
           if (   lmrDepth <= FpMaxDepth 
               && !pos.checkers 
-              && ss->staticEval + FpBase + FpDepthMul * lmrDepth <= alpha)
+              && ss->staticEval + FpBase + FpDepthMul * lmrDepth <= alpha) {
             movePicker.stage = MovePicker::PLAY_BAD_CAPTURES;
+            continue;
+          }
         }
       }
 
