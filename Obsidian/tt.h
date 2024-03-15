@@ -14,13 +14,18 @@ namespace TT {
     FLAG_EXACT = FLAG_LOWER | FLAG_UPPER,
     FLAG_PV = 4;
 
-#pragma pack(1)
+  constexpr int EntriesPerBucket = 3;
+
   struct Entry {
 
     void store(Key _key, Flag _bound, int _depth, Move _move, Score _score, Score _eval, bool isPV, int ply);
 
+    void updateAge();
+
+    int getQuality();
+
     inline bool matches(Key key) const {
-      return this->key32 == (uint32_t) key;
+      return this->key16 == (uint16_t) key;
     }
 
     inline Score getStaticEval() const {
@@ -32,7 +37,11 @@ namespace TT {
     }
 
     inline Flag getBound() const {
-      return flags & FLAG_EXACT;
+      return agePvBound & FLAG_EXACT;
+    }
+
+    inline uint8_t getAge() const {
+      return agePvBound >> 3;
     }
 
     inline Move getMove() const {
@@ -52,21 +61,31 @@ namespace TT {
     }
 
     inline bool wasPV() const {
-      return flags & FLAG_PV;
+      return agePvBound & FLAG_PV;
+    }
+
+    inline bool isEmpty() const {
+      return (agePvBound & (FLAG_EXACT | FLAG_PV)) == NO_FLAG;
     }
 
   private:
-    uint32_t key32;
+    uint16_t key16;
     int16_t staticEval;
-    Flag flags;
+    uint8_t agePvBound;
     uint8_t depth;
     uint16_t move;
     int16_t score;
   };
-#pragma pack()
+
+  struct Bucket {
+    Entry entries[EntriesPerBucket];
+    int16_t padding;
+  };
 
   // Initialize/clear the TT
   void clear();
+
+  void nextSearch();
 
   void resize(size_t megaBytes);
 
