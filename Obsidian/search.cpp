@@ -50,7 +50,7 @@ namespace Search {
   DEFINE_PARAM_S(FpDepthMul, 111, 6);
 
   DEFINE_PARAM_S(DoubleExtMargin, 16, 2);
-  DEFINE_PARAM_S(DoubleExtMax, 6, 1);
+  DEFINE_PARAM_S(DoubleExtMax, 8, 1);
 
   DEFINE_PARAM_S(LmrQuietHistoryDiv, 10486, 300);
   DEFINE_PARAM_S(LmrCapHistoryDiv, 8003, 300);
@@ -847,14 +847,14 @@ namespace Search {
       // Singular extension
       if ( !IsRoot
         && ply < 2 * rootDepth
-        && depth >= 6
+        && depth >= 5
         && !excludedMove
         && move == ttMove
         && abs(ttScore) < SCORE_TB_WIN_IN_MAX_PLY
         && ttBound & TT::FLAG_LOWER
         && ttDepth >= depth - 3) 
       {
-        Score singularBeta = ttScore - depth;
+        Score singularBeta = ttScore - 2 * depth;
         
         ss->excludedMove = move;
         Score seScore = negamax<false>(pos, singularBeta - 1, singularBeta, (depth - 1) / 2, cutNode, ss);
