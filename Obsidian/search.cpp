@@ -45,6 +45,9 @@ namespace Search {
 
   DEFINE_PARAM_S(EarlyLmrHistoryDiv, 5521, 300);
 
+  DEFINE_PARAM_S(HpMaxDepth, 5, 1);
+  DEFINE_PARAM_S(HpDepthMul, -4096, 300);
+
   DEFINE_PARAM_S(FpBase, 182, 10);
   DEFINE_PARAM_S(FpMaxDepth, 8, 1);
   DEFINE_PARAM_S(FpDepthMul, 111, 6);
@@ -832,6 +835,10 @@ namespace Search {
 
           int lmrRed = lmrTable[depth][seenMoves] + !improving - history / EarlyLmrHistoryDiv;
           int lmrDepth = std::max(0, depth - lmrRed);
+
+          // History pruning
+          if (lmrDepth <= HpMaxDepth && history < HpDepthMul * depth)
+            continue;
 
           // Futility pruning. If our evaluation is far below alpha,
           // only visit a few quiet moves
