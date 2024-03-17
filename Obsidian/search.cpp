@@ -1000,11 +1000,12 @@ namespace Search {
     // Update histories
     if (bestScore >= beta)
     {
-      int bonus = stat_bonus(depth + (bestScore > beta + StatBonusBoostAt));
-
+      int bonus = stat_bonus(depth);
+      
       if (pos.isQuiet(bestMove)) 
       {
-        updateHistories(pos, bonus, bestMove, bestScore, beta, quiets, quietCount, ss);
+        int quietBonus = stat_bonus(depth + (bestScore > beta + StatBonusBoostAt));
+        updateHistories(pos, quietBonus, bestMove, bestScore, beta, quiets, quietCount, ss);
       }
       else {
         PieceType captured = piece_type(pos.board[move_to(bestMove)]);
