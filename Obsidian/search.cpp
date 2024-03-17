@@ -46,7 +46,7 @@ namespace Search {
   DEFINE_PARAM_S(EarlyLmrHistoryDiv, 5521, 300);
 
   DEFINE_PARAM_S(HpMaxDepth, 5, 1);
-  DEFINE_PARAM_S(HpDepthMul, -4096, 300);
+  DEFINE_PARAM_S(HpDepthMul, -4200, 300);
 
   DEFINE_PARAM_S(FpBase, 182, 10);
   DEFINE_PARAM_S(FpMaxDepth, 8, 1);
@@ -837,8 +837,10 @@ namespace Search {
           int lmrDepth = std::max(0, depth - lmrRed);
 
           // History pruning
-          if (lmrDepth <= HpMaxDepth && history < HpDepthMul * depth)
+          if (lmrDepth <= HpMaxDepth && history < HpDepthMul * depth) {
+            movePicker.stage = MovePicker::PLAY_BAD_CAPTURES;
             continue;
+          }
 
           // Futility pruning. If our evaluation is far below alpha,
           // only visit a few quiet moves
