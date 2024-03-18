@@ -406,13 +406,13 @@ namespace Search {
     }
 
     Move bestMove = MOVE_NONE;
-    Score bestScore;
+    Score bestScore = -SCORE_INFINITE;
+    Score futility = -SCORE_INFINITE;
 
     // Do the static evaluation
 
     if (pos.checkers) {
       // When in check avoid evaluating
-      bestScore = -SCORE_INFINITE;
       ss->staticEval = SCORE_NONE;
     }
     else {
@@ -429,6 +429,8 @@ namespace Search {
         return bestScore;
       if (bestScore > alpha)
         alpha = bestScore;
+
+      futility = ss->staticEval + 180;
     }
 
     // Visiting the tt move when it is quiet, and stm is not check, loses ~300 Elo
@@ -459,6 +461,18 @@ namespace Search {
 
       if (!pos.isLegal(move))
         continue;
+
+      if (bestScore > SCORE_TB_LOSS_IN_MAX_PLY) {
+
+        if ( !pos.checkers
+          && futility <= alpha
+          && !pos.seeGe(move, 1)) 
+          {
+            if (futility > bestScore)
+              bestScore = futility;
+            continue;
+          }
+      }
 
       foundLegalMoves = true;
 
