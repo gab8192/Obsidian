@@ -129,7 +129,7 @@ bool Position::isPseudoLegal(Move move) const {
 
   if (moveType == MT_EN_PASSANT) {
     return 
-             epSquare != SQ_NONE
+             to == epSquare /* implies epSquare != SQ_NONE */
           && piece_type(pc) == PAWN
           && (getPawnAttacks(epSquare, them) & from);
   }
