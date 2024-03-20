@@ -6,7 +6,7 @@ namespace Eval {
 
   Score evaluate(Position& pos, NNUE::Accumulator& accumulator) {
 
-    Score score = NNUE::evaluate(accumulator, pos.sideToMove);
+    Score score = NNUE::evaluate(accumulator, pos);
 
     // Scale down as 50 move rule approaches
     score = score * (200 - pos.halfMoveClock) / 200;

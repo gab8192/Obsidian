@@ -3,9 +3,11 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "net13.bin"
+#define EvalFile "net14.bin"
 
 using namespace SIMD;
+
+struct Position;
 
 struct SquarePiece {
   Square sq;
@@ -26,6 +28,8 @@ namespace NNUE {
 
   constexpr int FeaturesWidth = 768;
   constexpr int HiddenWidth = 1536;
+
+  constexpr int OutputBuckets = 8;
 
   constexpr int NetworkScale = 400;
   constexpr int NetworkQA = 255;
@@ -49,5 +53,5 @@ namespace NNUE {
 
   void init();
 
-  Score evaluate(Accumulator& accumulator, Color sideToMove);
+  Score evaluate(Accumulator& accumulator, Position& pos);
 }
