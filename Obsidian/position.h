@@ -135,6 +135,9 @@ struct alignas(32) Position {
            || (mt == MT_CASTLING);
   }
 
+
+  bool isPseudoLegalImpl(Move move) const;
+
   bool isPseudoLegal(Move move) const;
 
   bool isLegal(Move move) const;

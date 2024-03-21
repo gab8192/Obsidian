@@ -1,5 +1,6 @@
 #include "position.h"
 #include "move.h"
+#include "movegen.h"
 #include "uci.h"
 
 #include <sstream>
@@ -100,6 +101,22 @@ void Position::updateKey() {
 }
 
 bool Position::isPseudoLegal(Move move) const {
+  bool result = isPseudoLegalImpl(move);
+  
+  bool correctResult = false;
+  MoveList list;
+  getStageMoves(*this, ADD_ALL_MOVES, &list);
+
+  for (int i = 0; i < list.size(); i++)
+    correctResult |= list[i].move == move;
+
+  if (result != correctResult)
+    exit(1);
+
+  return result;
+}
+
+bool Position::isPseudoLegalImpl(Move move) const {
   if (move == MOVE_NONE)
     return false;
 
