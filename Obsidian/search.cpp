@@ -232,6 +232,10 @@ namespace Search {
     ss->playedMove = move;
     keyStack[keyStackHead++] = pos.key;
 
+    Square oldKingSquares[COLOR_NB];
+    oldKingSquares[WHITE] = pos.kingSquare(WHITE);
+    oldKingSquares[BLACK] = pos.kingSquare(BLACK);
+
     NNUE::Accumulator& oldAcc = accumStack[accumStackHead];
     NNUE::Accumulator& newAcc = accumStack[++accumStackHead];
 
@@ -242,7 +246,12 @@ namespace Search {
 
     TT::prefetch(pos.key);
 
-    newAcc.doUpdates(dirtyPieces, oldAcc);
+    for (Color side = WHITE; side <= BLACK; ++side) {
+      if (NNUE::needRefresh(side, oldKingSquares[side], pos.kingSquare(side)))
+        newAcc.refresh(pos, side);
+      else
+        newAcc.doUpdates(pos.kingSquare(side), side, dirtyPieces, oldAcc); 
+    }
   }
 
   void Thread::cancelMove() {
@@ -1068,7 +1077,8 @@ namespace Search {
     Position rootPos = settings.position;
 
     accumStackHead = 0;
-    rootPos.updateAccumulator(accumStack[accumStackHead]);
+    accumStack[0].refresh(rootPos, WHITE);
+    accumStack[0].refresh(rootPos, BLACK);
 
     keyStackHead = 0;
     for (int i = 0; i < settings.prevPositions.size(); i++)

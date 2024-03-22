@@ -222,7 +222,8 @@ void UCI::loop(int argc, char* argv[]) {
     else if (token == "tune")       std::cout << paramsToSpsaInput();
     else if (token == "eval") {
       NNUE::Accumulator tempAcc;
-      pos.updateAccumulator(tempAcc);
+      tempAcc.refresh(pos, WHITE);
+      tempAcc.refresh(pos, BLACK);
       Score eval = Eval::evaluate(pos, tempAcc);
       if (pos.sideToMove == BLACK)
         eval = -eval;
