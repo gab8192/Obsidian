@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "net14.bin"
+#define EvalFile "net512.bin"
 
 using namespace SIMD;
 
@@ -27,7 +27,7 @@ namespace NNUE {
   using weight_t = int16_t;
 
   constexpr int FeaturesWidth = 768;
-  constexpr int HiddenWidth = 1536;
+  constexpr int HiddenWidth = 512;
 
   constexpr int OutputBuckets = 8;
 
