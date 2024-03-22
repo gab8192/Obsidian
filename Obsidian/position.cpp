@@ -685,13 +685,3 @@ bool Position::seeGe(Move m, int threshold) const {
 
   return bool(res);
 }
-
-void Position::updateAccumulator(NNUE::Accumulator& acc) const {
-  acc.reset();
-
-  Bitboard b0 = pieces();
-  while (b0) {
-    Square sq = popLsb(b0);
-    acc.addPiece(sq, board[sq]);
-  }
-}
