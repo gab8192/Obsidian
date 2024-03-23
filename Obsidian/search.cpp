@@ -208,7 +208,6 @@ namespace Search {
   }
 
   void Thread::playNullMove(Position& pos, SearchInfo* ss) {
-    TT::prefetch(pos.key ^ ZOBRIST_TEMPO);
     nodesSearched++;
 
     ss->contHistory = contHistory[false][0];
@@ -225,7 +224,6 @@ namespace Search {
   }
 
   void Thread::playMove(Position& pos, Move move, SearchInfo* ss) {
-    TT::prefetch(pos.keyAfter(move));
     nodesSearched++;
 
     bool isCap = pos.board[move_to(move)] != NO_PIECE;
