@@ -225,6 +225,7 @@ namespace Search {
   }
 
   void Thread::playMove(Position& pos, Move move, SearchInfo* ss) {
+    TT::prefetch(pos.keyAfter(move));
     nodesSearched++;
 
     bool isCap = pos.board[move_to(move)] != NO_PIECE;
@@ -243,8 +244,6 @@ namespace Search {
 
     ply++;
     pos.doMove(move, dirtyPieces);
-
-    TT::prefetch(pos.key);
 
     for (Color side = WHITE; side <= BLACK; ++side) {
       if (NNUE::needRefresh(side, oldKingSquares[side], pos.kingSquare(side)))
