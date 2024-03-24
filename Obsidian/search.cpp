@@ -13,6 +13,13 @@
 #include <cmath>
 #include <sstream>
 
+void FinnyEntry::reset() {
+  memset(byColorBB, 0, sizeof(byColorBB));
+  memset(byPieceBB, 0, sizeof(byPieceBB));
+  acc.reset(WHITE);
+  acc.reset(BLACK);
+}
+
 namespace Search {
 
   DEFINE_PARAM_S(MpPvsSeeMargin, -80, 15);
@@ -224,13 +231,46 @@ namespace Search {
     keyStackHead--;
   }
 
+  void Thread::refreshAccumulator(Position& pos, NNUE::Accumulator& acc, Color side) {
+    const Square king = pos.kingSquare(side);
+    const int bucket = NNUE::KingBucketsScheme[relative_square(side, king)];
+    FinnyEntry& entry = finny[fileOf(king) >= FILE_E][bucket];
+
+    for (Color c = WHITE; c <= BLACK; ++c) {
+      for (PieceType pt = PAWN; pt <= KING; ++pt) {
+        const Bitboard oldBB = entry.byColorBB[side][c] & entry.byPieceBB[side][pt];
+        const Bitboard newBB = pos.pieces(c, pt);
+        Bitboard toRemove = oldBB & ~newBB;
+        Bitboard toAdd = newBB & ~oldBB;
+
+        while (toRemove) {
+          Square sq = popLsb(toRemove);
+          entry.acc.removePiece(king, side, makePiece(c, pt), sq);
+        }
+        while (toAdd) {
+          Square sq = popLsb(toAdd);
+          entry.acc.addPiece(king, side, makePiece(c, pt), sq);
+        }
+      }
+    }
+
+    memcpy(acc.colors[side], entry.acc.colors[side], sizeof(acc.colors[0]));
+    memcpy(entry.byColorBB[side], pos.byColorBB, sizeof(entry.byColorBB[0]));
+    memcpy(entry.byPieceBB[side], pos.byPieceBB, sizeof(entry.byPieceBB[0]));
+  }
+
   void Thread::playMove(Position& pos, Move move, SearchInfo* ss) {
+
     nodesSearched++;
 
-    bool isCap = pos.board[move_to(move)] != NO_PIECE;
+    const bool isCap = pos.board[move_to(move)] != NO_PIECE;
     ss->contHistory = contHistory[isCap][pieceTo(pos, move)];
     ss->playedMove = move;
     keyStack[keyStackHead++] = pos.key;
+
+    Square oldKingSquares[COLOR_NB];
+    oldKingSquares[WHITE] = pos.kingSquare(WHITE);
+    oldKingSquares[BLACK] = pos.kingSquare(BLACK);
 
     NNUE::Accumulator& oldAcc = accumStack[accumStackHead];
     NNUE::Accumulator& newAcc = accumStack[++accumStackHead];
@@ -242,7 +282,12 @@ namespace Search {
 
     TT::prefetch(pos.key);
 
-    newAcc.doUpdates(dirtyPieces, oldAcc);
+    for (Color side = WHITE; side <= BLACK; ++side) {
+      if (NNUE::needRefresh(side, oldKingSquares[side], pos.kingSquare(side)))
+        refreshAccumulator(pos, newAcc, side);
+      else
+        newAcc.doUpdates(pos.kingSquare(side), side, dirtyPieces, oldAcc); 
+    }
   }
 
   void Thread::cancelMove() {
@@ -1068,7 +1113,12 @@ namespace Search {
     Position rootPos = settings.position;
 
     accumStackHead = 0;
-    rootPos.updateAccumulator(accumStack[accumStackHead]);
+    accumStack[0].refresh(rootPos, WHITE);
+    accumStack[0].refresh(rootPos, BLACK);
+    
+    for (int i = 0; i < 2; i++)
+        for (int j = 0; j < NNUE::KingBucketsCount; j++)
+          finny[i][j].reset();
 
     keyStackHead = 0;
     for (int i = 0; i < settings.prevPositions.size(); i++)

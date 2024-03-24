@@ -151,8 +151,6 @@ struct alignas(32) Position {
   void setToFen(const std::string& fen);
 
   std::string toFenString() const;
-
-  void updateAccumulator(NNUE::Accumulator& acc) const;
 };
 
 std::ostream& operator<<(std::ostream& stream, Position& sqr);

@@ -8,7 +8,7 @@
 #include <nmmintrin.h>
 #include <thread>
 
-const std::string engineVersion = "dev-11.13";
+const std::string engineVersion = "dev-11.14";
 
 using Key = uint64_t;
 using Bitboard = uint64_t;
@@ -213,6 +213,7 @@ ENABLE_BASE_OPERATORS_ON(File)
 ENABLE_BASE_OPERATORS_ON(Rank)
 ENABLE_BASE_OPERATORS_ON(Square)
 
+ENABLE_INCR_OPERATORS_ON(PieceType);
 ENABLE_INCR_OPERATORS_ON(Color)
 ENABLE_INCR_OPERATORS_ON(File)
 ENABLE_INCR_OPERATORS_ON(Rank)
