@@ -9,14 +9,14 @@
 #include <vector>
 
 struct FinnyEntry {
-  Bitboard byColorBB[COLOR_NB];
-  Bitboard byPieceBB[PIECE_TYPE_NB];
+  Bitboard byColorBB[COLOR_NB][COLOR_NB];
+  Bitboard byPieceBB[COLOR_NB][PIECE_TYPE_NB];
   NNUE::Accumulator acc;
 
   void reset();
 };
 
-using FinnyTable = FinnyEntry[2][2][NNUE::KingBucketsCount];
+using FinnyTable = FinnyEntry[2][NNUE::KingBucketsCount];
 
 namespace Search {
 

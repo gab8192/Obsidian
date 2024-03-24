@@ -234,11 +234,11 @@ namespace Search {
   void Thread::refreshAccumulator(Position& pos, NNUE::Accumulator& acc, Color side) {
     const Square king = pos.kingSquare(side);
     const int bucket = NNUE::KingBucketsScheme[relative_square(side, king)];
-    FinnyEntry& entry = finny[side][fileOf(king) >= FILE_E][bucket];
+    FinnyEntry& entry = finny[fileOf(king) >= FILE_E][bucket];
 
     for (Color c = WHITE; c <= BLACK; ++c) {
       for (PieceType pt = PAWN; pt <= KING; ++pt) {
-        const Bitboard oldBB = entry.byColorBB[c] & entry.byPieceBB[pt];
+        const Bitboard oldBB = entry.byColorBB[side][c] & entry.byPieceBB[side][pt];
         const Bitboard newBB = pos.pieces(c, pt);
         Bitboard toRemove = oldBB & ~newBB;
         Bitboard toAdd = newBB & ~oldBB;
@@ -255,8 +255,8 @@ namespace Search {
     }
 
     memcpy(acc.colors[side], entry.acc.colors[side], sizeof(acc.colors[0]));
-    memcpy(entry.byColorBB, pos.byColorBB, sizeof(entry.byColorBB));
-    memcpy(entry.byPieceBB, pos.byPieceBB, sizeof(entry.byPieceBB));
+    memcpy(entry.byColorBB[side], pos.byColorBB, sizeof(entry.byColorBB[0]));
+    memcpy(entry.byPieceBB[side], pos.byPieceBB, sizeof(entry.byPieceBB[0]));
   }
 
   void Thread::playMove(Position& pos, Move move, SearchInfo* ss) {
@@ -1116,9 +1116,8 @@ namespace Search {
     accumStack[0].refresh(rootPos, BLACK);
     
     for (int i = 0; i < 2; i++)
-      for (int k = 0; k < 2; k++)
         for (int j = 0; j < NNUE::KingBucketsCount; j++)
-          finny[k][i][j].reset();
+          finny[i][j].reset();
 
     keyStackHead = 0;
     for (int i = 0; i < settings.prevPositions.size(); i++)
