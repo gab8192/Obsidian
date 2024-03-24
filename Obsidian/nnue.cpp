@@ -113,9 +113,12 @@ namespace NNUE {
       outputVec[i] = addEpi16(subEpi16(subEpi16(addEpi16(inputVec[i], add0Vec[i]), sub0Vec[i]), sub1Vec[i]), add1Vec[i]);
   }
 
-  void Accumulator::addPiece(Square whiteKing, Square blackKing, Piece pc, Square sq) {
-    multiAdd<HiddenWidth>(colors[WHITE], colors[WHITE], featureAddress(whiteKing, WHITE, pc, sq));
-    multiAdd<HiddenWidth>(colors[BLACK], colors[BLACK], featureAddress(blackKing, BLACK, pc, sq));
+  void Accumulator::addPiece(Square kingSq, Color side, Piece pc, Square sq) {
+    multiAdd<HiddenWidth>(colors[side], colors[side], featureAddress(kingSq, side, pc, sq));
+  }
+
+  void Accumulator::removePiece(Square kingSq, Color side, Piece pc, Square sq) {
+    multiSub<HiddenWidth>(colors[side], colors[side], featureAddress(kingSq, side, pc, sq));
   }
 
   void Accumulator::doUpdates(Square kingSq, Color side, DirtyPieces& dp, Accumulator& input) {
@@ -141,15 +144,17 @@ namespace NNUE {
     }
   }
 
-  void Accumulator::refresh(Position& pos, Color side) {
+  void Accumulator::reset(Color side) {
     memcpy(colors[side], Content.FeatureBiases, sizeof(Content.FeatureBiases));
+  }
 
+  void Accumulator::refresh(Position& pos, Color side) {
+    reset(side);
     const Square kingSq = pos.kingSquare(side);
-
     Bitboard occupied = pos.pieces();
     while (occupied) {
       const Square sq = popLsb(occupied);
-      multiAdd<HiddenWidth>(colors[side], colors[side], featureAddress(kingSq, side, pos.board[sq], sq));
+      addPiece(kingSq, side, pos.board[sq], sq);
     }
   }
 

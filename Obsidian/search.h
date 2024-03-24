@@ -8,6 +8,16 @@
 #include <condition_variable>
 #include <vector>
 
+struct FinnyEntry {
+  Bitboard byColorBB[COLOR_NB];
+  Bitboard byPieceBB[PIECE_TYPE_NB];
+  NNUE::Accumulator acc;
+
+  void reset();
+};
+
+using FinnyTable = FinnyEntry[2][2][NNUE::KingBucketsCount];
+
 namespace Search {
 
   extern bool doingBench;
@@ -97,6 +107,10 @@ namespace Search {
     CaptureHistory captureHistory;
     ContinuationHistory contHistory;
     CounterMoveHistory counterMoveHistory;
+
+    FinnyTable finny;
+
+    void refreshAccumulator(Position& pos, NNUE::Accumulator& acc, Color side);
 
     void sortRootMoves(int offset);
 
