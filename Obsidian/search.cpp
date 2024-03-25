@@ -1300,11 +1300,6 @@ namespace Search {
 
       if (settings.hasTimeLimit() && rootDepth >= 4) {
 
-        // If the position is a dead draw, stop searching
-        if (rootDepth >= 40 && abs(score) < 5) {
-          goto bestMoveDecided;
-        }
-
         if (usedMostOfTime())
           goto bestMoveDecided;
 
