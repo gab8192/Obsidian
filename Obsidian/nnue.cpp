@@ -13,6 +13,7 @@ namespace NNUE {
   constexpr int WeightsPerVec = sizeof(SIMD::Vec) / sizeof(weight_t);
 
   struct {
+    char uwu[64];
     alignas(SIMD::Alignment) weight_t FeatureWeights[KingBucketsCount][2][6][64][HiddenWidth];
     alignas(SIMD::Alignment) weight_t FeatureBiases[HiddenWidth];
     alignas(SIMD::Alignment) weight_t OldOutputWeights[2 * HiddenWidth][OutputBuckets];
@@ -22,20 +23,11 @@ namespace NNUE {
   alignas(SIMD::Alignment) weight_t NewOutputWeights[OutputBuckets][2 * HiddenWidth];
 
   bool needRefresh(Color side, Square oldKing, Square newKing) {
-    const bool oldMirrored = fileOf(oldKing) >= FILE_E;
-    const bool newMirrored = fileOf(newKing) >= FILE_E;
-
-    if (oldMirrored != newMirrored)
-      return true;
-
     return   KingBucketsScheme[relative_square(side, oldKing)]
           != KingBucketsScheme[relative_square(side, newKing)];
   }
 
   inline weight_t* featureAddress(Square kingSq, Color side, Piece pc, Square sq) {
-    if (fileOf(kingSq) >= FILE_E)
-      sq = Square(sq ^ 7);
-
     return Content.FeatureWeights
             [KingBucketsScheme[relative_square(side, kingSq)]]
             [side != piece_color(pc)]

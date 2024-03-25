@@ -16,7 +16,7 @@ struct FinnyEntry {
   void reset();
 };
 
-using FinnyTable = FinnyEntry[2][NNUE::KingBucketsCount];
+using FinnyTable = FinnyEntry[NNUE::KingBucketsCount];
 
 namespace Search {
 

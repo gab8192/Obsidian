@@ -234,7 +234,7 @@ namespace Search {
   void Thread::refreshAccumulator(Position& pos, NNUE::Accumulator& acc, Color side) {
     const Square king = pos.kingSquare(side);
     const int bucket = NNUE::KingBucketsScheme[relative_square(side, king)];
-    FinnyEntry& entry = finny[fileOf(king) >= FILE_E][bucket];
+    FinnyEntry& entry = finny[bucket];
 
     for (Color c = WHITE; c <= BLACK; ++c) {
       for (PieceType pt = PAWN; pt <= KING; ++pt) {
@@ -1116,9 +1116,8 @@ namespace Search {
     accumStack[0].refresh(rootPos, WHITE);
     accumStack[0].refresh(rootPos, BLACK);
     
-    for (int i = 0; i < 2; i++)
-        for (int j = 0; j < NNUE::KingBucketsCount; j++)
-          finny[i][j].reset();
+    for (int j = 0; j < NNUE::KingBucketsCount; j++)
+      finny[j].reset();
 
     keyStackHead = 0;
     for (int i = 0; i < settings.prevPositions.size(); i++)
