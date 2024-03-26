@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "net20-240.bin"
+#define EvalFile "net19-321.bin"
 
 using namespace SIMD;
 
