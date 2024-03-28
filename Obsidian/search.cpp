@@ -729,10 +729,6 @@ namespace Search {
       ss->staticEval = eval = SCORE_NONE;
       goto moves_loop;
     }
-    else if (ss->excludedMove) {
-      // We have already evaluated the position in the node which invoked this singular search
-      eval = ss->staticEval;
-    }
     else {
       if (ttStaticEval != SCORE_NONE)
         ss->staticEval = eval = ttStaticEval;
