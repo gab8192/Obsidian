@@ -15,11 +15,9 @@ namespace NNUE {
   struct {
     alignas(SIMD::Alignment) weight_t FeatureWeights[KingBucketsCount][2][6][64][HiddenWidth];
     alignas(SIMD::Alignment) weight_t FeatureBiases[HiddenWidth];
-    alignas(SIMD::Alignment) weight_t OldOutputWeights[2 * HiddenWidth][OutputBuckets];
-                             weight_t OutputBias[OutputBuckets];
+    alignas(SIMD::Alignment) weight_t OutputWeights[2 * HiddenWidth];
+                             weight_t OutputBias;
   } Content;
-
-  alignas(SIMD::Alignment) weight_t NewOutputWeights[OutputBuckets][2 * HiddenWidth];
 
   bool needRefresh(Color side, Square oldKing, Square newKing) {
     const bool oldMirrored = fileOf(oldKing) >= FILE_E;
@@ -161,24 +159,16 @@ namespace NNUE {
   void init() {
 
     memcpy(&Content, gEmbeddedNNUEData, sizeof(Content));
-    
-    for (int i = 0; i < 2 * HiddenWidth; i++) {
-      for (int j = 0; j < OutputBuckets; j++) {
-        NewOutputWeights[j][i] = Content.OldOutputWeights[i][j];
-      }
-    }
+
   }
 
   Score evaluate(Accumulator& accumulator, Position& pos) {
 
-    constexpr int divisor = (32 + OutputBuckets - 1) / OutputBuckets;
-    int outputBucket = (BitCount(pos.pieces()) - 2) / divisor;
-
     Vec* stmAcc = (Vec*) accumulator.colors[pos.sideToMove];
     Vec* oppAcc = (Vec*) accumulator.colors[~pos.sideToMove];
 
-    Vec* stmWeights = (Vec*) &NewOutputWeights[outputBucket][0];
-    Vec* oppWeights = (Vec*) &NewOutputWeights[outputBucket][HiddenWidth];
+    Vec* stmWeights = (Vec*) &Content.OutputWeights[0];
+    Vec* oppWeights = (Vec*) &Content.OutputWeights[HiddenWidth];
 
     const Vec vecZero = vecSetZero();
     const Vec vecQA = vecSet1Epi16(NetworkQA);
@@ -202,7 +192,7 @@ namespace NNUE {
       sum = addEpi32(sum, v1);
     }
 
-    int unsquared = vecHaddEpi32(sum) / NetworkQA + Content.OutputBias[outputBucket];
+    int unsquared = vecHaddEpi32(sum) / NetworkQA + Content.OutputBias;
 
     return (unsquared * NetworkScale) / NetworkQAB;
   }
