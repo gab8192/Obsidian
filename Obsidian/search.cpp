@@ -254,13 +254,14 @@ namespace Search {
       }
     }
 
+    acc.updated[side] = true;
     memcpy(acc.colors[side], entry.acc.colors[side], sizeof(acc.colors[0]));
     memcpy(entry.byColorBB[side], pos.byColorBB, sizeof(entry.byColorBB[0]));
     memcpy(entry.byPieceBB[side], pos.byPieceBB, sizeof(entry.byPieceBB[0]));
   }
 
   void Thread::playMove(Position& pos, Move move, SearchInfo* ss) {
-
+    TT::prefetch(pos.keyAfter(move));
     nodesSearched++;
 
     const bool isCap = pos.board[move_to(move)] != NO_PIECE;
@@ -268,25 +269,14 @@ namespace Search {
     ss->playedMove = move;
     keyStack[keyStackHead++] = pos.key;
 
-    Square oldKingSquares[COLOR_NB];
-    oldKingSquares[WHITE] = pos.kingSquare(WHITE);
-    oldKingSquares[BLACK] = pos.kingSquare(BLACK);
-
-    NNUE::Accumulator& oldAcc = accumStack[accumStackHead];
     NNUE::Accumulator& newAcc = accumStack[++accumStackHead];
-
-    DirtyPieces dirtyPieces;
-
+    
     ply++;
-    pos.doMove(move, dirtyPieces);
-
-    TT::prefetch(pos.key);
+    pos.doMove(move, newAcc.dirtyPieces);
 
     for (Color side = WHITE; side <= BLACK; ++side) {
-      if (NNUE::needRefresh(side, oldKingSquares[side], pos.kingSquare(side)))
-        refreshAccumulator(pos, newAcc, side);
-      else
-        newAcc.doUpdates(pos.kingSquare(side), side, dirtyPieces, oldAcc); 
+      newAcc.updated[side] = false;
+      newAcc.kings[side] = pos.kingSquare(side);
     }
   }
 
@@ -416,12 +406,43 @@ namespace Search {
     return int(nodesSearched & 2) - 1;
   }
 
+  Score Thread::doEvaluation(Position& pos) {
+    Square kings[] = { pos.kingSquare(WHITE), pos.kingSquare(BLACK) };
+    NNUE::Accumulator* head = & accumStack[accumStackHead];
+
+    for (Color side = WHITE; side <= BLACK; ++side) {
+      if (head->updated[side])
+        continue;
+
+      NNUE::Accumulator* iter = head;
+      while (true) {
+        iter--;
+
+        if (NNUE::needRefresh(side, iter->kings[side], kings[side])) {
+          refreshAccumulator(pos, *head, side);
+          break;
+        }
+
+        if (iter->updated[side]) {
+          NNUE::Accumulator* lastUpdated = iter;
+          while (lastUpdated != head) {
+            (lastUpdated+1)->doUpdates(kings[side], side, *lastUpdated);
+            lastUpdated++;
+          }
+          break;
+        }
+      }
+    }
+
+    return Eval::evaluate(pos, *head);
+  }
+
   template<bool IsPV>
   Score Thread::qsearch(Position& pos, Score alpha, Score beta, SearchInfo* ss) {
     
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY-4)
-      return pos.checkers ? SCORE_DRAW : Eval::evaluate(pos, accumStack[accumStackHead]);
+      return pos.checkers ? SCORE_DRAW : doEvaluation(pos);
 
     // Detect draw
     if (isRepetition(pos, ply) || pos.halfMoveClock >= 100)
@@ -464,7 +485,7 @@ namespace Search {
       if (ttStaticEval != SCORE_NONE)
         bestScore = ss->staticEval = ttStaticEval;
       else
-        bestScore = ss->staticEval = Eval::evaluate(pos, accumStack[accumStackHead]);
+        bestScore = ss->staticEval = doEvaluation(pos);
 
       // When tt bound allows it, use ttScore as a better standing pat
       if (ttBound & boundForTT(ttScore > bestScore))
@@ -607,7 +628,7 @@ namespace Search {
 
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY - 4)
-      return pos.checkers ? SCORE_DRAW : Eval::evaluate(pos, accumStack[accumStackHead]);
+      return pos.checkers ? SCORE_DRAW : doEvaluation(pos);
 
     // Mate distance pruning
     alpha = std::max(alpha, ply - SCORE_MATE);
@@ -716,7 +737,7 @@ namespace Search {
       if (ttStaticEval != SCORE_NONE)
         ss->staticEval = eval = ttStaticEval;
       else
-        ss->staticEval = eval = Eval::evaluate(pos, accumStack[accumStackHead]);
+        ss->staticEval = eval = doEvaluation(pos);
 
       // When tt bound allows it, use ttScore as a better evaluation
       if (ttBound & boundForTT(ttScore > eval))
@@ -1113,8 +1134,10 @@ namespace Search {
     Position rootPos = settings.position;
 
     accumStackHead = 0;
-    accumStack[0].refresh(rootPos, WHITE);
-    accumStack[0].refresh(rootPos, BLACK);
+    for (Color side = WHITE; side <= BLACK; ++side) {
+      accumStack[0].refresh(rootPos, side);
+      accumStack[0].kings[side] = rootPos.kingSquare(side);
+    }
     
     for (int i = 0; i < 2; i++)
         for (int j = 0; j < NNUE::KingBucketsCount; j++)
