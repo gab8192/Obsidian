@@ -1154,8 +1154,6 @@ namespace Search {
 
     SearchInfo* ss = &searchStack[SsOffset];
 
-    clock_t startTimeForBench = timeMillis();
-
     // Setup root moves
     rootMoves = RootMoveList();
     {
@@ -1263,7 +1261,6 @@ namespace Search {
         continue;
 
       const clock_t elapsed = elapsedTime();
-      const clock_t elapsedStrict = timeMillis() - startTimeForBench;
 
       for (int i = 0; i < multiPV; i++) {
         if (doingBench)
@@ -1276,7 +1273,7 @@ namespace Search {
           << " multipv " << (i+1)
           << " score "   << UCI::scoreToString(rootMoves[i].score)
           << " nodes "   << Threads::totalNodes()
-          << " nps "     << (Threads::totalNodes() * 1000ULL) / std::max(elapsedStrict, 1L)
+          << " nps "     << (Threads::totalNodes() * 1000ULL) / std::max(elapsed, 1L)
           << " tbhits "  << Threads::totalTbHits()
           << " time "    << elapsed
           << " pv "      << getPvString(rootMoves[i]);
