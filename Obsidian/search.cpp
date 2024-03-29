@@ -732,6 +732,7 @@ namespace Search {
     // Razoring. When evaluation is far below alpha, we could probably only catch up with a capture,
     // thus do a qsearch. If the qsearch still can't hit alpha, cut off
     if ( !IsPV
+      && alpha < 2000
       && eval < alpha - RazoringDepthMul * depth) {
       Score score = qsearch<IsPV>(pos, alpha, beta, ss);
       if (score <= alpha)
@@ -1216,11 +1217,6 @@ namespace Search {
 
         while (true) {
 
-          if (beta >= 4000) {
-            beta = SCORE_INFINITE;
-            failHighCount = 0;
-          }
-
           int adjustedDepth = std::max(1, rootDepth - failHighCount);
 
           Score score = negamax<true>(rootPos, alpha, beta, adjustedDepth, false, ss);
@@ -1245,7 +1241,8 @@ namespace Search {
           else if (score >= beta) {
             beta = std::min(SCORE_INFINITE, beta + window);
 
-            failHighCount++;
+            if (score < 2000)
+              failHighCount++;
           }
           else
             break;
