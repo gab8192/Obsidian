@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "net24-240-gaussian.bin"
+#define EvalFile "net25-240.bin"
 
 using namespace SIMD;
 
