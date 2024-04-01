@@ -203,13 +203,9 @@ namespace Search {
 
   bool Thread::usedMostOfTime() {
 
-    if (Threads::getSearchSettings().hasTimeLimit())
+    if ( Threads::getSearchSettings().standardTimeLimit()
+      || Threads::getSearchSettings().movetime)
       return elapsedTime() >= maxTime;
-    
-    else if (Threads::getSearchSettings().movetime) {
-      clock_t timeLimit = Threads::getSearchSettings().movetime;
-      return elapsedTime() >= (timeLimit - 50);
-    }
 
     return false;
   }
@@ -1125,9 +1121,11 @@ namespace Search {
     for (int i = 0; i < settings.prevPositions.size(); i++)
       keyStack[keyStackHead++] = settings.prevPositions[i];
 
-    if (settings.hasTimeLimit())
+    if (settings.standardTimeLimit())
       TimeMan::calcOptimumTime(settings, rootPos.sideToMove,
                               &optimumTime, &maxTime);
+    else if (settings.movetime)
+      maxTime = settings.movetime - int(Options["Move Overhead"]);
 
     ply = 0;
     tbHits = 0;
@@ -1281,18 +1279,12 @@ namespace Search {
         std::cout << infoStr.str() << std::endl;
       }
 
-      // When playing in movetime mode, stop if we've used 75% time of movetime,
-      // because we will probably not hit the next depth in time
-      if (settings.movetime)
-        if (elapsedTime() >= (settings.movetime * 3) / 4)
-          goto bestMoveDecided;
-
       if (bestMove == idStack[rootDepth - 1].bestMove)
         searchStability = std::min(searchStability + 1, 8);
       else
         searchStability = 0;
 
-      if (settings.hasTimeLimit() && rootDepth >= 4) {
+      if (settings.standardTimeLimit() && rootDepth >= 4) {
 
         if (usedMostOfTime())
           goto bestMoveDecided;
