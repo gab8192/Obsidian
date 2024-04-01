@@ -34,7 +34,7 @@ namespace Search {
 
     Settings();
 
-    inline bool hasTimeLimit() const {
+    inline bool standardTimeLimit() const {
       return time[WHITE] || time[BLACK];
     }
   };
