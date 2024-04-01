@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "net20-960.bin"
+#define EvalFile "net26-240.bin"
 
 using namespace SIMD;
 
@@ -30,16 +30,16 @@ namespace NNUE {
   constexpr int HiddenWidth = 1024;
 
   constexpr int KingBucketsScheme[] = {
-    0, 1, 2, 3, 3, 2, 1, 0,
-    4, 4, 5, 5, 5, 5, 4, 4,
-    6, 6, 6, 6, 6, 6, 6, 6, 
-    6, 6, 6, 6, 6, 6, 6, 6, 
-    7, 7, 7, 7, 7, 7, 7, 7,
-    7, 7, 7, 7, 7, 7, 7, 7,
-    7, 7, 7, 7, 7, 7, 7, 7,
-    7, 7, 7, 7, 7, 7, 7, 7
+    0, 0, 1, 1, 1, 1, 0, 0,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    3, 3, 3, 3, 3, 3, 3, 3, 
+    3, 3, 3, 3, 3, 3, 3, 3, 
+    3, 3, 3, 3, 3, 3, 3, 3, 
+    3, 3, 3, 3, 3, 3, 3, 3, 
+    3, 3, 3, 3, 3, 3, 3, 3, 
+    3, 3, 3, 3, 3, 3, 3, 3
   };
-  constexpr int KingBucketsCount = 8;
+  constexpr int KingBucketsCount = 4;
 
   constexpr int OutputBuckets = 8;
 

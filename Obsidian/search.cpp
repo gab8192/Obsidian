@@ -1315,10 +1315,13 @@ namespace Search {
 
     // NOTE: When implementing best thread selection, don't mess up with tablebases dtz stuff
 
-    if (this == Threads::mainThread() && !doingBench) {
-      Threads::stopSearch();
+    if (this != Threads::mainThread())
+      return;
+
+    Threads::stopSearch();
+    
+    if (!doingBench)
       std::cout << "bestmove " << UCI::moveToString(rootMoves[0].move) << std::endl;
-    }
   }
 
   void Thread::idleLoop() {
