@@ -160,6 +160,8 @@ namespace {
       else if (token == "movetime")  is >> searchSettings.movetime;
       else if (token == "perft")     is >> perftPlies;
 
+    searchSettings.movetime *= 4;
+
     if (perftPlies) {
       clock_t begin = timeMillis();
       int64_t nodes = Search::perft<true>(pos, perftPlies);
