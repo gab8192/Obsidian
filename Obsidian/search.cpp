@@ -441,7 +441,7 @@ namespace Search {
     }
 
     // In non PV nodes, if tt bound allows it, return ttScore
-    if (!IsPV) {
+    if (!IsPV && ttScore != SCORE_NONE) {
       if (ttBound & boundForTT(ttScore >= beta))
         return ttScore;
     }
@@ -463,7 +463,7 @@ namespace Search {
         bestScore = ss->staticEval = Eval::evaluate(pos, accumStack[accumStackHead]);
 
       // When tt bound allows it, use ttScore as a better standing pat
-      if (ttBound & boundForTT(ttScore > bestScore))
+      if (ttScore != SCORE_NONE && (ttBound & boundForTT(ttScore > bestScore)))
         bestScore = ttScore;
 
       if (bestScore >= beta)
@@ -648,6 +648,7 @@ namespace Search {
     // In non PV nodes, if tt depth and bound allow it, return ttScore
     if ( !IsPV
       && !excludedMove
+      && ttScore != SCORE_NONE
       && ttDepth >= depth) 
     {
       if (ttBound & boundForTT(ttScore >= beta))
@@ -714,8 +715,15 @@ namespace Search {
       else
         ss->staticEval = eval = Eval::evaluate(pos, accumStack[accumStackHead]);
 
+      if (! ttHit) {
+        // This (probably new) position has just been evaluated.
+        // Immediately save the evaluation in TT, so other threads who reach this position
+        // won't need to evaluate again
+        ttEntry->store(pos.key, TT::NO_FLAG, 0, MOVE_NONE, SCORE_NONE, ss->staticEval, ttPV, ply);
+      }
+
       // When tt bound allows it, use ttScore as a better evaluation
-      if (ttBound & boundForTT(ttScore > eval))
+      if (ttScore != SCORE_NONE && (ttBound & boundForTT(ttScore > eval)))
         eval = ttScore;
     }
 
