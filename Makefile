@@ -42,6 +42,9 @@ endif
 COMMAND = g++ $(OPTIMIZE) $(FLAGS) $(FILES) -o $(EXE)
 
 make: $(FILES)
+	$(COMMAND)
+
+pgo: $(FILES)
 	$(COMMAND) -fprofile-generate="obs_pgo"
 ifeq ($(OS),Windows_NT)
 	$(EXE) bench
@@ -54,6 +57,3 @@ ifeq ($(OS),Windows_NT)
 else
 	rm -rf obs_pgo
 endif
-
-nopgo: $(FILES)
-	$(COMMAND)
