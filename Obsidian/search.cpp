@@ -1279,16 +1279,15 @@ namespace Search {
         std::cout << infoStr.str() << std::endl;
       }
 
+      if (usedMostOfTime())
+        goto bestMoveDecided;
+
       if (bestMove == idStack[rootDepth - 1].bestMove)
         searchStability = std::min(searchStability + 1, 8);
       else
         searchStability = 0;
 
       if (settings.standardTimeLimit() && rootDepth >= 4) {
-
-        if (usedMostOfTime())
-          goto bestMoveDecided;
-
         int bmNodes = rootMoves[rootMoves.indexOf(bestMove)].nodes;
         double notBestNodes = 1.0 - (bmNodes / double(nodesSearched));
         double nodesFactor     = (tm1/100.0) + notBestNodes * (tm0/100.0);
