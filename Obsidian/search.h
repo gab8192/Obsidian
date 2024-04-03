@@ -55,8 +55,6 @@ namespace Search {
 
     int doubleExt;
 
-    Move excludedMove;
-
     // [piece to]
     int* contHistory;
   };
@@ -144,7 +142,8 @@ namespace Search {
     Score qsearch(Position& position, Score alpha, Score beta, SearchInfo* ss);
 
     template<bool IsPV>
-    Score negamax(Position& position, Score alpha, Score beta, int depth, bool cutNode, SearchInfo* ss);
+    Score negamax(Position& position, Score alpha, Score beta, int depth,
+      bool cutNode, SearchInfo* ss, const Move excludedMove = MOVE_NONE);
 
     void startSearch();
 

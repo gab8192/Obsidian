@@ -568,7 +568,7 @@ namespace Search {
   }
 
   template<bool IsPV>
-  Score Thread::negamax(Position& pos, Score alpha, Score beta, int depth, bool cutNode, SearchInfo* ss) {
+  Score Thread::negamax(Position& pos, Score alpha, Score beta, int depth, bool cutNode, SearchInfo* ss, const Move excludedMove) {
 
     const bool IsRoot = IsPV && ply == 0;
 
@@ -610,8 +610,6 @@ namespace Search {
     beta = std::min(beta, SCORE_MATE - ply - 1);
     if (alpha >= beta)
       return alpha;
-
-    const Move excludedMove = ss->excludedMove;
 
     // Probe TT
     bool ttHit;
@@ -705,7 +703,7 @@ namespace Search {
       ss->staticEval = eval = SCORE_NONE;
       goto moves_loop;
     }
-    else if (ss->excludedMove) {
+    else if (excludedMove) {
       // We have already evaluated the position in the node which invoked this singular search
       eval = ss->staticEval;
     }
@@ -906,9 +904,7 @@ namespace Search {
       {
         Score singularBeta = ttScore - depth;
         
-        ss->excludedMove = move;
-        Score seScore = negamax<false>(pos, singularBeta - 1, singularBeta, (depth - 1) / 2, cutNode, ss);
-        ss->excludedMove = MOVE_NONE;
+        Score seScore = negamax<false>(pos, singularBeta - 1, singularBeta, (depth - 1) / 2, cutNode, ss, move);
         
         if (seScore < singularBeta) {
           extension = 1;
@@ -1149,7 +1145,6 @@ namespace Search {
       searchStack[i].pvLength = 0;
 
       searchStack[i].killerMove   = MOVE_NONE;
-      searchStack[i].excludedMove = MOVE_NONE;
       searchStack[i].playedMove   = MOVE_NONE;
 
       searchStack[i].contHistory = contHistory[false][0];
