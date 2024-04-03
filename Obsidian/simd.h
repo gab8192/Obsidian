@@ -158,8 +158,13 @@ namespace SIMD {
   }
 
   inline int vecHaddEpi32(Vec vec) {
-    int* asArray = (int*) &vec;
-    return asArray[0] + asArray[1] + asArray[2] + asArray[3];
+    const Vec high64 = _mm_unpackhi_epi64(vec, vec);
+    const Vec sum64 = _mm_add_epi32(vec, high64);
+
+    const Vec high32 = _mm_shuffle_epi32(sum64, _MM_SHUFFLE(2, 3, 0, 1));
+    const Vec sum32 = _mm_add_epi32(sum64, high32);
+
+    return _mm_cvtsi128_si32(sum32);
   }
 
 #endif
