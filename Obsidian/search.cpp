@@ -28,6 +28,7 @@ namespace Search {
   DEFINE_PARAM_S(LmrBase, 39, 10);
   DEFINE_PARAM_S(LmrDiv, 211, 10);
 
+  DEFINE_PARAM_B(StatBonusBase, 0, -200, 0);
   DEFINE_PARAM_S(StatBonusLinear, 130, 10);
   DEFINE_PARAM_S(StatBonusMax, 1159, 50);
   DEFINE_PARAM_S(StatBonusBoostAt, 120, 10);
@@ -177,7 +178,7 @@ namespace Search {
   }
 
   int stat_bonus(int d) {
-    return std::min(StatBonusLinear * d, (int)StatBonusMax);
+    return std::min(StatBonusLinear * d + StatBonusBase, (int)StatBonusMax);
   }
 
   void Thread::sortRootMoves(int offset) {
