@@ -5,7 +5,7 @@
 #include <immintrin.h>
 
 inline Square getLsb(Bitboard bb) {
-  return Square(_tzcnt_u64(bb));
+  return Square(__builtin_ctzll(bb));
 }
 
 inline Square popLsb(Bitboard& bbPtr) {

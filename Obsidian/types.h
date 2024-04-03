@@ -21,7 +21,9 @@ const std::string piecesChar = " PNBRQK  pnbrqk";
 constexpr int MAX_PLY = 246;
 constexpr int MAX_MOVES = 224; // 32*7
 
-#define BitCount(x) _mm_popcnt_u64(x)
+inline int BitCount(uint64_t x) {
+  return __builtin_popcountll(x);
+}
 
 inline void sleep(int millis) {
   std::this_thread::sleep_for(std::chrono::milliseconds(millis));
