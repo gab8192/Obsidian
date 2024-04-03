@@ -1138,8 +1138,6 @@ namespace Search {
     nodesSearched = 0;
     maxTimeCounter = 0;
 
-    SearchLoopInfo idStack[MAX_PLY];
-
     for (int i = 0; i < MAX_PLY + SsOffset; i++) {
       searchStack[i].staticEval = SCORE_NONE;
 
@@ -1259,6 +1257,7 @@ namespace Search {
 
       idStack[rootDepth].score = score;
       idStack[rootDepth].bestMove = bestMove;
+      completeDepth = rootDepth;
 
       if (this != Threads::mainThread())
         continue;
@@ -1315,9 +1314,37 @@ namespace Search {
       return;
 
     Threads::stopSearch();
+
+    int bestDepth = completeDepth;
+    SearchLoopInfo* bestSli = & this->idStack[completeDepth];
+
+    if (rootMoves.size() == 1)
+      goto threadPicked;
+
+    for (int i = 1; i < Threads::searchThreads.size(); i++) {
+      Search::Thread* st = Threads::searchThreads[i];
+      int otherDepth = st->completeDepth;
+      SearchLoopInfo* otherSli = & st->idStack[otherDepth];
+
+      const bool cond1 =  otherDepth == bestDepth
+                        && otherSli->score > bestSli->score;
+
+      const bool cond2 =  otherSli->score >= SCORE_TB_WIN_IN_MAX_PLY
+                        && otherSli->score > bestSli->score;
+
+      const bool cond3 = otherDepth > bestDepth
+                        && (otherSli->score > bestSli->score || bestSli->score < SCORE_TB_WIN_IN_MAX_PLY);
+
+      if (cond1 || cond2 || cond3) {
+        bestDepth = otherDepth;
+        bestSli = otherSli;
+      }
+    }
+
+    threadPicked:
     
     if (!doingBench)
-      std::cout << "bestmove " << UCI::moveToString(rootMoves[0].move) << std::endl;
+      std::cout << "bestmove " << UCI::moveToString(bestSli->bestMove) << std::endl;
   }
 
   void Thread::idleLoop() {

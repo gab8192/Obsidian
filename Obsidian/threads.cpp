@@ -39,6 +39,10 @@ namespace Threads {
   }
 
   void startSearch(Search::Settings& settings) {
+    
+    for (int i = 0; i < searchThreads.size(); i++)
+      searchThreads[i]->completeDepth = 0;
+
     searchSettings = settings;
     searchStopped = false;
     for (int i = 0; i < searchThreads.size(); i++) {
