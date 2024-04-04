@@ -171,8 +171,7 @@ namespace NNUE {
 
   Score evaluate(Accumulator& accumulator, Position& pos) {
 
-    constexpr int divisor = (32 + OutputBuckets - 1) / OutputBuckets;
-    int outputBucket = (BitCount(pos.pieces()) - 2) / divisor;
+    int outputBucket = BitCount(pos.pieces(PAWN)) / 2;
 
     Vec* stmAcc = (Vec*) accumulator.colors[pos.sideToMove];
     Vec* oppAcc = (Vec*) accumulator.colors[~pos.sideToMove];

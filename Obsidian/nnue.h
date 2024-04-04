@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "net26-240.bin"
+#define EvalFile "net32-240.bin"
 
 using namespace SIMD;
 
@@ -41,7 +41,7 @@ namespace NNUE {
   };
   constexpr int KingBucketsCount = 4;
 
-  constexpr int OutputBuckets = 8;
+  constexpr int OutputBuckets = 9;
 
   constexpr int NetworkScale = 400;
   constexpr int NetworkQA = 255;
