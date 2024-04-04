@@ -949,10 +949,6 @@ namespace Search {
         // Extend if this position *was* in a PV node. Even further if it *is*
         R -= ttPV + IsPV;
 
-        // Extend if this move is killer or counter
-        R -= (   moveStage == MovePicker::PLAY_KILLER 
-              || moveStage == MovePicker::PLAY_COUNTER);
-
         // Reduce more if the expected best move is a capture
         R += ttMoveNoisy;
 
