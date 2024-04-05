@@ -32,7 +32,7 @@ namespace NNUE {
           != KingBucketsScheme[relative_square(side, newKing)];
   }
 
-  inline weight_t* featureAddress(Square kingSq, Color side, Piece pc, Square sq) {
+  weight_t* featureAddress(Square kingSq, Color side, Piece pc, Square sq) {
     if (fileOf(kingSq) >= FILE_E)
       sq = Square(sq ^ 7);
 
@@ -156,6 +156,22 @@ namespace NNUE {
       const Square sq = popLsb(occupied);
       addPiece(kingSq, side, pos.board[sq], sq);
     }
+  }
+
+  void Accumulator::applyFinnyDelta(FinnyDelta& delta, Color side) {
+    Vec* inputVec = (Vec*) colors[side];
+
+    for (int i = 0; i < HiddenWidth / WeightsPerVec; ++i) {
+      for (int j = 0; j < delta.removeCount; j++) {
+        Vec* sub = (Vec*) delta.remove[j];
+        inputVec[i] = subEpi16(inputVec[i], sub[i]);
+      }
+      for (int j = 0; j < delta.addCount; j++) {
+        Vec* add = (Vec*) delta.add[j];
+        inputVec[i] = addEpi16(inputVec[i], add[i]);
+      }
+    }
+    
   }
 
   void init() {

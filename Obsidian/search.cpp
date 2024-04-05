@@ -232,6 +232,9 @@ namespace Search {
     const int bucket = NNUE::KingBucketsScheme[relative_square(side, king)];
     FinnyEntry& entry = finny[fileOf(king) >= FILE_E][bucket];
 
+    NNUE::FinnyDelta delta;
+    delta.addCount = delta.removeCount = 0;
+
     for (Color c = WHITE; c <= BLACK; ++c) {
       for (PieceType pt = PAWN; pt <= KING; ++pt) {
         const Bitboard oldBB = entry.byColorBB[side][c] & entry.byPieceBB[side][pt];
@@ -240,15 +243,17 @@ namespace Search {
         Bitboard toAdd = newBB & ~oldBB;
 
         while (toRemove) {
-          Square sq = popLsb(toRemove);
-          entry.acc.removePiece(king, side, makePiece(c, pt), sq);
+          const Square sq = popLsb(toRemove);
+          delta.remove[delta.removeCount++] = NNUE::featureAddress(king, side, makePiece(c, pt), sq);
         }
         while (toAdd) {
-          Square sq = popLsb(toAdd);
-          entry.acc.addPiece(king, side, makePiece(c, pt), sq);
+          const Square sq = popLsb(toAdd);
+          delta.add[delta.addCount++] = NNUE::featureAddress(king, side, makePiece(c, pt), sq);
         }
       }
     }
+
+    entry.acc.applyFinnyDelta(delta, side);
 
     memcpy(acc.colors[side], entry.acc.colors[side], sizeof(acc.colors[0]));
     memcpy(entry.byColorBB[side], pos.byColorBB, sizeof(entry.byColorBB[0]));

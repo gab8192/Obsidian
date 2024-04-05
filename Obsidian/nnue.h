@@ -48,7 +48,11 @@ namespace NNUE {
   constexpr int NetworkQB = 64;
   constexpr int NetworkQAB = NetworkQA * NetworkQB;
 
-  bool needRefresh(Color side, Square oldKing, Square newKing);
+  struct FinnyDelta {
+    weight_t* add[32];
+    weight_t* remove[32];
+    int addCount, removeCount;
+  };
 
   struct Accumulator {
     union {
@@ -65,7 +69,13 @@ namespace NNUE {
     void reset(Color side);
 
     void refresh(Position& pos, Color side);
+
+    void applyFinnyDelta(FinnyDelta& delta, Color side);
   };
+
+  weight_t* featureAddress(Square kingSq, Color side, Piece pc, Square sq);
+
+  bool needRefresh(Color side, Square oldKing, Square newKing);
 
   void init();
 
