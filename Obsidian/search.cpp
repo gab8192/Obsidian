@@ -641,7 +641,8 @@ namespace Search {
     Score eval;
     Move bestMove = MOVE_NONE;
     Score bestScore = -SCORE_INFINITE;
-    Score maxScore  =  SCORE_INFINITE; 
+    Score maxScore  =  SCORE_INFINITE;
+    (ss + 2)->cutoffs = 0;
 
     // In non PV nodes, if tt depth and bound allow it, return ttScore
     if ( !IsPV
@@ -690,7 +691,6 @@ namespace Search {
       }
     }
 
-    (ss + 1)->cutoffs = 0;
     (ss + 1)->killerMove = MOVE_NONE;
     ss->doubleExt = (ss - 1)->doubleExt;
 
@@ -945,7 +945,7 @@ namespace Search {
         R -= history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv);
 
         // Extend moves that give check
-        R -= (newPos.checkers != 0ULL);
+        R -= newPos.checkers != 0ULL;
 
         // Extend if this position *was* in a PV node. Even further if it *is*
         R -= ttPV + IsPV;
@@ -954,7 +954,7 @@ namespace Search {
         R -= (   moveStage == MovePicker::PLAY_KILLER 
               || moveStage == MovePicker::PLAY_COUNTER);
 
-        R += ((ss+1)->cutoffs > 2);
+        R += (ss+1)->cutoffs > 3;
 
         // Reduce more if the expected best move is a capture
         R += ttMoveNoisy;
