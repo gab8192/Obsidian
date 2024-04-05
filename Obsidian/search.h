@@ -55,6 +55,8 @@ namespace Search {
 
     int doubleExt;
 
+    int cutoffs;
+
     // [piece to]
     int* contHistory;
   };

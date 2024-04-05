@@ -690,6 +690,7 @@ namespace Search {
       }
     }
 
+    (ss + 1)->cutoffs = 0;
     (ss + 1)->killerMove = MOVE_NONE;
     ss->doubleExt = (ss - 1)->doubleExt;
 
@@ -953,6 +954,8 @@ namespace Search {
         R -= (   moveStage == MovePicker::PLAY_KILLER 
               || moveStage == MovePicker::PLAY_COUNTER);
 
+        R += ((ss+1)->cutoffs > 2);
+
         // Reduce more if the expected best move is a capture
         R += ttMoveNoisy;
 
@@ -1013,8 +1016,10 @@ namespace Search {
             updatePV(ss, ply, bestMove);
 
           // Always true in NonPV nodes
-          if (bestScore >= beta)
+          if (bestScore >= beta) {
+            ss->cutoffs++;
             break;
+          }
 
           alpha = bestScore;
         }
@@ -1150,6 +1155,7 @@ namespace Search {
       searchStack[i].contHistory = contHistory[false][0];
 
       searchStack[i].doubleExt = 0;
+      searchStack[i].cutoffs = 0;
     }
 
     int searchStability = 0;
