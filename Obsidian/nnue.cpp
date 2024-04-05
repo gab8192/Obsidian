@@ -162,16 +162,19 @@ namespace NNUE {
     Vec* inputVec = (Vec*) colors[side];
 
     for (int i = 0; i < HiddenWidth / WeightsPerVec; ++i) {
+      Vec reg = inputVec[i];
+
       for (int j = 0; j < delta.removeCount; j++) {
         Vec* sub = (Vec*) delta.remove[j];
-        inputVec[i] = subEpi16(inputVec[i], sub[i]);
+        reg = subEpi16(reg, sub[i]);
       }
       for (int j = 0; j < delta.addCount; j++) {
         Vec* add = (Vec*) delta.add[j];
-        inputVec[i] = addEpi16(inputVec[i], add[i]);
+        reg = addEpi16(reg, add[i]);
       }
+
+      inputVec[i] = reg;
     }
-    
   }
 
   void init() {
