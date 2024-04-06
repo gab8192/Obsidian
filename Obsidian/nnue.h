@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "net26-240.bin"
+#define EvalFile "net33-300.bin"
 
 using namespace SIMD;
 
@@ -34,12 +34,12 @@ namespace NNUE {
     2, 2, 2, 2, 2, 2, 2, 2,
     3, 3, 3, 3, 3, 3, 3, 3, 
     3, 3, 3, 3, 3, 3, 3, 3, 
-    3, 3, 3, 3, 3, 3, 3, 3, 
-    3, 3, 3, 3, 3, 3, 3, 3, 
-    3, 3, 3, 3, 3, 3, 3, 3, 
-    3, 3, 3, 3, 3, 3, 3, 3
+    4, 4, 4, 4, 4, 4, 4, 4, 
+    4, 4, 4, 4, 4, 4, 4, 4, 
+    4, 4, 4, 4, 4, 4, 4, 4, 
+    4, 4, 4, 4, 4, 4, 4, 4
   };
-  constexpr int KingBucketsCount = 4;
+  constexpr int KingBucketsCount = 5;
 
   constexpr int OutputBuckets = 8;
 
