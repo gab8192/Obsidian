@@ -907,15 +907,18 @@ namespace Search {
         Score seScore = negamax<false>(pos, singularBeta - 1, singularBeta, (depth - 1) / 2, cutNode, ss, move);
         
         if (seScore < singularBeta) {
-          extension = 1;
-          // Extend even more if s. value is smaller than s. beta by some margin
+
           if (   !IsPV 
               && ss->doubleExt <= DoubleExtMax 
               && seScore < singularBeta - DoubleExtMargin)
           {
-            extension = 2;
+            extension = 2 + (isQuiet && seScore < singularBeta - 64);
             ss->doubleExt = (ss - 1)->doubleExt + 1;
           }
+          else {
+            extension = 1;
+          }
+
         }
         else if (singularBeta >= beta) // Multicut
           return singularBeta;
