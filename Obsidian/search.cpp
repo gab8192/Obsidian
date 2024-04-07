@@ -936,7 +936,7 @@ namespace Search {
 
       bool needFullSearch = false;
 
-      if (depth >= 2 && seenMoves > 1 + 3 * IsRoot) {
+      if (depth >= 2 && seenMoves > 1 + 2 * IsRoot) {
 
         int R = lmrTable[depth][seenMoves] / (1 + !isQuiet);
 
