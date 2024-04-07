@@ -856,6 +856,8 @@ namespace Search {
       
       seenMoves++;
       
+      ss->doubleExt = (ss - 1)->doubleExt;
+      
       bool isQuiet = pos.isQuiet(move);
 
       int history = isQuiet ? getQuietHistory(pos, move, ss) : getCapHistory(pos, move);
