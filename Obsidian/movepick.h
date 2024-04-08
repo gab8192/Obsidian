@@ -31,7 +31,7 @@ public:
     int _seeMargin,
     Search::SearchInfo* _ss);
 
-  Move nextMove(Stage* outStage);
+  Move nextMove(bool skipQuiets, Stage* outStage);
 
 private:
   SearchType searchType;

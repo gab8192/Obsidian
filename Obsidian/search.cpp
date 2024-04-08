@@ -490,7 +490,7 @@ namespace Search {
     MovePicker::Stage moveStage;
     Move move;
 
-    while (move = movePicker.nextMove(&moveStage)) {
+    while (move = movePicker.nextMove(false, &moveStage)) {
 
       if (bestScore > SCORE_TB_LOSS_IN_MAX_PLY) {
         // Prevent qsearch from visiting bad captures and under-promotions
@@ -792,7 +792,7 @@ namespace Search {
       Move move;
       MovePicker::Stage moveStage;
 
-      while (move = pcMovePicker.nextMove(&moveStage)) {
+      while (move = pcMovePicker.nextMove(false, &moveStage)) {
         if (!pos.isLegal(move))
           continue;
 
@@ -817,7 +817,7 @@ namespace Search {
     // Generate moves and score them
 
     int seenMoves = 0;
-
+    bool skipQuiets = false;
     Move quiets[64];
     int quietCount = 0;
     Move captures[64];
@@ -844,7 +844,7 @@ namespace Search {
     Move move;
     MovePicker::Stage moveStage;
 
-    while (move = movePicker.nextMove(& moveStage)) {
+    while (move = movePicker.nextMove(skipQuiets, & moveStage)) {
       if (move == excludedMove)
         continue;
 
@@ -873,11 +873,13 @@ namespace Search {
             continue;
         }
 
-        if (isQuiet) {
-          // Late move pruning. At low depths, only visit a few quiet moves
+        // Late move pruning. At low depths, only visit a few quiet moves
+        if (! skipQuiets) {
           if (seenMoves >= (depth * depth + LmpBase) / (2 - improving))
-            movePicker.stage = MovePicker::PLAY_BAD_CAPTURES;
+            skipQuiets = true;
+        }
 
+        if (isQuiet) {
           int lmrRed = lmrTable[depth][seenMoves] + !improving - history / EarlyLmrHistoryDiv;
           int lmrDepth = std::max(0, depth - lmrRed);
 
