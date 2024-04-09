@@ -16,6 +16,9 @@ MovePicker::MovePicker(
 {
   this->stage = PLAY_TT_MOVE;
 
+  if (pos.checkers && _searchType == SearchType::PVS)
+    this->stage = IN_CHECK_TT_MOVE;
+
   if (! pos.isPseudoLegal(ttMove))
     ++ this->stage;
 
