@@ -492,14 +492,19 @@ namespace Search {
 
     while (move = movePicker.nextMove(false, &moveStage)) {
 
+      if (!pos.isLegal(move))
+        continue;
+
       if (bestScore > SCORE_TB_LOSS_IN_MAX_PLY) {
         // Prevent qsearch from visiting bad captures and under-promotions
         if (moveStage == MovePicker::PLAY_BAD_CAPTURES)
           break;
-      }
 
-      if (!pos.isLegal(move))
-        continue;
+        if (pos.checkers) {
+          if (! pos.seeGe(move, MpQsSeeMargin))
+            continue;
+        }
+      }
 
       foundLegalMoves = true;
 
