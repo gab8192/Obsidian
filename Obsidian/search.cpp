@@ -875,7 +875,7 @@ namespace Search {
 
         // Late move pruning. At low depths, only visit a few quiet moves
         if (! skipQuiets) {
-          if (seenMoves >= (depth * depth + LmpBase) / (2 - improving))
+          if (seenMoves >= (depth * depth + LmpBase) / (2 - improving) && !pos.checkers)
             skipQuiets = true;
         }
 
