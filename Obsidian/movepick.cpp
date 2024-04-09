@@ -14,7 +14,10 @@ MovePicker::MovePicker(
   seeMargin(_seeMargin),
   ss(_ss)
 {
-  this->stage = pos.isPseudoLegal(ttMove) ? PLAY_TT_MOVE : GEN_CAPTURES;
+  this->stage = pos.checkers ? IN_CHECK_TT_MOVE : PLAY_TT_MOVE;
+
+  if (! pos.isPseudoLegal(ttMove))
+    ++ this->stage;
 
   // Ensure tt, killer, and counter, are all different
 
@@ -95,18 +98,20 @@ Move MovePicker::nextMove(bool skipQuiets, Stage* outStage) {
   select:
   switch (stage)
   {
+  case IN_CHECK_TT_MOVE:
   case PLAY_TT_MOVE:
   {
+    *outStage = stage;
     ++stage;
-    *outStage = PLAY_TT_MOVE;
     return ttMove;
   }
+  case IN_CHECK_GEN_CAPTURES:
   case GEN_CAPTURES: 
   {
     getStageMoves(pos, ADD_CAPTURES, &captures);
     scoreCaptures();
     ++stage;
-    [[fallthrough]];
+    goto select;
   }
   case PLAY_GOOD_CAPTURES:
   {
@@ -121,7 +126,7 @@ Move MovePicker::nextMove(bool skipQuiets, Stage* outStage) {
       goto nextGoodCap;
     }
 
-    if (searchType == QSEARCH && !pos.checkers) {
+    if (searchType == QSEARCH) {
       stage = PLAY_BAD_CAPTURES;
       goto select;
     }
@@ -185,8 +190,38 @@ Move MovePicker::nextMove(bool skipQuiets, Stage* outStage) {
       *outStage = PLAY_BAD_CAPTURES;
       return move.move;
     }
+    return MOVE_NONE;
+  }
+  case IN_CHECK_PLAY_CAPTURES: {
+    if (capIndex < captures.size()) {
+      Move_Score move = nextMove0(captures, capIndex++);
+      *outStage = IN_CHECK_PLAY_CAPTURES;
+      return move.move;
+    }
+    ++stage;
+    [[fallthrough]];
+  }
+  case IN_CHECK_GEN_QUIETS: 
+  {
+    getStageMoves(pos, ADD_QUIETS, &quiets);
+    scoreQuiets();
+
+    ++stage;
+    [[fallthrough]];
+  }
+  case IN_CHECK_PLAY_QUIETS: 
+  {
+    if (quietIndex < quiets.size()) {
+      Move_Score move = nextMove0(quiets, quietIndex++);
+      *outStage = IN_CHECK_PLAY_QUIETS;
+      return move.move;
+    }
+
+    return MOVE_NONE;
   }
   }
 
+  std::cout << "unreachable!!" << std::endl;
+  exit(-1);
   return MOVE_NONE;
 }
