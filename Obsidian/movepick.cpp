@@ -24,12 +24,12 @@ MovePicker::MovePicker(
 
   // Ensure tt, killer, and counter, are all different
 
-  if (_killerMove == _ttMove)
+  if (pos.checkers || _killerMove == _ttMove)
     this->killerMove = MOVE_NONE;
   else
     this->killerMove = _killerMove;
 
-  if (_counterMove == _ttMove || _counterMove == _killerMove)
+  if (pos.checkers || _counterMove == _ttMove || _counterMove == _killerMove)
     this->counterMove = MOVE_NONE;
   else
     this->counterMove = _counterMove;
