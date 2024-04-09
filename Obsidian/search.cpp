@@ -494,7 +494,7 @@ namespace Search {
 
       if (bestScore > SCORE_TB_LOSS_IN_MAX_PLY) {
         // Prevent qsearch from visiting bad captures and under-promotions
-        if (moveStage > MovePicker::PLAY_QUIETS)
+        if (moveStage == MovePicker::PLAY_BAD_CAPTURES)
           break;
       }
 
@@ -867,7 +867,7 @@ namespace Search {
         && pos.hasNonPawns(pos.sideToMove))
       {
         // SEE (Static Exchange Evalution) pruning
-        if (moveStage > MovePicker::PLAY_GOOD_CAPTURES) {
+        if (moveStage != MovePicker::PLAY_GOOD_CAPTURES) {
           int seeMargin = depth * (isQuiet ? PvsQuietSeeMargin : PvsCapSeeMargin);
           if (!pos.seeGe(move, seeMargin))
             continue;
