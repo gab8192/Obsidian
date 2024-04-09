@@ -14,7 +14,7 @@ MovePicker::MovePicker(
   seeMargin(_seeMargin),
   ss(_ss)
 {
-  this->stage = pos.checkers ? IN_CHECK_TT_MOVE : PLAY_TT_MOVE;
+  this->stage = PLAY_TT_MOVE;
 
   if (! pos.isPseudoLegal(ttMove))
     ++ this->stage;
@@ -126,7 +126,7 @@ Move MovePicker::nextMove(bool skipQuiets, Stage* outStage) {
       goto nextGoodCap;
     }
 
-    if (searchType == QSEARCH) {
+    if (searchType == QSEARCH && !pos.checkers) {
       stage = PLAY_BAD_CAPTURES;
       goto select;
     }
