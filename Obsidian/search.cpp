@@ -866,9 +866,13 @@ namespace Search {
         && bestScore > SCORE_TB_LOSS_IN_MAX_PLY
         && pos.hasNonPawns(pos.sideToMove))
       {
+        int lmrRed = lmrTable[depth][seenMoves] + !improving - history / EarlyLmrHistoryDiv;
+        int lmrDepth = std::max(0, depth - lmrRed);
+
         // SEE (Static Exchange Evalution) pruning
         if (moveStage > MovePicker::PLAY_GOOD_CAPTURES) {
-          int seeMargin = depth * (isQuiet ? PvsQuietSeeMargin : PvsCapSeeMargin);
+          int seeMargin = isQuiet ? lmrDepth * PvsQuietSeeMargin :
+                                    depth    * PvsCapSeeMargin;
           if (!pos.seeGe(move, seeMargin))
             continue;
         }
@@ -877,9 +881,6 @@ namespace Search {
           // Late move pruning. At low depths, only visit a few quiet moves
           if (seenMoves >= (depth * depth + LmpBase) / (2 - improving))
             movePicker.stage = MovePicker::PLAY_BAD_CAPTURES;
-
-          int lmrRed = lmrTable[depth][seenMoves] + !improving - history / EarlyLmrHistoryDiv;
-          int lmrDepth = std::max(0, depth - lmrRed);
 
           // Futility pruning. If our evaluation is far below alpha,
           // only visit a few quiet moves
