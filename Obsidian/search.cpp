@@ -496,6 +496,10 @@ namespace Search {
         // Prevent qsearch from visiting bad captures and under-promotions
         if (moveStage > MovePicker::PLAY_QUIETS)
           break;
+
+        if (moveStage == MovePicker::PLAY_QUIETS)
+          if (! pos.seeGe(move, -25))
+            continue;
       }
 
       if (!pos.isLegal(move))
