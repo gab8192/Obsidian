@@ -12,6 +12,7 @@
 #include <climits>
 #include <cmath>
 #include <sstream>
+#include <unordered_map>
 
 void FinnyEntry::reset() {
   memset(byColorBB, 0, sizeof(byColorBB));
@@ -1192,8 +1193,10 @@ namespace Search {
     }
 
     // Search starting. Zero out the nodes of each root move
-    for (int i = 0; i < rootMoves.size(); i++)
+    for (int i = 0; i < rootMoves.size(); i++) {
       rootMoves[i].nodes = 0;
+      rootMoves[i].score = -SCORE_INFINITE;
+    }
 
     const int multiPV = std::min(int(Options["MultiPV"]), rootMoves.size());
 
@@ -1315,36 +1318,48 @@ namespace Search {
 
     Threads::stopSearch();
 
-    int bestDepth = completeDepth;
-    SearchLoopInfo* bestSli = & this->idStack[completeDepth];
+    Threads::waitForHelpers();
 
-    if (rootMoves.size() == 1)
-      goto threadPicked;
+    Move finalBestMove = rootMoves[0].move;
 
-    for (int i = 1; i < Threads::searchThreads.size(); i++) {
-      Search::Thread* st = Threads::searchThreads[i];
-      int otherDepth = st->completeDepth;
-      SearchLoopInfo* otherSli = & st->idStack[otherDepth];
+    if (rootMoves.size() > 1 && Threads::searchThreads.size() > 1) {
 
-      const bool cond1 =  otherDepth == bestDepth
-                        && otherSli->score > bestSli->score;
+      std::unordered_map<Move, int> votes;
+      Score minScore = SCORE_INFINITE;
 
-      const bool cond2 =  otherSli->score >= SCORE_TB_WIN_IN_MAX_PLY
-                        && otherSli->score > bestSli->score;
-
-      const bool cond3 = otherDepth > bestDepth
-                        && (otherSli->score > bestSli->score || bestSli->score < SCORE_TB_WIN_IN_MAX_PLY);
-
-      if (cond1 || cond2 || cond3) {
-        bestDepth = otherDepth;
-        bestSli = otherSli;
+      for (int i = 0; i < Threads::searchThreads.size(); i++) {
+        Search::Thread* st = Threads::searchThreads[i];
+        minScore = std::min(minScore, st->rootMoves[0].score);
       }
-    }
 
-    threadPicked:
+      for (int i = 0; i < Threads::searchThreads.size(); i++) {
+        Search::Thread* st = Threads::searchThreads[i];
+        votes[st->rootMoves[0].move] += (st->rootMoves[0].score - minScore + 9) * st->completeDepth;
+      }
+
+      Search::Thread* bestThread = this;
+
+      for (int i = 1; i < Threads::searchThreads.size(); i++) {
+        Search::Thread* currThread = Threads::searchThreads[i];
+        Score currScore = currThread->rootMoves[0].score;
+        int currVote = votes[currThread->rootMoves[0].move];
+        Score bestScore = bestThread->rootMoves[0].score;
+        int bestVote = votes[bestThread->rootMoves[0].move];
+        
+        if (abs(bestScore) >= SCORE_TB_WIN_IN_MAX_PLY) {
+          if (currScore > bestScore)
+            bestThread = currThread;
+        } else if (currScore >= SCORE_TB_WIN_IN_MAX_PLY)
+          bestThread = currThread;
+        else if ( currScore > SCORE_TB_LOSS_IN_MAX_PLY && currVote > bestVote)
+          bestThread = currThread;
+      }
+
+      finalBestMove = bestThread->rootMoves[0].move;
+    }
     
     if (!doingBench)
-      std::cout << "bestmove " << UCI::moveToString(bestSli->bestMove) << std::endl;
+      std::cout << "bestmove " << UCI::moveToString(finalBestMove) << std::endl;
   }
 
   void Thread::idleLoop() {
