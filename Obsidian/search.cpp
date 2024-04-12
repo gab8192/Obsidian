@@ -1223,6 +1223,8 @@ namespace Search {
 
           Score score = negamax<true>(rootPos, alpha, beta, adjustedDepth, false, ss);
 
+          sortRootMoves(pvIdx);
+
           // Discard any result if search was abruptly stopped
           if (Threads::isSearchStopped())
             goto bestMoveDecided;
@@ -1231,8 +1233,6 @@ namespace Search {
             && settings.nodes
             && Threads::totalNodes() > settings.nodes)
             goto bestMoveDecided;
-
-          sortRootMoves(pvIdx);
 
           if (score <= alpha) {
             beta = (alpha + beta) / 2;
