@@ -923,7 +923,7 @@ namespace Search {
         else if (ttScore >= beta) // Negative extensions
           extension = -2 + IsPV;
         else if (cutNode)
-          extension = -1;
+          extension = -2;
       }
 
       Position newPos = pos;
