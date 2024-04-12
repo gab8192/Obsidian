@@ -1342,6 +1342,8 @@ namespace Search {
       for (int i = 1; i < Threads::searchThreads.size(); i++) {
         Search::Thread* currThread = Threads::searchThreads[i];
         Score currScore = currThread->rootMoves[0].score;
+        if (currScore == -SCORE_INFINITE)
+          exit(-1);
         int currVote = votes[currThread->rootMoves[0].move];
         Score bestScore = bestThread->rootMoves[0].score;
         int bestVote = votes[bestThread->rootMoves[0].move];
