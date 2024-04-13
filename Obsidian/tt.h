@@ -75,7 +75,7 @@ namespace TT {
     uint8_t depth;
     uint16_t move;
     int16_t score;
-  } __attribute__((__packed__));
+  };
 
   struct Bucket {
     Entry entries[EntriesPerBucket];

@@ -880,7 +880,7 @@ namespace Search {
             && lmrDepth <= FpMaxDepth 
             && !pos.checkers 
             && ss->staticEval + FpBase + FpDepthMul * lmrDepth <= alpha)
-          movePicker.stage = MovePicker::PLAY_BAD_CAPTURES;
+          skipQuiets = true;
         
         // SEE (Static Exchange Evalution) pruning
         if (moveStage > MovePicker::PLAY_GOOD_CAPTURES) {
@@ -949,10 +949,6 @@ namespace Search {
 
         // Extend if this position *was* in a PV node. Even further if it *is*
         R -= ttPV + IsPV;
-
-        // Extend if this move is killer or counter
-        R -= (   moveStage == MovePicker::PLAY_KILLER 
-              || moveStage == MovePicker::PLAY_COUNTER);
 
         // Reduce more if the expected best move is a capture
         R += ttMoveNoisy;
