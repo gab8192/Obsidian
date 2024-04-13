@@ -1223,11 +1223,11 @@ namespace Search {
 
           Score score = negamax<true>(rootPos, alpha, beta, adjustedDepth, false, ss);
 
-          sortRootMoves(pvIdx);
-
           // Discard any result if search was abruptly stopped
           if (Threads::isSearchStopped())
             goto bestMoveDecided;
+        
+          sortRootMoves(pvIdx);
 
           if ( rootDepth > 1 
             && settings.nodes
@@ -1329,11 +1329,15 @@ namespace Search {
 
       for (int i = 0; i < Threads::searchThreads.size(); i++) {
         Search::Thread* st = Threads::searchThreads[i];
+        if (st->rootMoves[0].move == MOVE_NONE)
+          continue;
         minScore = std::min(minScore, st->rootMoves[0].score);
       }
 
       for (int i = 0; i < Threads::searchThreads.size(); i++) {
         Search::Thread* st = Threads::searchThreads[i];
+        if (st->rootMoves[0].move == MOVE_NONE)
+          continue;
         votes[st->rootMoves[0].move] += (st->rootMoves[0].score - minScore + 9) * st->completeDepth;
       }
 
@@ -1341,9 +1345,9 @@ namespace Search {
 
       for (int i = 1; i < Threads::searchThreads.size(); i++) {
         Search::Thread* currThread = Threads::searchThreads[i];
+        if (currThread->rootMoves[0].move == MOVE_NONE)
+          continue;
         Score currScore = currThread->rootMoves[0].score;
-        if (currScore == -SCORE_INFINITE)
-          exit(-1);
         int currVote = votes[currThread->rootMoves[0].move];
         Score bestScore = bestThread->rootMoves[0].score;
         int bestVote = votes[bestThread->rootMoves[0].move];
