@@ -91,7 +91,7 @@ void MovePicker::scoreCaptures() {
   }
 }
 
-Move MovePicker::nextMove(Stage* outStage) {
+Move MovePicker::nextMove(bool skipQuiets, Stage* outStage) {
   select:
   switch (stage)
   {
@@ -151,6 +151,11 @@ Move MovePicker::nextMove(Stage* outStage) {
   }
   case GEN_QUIETS: 
   {
+    if (skipQuiets) {
+      stage = PLAY_BAD_CAPTURES;
+      goto select;
+    }
+
     getStageMoves(pos, ADD_QUIETS, &quiets);
     scoreQuiets();
 
@@ -159,6 +164,11 @@ Move MovePicker::nextMove(Stage* outStage) {
   }
   case PLAY_QUIETS: 
   {
+    if (skipQuiets) {
+      stage = PLAY_BAD_CAPTURES;
+      goto select;
+    }
+    
     if (quietIndex < quiets.size()) {
       Move_Score move = nextMove0(quiets, quietIndex++);
       *outStage = PLAY_QUIETS;
