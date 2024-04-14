@@ -21,8 +21,6 @@ public:
     PLAY_QUIETS,
     PLAY_BAD_CAPTURES,
   };
-
-  Stage stage;
   
   MovePicker(
     SearchType _searchType, Position& _pos,
@@ -31,7 +29,7 @@ public:
     int _seeMargin,
     Search::SearchInfo* _ss);
 
-  Move nextMove(Stage* outStage);
+  Move nextMove(bool skipQuiets, Stage* outStage);
 
 private:
   SearchType searchType;
@@ -47,6 +45,8 @@ private:
   int seeMargin;
   
   Search::SearchInfo* ss;
+
+  Stage stage;
 
   MoveList captures;
   MoveList quiets;
