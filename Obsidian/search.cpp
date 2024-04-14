@@ -870,6 +870,14 @@ namespace Search {
         int lmrRed = lmrTable[depth][seenMoves] + !improving - history / EarlyLmrHistoryDiv;
         int lmrDepth = std::max(0, depth - lmrRed);
 
+        // SEE (Static Exchange Evalution) pruning
+        if (moveStage > MovePicker::PLAY_GOOD_CAPTURES) {
+          int seeMargin = isQuiet ? lmrDepth * PvsQuietSeeMargin :
+                                    depth    * PvsCapSeeMargin;
+          if (!pos.seeGe(move, seeMargin))
+            continue;
+        }
+
         // Late move pruning. At low depths, only visit a few quiet moves
         if (seenMoves >= (depth * depth + LmpBase) / (2 - improving) && !pos.checkers)
           skipQuiets = true;
@@ -881,14 +889,6 @@ namespace Search {
             && !pos.checkers 
             && ss->staticEval + FpBase + FpDepthMul * lmrDepth <= alpha)
           skipQuiets = true;
-        
-        // SEE (Static Exchange Evalution) pruning
-        if (moveStage > MovePicker::PLAY_GOOD_CAPTURES) {
-          int seeMargin = isQuiet ? lmrDepth * PvsQuietSeeMargin :
-                                    depth    * PvsCapSeeMargin;
-          if (!pos.seeGe(move, seeMargin))
-            continue;
-        }
       }
 
       int extension = 0;
@@ -949,6 +949,10 @@ namespace Search {
 
         // Extend if this position *was* in a PV node. Even further if it *is*
         R -= ttPV + IsPV;
+
+        // Extend if this move is killer or counter
+        R -= (   moveStage == MovePicker::PLAY_KILLER 
+              || moveStage == MovePicker::PLAY_COUNTER);
 
         // Reduce more if the expected best move is a capture
         R += ttMoveNoisy;
