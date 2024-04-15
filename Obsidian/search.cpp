@@ -22,7 +22,7 @@ void FinnyEntry::reset() {
 
 namespace Search {
 
-  DEFINE_PARAM_S(MpPvsSeeMargin, -80, 15);
+  DEFINE_PARAM_S(MpPvsSeeMargin, -110, 15);
   DEFINE_PARAM_S(MpQsSeeMargin, -25, 15);
 
   DEFINE_PARAM_S(LmrBase, 39, 10);
