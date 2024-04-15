@@ -25,7 +25,7 @@ namespace Search {
   DEFINE_PARAM_S(MpPvsSeeMargin, -80, 15);
   DEFINE_PARAM_S(MpQsSeeMargin, -25, 15);
 
-  DEFINE_PARAM_S(LmrBase, 39, 10);
+  DEFINE_PARAM_S(LmrBase, 89, 10);
   DEFINE_PARAM_S(LmrDiv, 211, 10);
 
   DEFINE_PARAM_S(StatBonusLinear, 130, 10);
@@ -954,7 +954,7 @@ namespace Search {
         R += ttMoveNoisy;
 
         // Reduce if evaluation is trending down
-        R += !improving;
+        R -= improving;
 
         // Reduce if we expect to fail high
         R += 2 * cutNode;
