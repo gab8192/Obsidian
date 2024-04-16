@@ -112,7 +112,7 @@ namespace Search {
 
     for (int i = 1; i < MAX_PLY; i++) {
       for (int m = 1; m < MAX_MOVES; m++) {
-        lmrTable[i][m] = dBase + log(i) * log(m) / dDiv;
+        lmrTable[i][m] = 0.2429 + log(i) * log(m) / 2.0385 ;
       }
     }
   }
@@ -937,28 +937,30 @@ namespace Search {
 
       bool needFullSearch = false;
 
-      if (depth >= 2 && seenMoves > 1 + 3 * IsRoot) {
+      if (depth >= 2 && seenMoves > 1 && (isQuiet || !IsPV)) {
 
         int R = lmrTable[depth][seenMoves];
 
         // Reduce or extend depending on history of this move
         R -= history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv);
 
-        // Extend moves that give check
-        R -= (newPos.checkers != 0ULL);
-
-        // Extend if this position *was* in a PV node. Even further if it *is*
-        R -= ttPV + IsPV;
-
         // Reduce more if the expected best move is a capture
         R += ttMoveNoisy;
+
+        // Extend if this position *was* in a PV node. Even further if it *is*
+        R += 2 * !ttPV;
 
         // Reduce if evaluation is trending down
         R += !improving;
 
+        // Extend moves that give check
+        R -= (newPos.checkers != 0ULL);
+
         // Reduce if we expect to fail high
         if (cutNode)
           R += 1 + isQuiet;
+
+        R -= (ttDepth >= depth);
 
         // Clamp to avoid a qsearch or an extension in the child search
         int reducedDepth = std::clamp(newDepth - R, 1, newDepth + 1);
