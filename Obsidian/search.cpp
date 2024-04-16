@@ -1103,6 +1103,7 @@ namespace Search {
 
   DEFINE_PARAM_B(tm4, 96,   0, 150);
   DEFINE_PARAM_B(tm5, 10,   0, 150);
+  DEFINE_PARAM_B(tm6, 15,   0, 150);
 
   DEFINE_PARAM_B(lol0, 84, -150, 0);
   DEFINE_PARAM_B(lol1, 152,   0,  150);
@@ -1298,7 +1299,9 @@ namespace Search {
         double stabilityFactor = (tm2/100.0) - searchStability * (tm3/100.0);
 
         double scoreLoss =   (tm4/100.0)
-                           + (tm5/1000.0) * (idStack[rootDepth - 1].score - score);
+                           + (tm5/1000.0) * (idStack[rootDepth - 1].score - score)
+                           + (tm6/1000.0) * (previousScore - score);
+
         double scoreFactor     = std::clamp(scoreLoss, lol0 / 100.0, lol1 / 100.0);
 
         if (elapsed > stabilityFactor * nodesFactor * scoreFactor * optimumTime)
