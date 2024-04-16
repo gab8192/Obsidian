@@ -108,6 +108,8 @@ namespace Search {
 
     FinnyTable finny;
 
+    Score previousScore;
+
     void refreshAccumulator(Position& pos, NNUE::Accumulator& acc, Color side);
 
     void sortRootMoves(int offset);
