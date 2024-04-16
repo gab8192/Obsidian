@@ -113,7 +113,7 @@ Move MovePicker::nextMove(bool skipQuiets, Stage* outStage) {
     nextGoodCap:
     if (capIndex < captures.size()) {
       Move_Score move = nextMove0(captures, capIndex++);
-      int realMargin = searchType == PVS ? (-move.score / 2) : seeMargin;
+      int realMargin = searchType == PVS ? (-move.score / 64) : seeMargin;
       if (pos.seeGe(move.move, realMargin) && !isUnderPromo(move.move)) { // good capture
         *outStage = PLAY_GOOD_CAPTURES;
         return move.move;
