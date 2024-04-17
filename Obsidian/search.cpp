@@ -1298,9 +1298,12 @@ namespace Search {
 
         double stabilityFactor = (tm2/100.0) - searchStability * (tm3/100.0);
 
+        int idScoreDiff = idStack[rootDepth - 1].score - score;
+        int threadScoreDiff = previousScore == SCORE_NONE ? 0 : previousScore - score;
+
         double scoreLoss =   (tm4/100.0)
-                           + (tm5/1000.0) * (idStack[rootDepth - 1].score - score)
-                           + (tm6/1000.0) * (previousScore - score);
+                           + (tm5/1000.0) * idScoreDiff;
+                           + (tm6/1000.0) * threadScoreDiff;
 
         double scoreFactor     = std::clamp(scoreLoss, lol0 / 100.0, lol1 / 100.0);
 
