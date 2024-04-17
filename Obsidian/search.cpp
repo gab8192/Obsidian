@@ -127,6 +127,8 @@ namespace Search {
     memset(captureHistory, 0, sizeof(captureHistory));
     memset(counterMoveHistory, 0, sizeof(counterMoveHistory));
     memset(contHistory, 0, sizeof(contHistory));
+    
+    previousScore = SCORE_NONE;
   }
 
   Thread::Thread() :
@@ -1101,9 +1103,10 @@ namespace Search {
 
   DEFINE_PARAM_B(tm4, 96,   0, 150);
   DEFINE_PARAM_B(tm5, 10,   0, 150);
+  DEFINE_PARAM_B(tm6, 15,   0, 150);
 
-  DEFINE_PARAM_B(lol0, -12, -150, 0);
-  DEFINE_PARAM_B(lol1, 56,   0,  150);
+  DEFINE_PARAM_B(lol0, 84, -150, 0);
+  DEFINE_PARAM_B(lol1, 152,   0,  150);
 
   void Thread::startSearch() {
 
@@ -1295,8 +1298,11 @@ namespace Search {
 
         double stabilityFactor = (tm2/100.0) - searchStability * (tm3/100.0);
 
-        int scoreLoss = std::clamp<int>(idStack[rootDepth - 1].score - score, lol0, lol1);
-        double scoreFactor     = (tm4/100.0) + scoreLoss * (tm5/1000.0);
+        double scoreLoss =   (tm4/100.0)
+                           + (tm5/1000.0) * (idStack[rootDepth - 1].score - score)
+                           + (tm6/1000.0) * (previousScore - score);
+
+        double scoreFactor     = std::clamp(scoreLoss, lol0 / 100.0, lol1 / 100.0);
 
         if (elapsed > stabilityFactor * nodesFactor * scoreFactor * optimumTime)
           goto bestMoveDecided;
@@ -1312,8 +1318,10 @@ namespace Search {
 
     Threads::stopSearch();
     
-    if (!doingBench)
+    if (!doingBench) {
+      previousScore = rootMoves[0].score;
       std::cout << "bestmove " << UCI::moveToString(rootMoves[0].move) << std::endl;
+    }
   }
 
   void Thread::idleLoop() {
