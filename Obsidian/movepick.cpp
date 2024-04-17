@@ -67,7 +67,8 @@ void MovePicker::scoreQuiets() {
       mainHist[pos.sideToMove][move_from_to(move)]
       + (ss - 1)->contHistory[chIndex]
       + (ss - 2)->contHistory[chIndex]
-      + (ss - 4)->contHistory[chIndex]/2;
+      + (ss - 4)->contHistory[chIndex]/2
+      + (ss - 6)->contHistory[chIndex]/2;
   }
 }
 
