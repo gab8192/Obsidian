@@ -1095,17 +1095,17 @@ namespace Search {
     return output.str();
   }
 
-  DEFINE_PARAM_B(tm0, 177, 50, 200);
-  DEFINE_PARAM_B(tm1, 63,  20, 100);
+  DEFINE_PARAM_B(tm0, 178, 50, 200);
+  DEFINE_PARAM_B(tm1, 64,  20, 100);
 
   DEFINE_PARAM_B(tm2, 141, 50, 200);
-  DEFINE_PARAM_B(tm3, 4,   0, 30);
+  DEFINE_PARAM_B(tm3, 5,   0, 30);
 
-  DEFINE_PARAM_B(tm4, 96,   0, 150);
-  DEFINE_PARAM_B(tm5, 10,   0, 150);
-  DEFINE_PARAM_B(tm6, 15,   0, 150);
+  DEFINE_PARAM_B(tm4, 93,   0, 150);
+  DEFINE_PARAM_B(tm5, 8,   0, 150);
+  DEFINE_PARAM_B(tm6, 18,   0, 150);
 
-  DEFINE_PARAM_B(lol0, 84, -150, 0);
+  DEFINE_PARAM_B(lol0, 85, -150, 0);
   DEFINE_PARAM_B(lol1, 152,   0,  150);
 
   void Thread::startSearch() {
