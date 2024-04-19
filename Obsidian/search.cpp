@@ -926,6 +926,8 @@ namespace Search {
           extension = -2 + IsPV;
         else if (cutNode)
           extension = -2;
+        else if (ttScore <= alpha)
+          extension = -1;
       }
 
       Position newPos = pos;
