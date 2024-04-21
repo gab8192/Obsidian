@@ -657,8 +657,8 @@ namespace Search {
       && eval - RfpDepthMul * (depth - improving) >= beta)
       return (eval + beta) / 2;
 
-    if (IsPV && depth >= 2 && !ttMove)
-      depth--;
+    if (IsPV && depth >= 3 && !ttMove)
+      depth -= 2;
 
   moves_loop:
 
