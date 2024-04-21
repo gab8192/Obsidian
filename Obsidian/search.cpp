@@ -657,6 +657,9 @@ namespace Search {
       && eval - RfpDepthMul * (depth - improving) >= beta)
       return (eval + beta) / 2;
 
+    if (IsPV && depth >= 2 && !ttMove)
+      depth--;
+
   moves_loop:
 
     // Generate moves and score them
