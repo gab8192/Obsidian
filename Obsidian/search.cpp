@@ -544,10 +544,43 @@ namespace Search {
     if (ply >= MAX_PLY - 4)
       return pos.checkers ? SCORE_DRAW : Eval::evaluate(pos, accumStack[accumStackHead]);
 
+    // Probe TT
+    bool ttHit;
+    TT::Entry* ttEntry = TT::probe(pos.key, ttHit);
+
+    TT::Flag ttBound = TT::NO_FLAG;
+    Score ttScore   = SCORE_NONE;
+    Move ttMove     = MOVE_NONE;
+    int ttDepth     = -1;
+    Score ttStaticEval = SCORE_NONE;
+    bool ttPV = IsPV;
+
+    if (ttHit) {
+      ttBound = ttEntry->getBound();
+      ttScore = ttEntry->getScore(ply);
+      ttMove = ttEntry->getMove();
+      ttDepth = ttEntry->getDepth();
+      ttStaticEval = ttEntry->getStaticEval();
+      ttPV |= ttEntry->wasPV();
+    }
+
+    if (IsRoot)
+      ttMove = rootMoves[pvIdx].move;
+
     Score eval;
     Move bestMove = MOVE_NONE;
     Score bestScore = -SCORE_INFINITE;
     Score maxScore  =  SCORE_INFINITE; 
+
+    // In non PV nodes, if tt depth and bound allow it, return ttScore
+    if ( !IsPV
+      && !excludedMove
+      && ttScore != SCORE_NONE
+      && ttDepth >= depth) 
+    {
+      if (ttBound & boundForTT(ttScore >= beta))
+        return ttScore;
+    }
 
     // Probe tablebases
     const TbResult tbResult = (IsRoot || excludedMove) ? TB_RESULT_FAILED : probeTB(pos);
@@ -572,7 +605,7 @@ namespace Search {
       }
 
       if ((tbBound == TT::FLAG_EXACT) || (tbBound == TT::FLAG_LOWER ? tbScore >= beta : tbScore <= alpha)) {
-        //ttEntry->store(pos.key, tbBound, depth, MOVE_NONE, tbScore, SCORE_NONE, ttPV, ply);
+        ttEntry->store(pos.key, tbBound, depth, MOVE_NONE, tbScore, SCORE_NONE, ttPV, ply);
         return tbScore;
       }
 
@@ -748,6 +781,17 @@ namespace Search {
     // Only in pv nodes we could probe tt and not cut off immediately
     if (IsPV)
       bestScore = std::min(bestScore, maxScore);
+
+    // Store to TT
+    if (!excludedMove && !(IsRoot && pvIdx > 0)) {
+      TT::Flag flag;
+      if (bestScore >= beta)
+        flag = TT::FLAG_LOWER;
+      else
+        flag = (IsPV && bestMove) ? TT::FLAG_EXACT : TT::FLAG_UPPER;
+
+      ttEntry->store(pos.key, flag, depth, bestMove, bestScore, ss->staticEval, ttPV, ply);
+    }
 
     return bestScore;
   }
