@@ -538,7 +538,7 @@ namespace Search {
 
     // Enter qsearch when depth is 0
     if (depth <= 0)
-      return Eval::evaluate(pos, accumStack[accumStackHead]);
+      return qsearch<IsPV>(pos, alpha, beta, ss);
 
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY - 4)
