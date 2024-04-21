@@ -536,6 +536,13 @@ namespace Search {
     if (IsPV)
       ss->pvLength = ply;
 
+    // Detect upcoming draw
+    if (!IsRoot && alpha < SCORE_DRAW && hasUpcomingRepetition(pos, ply)) {
+      alpha = makeDrawScore();
+      if (alpha >= beta)
+        return alpha;
+    }
+
     // Enter qsearch when depth is 0
     if (depth <= 0)
       return qsearch<IsPV>(pos, alpha, beta, ss);
