@@ -626,6 +626,8 @@ namespace Search {
     (ss + 1)->killerMove = MOVE_NONE;
     ss->doubleExt = (ss - 1)->doubleExt;
 
+    bool improving = false;
+
     // Do the static evaluation
 
     if (pos.checkers) {
@@ -640,6 +642,20 @@ namespace Search {
     else {
       ss->staticEval = eval = Eval::evaluate(pos, accumStack[accumStackHead]);
     }
+
+    // Calculate whether the evaluation here is worse or better than it was 2 plies ago
+    if ((ss - 2)->staticEval != SCORE_NONE)
+      improving = ss->staticEval > (ss - 2)->staticEval;
+    else if ((ss - 4)->staticEval != SCORE_NONE)
+      improving = ss->staticEval > (ss - 4)->staticEval;
+
+    // Reverse futility pruning. When evaluation is far above beta, the opponent is unlikely
+    // to catch up, thus cut off
+    if ( !IsPV
+      && depth <= RfpMaxDepth
+      && eval < SCORE_TB_WIN_IN_MAX_PLY
+      && eval - RfpDepthMul * (depth - improving) >= beta)
+      return (eval + beta) / 2;
 
   moves_loop:
 
