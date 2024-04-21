@@ -421,6 +421,29 @@ namespace Search {
     if (ply >= MAX_PLY-4)
       return pos.checkers ? SCORE_DRAW : Eval::evaluate(pos, accumStack[accumStackHead]);
 
+    // Probe TT
+    bool ttHit;
+    TT::Entry* ttEntry = TT::probe(pos.key, ttHit);
+    TT::Flag ttBound = TT::NO_FLAG;
+    Score ttScore = SCORE_NONE;
+    Move ttMove = MOVE_NONE;
+    Score ttStaticEval = SCORE_NONE;
+    bool ttPV = false;
+
+    if (ttHit) {
+      ttBound = ttEntry->getBound();
+      ttScore = ttEntry->getScore(ply);
+      ttMove = ttEntry->getMove();
+      ttStaticEval = ttEntry->getStaticEval();
+      ttPV = ttEntry->wasPV();
+    }
+
+    // In non PV nodes, if tt bound allows it, return ttScore
+    if (!IsPV && ttScore != SCORE_NONE) {
+      if (ttBound & boundForTT(ttScore >= beta))
+        return ttScore;
+    }
+
     Move bestMove = MOVE_NONE;
     Score bestScore;
 
