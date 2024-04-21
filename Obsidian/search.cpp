@@ -660,7 +660,7 @@ namespace Search {
 
     MovePicker movePicker(
       MovePicker::PVS, pos,
-      MOVE_NONE, MOVE_NONE, MOVE_NONE,
+      ttMove, MOVE_NONE, MOVE_NONE,
       mainHistory, captureHistory,
       MpPvsSeeMargin,
       ss);

@@ -81,7 +81,7 @@ namespace {
     for (int i = 0; i < posCount; i++) 
     {
       Search::Settings searchSettings;
-      searchSettings.depth = 6;
+      searchSettings.depth = 7;
       
       std::istringstream posStr(BENCH_POSITIONS[i]);
       position(searchSettings.position, posStr);
