@@ -511,6 +511,10 @@ namespace Search {
     if (pos.checkers && !foundLegalMoves)
       return ply - SCORE_MATE;
 
+    ttEntry->store(pos.key,
+      bestScore >= beta ? TT::FLAG_LOWER : TT::FLAG_UPPER,
+      0, bestMove, bestScore, ss->staticEval, ttPV, ply);
+
     return bestScore;
   }
 
