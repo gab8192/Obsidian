@@ -421,33 +421,6 @@ namespace Search {
     if (ply >= MAX_PLY-4)
       return pos.checkers ? SCORE_DRAW : Eval::evaluate(pos, accumStack[accumStackHead]);
 
-    // Detect draw
-    if (isRepetition(pos, ply) || pos.halfMoveClock >= 100)
-      return SCORE_DRAW;
-
-    // Probe TT
-    bool ttHit;
-    TT::Entry* ttEntry = TT::probe(pos.key, ttHit);
-    TT::Flag ttBound = TT::NO_FLAG;
-    Score ttScore = SCORE_NONE;
-    Move ttMove = MOVE_NONE;
-    Score ttStaticEval = SCORE_NONE;
-    bool ttPV = false;
-
-    if (ttHit) {
-      ttBound = ttEntry->getBound();
-      ttScore = ttEntry->getScore(ply);
-      ttMove = ttEntry->getMove();
-      ttStaticEval = ttEntry->getStaticEval();
-      ttPV = ttEntry->wasPV();
-    }
-
-    // In non PV nodes, if tt bound allows it, return ttScore
-    if (!IsPV && ttScore != SCORE_NONE) {
-      if (ttBound & boundForTT(ttScore >= beta))
-        return ttScore;
-    }
-
     Move bestMove = MOVE_NONE;
     Score bestScore;
 
@@ -459,14 +432,7 @@ namespace Search {
       ss->staticEval = SCORE_NONE;
     }
     else {
-      if (ttStaticEval != SCORE_NONE)
-        bestScore = ss->staticEval = ttStaticEval;
-      else
-        bestScore = ss->staticEval = Eval::evaluate(pos, accumStack[accumStackHead]);
-
-      // When tt bound allows it, use ttScore as a better standing pat
-      if (ttScore != SCORE_NONE && (ttBound & boundForTT(ttScore > bestScore)))
-        bestScore = ttScore;
+      bestScore = ss->staticEval = Eval::evaluate(pos, accumStack[accumStackHead]);
 
       if (bestScore >= beta)
         return bestScore;
@@ -476,11 +442,9 @@ namespace Search {
 
     // Visiting the tt move when it is quiet, and stm is not check, loses ~300 Elo
 
-    bool visitTTMove = (pos.checkers || !pos.isQuiet(ttMove));
-
     MovePicker movePicker(
       MovePicker::QSEARCH, pos,
-      visitTTMove ? ttMove : MOVE_NONE,
+      MOVE_NONE,
       MOVE_NONE, MOVE_NONE,
       mainHistory, captureHistory,
       MpQsSeeMargin,
@@ -493,12 +457,6 @@ namespace Search {
     Move move;
 
     while (move = movePicker.nextMove(false, &moveStage)) {
-
-      if (bestScore > SCORE_TB_LOSS_IN_MAX_PLY) {
-        // Prevent qsearch from visiting bad captures and under-promotions
-        if (moveStage > MovePicker::PLAY_QUIETS)
-          break;
-      }
 
       if (!pos.isLegal(move))
         continue;
@@ -525,20 +483,10 @@ namespace Search {
           alpha = bestScore;
         }
       }
-
-      if (bestScore > SCORE_TB_LOSS_IN_MAX_PLY) {
-        // This implies that we are in check too
-        if (moveStage == MovePicker::PLAY_QUIETS)
-          break;
-      }
     }
 
     if (pos.checkers && !foundLegalMoves)
       return ply - SCORE_MATE;
-
-    ttEntry->store(pos.key,
-      bestScore >= beta ? TT::FLAG_LOWER : TT::FLAG_UPPER,
-      0, bestMove, bestScore, ss->staticEval, ttPV, ply);
 
     return bestScore;
   }
@@ -588,72 +536,18 @@ namespace Search {
     if (IsPV)
       ss->pvLength = ply;
 
-    // Detect upcoming draw
-    if (!IsRoot && alpha < SCORE_DRAW && hasUpcomingRepetition(pos, ply)) {
-      alpha = makeDrawScore();
-      if (alpha >= beta)
-        return alpha;
-    }
-
     // Enter qsearch when depth is 0
     if (depth <= 0)
-      return qsearch<IsPV>(pos, alpha, beta, ss);
-
-    // Detect draw
-    if (!IsRoot && (isRepetition(pos, ply) || pos.halfMoveClock >= 100))
-      return makeDrawScore();
+      return Eval::evaluate(pos, accumStack[accumStackHead]);
 
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY - 4)
       return pos.checkers ? SCORE_DRAW : Eval::evaluate(pos, accumStack[accumStackHead]);
 
-    // Mate distance pruning
-    alpha = std::max(alpha, ply - SCORE_MATE);
-    beta = std::min(beta, SCORE_MATE - ply - 1);
-    if (alpha >= beta)
-      return alpha;
-
-    // Probe TT
-    bool ttHit;
-    TT::Entry* ttEntry = TT::probe(pos.key, ttHit);
-
-    TT::Flag ttBound = TT::NO_FLAG;
-    Score ttScore   = SCORE_NONE;
-    Move ttMove     = MOVE_NONE;
-    int ttDepth     = -1;
-    Score ttStaticEval = SCORE_NONE;
-    bool ttPV = IsPV;
-
-    if (ttHit) {
-      ttBound = ttEntry->getBound();
-      ttScore = ttEntry->getScore(ply);
-      ttMove = ttEntry->getMove();
-      ttDepth = ttEntry->getDepth();
-      ttStaticEval = ttEntry->getStaticEval();
-      ttPV |= ttEntry->wasPV();
-    }
-
-    if (IsRoot)
-      ttMove = rootMoves[pvIdx].move;
-
-    const bool ttMoveNoisy = ttMove && !pos.isQuiet(ttMove);
-
-    const Score probcutBeta = beta + ProbcutBetaMargin;
-
     Score eval;
     Move bestMove = MOVE_NONE;
     Score bestScore = -SCORE_INFINITE;
     Score maxScore  =  SCORE_INFINITE; 
-
-    // In non PV nodes, if tt depth and bound allow it, return ttScore
-    if ( !IsPV
-      && !excludedMove
-      && ttScore != SCORE_NONE
-      && ttDepth >= depth) 
-    {
-      if (ttBound & boundForTT(ttScore >= beta))
-        return ttScore;
-    }
 
     // Probe tablebases
     const TbResult tbResult = (IsRoot || excludedMove) ? TB_RESULT_FAILED : probeTB(pos);
@@ -678,7 +572,7 @@ namespace Search {
       }
 
       if ((tbBound == TT::FLAG_EXACT) || (tbBound == TT::FLAG_LOWER ? tbScore >= beta : tbScore <= alpha)) {
-        ttEntry->store(pos.key, tbBound, depth, MOVE_NONE, tbScore, SCORE_NONE, ttPV, ply);
+        //ttEntry->store(pos.key, tbBound, depth, MOVE_NONE, tbScore, SCORE_NONE, ttPV, ply);
         return tbScore;
       }
 
@@ -695,9 +589,6 @@ namespace Search {
     (ss + 1)->killerMove = MOVE_NONE;
     ss->doubleExt = (ss - 1)->doubleExt;
 
-    // At root we always assume improving, for lmr purposes
-    bool improving = false;
-
     // Do the static evaluation
 
     if (pos.checkers) {
@@ -710,108 +601,7 @@ namespace Search {
       eval = ss->staticEval;
     }
     else {
-      if (ttStaticEval != SCORE_NONE)
-        ss->staticEval = eval = ttStaticEval;
-      else
-        ss->staticEval = eval = Eval::evaluate(pos, accumStack[accumStackHead]);
-
-      if (! ttHit) {
-        // This (probably new) position has just been evaluated.
-        // Immediately save the evaluation in TT, so other threads who reach this position
-        // won't need to evaluate again
-        // This is also helpful when we cutoff early and no other store will be performed
-        ttEntry->store(pos.key, TT::NO_FLAG, 0, MOVE_NONE, SCORE_NONE, ss->staticEval, ttPV, ply);
-      }
-
-      // When tt bound allows it, use ttScore as a better evaluation
-      if (ttScore != SCORE_NONE && (ttBound & boundForTT(ttScore > eval)))
-        eval = ttScore;
-    }
-
-    // Calculate whether the evaluation here is worse or better than it was 2 plies ago
-    if ((ss - 2)->staticEval != SCORE_NONE)
-      improving = ss->staticEval > (ss - 2)->staticEval;
-    else if ((ss - 4)->staticEval != SCORE_NONE)
-      improving = ss->staticEval > (ss - 4)->staticEval;
-
-    // Razoring. When evaluation is far below alpha, we could probably only catch up with a capture,
-    // thus do a qsearch. If the qsearch still can't hit alpha, cut off
-    if ( !IsPV
-      && alpha < 2000
-      && eval < alpha - RazoringDepthMul * depth) {
-      Score score = qsearch<IsPV>(pos, alpha, beta, ss);
-      if (score <= alpha)
-        return score;
-    }
-
-    // Reverse futility pruning. When evaluation is far above beta, the opponent is unlikely
-    // to catch up, thus cut off
-    if ( !IsPV
-      && depth <= RfpMaxDepth
-      && eval < SCORE_TB_WIN_IN_MAX_PLY
-      && eval - RfpDepthMul * (depth - improving) >= beta)
-      return (eval + beta) / 2;
-
-    // Null move pruning. When our evaluation is above beta, we give the opponent
-    // a free move, and if he still can't catch up, cut off
-    if ( !IsPV
-      && !excludedMove
-      && (ss - 1)->playedMove != MOVE_NONE
-      && eval >= beta
-      && pos.hasNonPawns(pos.sideToMove)
-      && beta > SCORE_TB_LOSS_IN_MAX_PLY) {
-
-      int R = std::min((eval - beta) / NmpEvalDiv, (int)NmpEvalDivMin) + depth / NmpDepthDiv + NmpBase;
-
-      Position newPos = pos;
-      playNullMove(newPos, ss);
-      Score score = -negamax<false>(newPos, -beta, -beta + 1, depth - R, !cutNode, ss + 1);
-      cancelNullMove();
-
-      if (score >= beta)
-        return score < SCORE_TB_WIN_IN_MAX_PLY ? score : beta;
-    }
-
-    // IIR. Decrement the depth if we expect this search to have bad move ordering
-    if ((IsPV || cutNode) && depth >= 2+2*cutNode && !ttMove)
-      depth--;
-
-    if (   !IsPV
-        && depth >= 5
-        && std::abs(beta) < SCORE_TB_WIN_IN_MAX_PLY
-        && !(ttDepth >= depth - 3 && ttScore < probcutBeta))
-    {
-      int pcSeeMargin = (probcutBeta - ss->staticEval) * 10 / 16;
-      bool visitTTMove = ttMove && !pos.isQuiet(ttMove) && pos.seeGe(ttMove, pcSeeMargin);
-
-      MovePicker pcMovePicker(
-        MovePicker::PROBCUT, pos,
-        visitTTMove ? ttMove : MOVE_NONE, MOVE_NONE, MOVE_NONE,
-        mainHistory, captureHistory,
-        pcSeeMargin,
-        ss);
-
-      Move move;
-      MovePicker::Stage moveStage;
-
-      while (move = pcMovePicker.nextMove(false, &moveStage)) {
-        if (!pos.isLegal(move))
-          continue;
-
-        Position newPos = pos;
-        playMove(newPos, move, ss);
-
-        Score score = -qsearch<false>(newPos, -probcutBeta, -probcutBeta + 1, ss + 1);
-
-        // Do a normal search if qsearch was positive
-        if (score >= probcutBeta)
-          score = -negamax<false>(newPos, -probcutBeta, -probcutBeta + 1, depth - 4, !cutNode, ss + 1);
-
-        cancelMove();
-
-        if (score >= probcutBeta)
-          return score;
-      }
+      ss->staticEval = eval = Eval::evaluate(pos, accumStack[accumStackHead]);
     }
 
   moves_loop:
@@ -837,7 +627,7 @@ namespace Search {
 
     MovePicker movePicker(
       MovePicker::PVS, pos,
-      ttMove, ss->killerMove, counterMove,
+      MOVE_NONE, MOVE_NONE, MOVE_NONE,
       mainHistory, captureHistory,
       MpPvsSeeMargin,
       ss);
@@ -861,121 +651,16 @@ namespace Search {
       
       bool isQuiet = pos.isQuiet(move);
 
-      int history = isQuiet ? getQuietHistory(pos, move, ss) : getCapHistory(pos, move);
-
       int oldNodesSearched = nodesSearched;
-
-      if ( !IsRoot
-        && bestScore > SCORE_TB_LOSS_IN_MAX_PLY
-        && pos.hasNonPawns(pos.sideToMove))
-      {
-        int lmrRed = lmrTable[depth][seenMoves] + !improving - history / EarlyLmrHistoryDiv;
-        int lmrDepth = std::max(0, depth - lmrRed);
-
-        // SEE (Static Exchange Evalution) pruning
-        if (moveStage > MovePicker::PLAY_GOOD_CAPTURES) {
-          int seeMargin = isQuiet ? lmrDepth * PvsQuietSeeMargin :
-                                    depth    * PvsCapSeeMargin;
-          if (!pos.seeGe(move, seeMargin))
-            continue;
-        }
-
-        // Late move pruning. At low depths, only visit a few quiet moves
-        if (seenMoves >= (depth * depth + LmpBase) / (2 - improving))
-          skipQuiets = true;
-
-        // Futility pruning. If our evaluation is far below alpha,
-        // only visit a few quiet moves
-        if (   isQuiet
-            && lmrDepth <= FpMaxDepth 
-            && !pos.checkers 
-            && ss->staticEval + FpBase + FpDepthMul * lmrDepth <= alpha)
-          skipQuiets = true;
-      }
-
-      int extension = 0;
-      
-      // Singular extension
-      if ( !IsRoot
-        && ply < 2 * rootDepth
-        && depth >= 6
-        && !excludedMove
-        && move == ttMove
-        && abs(ttScore) < SCORE_TB_WIN_IN_MAX_PLY
-        && ttBound & TT::FLAG_LOWER
-        && ttDepth >= depth - 3) 
-      {
-        Score singularBeta = ttScore - depth;
-        
-        Score seScore = negamax<false>(pos, singularBeta - 1, singularBeta, (depth - 1) / 2, cutNode, ss, move);
-        
-        if (seScore < singularBeta) {
-          extension = 1;
-          // Extend even more if s. value is smaller than s. beta by some margin
-          if (   !IsPV 
-              && ss->doubleExt <= DoubleExtMax 
-              && seScore < singularBeta - DoubleExtMargin)
-          {
-            extension = 2;
-            ss->doubleExt = (ss - 1)->doubleExt + 1;
-          }
-        }
-        else if (singularBeta >= beta) // Multicut
-          return singularBeta;
-        else if (ttScore >= beta) // Negative extensions
-          extension = -2 + IsPV;
-        else if (cutNode)
-          extension = -2;
-      }
 
       Position newPos = pos;
       playMove(newPos, move, ss);
 
-      int newDepth = depth + extension - 1;
+      int newDepth = depth - 1;
 
       Score score;
 
-      // Late move reductions. Search at a reduced depth, moves that are late in the move list
-
-      bool needFullSearch = false;
-
-      if (depth >= 2 && seenMoves > 1 + 3 * IsRoot) {
-
-        int R = lmrTable[depth][seenMoves] / (1 + !isQuiet);
-
-        // Reduce or extend depending on history of this move
-        R -= history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv);
-
-        // Extend moves that give check
-        R -= (newPos.checkers != 0ULL);
-
-        // Extend if this position *was* in a PV node. Even further if it *is*
-        R -= ttPV + IsPV;
-
-        // Reduce more if the expected best move is a capture
-        R += ttMoveNoisy;
-
-        // Reduce if evaluation is trending down
-        R += !improving;
-
-        // Reduce if we expect to fail high
-        R += 2 * cutNode;
-
-        // Clamp to avoid a qsearch or an extension in the child search
-        int reducedDepth = std::clamp(newDepth - R, 1, newDepth + 1);
-
-        score = -negamax<false>(newPos, -alpha - 1, -alpha, reducedDepth, true, ss + 1);
-
-        if (score > alpha && reducedDepth < newDepth) {
-          newDepth += (score > bestScore + ZwsDeeperMargin && !IsRoot);
-          newDepth -= (score < bestScore + newDepth        && !IsRoot);
-          needFullSearch = reducedDepth < newDepth;
-        }
-      }
-      else
-        needFullSearch = !IsPV || seenMoves > 1;
-
-      if (needFullSearch)
+      if (!IsPV || seenMoves > 1)
         score = -negamax<false>(newPos, -alpha - 1, -alpha, newDepth, !cutNode, ss + 1);
 
       if (IsPV && (seenMoves == 1 || score > alpha))
@@ -1063,17 +748,6 @@ namespace Search {
     // Only in pv nodes we could probe tt and not cut off immediately
     if (IsPV)
       bestScore = std::min(bestScore, maxScore);
-
-    // Store to TT
-    if (!excludedMove && !(IsRoot && pvIdx > 0)) {
-      TT::Flag flag;
-      if (bestScore >= beta)
-        flag = TT::FLAG_LOWER;
-      else
-        flag = (IsPV && bestMove) ? TT::FLAG_EXACT : TT::FLAG_UPPER;
-
-      ttEntry->store(pos.key, flag, depth, bestMove, bestScore, ss->staticEval, ttPV, ply);
-    }
 
     return bestScore;
   }
