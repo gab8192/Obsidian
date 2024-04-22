@@ -26,7 +26,7 @@ namespace Search {
   DEFINE_PARAM_S(MpPvsSeeMargin, -80, 15);
   DEFINE_PARAM_S(MpQsSeeMargin, -25, 15);
 
-  DEFINE_PARAM_S(LmrBase, 25, 10);
+  DEFINE_PARAM_S(LmrBase, 55, 10);
   DEFINE_PARAM_S(LmrDiv, 211, 10);
 
   DEFINE_PARAM_S(StatBonusLinear, 130, 10);
@@ -739,6 +739,10 @@ namespace Search {
       if (depth >= 2 && seenMoves > 1 + 2 * IsRoot) {
 
         int R = lmrTable[depth][seenMoves];
+
+        R -= ttPV;
+
+        debug_add(R);
 
         // Clamp to avoid a qsearch or an extension in the child search
         int reducedDepth = std::max(std::min(newDepth - R, newDepth + 1), 1);
