@@ -700,7 +700,7 @@ namespace Search {
 
     MovePicker movePicker(
       MovePicker::PVS, pos,
-      ttMove, MOVE_NONE, MOVE_NONE,
+      ttMove, ss->killerMove, MOVE_NONE,
       mainHistory, captureHistory,
       MpPvsSeeMargin,
       ss);
