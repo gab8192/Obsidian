@@ -25,7 +25,7 @@ namespace Search {
   DEFINE_PARAM_S(MpPvsSeeMargin, -80, 15);
   DEFINE_PARAM_S(MpQsSeeMargin, -25, 15);
 
-  DEFINE_PARAM_S(LmrBase, 39, 10);
+  DEFINE_PARAM_S(LmrBase, 25, 10);
   DEFINE_PARAM_S(LmrDiv, 211, 10);
 
   DEFINE_PARAM_S(StatBonusLinear, 130, 10);
@@ -733,7 +733,25 @@ namespace Search {
 
       Score score;
 
-      if (!IsPV || seenMoves > 1)
+      bool needFullSearch = false;
+
+      if (depth >= 2 && seenMoves > 1 + 2 * IsRoot) {
+
+        int R = lmrTable[depth][seenMoves];
+
+        // Clamp to avoid a qsearch or an extension in the child search
+        int reducedDepth = std::max(std::min(newDepth - R, newDepth + 1), 1);
+
+        score = -negamax<false>(newPos, -alpha - 1, -alpha, reducedDepth, true, ss + 1);
+
+        if (score > alpha && reducedDepth < newDepth) {
+          needFullSearch = reducedDepth < newDepth;
+        }
+      } 
+      else
+        needFullSearch = !IsPV || seenMoves > 1;
+
+      if (needFullSearch)
         score = -negamax<false>(newPos, -alpha - 1, -alpha, newDepth, !cutNode, ss + 1);
 
       if (IsPV && (seenMoves == 1 || score > alpha))
