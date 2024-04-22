@@ -727,6 +727,15 @@ namespace Search {
 
       int oldNodesSearched = nodesSearched;
 
+      if ( !IsRoot
+        && bestScore > SCORE_TB_LOSS_IN_MAX_PLY
+        && pos.hasNonPawns(pos.sideToMove))
+      {
+        // Late move pruning. At low depths, only visit a few quiet moves
+        if (seenMoves >= (depth * depth + LmpBase) / (2 - improving))
+          skipQuiets = true;
+      }
+
       Position newPos = pos;
       playMove(newPos, move, ss);
 
