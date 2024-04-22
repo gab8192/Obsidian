@@ -1,5 +1,6 @@
 #include "uci.h"
 #include "bench.h"
+#include "debug.h"
 #include "evaluate.h"
 #include "move.h"
 #include "movegen.h"
@@ -107,6 +108,8 @@ namespace {
     std::cout << totalNodes << " nodes " << (totalNodes * 1000 / elapsed) << " nps" << std::endl;
 
     Search::doingBench = false;
+
+    debug_print();
   }
 
   void setoption(std::istringstream& is) {

@@ -1,5 +1,6 @@
 #include "search.h"
 #include "cuckoo.h"
+#include "debug.h"
 #include "evaluate.h"
 #include "movepick.h"
 #include "fathom/tbprobe.h"
