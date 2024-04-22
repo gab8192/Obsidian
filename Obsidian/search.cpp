@@ -26,7 +26,7 @@ namespace Search {
   DEFINE_PARAM_S(MpPvsSeeMargin, -80, 15);
   DEFINE_PARAM_S(MpQsSeeMargin, -25, 15);
 
-  DEFINE_PARAM_S(LmrBase, 65, 10);
+  DEFINE_PARAM_S(LmrBase, 25, 10);
   DEFINE_PARAM_S(LmrDiv, 211, 10);
 
   DEFINE_PARAM_S(StatBonusLinear, 130, 10);
@@ -739,6 +739,8 @@ namespace Search {
       if (depth >= 2 && seenMoves > 1 + 2 * IsRoot) {
 
         int R = lmrTable[depth][seenMoves];
+
+        R += !improving;
 
         R -= ttPV;
 
