@@ -657,6 +657,26 @@ namespace Search {
       && eval - RfpDepthMul * (depth - improving) >= beta)
       return (eval + beta) / 2;
 
+    // Null move pruning. When our evaluation is above beta, we give the opponent
+    // a free move, and if he still can't catch up, cut off
+    if ( !IsPV
+      && !excludedMove
+      && (ss - 1)->playedMove != MOVE_NONE
+      && eval >= beta
+      && pos.hasNonPawns(pos.sideToMove)
+      && beta > SCORE_TB_LOSS_IN_MAX_PLY) {
+
+      int R = std::min((eval - beta) / NmpEvalDiv, (int)NmpEvalDivMin) + depth / NmpDepthDiv + NmpBase;
+
+      Position newPos = pos;
+      playNullMove(newPos, ss);
+      Score score = -negamax<false>(newPos, -beta, -beta + 1, depth - R, !cutNode, ss + 1);
+      cancelNullMove();
+
+      if (score >= beta)
+        return score < SCORE_TB_WIN_IN_MAX_PLY ? score : beta;
+    }
+
   moves_loop:
 
     // Generate moves and score them
