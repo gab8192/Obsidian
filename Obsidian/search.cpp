@@ -763,7 +763,15 @@ namespace Search {
         Score seScore = negamax<false>(pos, singularBeta - 1, singularBeta, (depth - 1) / 2, cutNode, ss, move);
         
         if (seScore < singularBeta) {
-          extension = 1;
+          if (   !IsPV 
+              && ss->doubleExt <= DoubleExtMax 
+              && seScore < singularBeta - DoubleExtMargin)
+          {
+            extension = 2;
+            ss->doubleExt = (ss - 1)->doubleExt + 1;
+          } else {
+            extension = 1;
+          }
         }
       }
 
