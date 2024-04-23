@@ -764,7 +764,8 @@ namespace Search {
         
         if (seScore < singularBeta) {
           extension = 1;
-        }
+        } else if (singularBeta >= beta)
+          return singularBeta;
       }
 
       Position newPos = pos;
