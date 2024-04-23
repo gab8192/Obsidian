@@ -746,10 +746,31 @@ namespace Search {
           continue;
       }
 
+      int extension = 0;
+      
+      // Singular extension
+      if ( !IsRoot
+        && ply < 2 * rootDepth
+        && depth >= 6
+        && !excludedMove
+        && move == ttMove
+        && abs(ttScore) < SCORE_TB_WIN_IN_MAX_PLY
+        && ttBound & TT::FLAG_LOWER
+        && ttDepth >= depth - 3) 
+      {
+        Score singularBeta = ttScore - depth;
+        
+        Score seScore = negamax<false>(pos, singularBeta - 1, singularBeta, (depth - 1) / 2, cutNode, ss, move);
+        
+        if (seScore < singularBeta) {
+          extension = 1;
+        }
+      }
+
       Position newPos = pos;
       playMove(newPos, move, ss);
 
-      int newDepth = depth - 1;
+      int newDepth = depth + extension - 1;
 
       Score score;
 
