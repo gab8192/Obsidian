@@ -725,21 +725,25 @@ namespace Search {
       
       bool isQuiet = pos.isQuiet(move);
 
+      int quietHistory = getQuietHistory(pos, move, ss);
+
       int oldNodesSearched = nodesSearched;
 
       if ( !IsRoot
         && bestScore > SCORE_TB_LOSS_IN_MAX_PLY
         && pos.hasNonPawns(pos.sideToMove))
       {
+        int lmrRed = lmrTable[depth][seenMoves] + !improving - quietHistory / EarlyLmrHistoryDiv;
+        int lmrDepth = std::max(0, depth - lmrRed);
+
         // Late move pruning. At low depths, only visit a few quiet moves
         if (seenMoves >= (depth * depth + LmpBase) / (2 - improving))
           skipQuiets = true;
 
-        if (!isQuiet) {
-          int seeMargin = depth * PvsCapSeeMargin;
-          if (!pos.seeGe(move, seeMargin))
-            continue;
-        }
+        int seeMargin = isQuiet ? lmrDepth * PvsQuietSeeMargin :
+                                  depth    * PvsCapSeeMargin;
+        if (!pos.seeGe(move, seeMargin))
+          continue;
       }
 
       Position newPos = pos;
