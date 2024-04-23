@@ -761,7 +761,11 @@ namespace Search {
 
         R += !improving;
 
+        R += cutNode;
+
         R -= ttPV;
+
+        R -= IsPV;
 
         // Clamp to avoid a qsearch or an extension in the child search
         int reducedDepth = std::max(std::min(newDepth - R, newDepth + 1), 1);
