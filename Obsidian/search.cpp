@@ -873,12 +873,10 @@ namespace Search {
         int lmrDepth = std::max(0, depth - lmrRed);
 
         // SEE (Static Exchange Evalution) pruning
-        if (moveStage > MovePicker::PLAY_GOOD_CAPTURES) {
-          int seeMargin = isQuiet ? lmrDepth * PvsQuietSeeMargin :
-                                    depth    * PvsCapSeeMargin;
-          if (!pos.seeGe(move, seeMargin))
-            continue;
-        }
+        int seeMargin = isQuiet ? lmrDepth * PvsQuietSeeMargin :
+                                  depth    * PvsCapSeeMargin;
+        if (!pos.seeGe(move, seeMargin))
+          continue;
 
         // Late move pruning. At low depths, only visit a few quiet moves
         if (seenMoves >= (depth * depth + LmpBase) / (2 - improving))
