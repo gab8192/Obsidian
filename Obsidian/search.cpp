@@ -650,6 +650,14 @@ namespace Search {
     else if ((ss - 4)->staticEval != SCORE_NONE)
       improving = ss->staticEval > (ss - 4)->staticEval;
 
+    if ( !IsPV
+      && alpha < 2000
+      && eval < alpha - RazoringDepthMul * depth) {
+      Score score = qsearch<IsPV>(pos, alpha, beta, ss);
+      if (score <= alpha)
+        return score;
+    }
+
     // Reverse futility pruning. When evaluation is far above beta, the opponent is unlikely
     // to catch up, thus cut off
     if ( !IsPV
