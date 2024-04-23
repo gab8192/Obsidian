@@ -944,7 +944,8 @@ namespace Search {
         int R = lmrTable[depth][seenMoves] / (1 + !isQuiet);
 
         // Reduce or extend depending on history of this move
-        R -= history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv);
+        if (isQuiet)
+          R -= history / LmrQuietHistoryDiv;
 
         // Extend moves that give check
         R -= (newPos.checkers != 0ULL);
