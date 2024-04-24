@@ -489,10 +489,9 @@ namespace Search {
     bool foundLegalMoves = false;
 
     // Visit moves
-    MovePicker::Stage moveStage;
     Move move;
 
-    while (move = movePicker.nextMove(false, &moveStage)) {
+    while (move = movePicker.nextMove(false)) {
 
       if (!pos.isLegal(move))
         continue;
@@ -528,7 +527,7 @@ namespace Search {
 
       if (bestScore > SCORE_TB_LOSS_IN_MAX_PLY) {
         // This implies that we are in check too
-        if (moveStage == MovePicker::QS_PLAY_QUIETS)
+        if (pos.isQuiet(move))
           break;
       }
     }
@@ -792,9 +791,8 @@ namespace Search {
         ss);
 
       Move move;
-      MovePicker::Stage moveStage;
 
-      while (move = pcMovePicker.nextMove(false, &moveStage)) {
+      while (move = pcMovePicker.nextMove(false)) {
         if (!pos.isLegal(move))
           continue;
 
@@ -845,9 +843,8 @@ namespace Search {
     // Visit moves
 
     Move move;
-    MovePicker::Stage moveStage;
 
-    while (move = movePicker.nextMove(skipQuiets, & moveStage)) {
+    while (move = movePicker.nextMove(skipQuiets)) {
       if (move == excludedMove)
         continue;
 
@@ -873,12 +870,10 @@ namespace Search {
         int lmrDepth = std::max(0, depth - lmrRed);
 
         // SEE (Static Exchange Evalution) pruning
-        if (moveStage > MovePicker::PLAY_GOOD_CAPTURES) {
-          int seeMargin = isQuiet ? lmrDepth * PvsQuietSeeMargin :
-                                    depth    * PvsCapSeeMargin;
-          if (!pos.seeGe(move, seeMargin))
-            continue;
-        }
+        int seeMargin = isQuiet ? lmrDepth * PvsQuietSeeMargin :
+                                  depth    * PvsCapSeeMargin;
+        if (!pos.seeGe(move, seeMargin))
+          continue;
 
         // Late move pruning. At low depths, only visit a few quiet moves
         if (seenMoves >= (depth * depth + LmpBase) / (2 - improving))

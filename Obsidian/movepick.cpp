@@ -97,14 +97,13 @@ void MovePicker::scoreCaptures() {
   }
 }
 
-Move MovePicker::nextMove(bool skipQuiets, Stage* outStage) {
+Move MovePicker::nextMove(bool skipQuiets) {
   select:
   switch (stage)
   {
   case QS_PLAY_TT_MOVE:
   case PLAY_TT_MOVE:
   {
-    *outStage = stage;
     ++stage;
     return ttMove;
   }
@@ -120,7 +119,6 @@ Move MovePicker::nextMove(bool skipQuiets, Stage* outStage) {
   {
     if (capIndex < captures.size()) {
       Move_Score move = nextMove0(captures, capIndex++);
-      *outStage = stage;
       return move.move;
     }
 
@@ -135,10 +133,8 @@ Move MovePicker::nextMove(bool skipQuiets, Stage* outStage) {
     nextGoodCap:
     if (capIndex < captures.size()) {
       Move_Score move = nextMove0(captures, capIndex++);
-      if (pos.seeGe(move.move, seeMargin) && !isUnderPromo(move.move)) { // good capture
-        *outStage = stage;
+      if (pos.seeGe(move.move, seeMargin) && !isUnderPromo(move.move)) // good capture
         return move.move;
-      }
       badCaptures.add(move);
       goto nextGoodCap;
     }
@@ -152,19 +148,15 @@ Move MovePicker::nextMove(bool skipQuiets, Stage* outStage) {
   case PLAY_KILLER:
   {
     ++stage;
-    if (pos.isQuiet(killerMove) && pos.isPseudoLegal(killerMove)) {
-      *outStage = PLAY_KILLER;
+    if (pos.isQuiet(killerMove) && pos.isPseudoLegal(killerMove))
       return killerMove;
-    }
     goto select;
   }
   case PLAY_COUNTER:
   {
     ++stage;
-    if (pos.isQuiet(counterMove) && pos.isPseudoLegal(counterMove)) {
-      *outStage = PLAY_COUNTER;
+    if (pos.isQuiet(counterMove) && pos.isPseudoLegal(counterMove))
       return counterMove;
-    }
     goto select;
   }
   case QS_GEN_QUIETS:
@@ -191,7 +183,6 @@ Move MovePicker::nextMove(bool skipQuiets, Stage* outStage) {
     
     if (quietIndex < quiets.size()) {
       Move_Score move = nextMove0(quiets, quietIndex++);
-      *outStage = stage;
       return move.move;
     }
 
@@ -205,7 +196,6 @@ Move MovePicker::nextMove(bool skipQuiets, Stage* outStage) {
   {
     if (badCapIndex < badCaptures.size()) {
       Move_Score move = nextMove0(badCaptures, badCapIndex++);
-      *outStage = stage;
       return move.move;
     }
   }
