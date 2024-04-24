@@ -45,9 +45,9 @@ private:
   SearchType searchType;
   Position& pos;
 
-  Move ttMove;
-  Move killerMove;
-  Move counterMove;
+  Move ttMove = MOVE_NONE;
+  Move killerMove = MOVE_NONE;
+  Move counterMove = MOVE_NONE;
 
   MainHistory& mainHist;
   CaptureHistory& capHist;

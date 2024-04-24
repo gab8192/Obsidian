@@ -24,14 +24,10 @@ MovePicker::MovePicker(
   }
 
   if (stage == PLAY_TT) {
-    if (_killerMove == _ttMove)
-      this->killerMove = MOVE_NONE;
-    else
+    if (_killerMove != _ttMove)
       this->killerMove = _killerMove;
 
-    if (_counterMove == _ttMove || _counterMove == _killerMove)
-      this->counterMove = MOVE_NONE;
-    else
+    if (_counterMove != _ttMove && _counterMove != _killerMove)
       this->counterMove = _counterMove;
   }
 
