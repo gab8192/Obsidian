@@ -496,7 +496,7 @@ namespace Search {
 
       if (bestScore > SCORE_TB_LOSS_IN_MAX_PLY) {
         // Prevent qsearch from visiting bad captures and under-promotions
-        if (moveStage > MovePicker::PLAY_QUIETS)
+        if (moveStage == MovePicker::QS_PLAY_BAD_CAPTURES)
           break;
       }
 
@@ -528,7 +528,7 @@ namespace Search {
 
       if (bestScore > SCORE_TB_LOSS_IN_MAX_PLY) {
         // This implies that we are in check too
-        if (moveStage == MovePicker::PLAY_QUIETS)
+        if (moveStage == MovePicker::QS_PLAY_QUIETS)
           break;
       }
     }
