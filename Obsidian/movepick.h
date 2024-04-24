@@ -23,10 +23,9 @@ public:
 
     QS_PLAY_TT_MOVE,
     QS_GEN_CAPTURES,
-    QS_PLAY_GOOD_CAPTURES,
+    QS_PLAY_CAPTURES,
     QS_GEN_QUIETS,
     QS_PLAY_QUIETS,
-    QS_PLAY_BAD_CAPTURES,
   };
   
   MovePicker(

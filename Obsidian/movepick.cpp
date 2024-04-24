@@ -116,7 +116,20 @@ Move MovePicker::nextMove(bool skipQuiets, Stage* outStage) {
     ++stage;
     goto select;
   }
-  case QS_PLAY_GOOD_CAPTURES:
+  case QS_PLAY_CAPTURES:
+  {
+    if (capIndex < captures.size()) {
+      Move_Score move = nextMove0(captures, capIndex++);
+      *outStage = stage;
+      return move.move;
+    }
+
+    if (!pos.checkers)
+      return MOVE_NONE;
+
+    ++stage;
+    goto select;
+  }
   case PLAY_GOOD_CAPTURES:
   {
     nextGoodCap:
@@ -130,10 +143,6 @@ Move MovePicker::nextMove(bool skipQuiets, Stage* outStage) {
       goto nextGoodCap;
     }
 
-    if (searchType == QSEARCH && !pos.checkers) {
-      stage = QS_PLAY_BAD_CAPTURES;
-      goto select;
-    }
     if (searchType == PROBCUT)
       return MOVE_NONE;
 
@@ -186,10 +195,12 @@ Move MovePicker::nextMove(bool skipQuiets, Stage* outStage) {
       return move.move;
     }
 
+    if (searchType == QSEARCH)
+      return MOVE_NONE;
+
     ++stage;
     goto select;
   }
-  case QS_PLAY_BAD_CAPTURES:
   case PLAY_BAD_CAPTURES:
   {
     if (badCapIndex < badCaptures.size()) {
