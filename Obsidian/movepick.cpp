@@ -23,20 +23,20 @@ MovePicker::MovePicker(
       this->stage = PLAY_TT;
   }
 
+  if (stage == PLAY_TT) {
+    if (_killerMove == _ttMove)
+      this->killerMove = MOVE_NONE;
+    else
+      this->killerMove = _killerMove;
+
+    if (_counterMove == _ttMove || _counterMove == _killerMove)
+      this->counterMove = MOVE_NONE;
+    else
+      this->counterMove = _counterMove;
+  }
+
   if (! pos.isPseudoLegal(ttMove))
     ++(this->stage);
-
-  // Ensure tt, killer, and counter, are all different
-
-  if (_killerMove == _ttMove)
-    this->killerMove = MOVE_NONE;
-  else
-    this->killerMove = _killerMove;
-
-  if (_counterMove == _ttMove || _counterMove == _killerMove)
-    this->counterMove = MOVE_NONE;
-  else
-    this->counterMove = _counterMove;
 }
 
 int pieceTo(Position& pos, Move m) {
