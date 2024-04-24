@@ -499,9 +499,8 @@ namespace Search {
 
       if (bestScore > SCORE_TB_LOSS_IN_MAX_PLY) {
         // Prevent qsearch from visiting bad captures and under-promotions
-        if (moveStage == MovePicker::QS_PLAY_CAPTURES)
-          if (! pos.seeGe(move, MpQsSeeMargin))
-            continue;
+        if (! pos.seeGe(move, MpQsSeeMargin))
+          continue;
       }
 
       foundLegalMoves = true;
