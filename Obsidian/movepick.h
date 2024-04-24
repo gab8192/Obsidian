@@ -12,7 +12,7 @@ public:
   };
 
   enum Stage {
-    PLAY_TT_MOVE,
+    PLAY_TT,
     GEN_CAPTURES,
     PLAY_GOOD_CAPTURES,
     PLAY_KILLER,
@@ -21,11 +21,15 @@ public:
     PLAY_QUIETS,
     PLAY_BAD_CAPTURES,
 
-    QS_PLAY_TT_MOVE,
+    QS_PLAY_TT,
     QS_GEN_CAPTURES,
     QS_PLAY_CAPTURES,
-    QS_GEN_QUIETS,
-    QS_PLAY_QUIETS,
+
+    IN_CHECK_PLAY_TT,
+    IN_CHECK_GEN_CAPTURES,
+    IN_CHECK_PLAY_CAPTURES,
+    IN_CHECK_GEN_QUIETS,
+    IN_CHECK_PLAY_QUIETS
   };
   
   MovePicker(

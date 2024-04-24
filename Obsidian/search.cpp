@@ -528,7 +528,7 @@ namespace Search {
 
       if (bestScore > SCORE_TB_LOSS_IN_MAX_PLY) {
         // This implies that we are in check too
-        if (moveStage == MovePicker::QS_PLAY_QUIETS)
+        if (moveStage == MovePicker::IN_CHECK_PLAY_QUIETS)
           break;
       }
     }

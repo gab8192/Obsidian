@@ -14,10 +14,14 @@ MovePicker::MovePicker(
   seeMargin(_seeMargin),
   ss(_ss)
 {
-  if (_searchType == QSEARCH)
-    this->stage = QS_PLAY_TT_MOVE;
-  else
-    this->stage = PLAY_TT_MOVE;
+  if (pos.checkers)
+    this->stage = IN_CHECK_PLAY_TT;
+  else {
+    if (_searchType == QSEARCH)
+      this->stage = QS_PLAY_TT;
+    else
+      this->stage = PLAY_TT;
+  }
 
   if (! pos.isPseudoLegal(ttMove))
     ++(this->stage);
@@ -101,13 +105,15 @@ Move MovePicker::nextMove(bool skipQuiets, Stage* outStage) {
   select:
   switch (stage)
   {
-  case QS_PLAY_TT_MOVE:
-  case PLAY_TT_MOVE:
+  case IN_CHECK_PLAY_TT:
+  case QS_PLAY_TT:
+  case PLAY_TT:
   {
     *outStage = stage;
     ++stage;
     return ttMove;
   }
+  case IN_CHECK_GEN_CAPTURES:
   case QS_GEN_CAPTURES:
   case GEN_CAPTURES: 
   {
@@ -116,6 +122,7 @@ Move MovePicker::nextMove(bool skipQuiets, Stage* outStage) {
     ++stage;
     goto select;
   }
+  case IN_CHECK_PLAY_CAPTURES:
   case QS_PLAY_CAPTURES:
   {
     if (capIndex < captures.size()) {
@@ -167,7 +174,7 @@ Move MovePicker::nextMove(bool skipQuiets, Stage* outStage) {
     }
     goto select;
   }
-  case QS_GEN_QUIETS:
+  case IN_CHECK_GEN_QUIETS:
   case GEN_QUIETS: 
   {
     if (skipQuiets) {
@@ -181,7 +188,7 @@ Move MovePicker::nextMove(bool skipQuiets, Stage* outStage) {
     ++stage;
     goto select;
   }
-  case QS_PLAY_QUIETS:
+  case IN_CHECK_PLAY_QUIETS:
   case PLAY_QUIETS: 
   {
     if (skipQuiets) {
@@ -195,7 +202,7 @@ Move MovePicker::nextMove(bool skipQuiets, Stage* outStage) {
       return move.move;
     }
 
-    if (searchType == QSEARCH)
+    if (stage == IN_CHECK_PLAY_QUIETS)
       return MOVE_NONE;
 
     ++stage;
