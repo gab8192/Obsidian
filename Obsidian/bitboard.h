@@ -96,6 +96,8 @@ Bitboard getRookAttacks(Square s, Bitboard occupied);
 
 Bitboard getRookAttacks(Square s);
 
+Bitboard getQueenAttacks(Square s, Bitboard occupied);
+
 Bitboard getKingAttacks(Square square);
 
 Bitboard getKnightAttacks(Square square);

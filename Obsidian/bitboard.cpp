@@ -262,6 +262,10 @@ Bitboard getRookAttacks(Square sq, Bitboard occupied) {
 	return RookAttacks[sq][attack_index_rook(sq, occupied)];
 }
 
+Bitboard getQueenAttacks(Square sq, Bitboard occupied) {
+  return getBishopAttacks(sq, occupied) | getRookAttacks(sq, occupied);
+}
+
 Bitboard getBishopAttacks(Square sq) {
   return BishopAttacks[sq][0];
 }
