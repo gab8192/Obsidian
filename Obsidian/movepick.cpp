@@ -207,7 +207,7 @@ Move MovePicker::nextMove(bool skipQuiets, Stage* outStage) {
   case PLAY_BAD_CAPTURES:
   {
     if (badCapIndex < badCaptures.size()) {
-      Move_Score move = nextMove0(badCaptures, badCapIndex++);
+      Move_Score move = badCaptures[badCapIndex++];
       *outStage = stage;
       return move.move;
     }
