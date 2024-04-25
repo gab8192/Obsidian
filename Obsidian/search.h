@@ -141,7 +141,7 @@ namespace Search {
     Score makeDrawScore();
 
     template<bool IsPV>
-    Score qsearch(Position& position, Score alpha, Score beta, SearchInfo* ss);
+    Score qsearch(Position& position, Score alpha, Score beta, int depth, SearchInfo* ss);
 
     template<bool IsPV>
     Score negamax(Position& position, Score alpha, Score beta, int depth,

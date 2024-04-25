@@ -24,6 +24,8 @@ public:
     QS_PLAY_TT,
     QS_GEN_CAPTURES,
     QS_PLAY_CAPTURES,
+    QS_GEN_QUIET_CHECKS,
+    QS_PLAY_QUIET_CHECKS,
 
     IN_CHECK_PLAY_TT,
     IN_CHECK_GEN_CAPTURES,
@@ -32,6 +34,7 @@ public:
     IN_CHECK_PLAY_QUIETS
   };
   
+  // Constructor for pvs and probcut
   MovePicker(
     SearchType _searchType, Position& _pos,
     Move _ttMove, Move _killerMove, Move _counterMove,
@@ -40,6 +43,8 @@ public:
     Search::SearchInfo* _ss);
 
   Move nextMove(bool skipQuiets, Stage* outStage);
+
+  bool genQuietChecks = false;
 
 private:
   SearchType searchType;

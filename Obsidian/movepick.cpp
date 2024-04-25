@@ -127,7 +127,7 @@ Move MovePicker::nextMove(bool skipQuiets, Stage* outStage) {
       return move.move;
     }
 
-    if (!pos.checkers)
+    if (stage == QS_PLAY_CAPTURES && !genQuietChecks)
       return MOVE_NONE;
 
     ++stage;
@@ -211,6 +211,22 @@ Move MovePicker::nextMove(bool skipQuiets, Stage* outStage) {
       *outStage = stage;
       return move.move;
     }
+    return MOVE_NONE;
+  }
+  case QS_GEN_QUIET_CHECKS: 
+  {
+    getQuietChecks(pos, &quiets);
+    ++stage;
+    goto select;
+  }
+  case QS_PLAY_QUIET_CHECKS:
+  {
+    if (quietIndex < quiets.size()) {
+      Move_Score move = nextMove0(quiets, quietIndex++);
+      *outStage = stage;
+      return move.move;
+    }
+    return MOVE_NONE;
   }
   }
 
