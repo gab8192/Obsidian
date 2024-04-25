@@ -222,7 +222,7 @@ Move MovePicker::nextMove(bool skipQuiets, Stage* outStage) {
   case QS_PLAY_QUIET_CHECKS:
   {
     if (quietIndex < quiets.size()) {
-      Move_Score move = nextMove0(quiets, quietIndex++);
+      Move_Score move = quiets[quietIndex++];
       *outStage = stage;
       return move.move;
     }
