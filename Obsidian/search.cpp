@@ -498,13 +498,12 @@ namespace Search {
       if (!pos.isLegal(move))
         continue;
 
+      foundLegalMoves = true;
+
       if (bestScore > SCORE_TB_LOSS_IN_MAX_PLY) {
-        // Prevent qsearch from visiting bad captures and under-promotions
         if (! pos.seeGe(move, MpQsSeeMargin))
           continue;
       }
-
-      foundLegalMoves = true;
 
       Position newPos = pos;
       playMove(newPos, move, ss);
@@ -695,7 +694,6 @@ namespace Search {
     (ss + 1)->killerMove = MOVE_NONE;
     ss->doubleExt = (ss - 1)->doubleExt;
 
-    // At root we always assume improving, for lmr purposes
     bool improving = false;
 
     // Do the static evaluation
@@ -744,8 +742,8 @@ namespace Search {
         return score;
     }
 
-    // Reverse futility pruning. When evaluation is far above beta, the opponent is unlikely
-    // to catch up, thus cut off
+    // Reverse futility pruning. When evaluation is far above beta, assume that at least a move
+    // will return a similarly high score, so cut off
     if ( !IsPV
       && depth <= RfpMaxDepth
       && eval < SCORE_TB_WIN_IN_MAX_PLY
@@ -753,7 +751,7 @@ namespace Search {
       return (eval + beta) / 2;
 
     // Null move pruning. When our evaluation is above beta, we give the opponent
-    // a free move, and if he still can't catch up, cut off
+    // a free move, and if we are still better, cut off
     if ( !IsPV
       && !excludedMove
       && (ss - 1)->playedMove != MOVE_NONE
