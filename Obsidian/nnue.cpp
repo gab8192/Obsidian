@@ -8,9 +8,18 @@
 
 INCBIN(EmbeddedNNUE, EvalFile);
 
+INCBIN(EmbeddedErrorNNUE, "uncertainty.bin");
+
 namespace NNUE {
 
   constexpr int WeightsPerVec = sizeof(SIMD::Vec) / sizeof(weight_t);
+
+  struct {
+    alignas(SIMD::Alignment) weight_t FeatureWeights[2][6][64][ErrorHiddenWith];
+    alignas(SIMD::Alignment) weight_t FeatureBiases[ErrorHiddenWith];
+    alignas(SIMD::Alignment) weight_t OutputWeights[2 * ErrorHiddenWith];
+                             weight_t OutputBias;
+  } ErrorNet;
 
   struct {
     alignas(SIMD::Alignment) weight_t FeatureWeights[KingBucketsCount][2][6][64][HiddenWidth];
@@ -30,6 +39,13 @@ namespace NNUE {
 
     return   KingBucketsScheme[relative_square(side, oldKing)]
           != KingBucketsScheme[relative_square(side, newKing)];
+  }
+
+  inline weight_t* errorFeatureAddress(Color side, Piece pc, Square sq) {
+    return ErrorNet.FeatureWeights
+            [side != piece_color(pc)]
+            [piece_type(pc)-1]
+            [relative_square(side, sq)];
   }
 
   inline weight_t* featureAddress(Square kingSq, Color side, Piece pc, Square sq) {
@@ -121,6 +137,14 @@ namespace NNUE {
     multiSub<HiddenWidth>(colors[side], colors[side], featureAddress(kingSq, side, pc, sq));
   }
 
+  void ErrorAccumulator::addPiece(Color side, Piece pc, Square sq) {
+    multiAdd<ErrorHiddenWith>(colors[side], colors[side], errorFeatureAddress(side, pc, sq));
+  }
+
+  void ErrorAccumulator::removePiece(Color side, Piece pc, Square sq) {
+    multiSub<ErrorHiddenWith>(colors[side], colors[side], errorFeatureAddress(side, pc, sq));
+  }
+
   void Accumulator::doUpdates(Square kingSq, Color side, DirtyPieces& dp, Accumulator& input) {
     
     if (dp.type == DirtyPieces::CASTLING) 
@@ -144,6 +168,29 @@ namespace NNUE {
     }
   }
 
+  void ErrorAccumulator::doUpdates(Color side, DirtyPieces& dp, ErrorAccumulator& input) {
+    
+    if (dp.type == DirtyPieces::CASTLING) 
+    {
+      multiSubAddSubAdd<ErrorHiddenWith>(colors[side], input.colors[side], 
+        errorFeatureAddress(side, dp.sub0.pc, dp.sub0.sq),
+        errorFeatureAddress(side, dp.add0.pc, dp.add0.sq),
+        errorFeatureAddress(side, dp.sub1.pc, dp.sub1.sq),
+        errorFeatureAddress(side, dp.add1.pc, dp.add1.sq));
+    } else if (dp.type == DirtyPieces::CAPTURE) 
+    { 
+      multiSubAddSub<ErrorHiddenWith>(colors[side], input.colors[side], 
+        errorFeatureAddress(side, dp.sub0.pc, dp.sub0.sq),
+        errorFeatureAddress(side, dp.add0.pc, dp.add0.sq),
+        errorFeatureAddress(side, dp.sub1.pc, dp.sub1.sq));
+    } else
+    {
+      multiSubAdd<ErrorHiddenWith>(colors[side], input.colors[side], 
+        errorFeatureAddress(side, dp.sub0.pc, dp.sub0.sq),
+        errorFeatureAddress(side, dp.add0.pc, dp.add0.sq));
+    }
+  }
+
   void Accumulator::reset(Color side) {
     memcpy(colors[side], Content.FeatureBiases, sizeof(Content.FeatureBiases));
   }
@@ -158,9 +205,24 @@ namespace NNUE {
     }
   }
 
+  void ErrorAccumulator::reset(Color side) {
+    memcpy(colors[side], ErrorNet.FeatureBiases, sizeof(ErrorNet.FeatureBiases));
+  }
+
+  void ErrorAccumulator::refresh(Position& pos, Color side) {
+    reset(side);
+    Bitboard occupied = pos.pieces();
+    while (occupied) {
+      const Square sq = popLsb(occupied);
+      addPiece(side, pos.board[sq], sq);
+    }
+  }
+
   void init() {
 
     memcpy(&Content, gEmbeddedNNUEData, sizeof(Content));
+
+    memcpy(&ErrorNet, gEmbeddedErrorNNUEData, sizeof(ErrorNet));
     
     for (int i = 0; i < 2 * HiddenWidth; i++) {
       for (int j = 0; j < OutputBuckets; j++) {
@@ -207,4 +269,38 @@ namespace NNUE {
     return (unsquared * NetworkScale) / NetworkQAB;
   }
 
+  Score evaluateError(ErrorAccumulator& accumulator, Position& pos) {
+
+    Vec* stmAcc = (Vec*) accumulator.colors[pos.sideToMove];
+    Vec* oppAcc = (Vec*) accumulator.colors[~pos.sideToMove];
+
+    Vec* stmWeights = (Vec*) &ErrorNet.OutputWeights[0];
+    Vec* oppWeights = (Vec*) &ErrorNet.OutputWeights[ErrorHiddenWith];
+
+    const Vec vecZero = vecSetZero();
+    const Vec vecQA = vecSet1Epi16(NetworkQA);
+
+    Vec sum = vecSetZero();
+    Vec v0, v1;
+
+    for (int i = 0; i < ErrorHiddenWith / WeightsPerVec; ++i) {
+      // Side to move
+      v0 = maxEpi16(stmAcc[i], vecZero); // clip
+      v0 = minEpi16(v0, vecQA); // clip
+      v1 = mulloEpi16(v0, stmWeights[i]); // square
+      v1 = maddEpi16(v1, v0); // multiply with output layer
+      sum = addEpi32(sum, v1); // collect the result
+
+      // Non side to move
+      v0 = maxEpi16(oppAcc[i], vecZero);
+      v0 = minEpi16(v0, vecQA);
+      v1 = mulloEpi16(v0, oppWeights[i]);
+      v1 = maddEpi16(v1, v0);
+      sum = addEpi32(sum, v1);
+    }
+
+    int unsquared = vecHaddEpi32(sum) / NetworkQA + ErrorNet.OutputBias;
+
+    return (unsquared * NetworkScale) / NetworkQAB;
+  }
 }

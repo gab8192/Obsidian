@@ -96,6 +96,9 @@ namespace Search {
     int accumStackHead;
     NNUE::Accumulator accumStack[MAX_PLY];
 
+    int errorStackHead;
+    NNUE::ErrorAccumulator errorStack[MAX_PLY];
+
     SearchInfo searchStack[MAX_PLY + SsOffset];
 
     RootMoveList rootMoves;

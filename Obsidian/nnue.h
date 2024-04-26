@@ -29,6 +29,8 @@ namespace NNUE {
   constexpr int FeaturesWidth = 768;
   constexpr int HiddenWidth = 1024;
 
+  constexpr int ErrorHiddenWith = 32;
+
   constexpr int KingBucketsScheme[] = {
     0, 0, 1, 1, 1, 1, 0, 0,
     2, 2, 2, 2, 2, 2, 2, 2,
@@ -67,7 +69,26 @@ namespace NNUE {
     void refresh(Position& pos, Color side);
   };
 
+  struct ErrorAccumulator {
+    union {
+      alignas(Alignment) weight_t colors[COLOR_NB][ErrorHiddenWith];
+      alignas(Alignment) weight_t both[COLOR_NB * ErrorHiddenWith];
+    };
+
+    void addPiece(Color side, Piece pc, Square sq);
+
+    void removePiece(Color side, Piece pc, Square sq);
+
+    void doUpdates(Color side, DirtyPieces& dp, ErrorAccumulator& input);
+
+    void reset(Color side);
+
+    void refresh(Position& pos, Color side);
+  };
+
   void init();
 
   Score evaluate(Accumulator& accumulator, Position& pos);
+
+  Error evaluateError(ErrorAccumulator& accumulator, Position& pos);
 }

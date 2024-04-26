@@ -14,6 +14,7 @@ using Key = uint64_t;
 using Bitboard = uint64_t;
 using TbResult = uint32_t;
 using Score = int;
+using Error = int;
 using Move = int;
 
 const std::string piecesChar = " PNBRQK  pnbrqk";

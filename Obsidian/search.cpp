@@ -270,6 +270,9 @@ namespace Search {
     oldKingSquares[WHITE] = pos.kingSquare(WHITE);
     oldKingSquares[BLACK] = pos.kingSquare(BLACK);
 
+    NNUE::ErrorAccumulator& oldError = errorStack[errorStackHead];
+    NNUE::ErrorAccumulator& newError = errorStack[++errorStackHead];
+
     NNUE::Accumulator& oldAcc = accumStack[accumStackHead];
     NNUE::Accumulator& newAcc = accumStack[++accumStackHead];
 
@@ -284,7 +287,9 @@ namespace Search {
       if (NNUE::needRefresh(side, oldKingSquares[side], pos.kingSquare(side)))
         refreshAccumulator(pos, newAcc, side);
       else
-        newAcc.doUpdates(pos.kingSquare(side), side, dirtyPieces, oldAcc); 
+        newAcc.doUpdates(pos.kingSquare(side), side, dirtyPieces, oldAcc);
+
+      newError.doUpdates(side, dirtyPieces, oldError);
     }
   }
 
@@ -292,6 +297,7 @@ namespace Search {
     ply--;
     keyStackHead--;
     accumStackHead--;
+    errorStackHead--;
   }
 
   int Thread::getCapHistory(Position& pos, Move move) {
@@ -1113,6 +1119,14 @@ namespace Search {
     accumStackHead = 0;
     accumStack[0].refresh(rootPos, WHITE);
     accumStack[0].refresh(rootPos, BLACK);
+
+    errorStackHead = 0;
+    errorStack[0].refresh(rootPos, WHITE);
+    errorStack[0].refresh(rootPos, BLACK);
+
+    Error yea = NNUE::evaluateError(errorStack[0], rootPos);
+
+    std::cout << "error is " << yea << std::endl;
     
     for (int i = 0; i < 2; i++)
         for (int j = 0; j < NNUE::KingBucketsCount; j++)
