@@ -775,6 +775,20 @@ namespace Search {
       depth--;
 
     if (   !IsPV
+        && ttScore == SCORE_NONE
+        && ss->staticEval >= beta
+        && depth >= 8
+        && std::abs(beta) < SCORE_TB_WIN_IN_MAX_PLY)
+    {
+      int epicBeta = beta + 90 - 2 * depth;
+
+      Score epicScore = negamax<false>(pos, epicBeta-1, epicBeta, depth/2 + 1, cutNode, ss);
+
+      if (epicScore >= epicBeta)
+        return epicScore;
+    }
+
+    if (   !IsPV
         && depth >= 5
         && std::abs(beta) < SCORE_TB_WIN_IN_MAX_PLY
         && !(ttDepth >= depth - 3 && ttScore < probcutBeta))
