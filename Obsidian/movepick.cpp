@@ -97,7 +97,7 @@ void MovePicker::scoreCaptures() {
   }
 }
 
-Move MovePicker::nextMove(bool skipQuiets, Stage* outStage) {
+Move MovePicker::nextMove(bool skipQuiets) {
   select:
   switch (stage)
   {
@@ -105,7 +105,6 @@ Move MovePicker::nextMove(bool skipQuiets, Stage* outStage) {
   case QS_PLAY_TT:
   case PLAY_TT:
   {
-    *outStage = stage;
     ++stage;
     return ttMove;
   }
@@ -121,11 +120,8 @@ Move MovePicker::nextMove(bool skipQuiets, Stage* outStage) {
   case IN_CHECK_PLAY_CAPTURES:
   case QS_PLAY_CAPTURES:
   {
-    if (capIndex < captures.size()) {
-      Move_Score move = nextMove0(captures, capIndex++);
-      *outStage = stage;
-      return move.move;
-    }
+    if (capIndex < captures.size())
+      return nextMove0(captures, capIndex++).move;
 
     if (stage == QS_PLAY_CAPTURES && !genQuietChecks)
       return MOVE_NONE;
@@ -138,10 +134,9 @@ Move MovePicker::nextMove(bool skipQuiets, Stage* outStage) {
     nextGoodCap:
     if (capIndex < captures.size()) {
       Move_Score move = nextMove0(captures, capIndex++);
-      if (pos.seeGe(move.move, seeMargin) && !isUnderPromo(move.move)) { // good capture
-        *outStage = stage;
+      if (pos.seeGe(move.move, seeMargin) && !isUnderPromo(move.move)) // good capture
         return move.move;
-      }
+        
       badCaptures.add(move);
       goto nextGoodCap;
     }
@@ -155,19 +150,15 @@ Move MovePicker::nextMove(bool skipQuiets, Stage* outStage) {
   case PLAY_KILLER:
   {
     ++stage;
-    if (pos.isQuiet(killerMove) && pos.isPseudoLegal(killerMove)) {
-      *outStage = PLAY_KILLER;
+    if (pos.isQuiet(killerMove) && pos.isPseudoLegal(killerMove))
       return killerMove;
-    }
     goto select;
   }
   case PLAY_COUNTER:
   {
     ++stage;
-    if (pos.isQuiet(counterMove) && pos.isPseudoLegal(counterMove)) {
-      *outStage = PLAY_COUNTER;
+    if (pos.isQuiet(counterMove) && pos.isPseudoLegal(counterMove))
       return counterMove;
-    }
     goto select;
   }
   case IN_CHECK_GEN_QUIETS:
@@ -192,11 +183,8 @@ Move MovePicker::nextMove(bool skipQuiets, Stage* outStage) {
       goto select;
     }
     
-    if (quietIndex < quiets.size()) {
-      Move_Score move = nextMove0(quiets, quietIndex++);
-      *outStage = stage;
-      return move.move;
-    }
+    if (quietIndex < quiets.size())
+      return nextMove0(quiets, quietIndex++).move;
 
     if (stage == IN_CHECK_PLAY_QUIETS)
       return MOVE_NONE;
@@ -206,11 +194,9 @@ Move MovePicker::nextMove(bool skipQuiets, Stage* outStage) {
   }
   case PLAY_BAD_CAPTURES:
   {
-    if (badCapIndex < badCaptures.size()) {
-      Move_Score move = badCaptures[badCapIndex++];
-      *outStage = stage;
-      return move.move;
-    }
+    if (badCapIndex < badCaptures.size())
+      return badCaptures[badCapIndex++].move;
+      
     return MOVE_NONE;
   }
   case QS_GEN_QUIET_CHECKS: 
@@ -221,11 +207,9 @@ Move MovePicker::nextMove(bool skipQuiets, Stage* outStage) {
   }
   case QS_PLAY_QUIET_CHECKS:
   {
-    if (quietIndex < quiets.size()) {
-      Move_Score move = quiets[quietIndex++];
-      *outStage = stage;
-      return move.move;
-    }
+    if (quietIndex < quiets.size())
+      return quiets[quietIndex++].move;
+
     return MOVE_NONE;
   }
   }

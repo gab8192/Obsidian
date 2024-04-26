@@ -42,7 +42,7 @@ public:
     int _seeMargin,
     Search::SearchInfo* _ss);
 
-  Move nextMove(bool skipQuiets, Stage* outStage);
+  Move nextMove(bool skipQuiets);
 
   bool genQuietChecks = false;
 
