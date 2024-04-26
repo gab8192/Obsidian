@@ -703,6 +703,7 @@ namespace Search {
 
     // At root we always assume improving, for lmr purposes
     bool improving = false;
+    int error = 1000;
 
     // Do the static evaluation
 
@@ -734,6 +735,8 @@ namespace Search {
         eval = ttScore;
     }
 
+    error = NNUE::evaluateError(errorStack[errorStackHead], pos) / 8;
+
     // Calculate whether the evaluation here is worse or better than it was 2 plies ago
     if ((ss - 2)->staticEval != SCORE_NONE)
       improving = ss->staticEval > (ss - 2)->staticEval;
@@ -755,7 +758,7 @@ namespace Search {
     if ( !IsPV
       && depth <= RfpMaxDepth
       && eval < SCORE_TB_WIN_IN_MAX_PLY
-      && eval - RfpDepthMul * (depth - improving) >= beta)
+      && eval - RfpDepthMul * (depth - improving) >= beta + error)
       return (eval + beta) / 2;
 
     // Null move pruning. When our evaluation is above beta, we give the opponent
@@ -1124,10 +1127,6 @@ namespace Search {
     errorStack[0].refresh(rootPos, WHITE);
     errorStack[0].refresh(rootPos, BLACK);
 
-    Error yea = NNUE::evaluateError(errorStack[0], rootPos);
-
-    std::cout << "error is " << yea << std::endl;
-    
     for (int i = 0; i < 2; i++)
         for (int j = 0; j < NNUE::KingBucketsCount; j++)
           finny[i][j].reset();
