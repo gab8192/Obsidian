@@ -286,8 +286,7 @@ void Position::doMove(Move move, DirtyPieces& dp) {
       break;
     }
     case KING: {
-      if (us == WHITE) newCastlingRights &= BLACK_CASTLING;
-      else             newCastlingRights &= WHITE_CASTLING;
+      newCastlingRights &= (us == WHITE ? BLACK_CASTLING : WHITE_CASTLING);
       break;
     }
     }
