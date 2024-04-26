@@ -10,3 +10,6 @@ enum MoveGenFlags {
 };
 
 void getStageMoves(const Position& pos, MoveGenFlags flags, MoveList* moveList);
+
+/// @brief Do not invoke when in check
+void getQuietChecks(const Position& pos, MoveList* moveList);

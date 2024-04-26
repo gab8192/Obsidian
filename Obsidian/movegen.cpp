@@ -183,3 +183,61 @@ void getStageMoves(const Position& pos, MoveGenFlags flags, MoveList* moveList) 
 
   addNormalMovesToList(ourKing, getKingAttacks(ourKing) & targets, moveList);
 }
+
+/// @brief Do not invoke when in check
+void getQuietChecks(const Position& pos, MoveList* moveList) {
+  const Color us = pos.sideToMove, them = ~us;
+  const Square ourKing = pos.kingSquare(us);
+  const Square theirKing = pos.kingSquare(them);
+  const Bitboard ourPieces = pos.pieces(us);
+  const Bitboard theirPieces = pos.pieces(them);
+  const Bitboard occupied = ourPieces | theirPieces;
+  const Bitboard pinned = ourPieces & pos.blockersForKing[us];
+
+  Bitboard pawnChecks = getPawnAttacks(theirKing, them)  & ~occupied;
+  while (pawnChecks) {
+    Square to = popLsb(pawnChecks);
+    Square from = to - (us == WHITE ? 8 : -8);
+    if (ourPieces & pos.pieces(PAWN) & from)
+      moveList->add(createMove(from, to, MT_NORMAL));
+  }
+
+  Bitboard checkSquares[PIECE_TYPE_NB];
+  checkSquares[KNIGHT] = getKnightAttacks(theirKing)           & ~occupied;
+  checkSquares[BISHOP] = getBishopAttacks(theirKing, occupied) & ~occupied;
+  checkSquares[ROOK] =   getRookAttacks(theirKing, occupied)   & ~occupied;
+  checkSquares[QUEEN] =  checkSquares[BISHOP] | checkSquares[ROOK];
+
+  Bitboard knights = ourPieces & pos.pieces(KNIGHT) & ~pinned;
+  while (knights) {
+    Square from = popLsb(knights);
+    addNormalMovesToList(from, getKnightAttacks(from) & checkSquares[KNIGHT], moveList);
+  }
+
+  Bitboard bishops = ourPieces & pos.pieces(BISHOP);
+  while (bishops) {
+    Square from = popLsb(bishops);
+    Bitboard attacks = getBishopAttacks(from, occupied) & checkSquares[BISHOP];
+    if (pinned & from)
+      attacks &= LINE_BB[ourKing][from];
+    addNormalMovesToList(from, attacks, moveList);
+  }
+
+  Bitboard rooks = ourPieces & pos.pieces(ROOK);
+  while (rooks) {
+    Square from = popLsb(rooks);
+    Bitboard attacks = getRookAttacks(from, occupied) & checkSquares[ROOK];
+    if (pinned & from)
+      attacks &= LINE_BB[ourKing][from];
+    addNormalMovesToList(from, attacks, moveList);
+  }
+
+  Bitboard queens = ourPieces & pos.pieces(QUEEN);
+  while (queens) {
+    Square from = popLsb(queens);
+    Bitboard attacks = getQueenAttacks(from, occupied) & checkSquares[QUEEN];
+    if (pinned & from)
+      attacks &= LINE_BB[ourKing][from];
+    addNormalMovesToList(from, attacks, moveList);
+  }
+}

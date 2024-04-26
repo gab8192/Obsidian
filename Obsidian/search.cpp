@@ -415,7 +415,7 @@ namespace Search {
   }
 
   template<bool IsPV>
-  Score Thread::qsearch(Position& pos, Score alpha, Score beta, SearchInfo* ss) {
+  Score Thread::qsearch(Position& pos, Score alpha, Score beta, int depth, SearchInfo* ss) {
     
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY-4)
@@ -486,6 +486,8 @@ namespace Search {
       MpQsSeeMargin,
       ss);
 
+    movePicker.genQuietChecks = (depth == 0);
+
     bool foundLegalMoves = false;
 
     // Visit moves
@@ -494,21 +496,21 @@ namespace Search {
 
     while (move = movePicker.nextMove(false, &moveStage)) {
 
-      if (bestScore > SCORE_TB_LOSS_IN_MAX_PLY) {
-        // Prevent qsearch from visiting bad captures and under-promotions
-        if (moveStage > MovePicker::PLAY_QUIETS)
-          break;
-      }
-
       if (!pos.isLegal(move))
         continue;
+
+      if (bestScore > SCORE_TB_LOSS_IN_MAX_PLY) {
+        // Prevent qsearch from visiting bad captures and under-promotions
+        if (! pos.seeGe(move, MpQsSeeMargin))
+          continue;
+      }
 
       foundLegalMoves = true;
 
       Position newPos = pos;
       playMove(newPos, move, ss);
 
-      Score score = -qsearch<IsPV>(newPos, -beta, -alpha, ss + 1);
+      Score score = -qsearch<IsPV>(newPos, -beta, -alpha, depth - 1, ss + 1);
 
       cancelMove();
 
@@ -528,7 +530,7 @@ namespace Search {
 
       if (bestScore > SCORE_TB_LOSS_IN_MAX_PLY) {
         // This implies that we are in check too
-        if (moveStage == MovePicker::PLAY_QUIETS)
+        if (moveStage == MovePicker::IN_CHECK_PLAY_QUIETS)
           break;
       }
     }
@@ -597,7 +599,7 @@ namespace Search {
 
     // Enter qsearch when depth is 0
     if (depth <= 0)
-      return qsearch<IsPV>(pos, alpha, beta, ss);
+      return qsearch<IsPV>(pos, alpha, beta, 0, ss);
 
     // Detect draw
     if (!IsRoot && (isRepetition(pos, ply) || pos.halfMoveClock >= 100))
@@ -739,7 +741,7 @@ namespace Search {
     if ( !IsPV
       && alpha < 2000
       && eval < alpha - RazoringDepthMul * depth) {
-      Score score = qsearch<IsPV>(pos, alpha, beta, ss);
+      Score score = qsearch<IsPV>(pos, alpha, beta, 0, ss);
       if (score <= alpha)
         return score;
     }
@@ -801,7 +803,7 @@ namespace Search {
         Position newPos = pos;
         playMove(newPos, move, ss);
 
-        Score score = -qsearch<false>(newPos, -probcutBeta, -probcutBeta + 1, ss + 1);
+        Score score = -qsearch<false>(newPos, -probcutBeta, -probcutBeta + 1, 0, ss + 1);
 
         // Do a normal search if qsearch was positive
         if (score >= probcutBeta)

@@ -12,7 +12,7 @@ public:
   };
 
   enum Stage {
-    PLAY_TT_MOVE,
+    PLAY_TT,
     GEN_CAPTURES,
     PLAY_GOOD_CAPTURES,
     PLAY_KILLER,
@@ -20,8 +20,21 @@ public:
     GEN_QUIETS,
     PLAY_QUIETS,
     PLAY_BAD_CAPTURES,
+
+    QS_PLAY_TT,
+    QS_GEN_CAPTURES,
+    QS_PLAY_CAPTURES,
+    QS_GEN_QUIET_CHECKS,
+    QS_PLAY_QUIET_CHECKS,
+
+    IN_CHECK_PLAY_TT,
+    IN_CHECK_GEN_CAPTURES,
+    IN_CHECK_PLAY_CAPTURES,
+    IN_CHECK_GEN_QUIETS,
+    IN_CHECK_PLAY_QUIETS
   };
   
+  // Constructor for pvs and probcut
   MovePicker(
     SearchType _searchType, Position& _pos,
     Move _ttMove, Move _killerMove, Move _counterMove,
@@ -31,13 +44,15 @@ public:
 
   Move nextMove(bool skipQuiets, Stage* outStage);
 
+  bool genQuietChecks = false;
+
 private:
   SearchType searchType;
   Position& pos;
 
-  Move ttMove;
-  Move killerMove;
-  Move counterMove;
+  Move ttMove = MOVE_NONE;
+  Move killerMove = MOVE_NONE;
+  Move counterMove = MOVE_NONE;
 
   MainHistory& mainHist;
   CaptureHistory& capHist;

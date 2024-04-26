@@ -69,6 +69,15 @@ namespace {
       st->resetHistories();
   }
 
+  void qc(Position& pos) {
+    MoveList checks;
+    getQuietChecks(pos, &checks);
+
+    for (int i = 0; i < checks.size(); i++) {
+      std::cout << UCI::moveToString(checks[i].move) << std::endl;
+    }
+  }
+
   void bench() {
     constexpr int posCount = sizeof(BENCH_POSITIONS) / sizeof(char*);
 
@@ -212,6 +221,7 @@ void UCI::loop(int argc, char* argv[]) {
         << "\n" << paramsToUci()
         << "uciok" << std::endl;
     }
+    else if (token == "qc")         qc(pos);
     else if (token == "bench")      bench();
     else if (token == "setoption")  setoption(is);
     else if (token == "go")         go(pos, is);
