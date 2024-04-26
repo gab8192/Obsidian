@@ -777,12 +777,14 @@ namespace Search {
     if (   !IsPV
         && ttScore == SCORE_NONE
         && ss->staticEval >= beta
-        && depth >= 8
+        && depth >= 6
         && std::abs(beta) < SCORE_TB_WIN_IN_MAX_PLY)
     {
       int epicBeta = beta + 90 - 2 * depth;
 
       Score epicScore = negamax<false>(pos, epicBeta-1, epicBeta, depth/2 + 1, cutNode, ss);
+
+      //std::cout << epicScore << " " << epicBeta << std::endl;
 
       if (epicScore >= epicBeta)
         return epicScore;
