@@ -904,7 +904,6 @@ namespace Search {
         Score seScore = negamax<false>(pos, singularBeta - 1, singularBeta, (depth - 1) / 2, cutNode, ss, move);
         
         if (seScore < singularBeta) {
-          extension = 1;
           // Extend even more if s. value is smaller than s. beta by some margin
           if (   !IsPV 
               && ss->doubleExt <= DoubleExtMax 
@@ -912,6 +911,8 @@ namespace Search {
           {
             extension = 2;
             ss->doubleExt = (ss - 1)->doubleExt + 1;
+          } else {
+            extension = 1;
           }
         }
         else if (singularBeta >= beta) // Multicut
@@ -1010,6 +1011,10 @@ namespace Search {
             break;
 
           alpha = bestScore;
+
+          if ( depth >= 2 && depth <= 9
+            && alpha > SCORE_TB_LOSS_IN_MAX_PLY)
+            depth--;
         }
       }
 
