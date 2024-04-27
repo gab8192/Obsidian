@@ -55,6 +55,7 @@ namespace Search {
   DEFINE_PARAM_S(FpMaxDepth, 8, 1);
   DEFINE_PARAM_S(FpDepthMul, 111, 6);
 
+  DEFINE_PARAM_S(TripleExtMargin, 90, 10);
   DEFINE_PARAM_S(DoubleExtMargin, 16, 2);
   DEFINE_PARAM_S(DoubleExtMax, 6, 1);
 
@@ -910,7 +911,7 @@ namespace Search {
               && ss->doubleExt <= DoubleExtMax 
               && seScore < singularBeta - DoubleExtMargin)
           {
-            extension = 2;
+            extension = 2 + (isQuiet && seScore < singularBeta - TripleExtMargin);
             ss->doubleExt = (ss - 1)->doubleExt + 1;
           }
         }
