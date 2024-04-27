@@ -55,7 +55,7 @@ namespace Search {
   DEFINE_PARAM_S(FpMaxDepth, 8, 1);
   DEFINE_PARAM_S(FpDepthMul, 111, 6);
 
-  DEFINE_PARAM_S(TripleExtMargin, 90, 10);
+  DEFINE_PARAM_S(TripleExtMargin, 130, 10);
   DEFINE_PARAM_S(DoubleExtMargin, 16, 2);
   DEFINE_PARAM_S(DoubleExtMax, 6, 1);
 
