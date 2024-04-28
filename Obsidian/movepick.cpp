@@ -134,7 +134,8 @@ Move MovePicker::nextMove(bool skipQuiets) {
     nextGoodCap:
     if (capIndex < captures.size()) {
       Move_Score move = nextMove0(captures, capIndex++);
-      if (pos.seeGe(move.move, seeMargin) && !isUnderPromo(move.move)) // good capture
+      int realMargin = searchType == PVS ? (- move.score / 64) : seeMargin;
+      if (pos.seeGe(move.move, realMargin) && !isUnderPromo(move.move)) // good capture
         return move.move;
         
       badCaptures.add(move);
