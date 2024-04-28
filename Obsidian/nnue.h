@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "net37.bin"
+#define EvalFile "lolxd.bin"
 
 using namespace SIMD;
 
