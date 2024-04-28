@@ -22,8 +22,7 @@ void FinnyEntry::reset() {
 
 namespace Search {
 
-  DEFINE_PARAM_S(MpPvsSeeMargin, -80, 15);
-  DEFINE_PARAM_S(MpQsSeeMargin, -25, 15);
+  DEFINE_PARAM_S(MpQsSeeMargin, -35, 15);
 
   DEFINE_PARAM_S(LmrBase, 39, 10);
   DEFINE_PARAM_S(LmrDiv, 211, 10);
@@ -46,8 +45,8 @@ namespace Search {
 
   DEFINE_PARAM_S(LmpBase,    3, 1);
 
-  DEFINE_PARAM_S(PvsQuietSeeMargin, -77, 20);
-  DEFINE_PARAM_S(PvsCapSeeMargin, -132, 20);
+  DEFINE_PARAM_S(PvsQuietSeeMargin, -102, 20);
+  DEFINE_PARAM_S(PvsCapSeeMargin, -186, 20);
 
   DEFINE_PARAM_S(EarlyLmrHistoryDiv, 5521, 300);
 
@@ -484,7 +483,7 @@ namespace Search {
       visitTTMove ? ttMove : MOVE_NONE,
       MOVE_NONE, MOVE_NONE,
       mainHistory, captureHistory,
-      MpQsSeeMargin,
+      0,
       ss);
 
     movePicker.genQuietChecks = (depth == 0);
@@ -780,7 +779,7 @@ namespace Search {
         && std::abs(beta) < SCORE_TB_WIN_IN_MAX_PLY
         && !(ttDepth >= depth - 3 && ttScore < probcutBeta))
     {
-      int pcSeeMargin = (probcutBeta - ss->staticEval) * 10 / 16;
+      int pcSeeMargin = probcutBeta - ss->staticEval;
       bool visitTTMove = ttMoveNoisy && pos.seeGe(ttMove, pcSeeMargin);
 
       MovePicker pcMovePicker(
@@ -837,7 +836,7 @@ namespace Search {
       MovePicker::PVS, pos,
       ttMove, ss->killerMove, counterMove,
       mainHistory, captureHistory,
-      MpPvsSeeMargin,
+      0,
       ss);
 
     // Visit moves
