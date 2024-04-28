@@ -781,7 +781,7 @@ namespace Search {
         && !(ttDepth >= depth - 3 && ttScore < probcutBeta))
     {
       int pcSeeMargin = (probcutBeta - ss->staticEval) * 10 / 16;
-      bool visitTTMove = ttMove && !pos.isQuiet(ttMove) && pos.seeGe(ttMove, pcSeeMargin);
+      bool visitTTMove = ttMoveNoisy && pos.seeGe(ttMove, pcSeeMargin);
 
       MovePicker pcMovePicker(
         MovePicker::PROBCUT, pos,
