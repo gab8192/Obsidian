@@ -69,5 +69,5 @@ namespace NNUE {
 
   void init();
 
-  Score evaluate(Accumulator& accumulator, Position& pos);
+  Score evaluate(Position& pos, Accumulator& accumulator);
 }

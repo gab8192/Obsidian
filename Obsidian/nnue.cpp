@@ -169,7 +169,7 @@ namespace NNUE {
     }
   }
 
-  Score evaluate(Accumulator& accumulator, Position& pos) {
+  Score evaluate(Position& pos, Accumulator& accumulator) {
 
     constexpr int divisor = (32 + OutputBuckets - 1) / OutputBuckets;
     int outputBucket = (BitCount(pos.pieces()) - 2) / divisor;
