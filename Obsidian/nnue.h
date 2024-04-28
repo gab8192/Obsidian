@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "lolxd.bin"
+#define EvalFile "lmfao.bin"
 
 using namespace SIMD;
 
