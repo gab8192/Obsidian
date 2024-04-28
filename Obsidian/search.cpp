@@ -1165,6 +1165,8 @@ namespace Search {
       }
     }
 
+    const bool oneLegalMove = (rootMoves.size() == 1);
+
     if ( this == Threads::mainThread()
       && BitCount(rootPos.pieces()) <= TB_LARGEST) {
 
@@ -1197,7 +1199,7 @@ namespace Search {
     for (rootDepth = 1; rootDepth <= settings.depth; rootDepth++) {
 
       // Only one legal move? For analysis purposes search, but with a limited depth
-      if (rootDepth > 10 && rootMoves.size() == 1)
+      if (rootDepth > 10 && oneLegalMove)
         break;
 
       for (pvIdx = 0; pvIdx < multiPV; pvIdx++) {
