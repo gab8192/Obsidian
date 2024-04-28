@@ -1,5 +1,5 @@
 #include "uci.h"
-#include "fathom/tbprobe.h"
+#include "fathom/src/tbprobe.h"
 #include "threads.h"
 #include "tt.h"
 

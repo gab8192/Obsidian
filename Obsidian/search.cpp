@@ -2,7 +2,7 @@
 #include "cuckoo.h"
 #include "evaluate.h"
 #include "movepick.h"
-#include "fathom/tbprobe.h"
+#include "fathom/src/tbprobe.h"
 #include "timeman.h"
 #include "threads.h"
 #include "tt.h"
