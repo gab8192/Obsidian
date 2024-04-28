@@ -2,7 +2,13 @@
 
 #include <iostream>
 
+#if defined(__linux__)
+#include <sys/mman.h>
+#endif
+
 namespace TT {
+
+  constexpr size_t Mega = 1024 * 1024;
 
   constexpr uint8_t MAX_AGE = 1 << 5;
 
@@ -20,13 +26,19 @@ namespace TT {
   }
 
   void resize(size_t megaBytes) {
-    size_t bytes = megaBytes * 1024ULL * 1024ULL;
+    if (buckets)
+      free(buckets);
+
+    size_t bytes = megaBytes * Mega;
     bucketCount = bytes / sizeof(Bucket);
 
-    if (buckets != nullptr)
-      delete[] buckets;
+#if defined(__linux__)
+    buckets = (Bucket*) aligned_alloc(2 * Mega, bytes);
+    madvise(buckets, bytes, MADV_HUGEPAGE);
+#else
+    exit(-1);
+#endif 
 
-    buckets = new Bucket[bucketCount];
     clear();
   }
 
