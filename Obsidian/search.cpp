@@ -55,6 +55,7 @@ namespace Search {
   DEFINE_PARAM_S(FpMaxDepth, 8, 1);
   DEFINE_PARAM_S(FpDepthMul, 111, 6);
 
+  DEFINE_PARAM_S(TripleExtMargin, 130, 10);
   DEFINE_PARAM_S(DoubleExtMargin, 16, 2);
   DEFINE_PARAM_S(DoubleExtMax, 6, 1);
 
@@ -904,14 +905,15 @@ namespace Search {
         Score seScore = negamax<false>(pos, singularBeta - 1, singularBeta, (depth - 1) / 2, cutNode, ss, move);
         
         if (seScore < singularBeta) {
-          extension = 1;
           // Extend even more if s. value is smaller than s. beta by some margin
           if (   !IsPV 
               && ss->doubleExt <= DoubleExtMax 
               && seScore < singularBeta - DoubleExtMargin)
           {
-            extension = 2;
+            extension = 2 + (isQuiet && seScore < singularBeta - TripleExtMargin);
             ss->doubleExt = (ss - 1)->doubleExt + 1;
+          } else {
+            extension = 1;
           }
         }
         else if (singularBeta >= beta) // Multicut
