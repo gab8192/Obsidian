@@ -63,6 +63,18 @@ namespace TT {
     return worstEntry;
   }
 
+  int hashfull() {
+    int entryCount = 0;
+    for (int i = 0; i < 1000; i++) {
+      for (int j = 0; j < EntriesPerBucket; j++) {
+        Entry* entry = & buckets[i].entries[j];
+        if (entry->getAge() == tableAge && !entry->isEmpty())
+          entryCount++;
+      }
+    }
+    return entryCount / EntriesPerBucket;
+  }
+
   void Entry::store(Key _key, Flag _bound, int _depth, Move _move, Score _score, Score _eval, bool isPV, int ply) {
 
      if (!matches(_key) || _move)

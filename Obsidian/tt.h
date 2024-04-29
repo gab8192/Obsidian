@@ -92,4 +92,6 @@ namespace TT {
   void prefetch(Key key);
 
   Entry* probe(Key key, bool& hit);
+
+  int hashfull();
 }

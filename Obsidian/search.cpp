@@ -1267,14 +1267,15 @@ namespace Search {
         std::ostringstream infoStr;
         infoStr
           << "info"
-          << " depth "   << rootDepth
-          << " multipv " << (i+1)
-          << " score "   << UCI::scoreToString(rootMoves[i].score)
-          << " nodes "   << Threads::totalNodes()
-          << " nps "     << (Threads::totalNodes() * 1000ULL) / std::max(elapsed, 1L)
-          << " tbhits "  << Threads::totalTbHits()
-          << " time "    << elapsed
-          << " pv "      << getPvString(rootMoves[i]);
+          << " depth "    << rootDepth
+          << " multipv "  << (i+1)
+          << " score "    << UCI::scoreToString(rootMoves[i].score)
+          << " nodes "    << Threads::totalNodes()
+          << " nps "      << (Threads::totalNodes() * 1000ULL) / std::max(elapsed, 1L)
+          << " hashfull " << TT::hashfull()
+          << " tbhits "   << Threads::totalTbHits()
+          << " time "     << elapsed
+          << " pv "       << getPvString(rootMoves[i]);
 
         std::cout << infoStr.str() << std::endl;
       }
