@@ -500,7 +500,7 @@ namespace Search {
       foundLegalMoves = true;
 
       if (bestScore > SCORE_TB_LOSS_IN_MAX_PLY) {
-        if (! pos.seeGe(move, QsSeeMargin))
+        if (!pos.seeGe(move, QsSeeMargin) || isUnderPromo(move))
           continue;
       }
 
