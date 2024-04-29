@@ -533,6 +533,9 @@ namespace Search {
 
     if (pos.checkers && !foundLegalMoves)
       return ply - SCORE_MATE;
+    
+    if (bestScore >= beta && abs(bestScore) < SCORE_TB_WIN_IN_MAX_PLY)
+      bestScore = (bestScore + beta) / 2;
 
     ttEntry->store(pos.key,
       bestScore >= beta ? TT::FLAG_LOWER : TT::FLAG_UPPER,
