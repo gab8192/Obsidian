@@ -13,13 +13,6 @@
 #include <cmath>
 #include <sstream>
 
-void FinnyEntry::reset() {
-  memset(byColorBB, 0, sizeof(byColorBB));
-  memset(byPieceBB, 0, sizeof(byPieceBB));
-  acc.reset(WHITE);
-  acc.reset(BLACK);
-}
-
 namespace Search {
 
   DEFINE_PARAM_S(LmrBase, 39, 10);
@@ -228,34 +221,6 @@ namespace Search {
     keyStackHead--;
   }
 
-  void Thread::refreshAccumulator(Position& pos, NNUE::Accumulator& acc, Color side) {
-    const Square king = pos.kingSquare(side);
-    const int bucket = NNUE::KingBucketsScheme[relative_square(side, king)];
-    FinnyEntry& entry = finny[fileOf(king) >= FILE_E][bucket];
-
-    for (Color c = WHITE; c <= BLACK; ++c) {
-      for (PieceType pt = PAWN; pt <= KING; ++pt) {
-        const Bitboard oldBB = entry.byColorBB[side][c] & entry.byPieceBB[side][pt];
-        const Bitboard newBB = pos.pieces(c, pt);
-        Bitboard toRemove = oldBB & ~newBB;
-        Bitboard toAdd = newBB & ~oldBB;
-
-        while (toRemove) {
-          Square sq = popLsb(toRemove);
-          entry.acc.removePiece(king, side, makePiece(c, pt), sq);
-        }
-        while (toAdd) {
-          Square sq = popLsb(toAdd);
-          entry.acc.addPiece(king, side, makePiece(c, pt), sq);
-        }
-      }
-    }
-
-    memcpy(acc.colors[side], entry.acc.colors[side], sizeof(acc.colors[0]));
-    memcpy(entry.byColorBB[side], pos.byColorBB, sizeof(entry.byColorBB[0]));
-    memcpy(entry.byPieceBB[side], pos.byPieceBB, sizeof(entry.byPieceBB[0]));
-  }
-
   void Thread::playMove(Position& pos, Move move, SearchInfo* ss) {
 
     nodesSearched++;
@@ -277,13 +242,16 @@ namespace Search {
     ply++;
     pos.doMove(move, dirtyPieces);
 
+
     TT::prefetch(pos.key);
 
     for (Color side = WHITE; side <= BLACK; ++side) {
-      if (NNUE::needRefresh(side, oldKingSquares[side], pos.kingSquare(side)))
-        refreshAccumulator(pos, newAcc, side);
-      else
+      if (NNUE::needRefresh(side, oldKingSquares[side], pos.kingSquare(side))) {
+        NNUE::refreshAccumulator(newAcc, finny, pos, side);
+      }
+      else {
         newAcc.doUpdates(pos.kingSquare(side), side, dirtyPieces, oldAcc); 
+      }
     }
   }
 

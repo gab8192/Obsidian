@@ -48,8 +48,6 @@ namespace NNUE {
   constexpr int NetworkQB = 64;
   constexpr int NetworkQAB = NetworkQA * NetworkQB;
 
-  bool needRefresh(Color side, Square oldKing, Square newKing);
-
   struct Accumulator {
     union {
       alignas(Alignment) weight_t colors[COLOR_NB][HiddenWidth];
@@ -66,6 +64,20 @@ namespace NNUE {
 
     void refresh(Position& pos, Color side);
   };
+
+  struct FinnyEntry {
+    Bitboard byColorBB[COLOR_NB][COLOR_NB];
+    Bitboard byPieceBB[COLOR_NB][PIECE_TYPE_NB];
+    Accumulator acc;
+
+    void reset();
+  };
+
+  using FinnyTable = FinnyEntry[2][KingBucketsCount];
+
+  bool needRefresh(Color side, Square oldKing, Square newKing);
+
+  void refreshAccumulator(Accumulator& acc, FinnyTable& finnyTable, Position& pos, Color side);
 
   void init();
 

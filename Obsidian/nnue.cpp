@@ -99,7 +99,7 @@ namespace NNUE {
       outputVec[i] = subEpi16(subEpi16(addEpi16(inputVec[i], add0Vec[i]), sub0Vec[i]), sub1Vec[i]);
   }
 
-   template <int InputSize>
+  template <int InputSize>
   inline void multiSubAddSubAdd(weight_t* output, weight_t* input, weight_t* sub0, weight_t* add0, weight_t* sub1, weight_t* add1) {
     Vec* inputVec = (Vec*)input;
     Vec* outputVec = (Vec*)output;
@@ -111,6 +111,49 @@ namespace NNUE {
 
     for (int i = 0; i < InputSize / WeightsPerVec; ++i)
       outputVec[i] = addEpi16(subEpi16(subEpi16(addEpi16(inputVec[i], add0Vec[i]), sub0Vec[i]), sub1Vec[i]), add1Vec[i]);
+  }
+
+  void refreshAccumulator(Accumulator& acc, FinnyTable& finnyTable, Position& pos, Color side) {
+    const Square king = pos.kingSquare(side);
+    const int bucket = KingBucketsScheme[relative_square(side, king)];
+    FinnyEntry& entry = finnyTable[fileOf(king) >= FILE_E][bucket];
+
+    Vec* add[32];
+    Vec* remove[32];
+    int addN = 0, removeN = 0;
+
+    for (Color c = WHITE; c <= BLACK; ++c) {
+      for (PieceType pt = PAWN; pt <= KING; ++pt) {
+        const Bitboard oldBB = entry.byColorBB[side][c] & entry.byPieceBB[side][pt];
+        const Bitboard newBB = pos.pieces(c, pt);
+        Bitboard toRemove = oldBB & ~newBB;
+        Bitboard toAdd = newBB & ~oldBB;
+
+        while (toRemove)
+          remove[removeN++] = (Vec*) featureAddress(king, side, makePiece(c, pt), popLsb(toRemove));
+
+        while (toAdd)
+          add[addN++] = (Vec*) featureAddress(king, side, makePiece(c, pt), popLsb(toAdd));
+      }
+    }
+
+    Vec* entryWeights = (Vec*) entry.acc.colors[side];
+
+    for (int i = 0; i < HiddenWidth / WeightsPerVec; i++) {
+      Vec vec = entryWeights[i];
+
+      for (int j = 0; j < addN; j++)
+        vec = addEpi16(vec, add[j][i]);
+
+      for (int j = 0; j < removeN; j++)
+        vec = subEpi16(vec, remove[j][i]);
+
+      entryWeights[i] = vec;
+    }
+
+    memcpy(acc.colors[side], entry.acc.colors[side], sizeof(acc.colors[0]));
+    memcpy(entry.byColorBB[side], pos.byColorBB, sizeof(entry.byColorBB[0]));
+    memcpy(entry.byPieceBB[side], pos.byPieceBB, sizeof(entry.byPieceBB[0]));
   }
 
   void Accumulator::addPiece(Square kingSq, Color side, Piece pc, Square sq) {
@@ -156,6 +199,13 @@ namespace NNUE {
       const Square sq = popLsb(occupied);
       addPiece(kingSq, side, pos.board[sq], sq);
     }
+  }
+
+  void FinnyEntry::reset() {
+    memset(byColorBB, 0, sizeof(byColorBB));
+    memset(byPieceBB, 0, sizeof(byPieceBB));
+    acc.reset(WHITE);
+    acc.reset(BLACK);
   }
 
   void init() {
