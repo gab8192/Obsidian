@@ -131,16 +131,15 @@ Move MovePicker::nextMove(bool skipQuiets) {
   }
   case PLAY_GOOD_CAPTURES:
   {
-    nextGoodCap:
-    if (capIndex < captures.size()) {
+    while (capIndex < captures.size()) {
       Move_Score move = nextMove0(captures, capIndex++);
       int realMargin = searchType == PVS ? (- move.score / 64) : seeMargin;
       if (pos.seeGe(move.move, realMargin) && !isUnderPromo(move.move)) // good capture
         return move.move;
         
       badCaptures.add(move);
-      goto nextGoodCap;
     }
+
 
     if (searchType == PROBCUT)
       return MOVE_NONE;

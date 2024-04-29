@@ -22,9 +22,6 @@ void FinnyEntry::reset() {
 
 namespace Search {
 
-  DEFINE_PARAM_S(MpPvsSeeMargin, -80, 15);
-  DEFINE_PARAM_S(MpQsSeeMargin, -25, 15);
-
   DEFINE_PARAM_S(LmrBase, 39, 10);
   DEFINE_PARAM_S(LmrDiv, 211, 10);
 
@@ -46,6 +43,7 @@ namespace Search {
 
   DEFINE_PARAM_S(LmpBase,    3, 1);
 
+  DEFINE_PARAM_S(QsSeeMargin, -25, 15);
   DEFINE_PARAM_S(PvsQuietSeeMargin, -77, 20);
   DEFINE_PARAM_S(PvsCapSeeMargin, -132, 20);
 
@@ -484,7 +482,7 @@ namespace Search {
       visitTTMove ? ttMove : MOVE_NONE,
       MOVE_NONE, MOVE_NONE,
       mainHistory, captureHistory,
-      MpQsSeeMargin,
+      0,
       ss);
 
     movePicker.genQuietChecks = (depth == 0);
@@ -502,7 +500,7 @@ namespace Search {
       foundLegalMoves = true;
 
       if (bestScore > SCORE_TB_LOSS_IN_MAX_PLY) {
-        if (! pos.seeGe(move, MpQsSeeMargin))
+        if (! pos.seeGe(move, QsSeeMargin))
           continue;
       }
 
@@ -837,7 +835,7 @@ namespace Search {
       MovePicker::PVS, pos,
       ttMove, ss->killerMove, counterMove,
       mainHistory, captureHistory,
-      MpPvsSeeMargin,
+      0,
       ss);
 
     // Visit moves
