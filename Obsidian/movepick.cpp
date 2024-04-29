@@ -62,7 +62,7 @@ void MovePicker::scoreQuiets() {
   while (i < quiets.size()) {
     Move move = quiets[i].move;
 
-    if (move == ttMove || move == killerMove || move == counterMove) {
+    if (move == ttMove) {
       quiets.remove(i);
       continue;
     }
@@ -183,8 +183,11 @@ Move MovePicker::nextMove(bool skipQuiets) {
       goto select;
     }
     
-    if (quietIndex < quiets.size())
-      return nextMove0(quiets, quietIndex++).move;
+    while (quietIndex < quiets.size()) {
+      Move move = nextMove0(quiets, quietIndex++).move;
+      if (move != killerMove && move != counterMove)
+        return move;
+    }
 
     if (stage == IN_CHECK_PLAY_QUIETS)
       return MOVE_NONE;
