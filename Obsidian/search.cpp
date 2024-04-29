@@ -463,6 +463,9 @@ namespace Search {
       else
         bestScore = ss->staticEval = Eval::evaluate(pos, accumStack[accumStackHead]);
 
+      if (! ttHit)
+        ttEntry->store(pos.key, TT::NO_FLAG, 0, MOVE_NONE, SCORE_NONE, ss->staticEval, ttPV, ply);
+
       // When tt bound allows it, use ttScore as a better standing pat
       if (ttScore != SCORE_NONE && (ttBound & boundForTT(ttScore > bestScore)))
         bestScore = ttScore;
