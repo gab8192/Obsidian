@@ -22,7 +22,7 @@ void FinnyEntry::reset() {
 
 namespace Search {
 
-  DEFINE_PARAM_S(LmrBase, 39, 10);
+  DEFINE_PARAM_S(LmrBase, 19, 10);
   DEFINE_PARAM_S(LmrDiv, 211, 10);
 
   DEFINE_PARAM_S(StatBonusLinear, 130, 10);
@@ -938,7 +938,7 @@ namespace Search {
 
       if (depth >= 2 && seenMoves > 1 + 3 * IsRoot) {
 
-        int R = lmrTable[depth][seenMoves] / (1 + !isQuiet);
+        int R = lmrTable[depth][seenMoves];
 
         // Reduce or extend depending on history of this move
         R -= history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv);
@@ -956,7 +956,8 @@ namespace Search {
         R += !improving;
 
         // Reduce if we expect to fail high
-        R += 2 * cutNode;
+        if (cutNode)
+          R += 1 + isQuiet;
 
         // Clamp to avoid a qsearch or an extension in the child search
         int reducedDepth = std::clamp(newDepth - R, 1, newDepth + 1);
