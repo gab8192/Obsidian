@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "amogus.bin"
+#define EvalFile "net41.bin"
 
 using namespace SIMD;
 
