@@ -58,6 +58,7 @@ Move_Score nextMove0(MoveList& moveList, const int visitedCount) {
 }
 
 void MovePicker::scoreQuiets() {
+  Threats& threats = pos.getThreats();
   int i = 0;
   while (i < quiets.size()) {
     Move move = quiets[i].move;
@@ -67,10 +68,26 @@ void MovePicker::scoreQuiets() {
       continue;
     }
 
+    Square from = move_from(move), to = move_to(move);
+    PieceType pt = piece_type(pos.board[from]);
     int chIndex = pieceTo(pos, move);
 
+    int threatScore = 0;
+
+    if (pt == QUEEN) {
+      if (threats.byRook & from) threatScore += 32768;
+      if (threats.byRook & to) threatScore -= 32768;
+    } else if (pt == ROOK) {
+      if (threats.byMinor & from) threatScore += 16384;
+      if (threats.byMinor & to) threatScore -= 16384;
+    } else if (pt == KNIGHT || pt == BISHOP) {
+      if (threats.byPawn & from) threatScore += 16384;
+      if (threats.byPawn & to) threatScore -= 16384;
+    }
+
     quiets[i++].score =
-      mainHist[pos.sideToMove][move_from_to(move)]
+        threatScore
+      + mainHist[pos.sideToMove][move_from_to(move)]
       + (ss - 1)->contHistory[chIndex]
       + (ss - 2)->contHistory[chIndex]
       + (ss - 4)->contHistory[chIndex]/2;
