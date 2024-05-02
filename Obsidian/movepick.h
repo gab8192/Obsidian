@@ -45,6 +45,7 @@ public:
   Move nextMove(bool skipQuiets);
 
   bool genQuietChecks = false;
+  bool useThreats = true;
 
 private:
   SearchType searchType;

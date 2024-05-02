@@ -841,6 +841,8 @@ namespace Search {
       0,
       ss);
 
+    movePicker.useThreats = depth <= 10;
+
     // Visit moves
 
     Move move;
