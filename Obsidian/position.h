@@ -11,6 +11,12 @@
 /// </summary>
 void positionInit();
 
+struct Threats {
+  Bitboard byPawn;
+  Bitboard byMinor;
+  Bitboard byRook;
+};
+
 struct alignas(32) Position {
   Color sideToMove;
   Square epSquare;
@@ -30,6 +36,9 @@ struct alignas(32) Position {
 
   // What pieces of the opponent are attacking the king of the side to move
   Bitboard checkers;
+
+  Threats threats;
+  bool threatsUpdated;
 
   inline Bitboard pieces(PieceType pt) const {
     return byPieceBB[pt];
@@ -79,13 +88,15 @@ struct alignas(32) Position {
 
   /// <summary>
   /// Invoke AFTER the side to move has been updated.
-  /// Refreshes blockersForKing, pinners, checkers
+  /// Refreshes blockersForKing, pinners, checkers, threats
   /// </summary>
-  inline void updateAttacksToKings() {
+  inline void updateAttacks() {
     updatePins(WHITE);
     updatePins(BLACK);
 
     checkers = attackersTo(kingSquare(sideToMove), ~sideToMove);
+
+    threatsUpdated = false;
   }
 
   void updateKey();
@@ -142,6 +153,8 @@ struct alignas(32) Position {
   void doNullMove();
 
   void doMove(Move move, DirtyPieces& dp);
+
+  Threats& getThreats();
 
   /// Only works for MT_NORMAL moves
   Key keyAfter(Move move) const;

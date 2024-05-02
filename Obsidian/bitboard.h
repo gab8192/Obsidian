@@ -104,6 +104,8 @@ Bitboard getKnightAttacks(Square square);
 
 Bitboard getPawnAttacks(Square square, Color pawnColor);
 
+Bitboard getPawnBbAttacks(Bitboard pawns, Color pawnColor);
+
 inline Bitboard getPieceAttacks(PieceType pt, Square s, Bitboard occupied) {
   switch (pt) {
   case KNIGHT: return getKnightAttacks(s);

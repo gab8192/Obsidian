@@ -223,7 +223,7 @@ void Position::doNullMove() {
   sideToMove = them;
   key ^= ZOBRIST_TEMPO;
 
-  updateAttacksToKings();
+  updateAttacks();
 }
 
 void Position::doMove(Move move, DirtyPieces& dp) {
@@ -366,12 +366,40 @@ void Position::doMove(Move move, DirtyPieces& dp) {
   sideToMove = them;
   key ^= ZOBRIST_TEMPO;
 
-  updateAttacksToKings();
+  updateAttacks();
 
   if (newCastlingRights != castlingRights) {
     key ^= ZOBRIST_CASTLING[castlingRights ^ newCastlingRights];
     castlingRights = newCastlingRights;
   }
+}
+
+Threats& Position::getThreats() {
+  if (threatsUpdated)
+    return threats;
+
+  Color them = ~sideToMove;
+
+  threats.byPawn = getPawnBbAttacks(pieces(them, PAWN), them);
+  threats.byMinor = threats.byPawn;
+  Bitboard knights = pieces(them, KNIGHT);
+  while (knights) {
+    Square sq = popLsb(knights);
+    threats.byMinor |= getKnightAttacks(sq);
+  }
+  Bitboard bishops = pieces(them, BISHOP);
+  while (bishops) {
+    Square sq = popLsb(bishops);
+    threats.byMinor |= getBishopAttacks(sq, pieces());
+  }
+  threats.byRook = threats.byMinor;
+  Bitboard rooks = pieces(them, ROOK);
+  while (rooks) {
+    Square sq = popLsb(rooks);
+    threats.byRook |= getRookAttacks(sq, pieces());
+  }
+  threatsUpdated = true;
+  return threats;
 }
 
 /// Only works for MT_NORMAL moves
@@ -491,7 +519,7 @@ void Position::setToFen(const std::string& fen) {
   }
   gamePly = std::max(2 * (gamePly - 1), 0) + (sideToMove == BLACK);
 
-  updateAttacksToKings();
+  updateAttacks();
   updateKey();
 }
 

@@ -286,6 +286,18 @@ Bitboard getPawnAttacks(Square sq, Color pawnColor) {
   return pawn_attacks[pawnColor][sq];
 }
 
+Bitboard getPawnBbAttacks(Bitboard pawns, Color pawnColor) {
+  if (pawnColor == WHITE) {
+    Bitboard east = (pawns & ~FILE_HBB) << 9;
+    Bitboard west = (pawns & ~FILE_ABB) << 7;
+    return east | west;
+  } else {
+    Bitboard east = (pawns & ~FILE_HBB) >> 7;
+    Bitboard west = (pawns & ~FILE_ABB) >> 9;
+    return east | west;
+  }
+}
+
 #if defined(USE_PEXT)
 
 void init_pext_attacks(Bitboard table[], Bitboard* attacks[], Bitboard masks[],
