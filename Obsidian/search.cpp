@@ -859,7 +859,7 @@ namespace Search {
       
       bool isQuiet = pos.isQuiet(move);
 
-      int history = isQuiet ? getQuietHistory(pos, move, ss) : getCapHistory(pos, move);
+      int history = getQuietHistory(pos, move, ss);
 
       int oldNodesSearched = nodesSearched;
 
@@ -941,7 +941,7 @@ namespace Search {
         int R = lmrTable[depth][seenMoves] / (1 + !isQuiet);
 
         // Reduce or extend depending on history of this move
-        R -= history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv);
+        R -= history / LmrQuietHistoryDiv;
 
         // Extend moves that give check
         R -= (newPos.checkers != 0ULL);
