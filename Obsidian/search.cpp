@@ -22,24 +22,24 @@ void FinnyEntry::reset() {
 
 namespace Search {
 
-  DEFINE_PARAM_S(LmrBase, 39, 10);
-  DEFINE_PARAM_S(LmrDiv, 211, 10);
+  DEFINE_PARAM_S(LmrBase, 45, 10);
+  DEFINE_PARAM_S(LmrDiv, 207, 10);
 
-  DEFINE_PARAM_S(StatBonusLinear, 130, 10);
-  DEFINE_PARAM_S(StatBonusMax, 1159, 50);
+  DEFINE_PARAM_S(StatBonusLinear, 134, 10);
+  DEFINE_PARAM_S(StatBonusMax, 1176, 50);
   DEFINE_PARAM_S(StatBonusBoostAt, 120, 10);
 
-  DEFINE_PARAM_S(RazoringDepthMul, 415, 10);
+  DEFINE_PARAM_S(RazoringDepthMul, 419, 10);
 
-  DEFINE_PARAM_S(RfpMaxDepth, 9, 1);
-  DEFINE_PARAM_S(RfpDepthMul, 123, 6);
+  DEFINE_PARAM_S(RfpMaxDepth, 10, 1);
+  DEFINE_PARAM_S(RfpDepthMul, 119, 6);
 
   DEFINE_PARAM_S(NmpBase, 4, 1);
   DEFINE_PARAM_B(NmpDepthDiv, 4, 1, 21);
-  DEFINE_PARAM_S(NmpEvalDiv, 207, 20);
+  DEFINE_PARAM_S(NmpEvalDiv, 195, 20);
   DEFINE_PARAM_S(NmpEvalDivMin, 4, 1);
 
-  DEFINE_PARAM_S(ProbcutBetaMargin, 229, 10);
+  DEFINE_PARAM_S(ProbcutBetaMargin, 227, 10);
 
   DEFINE_PARAM_S(LmpBase,    3, 1);
 
@@ -47,19 +47,19 @@ namespace Search {
   DEFINE_PARAM_S(PvsQuietSeeMargin, -77, 20);
   DEFINE_PARAM_S(PvsCapSeeMargin, -132, 20);
 
-  DEFINE_PARAM_S(EarlyLmrHistoryDiv, 5521, 300);
+  DEFINE_PARAM_S(EarlyLmrHistoryDiv, 5476, 300);
 
-  DEFINE_PARAM_S(FpBase, 182, 10);
+  DEFINE_PARAM_S(FpBase, 178, 10);
   DEFINE_PARAM_S(FpMaxDepth, 8, 1);
   DEFINE_PARAM_S(FpDepthMul, 111, 6);
 
-  DEFINE_PARAM_S(TripleExtMargin, 130, 10);
-  DEFINE_PARAM_S(DoubleExtMargin, 16, 2);
+  DEFINE_PARAM_S(TripleExtMargin, 133, 10);
+  DEFINE_PARAM_S(DoubleExtMargin, 17, 2);
   DEFINE_PARAM_S(DoubleExtMax, 6, 1);
 
-  DEFINE_PARAM_S(LmrQuietHistoryDiv, 10486, 300);
-  DEFINE_PARAM_S(LmrCapHistoryDiv, 8003, 300);
-  DEFINE_PARAM_S(ZwsDeeperMargin, 79, 5);
+  DEFINE_PARAM_S(LmrQuietHistoryDiv, 10435, 300);
+  DEFINE_PARAM_S(LmrCapHistoryDiv, 7855, 300);
+  DEFINE_PARAM_S(ZwsDeeperMargin, 76, 5);
 
   DEFINE_PARAM_B(AspWindowStartDepth, 4, 4, 34);
   DEFINE_PARAM_B(AspWindowStartDelta, 11, 5, 45);
