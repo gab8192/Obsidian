@@ -502,8 +502,10 @@ namespace Search {
 
       foundLegalMoves = true;
 
+      bool isQuiet = pos.isQuiet(move);
+
       if (bestScore > SCORE_TB_LOSS_IN_MAX_PLY) {
-        if (!pos.checkers && futility <= alpha && !pos.seeGe(move, 1)) {
+        if (!isQuiet && !pos.checkers && futility <= alpha && !pos.seeGe(move, 1)) {
           bestScore = std::max(bestScore, futility);
           continue;
         }
@@ -534,7 +536,7 @@ namespace Search {
       }
 
       if (bestScore > SCORE_TB_LOSS_IN_MAX_PLY) {
-        if (pos.checkers && pos.isQuiet(move))
+        if (pos.checkers && isQuiet)
           break;
       }
     }
