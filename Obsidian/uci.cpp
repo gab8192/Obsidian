@@ -146,15 +146,11 @@ namespace {
 
   void go(Position& pos, std::istringstream& is) {
 
-    clock_t time = timeMillis();
-
-    Threads::waitForSearch();
-
     std::string token;
 
     int perftPlies = 0;
     Search::Settings searchSettings;
-    searchSettings.startTime = time;
+    searchSettings.startTime = timeMillis();
     searchSettings.position = pos;
     searchSettings.prevPositions = prevPositions;
 
@@ -168,6 +164,8 @@ namespace {
       else if (token == "nodes")     is >> searchSettings.nodes;
       else if (token == "movetime")  is >> searchSettings.movetime;
       else if (token == "perft")     is >> perftPlies;
+
+    Threads::waitForSearch();
 
     if (perftPlies) {
       clock_t begin = timeMillis();

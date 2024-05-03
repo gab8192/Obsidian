@@ -13,13 +13,6 @@
 #include <cmath>
 #include <sstream>
 
-void FinnyEntry::reset() {
-  memset(byColorBB, 0, sizeof(byColorBB));
-  memset(byPieceBB, 0, sizeof(byPieceBB));
-  acc.reset(WHITE);
-  acc.reset(BLACK);
-}
-
 namespace Search {
     
   DEFINE_PARAM_S(QsFpMargin, 160, 10);
@@ -233,7 +226,7 @@ namespace Search {
   void Thread::refreshAccumulator(Position& pos, NNUE::Accumulator& acc, Color side) {
     const Square king = pos.kingSquare(side);
     const int bucket = NNUE::KingBucketsScheme[relative_square(side, king)];
-    FinnyEntry& entry = finny[fileOf(king) >= FILE_E][bucket];
+    NNUE::FinnyEntry& entry = finny[fileOf(king) >= FILE_E][bucket];
 
     for (Color c = WHITE; c <= BLACK; ++c) {
       for (PieceType pt = PAWN; pt <= KING; ++pt) {

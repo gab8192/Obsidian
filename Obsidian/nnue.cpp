@@ -158,6 +158,13 @@ namespace NNUE {
     }
   }
 
+  void FinnyEntry::reset() {
+    memset(byColorBB, 0, sizeof(byColorBB));
+    memset(byPieceBB, 0, sizeof(byPieceBB));
+    acc.reset(WHITE);
+    acc.reset(BLACK);
+  }
+
   void init() {
 
     memcpy(&Content, gEmbeddedNNUEData, sizeof(Content));
