@@ -1238,12 +1238,12 @@ namespace Search {
 
           if (score <= alpha) {
             beta = (alpha + beta) / 2;
-            alpha = std::max(-SCORE_INFINITE, alpha - window);
+            alpha = std::max(-SCORE_INFINITE, score - window);
 
             failHighCount = 0;
           }
           else if (score >= beta) {
-            beta = std::min(SCORE_INFINITE, beta + window);
+            beta = std::min(SCORE_INFINITE, score + window);
 
             if (score < 2000)
               failHighCount++;
