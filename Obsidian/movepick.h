@@ -45,6 +45,7 @@ public:
   Move nextMove(bool skipQuiets);
 
   bool genQuietChecks = false;
+  Stage stage;
 
 private:
   SearchType searchType;
@@ -60,8 +61,6 @@ private:
   int seeMargin;
   
   Search::SearchInfo* ss;
-
-  Stage stage;
 
   MoveList captures;
   MoveList quiets;

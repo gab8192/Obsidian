@@ -499,18 +499,16 @@ namespace Search {
 
       bool isQuiet = pos.isQuiet(move);
 
-      if (bestScore > SCORE_TB_LOSS_IN_MAX_PLY) {
-        if (!isQuiet && !pos.checkers && futility <= alpha && !pos.seeGe(move, 1)) {
-          bestScore = std::max(bestScore, futility);
-          continue;
-        }
-
-        if (!pos.seeGe(move, QsSeeMargin))
-          continue;
-      }
-
       Position newPos = pos;
       playMove(newPos, move, ss);
+
+      if (movePicker.stage == MovePicker::QS_PLAY_QUIET_CHECKS) {
+        if (pos.isPseudoLegal(move) && pos.isQuiet(move) && newPos.checkers) {
+          // fine
+        } else {
+          exit(1);
+        }
+      }
 
       Score score = -qsearch<IsPV>(newPos, -beta, -alpha, depth - 1, ss + 1);
 
