@@ -51,7 +51,7 @@ namespace Search {
 
   // A sort of header of the search stack, so that plies behind 0 are accessible and
   // it's easier to determine conthist score, improving, ...
-  constexpr int SsOffset = 4;
+  constexpr int SsOffset = 6;
 
   class Thread {
 
