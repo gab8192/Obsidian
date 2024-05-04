@@ -44,6 +44,9 @@ namespace Search {
 
   DEFINE_PARAM_S(EarlyLmrHistoryDiv, 5521, 300);
 
+  DEFINE_PARAM_S(HpMaxDepth, 4, 1);
+  DEFINE_PARAM_S(HpDepthMul, -4096, 300);
+
   DEFINE_PARAM_S(FpBase, 182, 10);
   DEFINE_PARAM_S(FpMaxDepth, 8, 1);
   DEFINE_PARAM_S(FpDepthMul, 111, 6);
@@ -886,6 +889,10 @@ namespace Search {
         // Late move pruning. At low depths, only visit a few quiet moves
         if (seenMoves >= (depth * depth + LmpBase) / (2 - improving))
           skipQuiets = true;
+
+        // History pruning
+        if (lmrDepth <= HpMaxDepth && history < HpDepthMul * depth)
+          continue;
 
         // Futility pruning. If our evaluation is far below alpha,
         // only visit a few quiet moves
