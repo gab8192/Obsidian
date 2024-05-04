@@ -891,15 +891,17 @@ namespace Search {
           skipQuiets = true;
 
         // History pruning
-        if (lmrDepth <= HpMaxDepth && history < HpDepthMul * depth)
+        if ( isQuiet
+          && lmrDepth <= HpMaxDepth
+          && history < HpDepthMul * depth)
           continue;
 
         // Futility pruning. If our evaluation is far below alpha,
         // only visit a few quiet moves
-        if (   isQuiet
-            && lmrDepth <= FpMaxDepth 
-            && !pos.checkers 
-            && ss->staticEval + FpBase + FpDepthMul * lmrDepth <= alpha)
+        if ( isQuiet
+          && lmrDepth <= FpMaxDepth 
+          && !pos.checkers 
+          && ss->staticEval + FpBase + FpDepthMul * lmrDepth <= alpha)
           skipQuiets = true;
       }
 
