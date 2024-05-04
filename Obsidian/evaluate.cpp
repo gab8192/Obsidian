@@ -8,6 +8,13 @@ namespace Eval {
 
     Score score = NNUE::evaluate(pos, accumulator);
 
+    int phase =  3 * BitCount(pos.pieces(KNIGHT))
+               + 3 * BitCount(pos.pieces(BISHOP))
+               + 5 * BitCount(pos.pieces(ROOK))
+               + 10 * BitCount(pos.pieces(QUEEN));    
+
+    score = score * (206 + phase) / 256;           
+
     // Scale down as 50 move rule approaches
     score = score * (200 - pos.halfMoveClock) / 200;
 
