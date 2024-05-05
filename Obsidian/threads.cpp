@@ -1,4 +1,5 @@
 #include "threads.h"
+#include <atomic>
 
 namespace Threads {
 
@@ -6,14 +7,14 @@ namespace Threads {
 
   std::vector<Search::Thread*> searchThreads;
 
-  volatile bool searchStopped;
+  std::atomic<bool> searchStopped;
 
   Search::Thread* mainThread() {
     return searchThreads[0];
   }
 
   bool isSearchStopped() {
-    return searchStopped;
+    return searchStopped.load(std::memory_order_relaxed);
   }
 
   uint64_t totalNodes() {
