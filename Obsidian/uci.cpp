@@ -193,8 +193,8 @@ void UCI::loop(int argc, char* argv[]) {
   Position pos;
   pos.setToFen(StartFEN);
 
-  for (int i = 1; i < argc; ++i)
-    cmd += std::string(argv[i]) + " ";
+  //for (int i = 1; i < argc; ++i)
+    //cmd += std::string(argv[i]) + " ";
 
   do {
     if (argc == 1 && !std::getline(std::cin, cmd))
