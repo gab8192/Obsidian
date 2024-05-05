@@ -81,8 +81,6 @@ namespace {
   void bench() {
     constexpr int posCount = sizeof(BENCH_POSITIONS) / sizeof(char*);
 
-    Threads::setThreadCount(1);
-
     uint64_t totalNodes = 0;
     clock_t elapsed = 0;
     Search::doingBench = true;
