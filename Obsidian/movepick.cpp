@@ -75,14 +75,14 @@ void MovePicker::scoreQuiets() {
     int threatScore = 0;
 
     if (pt == QUEEN) {
-      if (threats.byRook & from) threatScore += 32768;
-      if (threats.byRook & to) threatScore -= 32768;
+      if (threats.byRook & from) threatScore += 16000;
+      if (threats.byRook & to)   threatScore -= 16000;
     } else if (pt == ROOK) {
-      if (threats.byMinor & from) threatScore += 16384;
-      if (threats.byMinor & to) threatScore -= 16384;
+      if (threats.byMinor & from) threatScore += 10000;
+      if (threats.byMinor & to)   threatScore -= 10000;
     } else if (pt == KNIGHT || pt == BISHOP) {
-      if (threats.byPawn & from) threatScore += 16384;
-      if (threats.byPawn & to) threatScore -= 16384;
+      if (threats.byPawn & from) threatScore += 8000;
+      if (threats.byPawn & to)   threatScore -= 8000;
     }
 
     quiets[i++].score =
