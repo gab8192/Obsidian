@@ -2,6 +2,7 @@
 //
 
 #include "cuckoo.h"
+#include "evaluate.h"
 #include "threads.h"
 #include "tt.h"
 #include "uci.h"
@@ -31,6 +32,8 @@ int main(int argc, char** argv)
   TT::resize(Options["Hash"]);
 
   NNUE::init();
+
+  Eval::init();
 
   UCI::loop(argc, argv);
 

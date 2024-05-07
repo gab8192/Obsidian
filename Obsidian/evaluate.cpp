@@ -1,8 +1,17 @@
 #include "evaluate.h"
 
+#include <cmath>
 #include <iostream>
 
 namespace Eval {
+
+  int fmrScaleTable[101];
+
+  void init() {
+    for (int x = 0; x <= 100; x++) {
+      fmrScaleTable[x] = 200 - std::pow(double(x), 1.1);
+    }
+  }
 
   Score evaluate(Position& pos, NNUE::Accumulator& accumulator) {
 
@@ -16,7 +25,7 @@ namespace Eval {
     score = score * (206 + phase) / 256;           
 
     // Scale down as 50 move rule approaches
-    score = score * (200 - pos.halfMoveClock) / 200;
+    score = score * fmrScaleTable[pos.halfMoveClock] / 200;
 
     // Make sure the evaluation does not mix with guaranteed win/loss scores
     score = std::clamp(score, SCORE_TB_LOSS_IN_MAX_PLY + 1, SCORE_TB_WIN_IN_MAX_PLY - 1);
