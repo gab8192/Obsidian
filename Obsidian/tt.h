@@ -91,7 +91,7 @@ namespace TT {
 
   void prefetch(Key key);
 
-  Entry* probe(Key key, bool& hit);
+  Entry* probe(Key key, bool& hit, bool& fromThisSearch);
 
   int hashfull();
 }

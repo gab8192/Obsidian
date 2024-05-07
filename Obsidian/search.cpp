@@ -422,8 +422,9 @@ namespace Search {
       return SCORE_DRAW;
 
     // Probe TT
+    bool ttRecent;
     bool ttHit;
-    TT::Entry* ttEntry = TT::probe(pos.key, ttHit);
+    TT::Entry* ttEntry = TT::probe(pos.key, ttHit, ttRecent);
     TT::Flag ttBound = TT::NO_FLAG;
     Score ttScore = SCORE_NONE;
     Move ttMove = MOVE_NONE;
@@ -622,8 +623,9 @@ namespace Search {
       return alpha;
 
     // Probe TT
+    bool ttRecent;
     bool ttHit;
-    TT::Entry* ttEntry = TT::probe(pos.key, ttHit);
+    TT::Entry* ttEntry = TT::probe(pos.key, ttHit, ttRecent);
 
     TT::Flag ttBound = TT::NO_FLAG;
     Score ttScore   = SCORE_NONE;
@@ -657,7 +659,7 @@ namespace Search {
     if ( !IsPV
       && !excludedMove
       && ttScore != SCORE_NONE
-      && ttDepth > depth) 
+      && ttDepth + ttRecent > depth) 
     {
       if (ttBound & boundForTT(ttScore >= beta))
         return ttScore;

@@ -40,13 +40,14 @@ namespace TT {
     __builtin_prefetch(getBucket(key));
   }
 
-  Entry* probe(Key key, bool& hit) {
+  Entry* probe(Key key, bool& hit, bool& fromThisSearch) {
 
     Entry* entries = getBucket(key)->entries;
 
     for (int i = 0; i < EntriesPerBucket; i++) {
       if (entries[i].matches(key) || entries[i].isEmpty()) {
         hit = ! entries[i].isEmpty();
+        fromThisSearch = (entries[i].getAge() == tableAge);
         entries[i].updateAge();
         return & entries[i];
       }
@@ -59,6 +60,7 @@ namespace TT {
         worstEntry = & entries[i];
     }
     
+    fromThisSearch = false;
     hit = false;
     return worstEntry;
   }
