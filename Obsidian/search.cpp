@@ -657,6 +657,7 @@ namespace Search {
     if ( !IsPV
       && !excludedMove
       && ttScore != SCORE_NONE
+      && (cutNode || ttScore <= alpha)
       && ttDepth >= depth) 
     {
       if (ttBound & boundForTT(ttScore >= beta))
