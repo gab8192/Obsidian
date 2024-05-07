@@ -657,7 +657,7 @@ namespace Search {
     if ( !IsPV
       && !excludedMove
       && ttScore != SCORE_NONE
-      && ttDepth >= depth) 
+      && ttDepth > depth) 
     {
       if (ttBound & boundForTT(ttScore >= beta))
         return ttScore;
