@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "supernet.bin"
+#define EvalFile "uwu.bin"
 
 using namespace SIMD;
 
