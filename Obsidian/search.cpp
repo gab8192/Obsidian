@@ -12,6 +12,7 @@
 #include <climits>
 #include <cmath>
 #include <sstream>
+#include <unordered_map>
 
 namespace Search {
     
@@ -1321,13 +1322,59 @@ namespace Search {
 
     Threads::stopSearch();
 
+    Threads::waitForSearch(false);
+
     if (!doingBench && std::string(Options["Minimal"]) == "true")
         for (int i = 0; i < multiPV; i++)
           printInfo(completeDepth, i+1, rootMoves[i].score, getPvString(rootMoves[i]));
+
+    Move finalBestMove = rootMoves[0].move;
+
+    if (rootMoves.size() > 1 && Threads::searchThreads.size() > 1) {
+
+      std::unordered_map<Move, int> votes;
+      Score minScore = SCORE_INFINITE;
+
+      for (int i = 0; i < Threads::searchThreads.size(); i++) {
+        Search::Thread* st = Threads::searchThreads[i];
+        if (st->rootMoves[0].score == - SCORE_INFINITE)
+          continue;
+        minScore = std::min(minScore, st->rootMoves[0].score);
+      }
+
+      for (int i = 0; i < Threads::searchThreads.size(); i++) {
+        Search::Thread* st = Threads::searchThreads[i];
+        if (st->rootMoves[0].score == - SCORE_INFINITE)
+          continue;
+        votes[st->rootMoves[0].move] += (st->rootMoves[0].score - minScore + 9) * st->completeDepth;
+      }
+
+      Search::Thread* bestThread = this;
+
+      for (int i = 1; i < Threads::searchThreads.size(); i++) {
+        Search::Thread* currThread = Threads::searchThreads[i];
+        if (currThread->rootMoves[0].score == - SCORE_INFINITE)
+          continue;
+        Score currScore = currThread->rootMoves[0].score;
+        int currVote = votes[currThread->rootMoves[0].move];
+        Score bestScore = bestThread->rootMoves[0].score;
+        int bestVote = votes[bestThread->rootMoves[0].move];
+
+        if (abs(bestScore) >= SCORE_TB_WIN_IN_MAX_PLY) {
+          if (currScore > bestScore)
+            bestThread = currThread;
+        } else if (currScore >= SCORE_TB_WIN_IN_MAX_PLY)
+          bestThread = currThread;
+        else if ( currScore > SCORE_TB_LOSS_IN_MAX_PLY && currVote > bestVote)
+          bestThread = currThread;
+      }
+
+      finalBestMove = bestThread->rootMoves[0].move;
+    }
     
     if (!doingBench) {
       previousScore = rootMoves[0].score;
-      std::cout << "bestmove " << UCI::moveToString(rootMoves[0].move) << std::endl;
+      std::cout << "bestmove " << UCI::moveToString(finalBestMove) << std::endl;
     }
   }
 
