@@ -1155,8 +1155,6 @@ namespace Search {
       maxTime = settings.movetime - int(Options["Move Overhead"]);
 
     ply = 0;
-    tbHits = 0;
-    nodesSearched = 0;
     maxTimeCounter = 0;
 
     SearchLoopInfo idStack[MAX_PLY];
@@ -1283,6 +1281,8 @@ namespace Search {
       idStack[rootDepth].score = score;
       idStack[rootDepth].bestMove = bestMove;
 
+      completeDepth = rootDepth;
+
       if (this != Threads::mainThread())
         continue;
 
@@ -1329,7 +1329,7 @@ namespace Search {
 
     if (!doingBench && std::string(Options["Minimal"]) == "true")
         for (int i = 0; i < multiPV; i++)
-          printInfo(rootDepth, i+1, rootMoves[i].score, getPvString(rootMoves[i]));
+          printInfo(completeDepth, i+1, rootMoves[i].score, getPvString(rootMoves[i]));
     
     if (!doingBench) {
       previousScore = rootMoves[0].score;

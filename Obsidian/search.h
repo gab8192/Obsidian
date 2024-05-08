@@ -64,6 +64,7 @@ namespace Search {
     volatile bool exitThread = false;
     std::thread thread;
 
+    int completeDepth;
     uint64_t nodesSearched;
     uint64_t tbHits;
 

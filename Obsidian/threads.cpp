@@ -44,6 +44,12 @@ namespace Threads {
     searchStopped = false;
     for (int i = 0; i < searchThreads.size(); i++) {
       Search::Thread* st = searchThreads[i];
+      st->nodesSearched = 0;
+      st->tbHits = 0;
+      st->completeDepth = 0;
+    }
+    for (int i = 0; i < searchThreads.size(); i++) {
+      Search::Thread* st = searchThreads[i];
       st->searching = true;
       st->cv.notify_all();
     }
