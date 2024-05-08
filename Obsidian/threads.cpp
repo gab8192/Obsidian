@@ -39,9 +39,21 @@ namespace Threads {
     }
   }
 
+  void waitForHelpers() {
+    for (int i = 1; i < searchThreads.size(); i++) {
+      Search::Thread* st = searchThreads[i];
+      std::unique_lock lock(st->mutex);
+      st->cv.wait(lock, [&] { return !st->searching; });
+    }
+  }
+
   void startSearch(Search::Settings& settings) {
     searchSettings = settings;
     searchStopped = false;
+
+    for (int i = 0; i < searchThreads.size(); i++)
+      searchThreads[i]->completeDepth = 0;
+      
     for (int i = 0; i < searchThreads.size(); i++) {
       Search::Thread* st = searchThreads[i];
       st->searching = true;

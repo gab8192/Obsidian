@@ -67,6 +67,9 @@ namespace Search {
     uint64_t nodesSearched;
     uint64_t tbHits;
 
+    int completeDepth;
+    SearchLoopInfo idStack[MAX_PLY];
+
     Thread();
 
     void resetHistories();

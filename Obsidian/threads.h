@@ -18,6 +18,8 @@ namespace Threads {
 
   void waitForSearch();
 
+  void waitForHelpers();
+
   void startSearch(Search::Settings& settings);
 
   Search::Settings& getSearchSettings();
