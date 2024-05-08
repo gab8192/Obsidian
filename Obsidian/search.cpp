@@ -1327,7 +1327,7 @@ namespace Search {
 
     Threads::stopSearch();
 
-    Threads::waitForHelpers();
+  //  Threads::waitForHelpers();
 
     Move finalBestMove = rootMoves[0].move;
 
