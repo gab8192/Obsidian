@@ -1324,6 +1324,8 @@ namespace Search {
       return;
 
     Threads::stopSearch();
+
+    Threads::waitForSearch(false);
     
     if (!doingBench) {
       previousScore = rootMoves[0].score;

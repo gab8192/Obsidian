@@ -31,8 +31,8 @@ namespace Threads {
     return result;
   }
 
-  void waitForSearch() {
-    for (int i = 0; i < searchThreads.size(); i++) {
+  void waitForSearch(bool waitMain) {
+    for (int i = !waitMain; i < searchThreads.size(); i++) {
       Search::Thread* st = searchThreads[i];
       std::unique_lock lock(st->mutex);
       st->cv.wait(lock, [&] { return !st->searching; });
