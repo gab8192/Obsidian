@@ -172,6 +172,24 @@ namespace Search {
     return timeMillis() - Threads::getSearchSettings().startTime;
   }
 
+  void printInfo(int depth, int pvIdx, Score score, const std::string& pvString) {
+    clock_t elapsed = elapsedTime();
+    std::ostringstream infoStr;
+        infoStr
+          << "info"
+          << " depth "    << depth
+          << " multipv "  << pvIdx
+          << " score "    << UCI::scoreToString(score)
+          << " nodes "    << Threads::totalNodes()
+          << " nps "      << (Threads::totalNodes() * 1000ULL) / std::max(elapsed, 1L)
+          << " hashfull " << TT::hashfull()
+          << " tbhits "   << Threads::totalTbHits()
+          << " time "     << elapsed
+          << " pv "       << pvString;
+
+    std::cout << infoStr.str() << std::endl;
+  }
+
   int stat_bonus(int d) {
     return std::min(StatBonusLinear * d, (int)StatBonusMax);
   }
@@ -1270,25 +1288,9 @@ namespace Search {
 
       const clock_t elapsed = elapsedTime();
 
-      for (int i = 0; i < multiPV; i++) {
-        if (doingBench)
-          break; // save indentation
-
-        std::ostringstream infoStr;
-        infoStr
-          << "info"
-          << " depth "    << rootDepth
-          << " multipv "  << (i+1)
-          << " score "    << UCI::scoreToString(rootMoves[i].score)
-          << " nodes "    << Threads::totalNodes()
-          << " nps "      << (Threads::totalNodes() * 1000ULL) / std::max(elapsed, 1L)
-          << " hashfull " << TT::hashfull()
-          << " tbhits "   << Threads::totalTbHits()
-          << " time "     << elapsed
-          << " pv "       << getPvString(rootMoves[i]);
-
-        std::cout << infoStr.str() << std::endl;
-      }
+      if (!doingBench && std::string(Options["Minimal"]) != "true")
+        for (int i = 0; i < multiPV; i++)
+          printInfo(rootDepth, i+1, rootMoves[i].score, getPvString(rootMoves[i]));
 
       if (usedMostOfTime())
         goto bestMoveDecided;
@@ -1324,6 +1326,10 @@ namespace Search {
       return;
 
     Threads::stopSearch();
+
+    if (!doingBench && std::string(Options["Minimal"]) == "true")
+        for (int i = 0; i < multiPV; i++)
+          printInfo(rootDepth, i+1, rootMoves[i].score, getPvString(rootMoves[i]));
     
     if (!doingBench) {
       previousScore = rootMoves[0].score;

@@ -148,4 +148,6 @@ namespace Search {
   void initLmrTable();
 
   void init();
+
+  void printInfo(int depth, int pvIdx, Score score, const std::string& pvString);
 }

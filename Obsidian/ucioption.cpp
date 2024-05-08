@@ -51,6 +51,7 @@ void init(OptionsMap& o) {
   o["Threads"]           << Option(1, 1, 1024, threadsChanged);
   o["Move Overhead"]     << Option(10, 0, 1000);
   o["SyzygyPath"]        << Option("", syzygyPathChanged);
+  o["Minimal"]           << Option("false");
   o["MultiPV"]           << Option(1, 1, MAX_MOVES);
 }
 
