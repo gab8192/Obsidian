@@ -1338,14 +1338,14 @@ namespace Search {
 
       for (int i = 0; i < Threads::searchThreads.size(); i++) {
         Search::Thread* st = Threads::searchThreads[i];
-        if (st->rootMoves[0].move == MOVE_NONE)
+        if (st->rootMoves[0].score == - SCORE_INFINITE)
           continue;
         minScore = std::min(minScore, st->rootMoves[0].score);
       }
 
       for (int i = 0; i < Threads::searchThreads.size(); i++) {
         Search::Thread* st = Threads::searchThreads[i];
-        if (st->rootMoves[0].move == MOVE_NONE)
+        if (st->rootMoves[0].score == - SCORE_INFINITE)
           continue;
         votes[st->rootMoves[0].move] += (st->rootMoves[0].score - minScore + 9) * st->completeDepth;
       }
@@ -1354,7 +1354,7 @@ namespace Search {
 
       for (int i = 1; i < Threads::searchThreads.size(); i++) {
         Search::Thread* currThread = Threads::searchThreads[i];
-        if (currThread->rootMoves[0].move == MOVE_NONE)
+        if (currThread->rootMoves[0].score == - SCORE_INFINITE)
           continue;
         Score currScore = currThread->rootMoves[0].score;
         int currVote = votes[currThread->rootMoves[0].move];
