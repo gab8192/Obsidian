@@ -1284,8 +1284,7 @@ namespace Search {
           << " nps "      << (Threads::totalNodes() * 1000ULL) / std::max(elapsed, 1L)
           << " hashfull " << TT::hashfull()
           << " tbhits "   << Threads::totalTbHits()
-          << " time "     << elapsed
-          << " pv "       << getPvString(rootMoves[i]);
+          << " time "     << elapsed;
 
         std::cout << infoStr.str() << std::endl;
       }
