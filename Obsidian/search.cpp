@@ -228,7 +228,7 @@ namespace Search {
     TT::prefetch(pos.key ^ ZOBRIST_TEMPO);
     nodesSearched++;
 
-    ss->playedCap = false;
+    ss->playedCap = true;
     ss->contHistory = contHistory[false][0];
     ss->playedMove = MOVE_NONE;
     keyStack[keyStackHead++] = pos.key;
@@ -275,7 +275,7 @@ namespace Search {
     nodesSearched++;
 
     const bool isCap = pos.board[move_to(move)] != NO_PIECE;
-    ss->playedCap = isCap;
+    ss->playedCap = isCap || move_type(move) != MT_NORMAL;
     ss->contHistory = contHistory[isCap][pieceTo(pos, move)];
     ss->playedMove = move;
     keyStack[keyStackHead++] = pos.key;
