@@ -225,8 +225,11 @@ Move MovePicker::nextMove(bool skipQuiets) {
   }
   case QS_PLAY_QUIET_CHECKS:
   {
-    if (quietIndex < quiets.size())
-      return quiets[quietIndex++].move;
+    while (quietIndex < quiets.size()) {
+      Move move = quiets[quietIndex++].move;
+      if (move != ttMove)
+        return move;
+    }
 
     return MOVE_NONE;
   }
