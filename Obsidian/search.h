@@ -45,6 +45,8 @@ namespace Search {
 
     int doubleExt;
 
+    bool playedCap;
+
     // [piece to]
     int* contHistory;
   };

@@ -228,6 +228,7 @@ namespace Search {
     TT::prefetch(pos.key ^ ZOBRIST_TEMPO);
     nodesSearched++;
 
+    ss->playedCap = false;
     ss->contHistory = contHistory[false][0];
     ss->playedMove = MOVE_NONE;
     keyStack[keyStackHead++] = pos.key;
@@ -274,6 +275,7 @@ namespace Search {
     nodesSearched++;
 
     const bool isCap = pos.board[move_to(move)] != NO_PIECE;
+    ss->playedCap = isCap;
     ss->contHistory = contHistory[isCap][pieceTo(pos, move)];
     ss->playedMove = move;
     keyStack[keyStackHead++] = pos.key;
@@ -715,6 +717,8 @@ namespace Search {
     (ss + 1)->killerMove = MOVE_NONE;
     ss->doubleExt = (ss - 1)->doubleExt;
 
+    bool misEvaluating = false;
+    Score theirImprovement = 0;
     bool improving = false;
 
     // Do the static evaluation
@@ -752,6 +756,13 @@ namespace Search {
       improving = ss->staticEval > (ss - 2)->staticEval;
     else if ((ss - 4)->staticEval != SCORE_NONE)
       improving = ss->staticEval > (ss - 4)->staticEval;
+
+    theirImprovement = (- ss->staticEval) - (ss - 1)->staticEval;
+
+    misEvaluating =
+             (ss - 1)->staticEval != SCORE_NONE 
+          && ! (ss - 1)->playedCap
+          && theirImprovement > 110;
 
     // Razoring. When evaluation is far below alpha, we could probably only catch up with a capture,
     // thus do a qsearch. If the qsearch still can't hit alpha, cut off
@@ -958,6 +969,8 @@ namespace Search {
       if (depth >= 2 && seenMoves > 1 + 3 * IsRoot) {
 
         int R = lmrTable[depth][seenMoves] / (1 + !isQuiet);
+
+        R -= (misEvaluating && depth <= 4);
 
         // Reduce or extend depending on history of this move
         R -= history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv);
