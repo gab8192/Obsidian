@@ -273,8 +273,7 @@ namespace Search {
 
     nodesSearched++;
 
-    const bool isCap = pos.board[move_to(move)] != NO_PIECE;
-    ss->contHistory = contHistory[isCap][pieceTo(pos, move)];
+    ss->contHistory = contHistory[!pos.isQuiet(move)][pieceTo(pos, move)];
     ss->playedMove = move;
     keyStack[keyStackHead++] = pos.key;
 
