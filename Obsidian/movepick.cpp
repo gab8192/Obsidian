@@ -212,8 +212,12 @@ Move MovePicker::nextMove(bool skipQuiets) {
   }
   case PLAY_BAD_CAPTURES:
   {
-    if (badCapIndex < badCaptures.size())
-      return badCaptures[badCapIndex++].move;
+    while (badCapIndex < badCaptures.size()) {
+      Move move = badCaptures[badCapIndex++].move;
+      if (skipQuiets && isUnderPromo(move))
+        continue;
+      return move;
+    }
       
     return MOVE_NONE;
   }
