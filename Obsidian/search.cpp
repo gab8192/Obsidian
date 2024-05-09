@@ -675,11 +675,10 @@ namespace Search {
     if ( !IsPV
       && !excludedMove
       && ttScore != SCORE_NONE
-      && ttDepth >= depth) 
-    {
-      if (ttBound & boundForTT(ttScore >= beta))
+      && ttDepth >= depth
+      && (ttBound & boundForTT(ttScore >= beta))
+      && pos.halfMoveClock < 90) // The TT entry might trick us into thinking this is not a draw
         return ttScore;
-    }
 
     // Probe tablebases
     const TbResult tbResult = (IsRoot || excludedMove) ? TB_RESULT_FAILED : probeTB(pos);
