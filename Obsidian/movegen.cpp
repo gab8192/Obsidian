@@ -100,7 +100,6 @@ void getStageMoves(const Position& pos, MoveGenFlags flags, MoveList* moveList) 
   
   const Color us = pos.sideToMove, them = ~us;
   const Square ourKing = pos.kingSquare(us);
-  const Bitboard ourRank8BB = (us == WHITE ? Rank8BB : Rank1BB);
   const Bitboard ourPieces = pos.pieces(us);
   const Bitboard theirPieces = pos.pieces(them);
   const Bitboard occupied = ourPieces | theirPieces;

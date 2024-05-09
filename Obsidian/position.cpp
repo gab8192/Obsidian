@@ -407,8 +407,6 @@ Key Position::keyAfter(Move move) const {
 
   Key newKey = key;
 
-  const Color us = sideToMove, them = ~us;
-
   const Square from = move_from(move);
   const Square to = move_to(move);
 
