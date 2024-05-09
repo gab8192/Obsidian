@@ -491,14 +491,9 @@ namespace Search {
         alpha = bestScore;
     }
 
-    // Visiting the tt move when it is quiet, and stm is not check, loses ~300 Elo
-
-    bool visitTTMove = (pos.checkers || !pos.isQuiet(ttMove));
-
     MovePicker movePicker(
       MovePicker::QSEARCH, pos,
-      visitTTMove ? ttMove : MOVE_NONE,
-      MOVE_NONE, MOVE_NONE,
+      ttMove, MOVE_NONE, MOVE_NONE,
       mainHistory, captureHistory,
       0,
       ss);
