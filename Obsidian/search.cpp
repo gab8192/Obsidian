@@ -906,7 +906,7 @@ namespace Search {
 
         // Futility pruning. If our evaluation is far below alpha,
         // only visit a few quiet moves
-        if (   isQuiet
+        if (   (isQuiet || isUnderPromo(move))
             && lmrDepth <= FpMaxDepth 
             && !pos.checkers 
             && ss->staticEval + FpBase + FpDepthMul * lmrDepth <= alpha)
