@@ -753,16 +753,6 @@ namespace Search {
     else if ((ss - 4)->staticEval != SCORE_NONE)
       improving = ss->staticEval > (ss - 4)->staticEval;
 
-    // Razoring. When evaluation is far below alpha, we could probably only catch up with a capture,
-    // thus do a qsearch. If the qsearch still can't hit alpha, cut off
-    if ( !IsPV
-      && alpha < 2000
-      && eval < alpha - RazoringDepthMul * depth) {
-      Score score = qsearch<IsPV>(pos, alpha, beta, 0, ss);
-      if (score <= alpha)
-        return score;
-    }
-
     // Reverse futility pruning. When evaluation is far above beta, assume that at least a move
     // will return a similarly high score, so cut off
     if ( !IsPV
