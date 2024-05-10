@@ -121,7 +121,9 @@ namespace NNUE {
     multiSub<HiddenWidth>(colors[side], colors[side], featureAddress(kingSq, side, pc, sq));
   }
 
-  void Accumulator::doUpdates(Square kingSq, Color side, DirtyPieces& dp, Accumulator& input) {
+  void Accumulator::doUpdates(Square kingSq, Color side, Accumulator& input) {
+
+    DirtyPieces dp = this->dirtyPieces;
     
     if (dp.type == DirtyPieces::CASTLING) 
     {
@@ -142,6 +144,8 @@ namespace NNUE {
         featureAddress(kingSq, side, dp.sub0.pc, dp.sub0.sq),
         featureAddress(kingSq, side, dp.add0.pc, dp.add0.sq));
     }
+
+    updated[side] = true;
   }
 
   void Accumulator::reset(Color side) {
@@ -156,6 +160,8 @@ namespace NNUE {
       const Square sq = popLsb(occupied);
       addPiece(kingSq, side, pos.board[sq], sq);
     }
+
+    updated[side] = true;
   }
 
   void FinnyEntry::reset() {
