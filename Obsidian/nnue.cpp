@@ -13,7 +13,7 @@ namespace NNUE {
   constexpr int WeightsPerVec = sizeof(SIMD::Vec) / sizeof(weight_t);
 
   struct {
-    alignas(SIMD::Alignment) weight_t FeatureWeights[KingBucketsCount][2][6][64][HiddenWidth];
+    alignas(SIMD::Alignment) weight_t FeatureWeights[KingBuckets][2][6][64][HiddenWidth];
     alignas(SIMD::Alignment) weight_t FeatureBiases[HiddenWidth];
     alignas(SIMD::Alignment) weight_t OldOutputWeights[2 * HiddenWidth][OutputBuckets];
                              weight_t OutputBias[OutputBuckets];

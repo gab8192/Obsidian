@@ -1135,7 +1135,7 @@ namespace Search {
     accumStack[0].refresh(rootPos, BLACK);
     
     for (int i = 0; i < 2; i++)
-        for (int j = 0; j < NNUE::KingBucketsCount; j++)
+        for (int j = 0; j < NNUE::KingBuckets; j++)
           finny[i][j].reset();
 
     keyStackHead = 0;
