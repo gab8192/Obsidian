@@ -742,6 +742,12 @@ namespace Search {
       }
     }
 
+    if ((ss - 1)->playedMove) {
+      Color them = ~pos.sideToMove;
+      if (NNUE::needRefresh(them, accumStack[accumStackHead-1].kings[them], pos.kingSquare(them)))
+        refreshAccumulator(pos, accumStack[accumStackHead], them);
+    }
+
     (ss + 1)->killerMove = MOVE_NONE;
     ss->doubleExt = (ss - 1)->doubleExt;
 
