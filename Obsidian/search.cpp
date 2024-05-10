@@ -271,7 +271,8 @@ namespace Search {
 
   void Thread::playMove(Position& pos, Move move, SearchInfo* ss) {
 
-    TT::prefetch(pos.keyAfter(move));
+    if (move_type(move) == MT_NORMAL)
+      TT::prefetch(pos.keyAfter(move));
 
     nodesSearched++;
 
