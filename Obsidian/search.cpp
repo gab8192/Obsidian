@@ -282,11 +282,6 @@ namespace Search {
     ss->playedMove = move;
     keyStack[keyStackHead++] = pos.key;
 
-    Square oldKingSquares[COLOR_NB];
-    oldKingSquares[WHITE] = pos.kingSquare(WHITE);
-    oldKingSquares[BLACK] = pos.kingSquare(BLACK);
-
-    NNUE::Accumulator& oldAcc = accumStack[accumStackHead];
     NNUE::Accumulator& newAcc = accumStack[++accumStackHead];
 
     ply++;
@@ -295,11 +290,6 @@ namespace Search {
     for (Color side = WHITE; side <= BLACK; ++side) {
       newAcc.updated[side] = false;
       newAcc.kings[side] = pos.kingSquare(side);
-    }
-
-    for (Color side = WHITE; side <= BLACK; ++side) {
-      if (NNUE::needRefresh(side, oldKingSquares[side], pos.kingSquare(side)))
-        refreshAccumulator(pos, newAcc, side);
     }
   }
 
@@ -523,6 +513,12 @@ namespace Search {
         return bestScore;
       if (bestScore > alpha)
         alpha = bestScore;
+    }
+
+    if ((ss - 1)->playedMove) {
+      Color them = ~pos.sideToMove;
+      if (NNUE::needRefresh(them, accumStack[accumStackHead-1].kings[them], pos.kingSquare(them)))
+        refreshAccumulator(pos, accumStack[accumStackHead], them);
     }
 
     MovePicker movePicker(
