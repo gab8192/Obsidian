@@ -1150,6 +1150,7 @@ namespace Search {
 
     ply = 0;
     maxTimeCounter = 0;
+    isFortress = false;
 
     SearchLoopInfo idStack[MAX_PLY];
 
@@ -1276,6 +1277,18 @@ namespace Search {
       idStack[rootDepth].bestMove = bestMove;
 
       completeDepth = rootDepth;
+
+      // Check if we should turn on isFortress
+      if (!isFortress && rootDepth >= 20) {
+        bool isSameScore = true;
+        for (int i = 1; i <= 8; i++) {
+          if (idStack[rootDepth-i].score != idStack[rootDepth].score) {
+            isSameScore = false;
+            break;
+          }
+        }
+        isFortress = isSameScore;
+      }
 
       if (this != Threads::mainThread())
         continue;

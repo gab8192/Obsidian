@@ -101,6 +101,8 @@ namespace Search {
 
     Score previousScore;
 
+    bool isFortress;
+
     void refreshAccumulator(Position& pos, NNUE::Accumulator& acc, Color side);
 
     void sortRootMoves(int offset);
