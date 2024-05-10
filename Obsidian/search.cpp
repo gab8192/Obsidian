@@ -757,6 +757,7 @@ namespace Search {
     // thus do a qsearch. If the qsearch still can't hit alpha, cut off
     if ( !IsPV
       && alpha < 2000
+      && !isFortress
       && eval < alpha - RazoringDepthMul * depth) {
       Score score = qsearch<IsPV>(pos, alpha, beta, 0, ss);
       if (score <= alpha)
