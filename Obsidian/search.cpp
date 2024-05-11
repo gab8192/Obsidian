@@ -672,7 +672,8 @@ namespace Search {
       && ttScore != SCORE_NONE
       && ttDepth >= depth
       && (ttBound & boundForTT(ttScore >= beta))
-      && pos.halfMoveClock < 90) // The TT entry might trick us into thinking this is not a draw
+      && pos.halfMoveClock < 90 // The TT entry might trick us into thinking this is not a draw
+      && ply >= 5)
         return ttScore;
 
     // Probe tablebases
