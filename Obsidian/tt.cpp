@@ -4,6 +4,7 @@
 
 namespace TT {
 
+  constexpr size_t MEGA = 1024 * 1024;
   constexpr uint8_t MAX_AGE = 1 << 5;
 
   uint8_t tableAge;
@@ -20,13 +21,13 @@ namespace TT {
   }
 
   void resize(size_t megaBytes) {
-    size_t bytes = megaBytes * 1024ULL * 1024ULL;
+    size_t bytes = megaBytes * MEGA;
     bucketCount = bytes / sizeof(Bucket);
 
     if (buckets != nullptr)
       delete[] buckets;
 
-    buckets = new Bucket[bucketCount];
+    buckets = new(std::align_val_t(2 * MEGA)) Bucket[bucketCount];
     clear();
   }
 
