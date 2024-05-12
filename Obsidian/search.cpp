@@ -1224,7 +1224,6 @@ namespace Search {
         int window = AspWindowStartDelta;
         Score alpha = -SCORE_INFINITE;
         Score beta  = SCORE_INFINITE;
-        int failHighCount = 0;
 
         if (rootDepth >= AspWindowStartDepth) {
           alpha = std::max(-SCORE_INFINITE, rootMoves[pvIdx].score - window);
@@ -1233,7 +1232,7 @@ namespace Search {
 
         while (true) {
 
-          int adjustedDepth = std::max(1, rootDepth - failHighCount);
+          int adjustedDepth = std::max(1, rootDepth);
 
           Score score = negamax<true>(rootPos, alpha, beta, adjustedDepth, false, ss);
 
@@ -1246,14 +1245,9 @@ namespace Search {
           if (score <= alpha) {
             beta = (alpha + beta) / 2;
             alpha = std::max(-SCORE_INFINITE, score - window);
-
-            failHighCount = 0;
           }
           else if (score >= beta) {
             beta = std::min(SCORE_INFINITE, score + window);
-
-            if (score < 2000)
-              failHighCount++;
           }
           else
             break;
