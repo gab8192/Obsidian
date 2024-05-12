@@ -1222,18 +1222,18 @@ namespace Search {
 
       for (pvIdx = 0; pvIdx < multiPV; pvIdx++) {
         int window = AspWindowStartDelta;
-        Score alpha = -SCORE_INFINITE;
+        Score beta  = SCORE_INFINITE;
         int failHighCount = 0;
 
         if (rootDepth >= AspWindowStartDepth) {
-          alpha = std::max(-SCORE_INFINITE, rootMoves[pvIdx].score - window);
+          beta  = std::min( SCORE_INFINITE, rootMoves[pvIdx].score + window);
         }
 
         while (true) {
 
           int adjustedDepth = std::max(1, rootDepth - failHighCount);
 
-          Score score = negamax<true>(rootPos, alpha, SCORE_INFINITE, adjustedDepth, false, ss);
+          Score score = negamax<true>(rootPos, -SCORE_INFINITE, beta, adjustedDepth, false, ss);
 
           // Discard any result if search was abruptly stopped
           if (Threads::isSearchStopped())
@@ -1241,10 +1241,11 @@ namespace Search {
 
           sortRootMoves(pvIdx);
 
-          if (score <= alpha) {
-            alpha = std::max(-SCORE_INFINITE, score - window);
+          if (score >= beta) {
+            beta = std::min(SCORE_INFINITE, score + window);
 
-            failHighCount = 0;
+            if (score < 2000)
+              failHighCount++;
           }
           else
             break;
