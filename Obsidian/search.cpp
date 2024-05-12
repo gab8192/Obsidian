@@ -1241,11 +1241,6 @@ namespace Search {
           if (Threads::isSearchStopped())
             goto bestMoveDecided;
 
-          if ( rootDepth > 1 
-            && settings.nodes
-            && Threads::totalNodes() > settings.nodes)
-            goto bestMoveDecided;
-
           sortRootMoves(pvIdx);
 
           if (score <= alpha) {
@@ -1285,6 +1280,11 @@ namespace Search {
       if (!doingBench && std::string(Options["Minimal"]) != "true")
         for (int i = 0; i < multiPV; i++)
           printInfo(rootDepth, i+1, rootMoves[i].score, getPvString(rootMoves[i]));
+
+      if ( rootDepth > 1 
+            && settings.nodes
+            && Threads::totalNodes() > settings.nodes)
+            goto bestMoveDecided;
 
       if (usedMostOfTime())
         goto bestMoveDecided;
