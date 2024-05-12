@@ -715,7 +715,7 @@ namespace Search {
     (ss + 1)->killerMove = MOVE_NONE;
     ss->doubleExt = (ss - 1)->doubleExt;
 
-    bool improving = false;
+    bool improving = true;
 
     // Do the static evaluation
 
