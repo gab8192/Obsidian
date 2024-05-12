@@ -1,5 +1,6 @@
 #include "uci.h"
 #include "bench.h"
+#include "datagen.h"
 #include "evaluate.h"
 #include "move.h"
 #include "movegen.h"
@@ -17,8 +18,6 @@
 #include <vector>
 
 namespace {
-
-  const char* StartFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
   std::vector<uint64_t> prevPositions;
 
@@ -83,7 +82,7 @@ namespace {
 
     uint64_t totalNodes = 0;
     clock_t elapsed = 0;
-    Search::doingBench = true;
+    Search::infoDisabled = true;
 
     for (int i = 0; i < posCount; i++) 
     {
@@ -113,7 +112,7 @@ namespace {
 
     std::cout << totalNodes << " nodes " << (totalNodes * 1000 / elapsed) << " nps" << std::endl;
 
-    Search::doingBench = false;
+    Search::infoDisabled = false;
   }
 
   void setoption(std::istringstream& is) {
@@ -235,6 +234,11 @@ void UCI::loop(int argc, char* argv[]) {
         eval = -eval;
       std::cout << "Evaluation: " << UCI::normalizeToCp(eval) 
                 << "  (not normalized: " << eval << ")" << std::endl;
+    }
+    else if (token == "datagen") {
+      int threadN;
+      is >> threadN;
+      Datagen::datagen();
     }
     else if (!token.empty() && token[0] != '#')
       std::cout << "Unknown command: '" << cmd << "'." << std::endl;

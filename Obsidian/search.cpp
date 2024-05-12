@@ -59,7 +59,7 @@ namespace Search {
   DEFINE_PARAM_B(AspWindowStartDepth, 4, 4, 34);
   DEFINE_PARAM_B(AspWindowStartDelta, 13, 5, 45);
   
-  bool doingBench = false;
+  bool infoDisabled = false;
 
   int lmrTable[MAX_PLY][MAX_MOVES];
 
@@ -1241,11 +1241,6 @@ namespace Search {
           if (Threads::isSearchStopped())
             goto bestMoveDecided;
 
-          if ( rootDepth > 1 
-            && settings.nodes
-            && Threads::totalNodes() > settings.nodes)
-            goto bestMoveDecided;
-
           sortRootMoves(pvIdx);
 
           if (score <= alpha) {
@@ -1278,13 +1273,16 @@ namespace Search {
       completeDepth = rootDepth;
 
       if (this != Threads::mainThread())
-        continue;
+        continue; 
 
-      const clock_t elapsed = elapsedTime();
-
-      if (!doingBench && std::string(Options["Minimal"]) != "true")
+      if (!infoDisabled && std::string(Options["Minimal"]) != "true")
         for (int i = 0; i < multiPV; i++)
           printInfo(rootDepth, i+1, rootMoves[i].score, getPvString(rootMoves[i]));
+
+      if ( rootDepth > 1 
+        && settings.nodes
+        && Threads::totalNodes() > settings.nodes)
+        goto bestMoveDecided;    
 
       if (usedMostOfTime())
         goto bestMoveDecided;
@@ -1307,7 +1305,7 @@ namespace Search {
 
         double scoreFactor     = std::clamp(scoreLoss, lol0 / 100.0, lol1 / 100.0);
 
-        if (elapsed > stabilityFactor * nodesFactor * scoreFactor * optimumTime)
+        if (elapsedTime() > stabilityFactor * nodesFactor * scoreFactor * optimumTime)
           goto bestMoveDecided;
       }
     }
@@ -1321,11 +1319,11 @@ namespace Search {
 
     Threads::stopSearch();
 
-    if (!doingBench && std::string(Options["Minimal"]) == "true")
+    if (!infoDisabled && std::string(Options["Minimal"]) == "true")
         for (int i = 0; i < multiPV; i++)
           printInfo(completeDepth, i+1, rootMoves[i].score, getPvString(rootMoves[i]));
     
-    if (!doingBench) {
+    if (!infoDisabled) {
       previousScore = rootMoves[0].score;
       std::cout << "bestmove " << UCI::moveToString(rootMoves[0].move) << std::endl;
     }

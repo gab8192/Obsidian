@@ -1,5 +1,4 @@
 #include "threads.h"
-#include <atomic>
 
 namespace Threads {
 

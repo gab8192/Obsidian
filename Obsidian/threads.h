@@ -2,11 +2,16 @@
 
 #include "history.h"
 #include "search.h"
+#include <atomic>
 #include <vector>
 
 namespace Threads {
 
+  extern Search::Settings searchSettings;
+
   extern std::vector<Search::Thread*> searchThreads;
+
+  extern std::atomic<bool> searchStopped;
 
   Search::Thread* mainThread();
 

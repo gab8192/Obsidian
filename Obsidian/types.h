@@ -18,6 +18,8 @@ using Move = int;
 
 const std::string piecesChar = " PNBRQK  pnbrqk";
 
+const std::string StartFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+
 constexpr int MAX_PLY = 246;
 constexpr int MAX_MOVES = 224; // 32*7
 

@@ -10,7 +10,7 @@
 
 namespace Search {
 
-  extern bool doingBench;
+  extern bool infoDisabled;
 
   struct Settings {
 
@@ -68,9 +68,13 @@ namespace Search {
     uint64_t nodesSearched;
     uint64_t tbHits;
 
+     RootMoveList rootMoves;
+
     Thread();
 
     void resetHistories();
+
+    void startSearch();
     
   private:
     
@@ -89,7 +93,6 @@ namespace Search {
 
     SearchInfo searchStack[MAX_PLY + SsOffset];
 
-    RootMoveList rootMoves;
     int pvIdx;
 
     MainHistory mainHistory;
@@ -137,8 +140,6 @@ namespace Search {
     template<bool IsPV>
     Score negamax(Position& position, Score alpha, Score beta, int depth,
       bool cutNode, SearchInfo* ss, const Move excludedMove = MOVE_NONE);
-
-    void startSearch();
 
     void idleLoop();
   };
