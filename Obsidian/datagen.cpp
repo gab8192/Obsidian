@@ -10,7 +10,7 @@ namespace Datagen {
 
   void playRandomMoves(Position& pos, int numMoves) {
     std::mt19937 gen(__rdtsc());
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < numMoves; i++) {
       MoveList legals;
       {
         MoveList pseudoLegals;
@@ -53,24 +53,20 @@ namespace Datagen {
 
   constexpr int MAX_GAME_PLY = 400;
 
-  void playGame(Position pos /* copy on purpose */ ) {
+  void playGame(Position pos /* copy on purpose */, int ply) {
     TT::clear();
 
-    int ply = 0;
     Key prevPositions[MAX_GAME_PLY+4];
 
     Search::Thread* st = Threads::mainThread();
     while (true) {
 
-      if (!anyLegalMove(pos))
-        return;
+      TT::nextSearch();   
 
       Search::Settings settings;
       settings.startTime = timeMillis();
       settings.position = pos;
       settings.nodes = 5000;
-
-      TT::nextSearch();   
 
       Threads::searchSettings = settings;
       Threads::searchStopped = false;
@@ -81,22 +77,32 @@ namespace Datagen {
       Score score = st->rootMoves[0].score;
       Move move = st->rootMoves[0].move;
 
-      std::cout << pos.toFenString() << " | " << score << " | " << UCI::moveToString(move) << std::endl;
+      if (pos.sideToMove == BLACK) score *= -1;
+
+      bool isCap = move_type(move) == MT_EN_PASSANT || pos.board[move_to(move)];
+
+      if (   ply >= 16
+          && !pos.checkers
+          && !isCap
+          && std::abs(score) < SCORE_TB_WIN_IN_MAX_PLY)
+        std::cout << pos.toFenString() << " | " << score << std::endl;
 
       prevPositions[ply++] = pos.key;
 
       DirtyPieces dp;
       pos.doMove(move, dp);
 
-      if (pos.halfMoveClock >= 100)
+      if (pos.halfMoveClock >= 100 || ply >= MAX_GAME_PLY)
         return;
       if (std::abs(score) >= SCORE_TB_WIN_IN_MAX_PLY)
-        return;   
-      if (!enoughMaterialToMate(pos, WHITE) && !enoughMaterialToMate(pos, BLACK))
         return;
       for (int i = ply - 4; i >= ply - pos.halfMoveClock; i -= 2)
         if (prevPositions[i] == pos.key)
           return;
+      if (!enoughMaterialToMate(pos, WHITE) && !enoughMaterialToMate(pos, BLACK))
+        return;
+      if (!anyLegalMove(pos))
+        return;
     }
   }
 
@@ -104,13 +110,19 @@ namespace Datagen {
     Search::infoDisabled = true;
     Search::Thread* st = Threads::mainThread();
 
-    for (int i = 0; i < 10; i++) {
+    int gameN = 0;
+    while (true) {
       Position pos;
       pos.setToFen(StartFEN);
-      playRandomMoves(pos, 9 + (i & 1)); // 9 or 10 random moves
+      int ply = 9 + (gameN & 1);
+      playRandomMoves(pos, ply); // 9 or 10 random moves
       pos.halfMoveClock = 0;
+      if (! anyLegalMove(pos))
+        return;
 
-      playGame(pos);
+      playGame(pos, ply);
+
+      gameN++;
     }
   }
 
