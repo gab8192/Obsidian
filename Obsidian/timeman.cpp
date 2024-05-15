@@ -30,6 +30,7 @@ namespace TimeMan {
     }
 
     *optimumTime = clock_t(optScale * timeLeft);
-    *maximumTime = settings.time[us] * 0.8 - overhead;
+   // *maximumTime = settings.time[us] * 0.8 - overhead;
+    *maximumTime = *optimumTime;
   }
 }

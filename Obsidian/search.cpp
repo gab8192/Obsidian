@@ -1238,9 +1238,10 @@ namespace Search {
 
           Score score = negamax<true>(rootPos, alpha, beta, adjustedDepth, false, ss);
 
+          // The score of any root move is updated only if search wasn't yet stopped at the moment of updating.
+          // That means that the root moves' score is usable at any time
           sortRootMoves(pvIdx);
 
-          // Discard any result if search was abruptly stopped
           if (Threads::isSearchStopped())
             goto bestMoveDecided;
 
@@ -1307,9 +1308,6 @@ namespace Search {
                            + (tm6/1000.0) * (previousScore - score);
 
         double scoreFactor     = std::clamp(scoreLoss, lol0 / 100.0, lol1 / 100.0);
-
-        if (elapsed > stabilityFactor * nodesFactor * scoreFactor * optimumTime)
-          goto bestMoveDecided;
       }
     }
 
