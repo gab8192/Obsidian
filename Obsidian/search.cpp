@@ -1238,9 +1238,7 @@ namespace Search {
 
           Score score = negamax<true>(rootPos, alpha, beta, adjustedDepth, false, ss);
 
-          // The score of any root move is updated only if search wasn't yet stopped at the moment of updating.
-          // That means that the root moves' score is usable at any time
-          sortRootMoves(pvIdx);
+          
 
           if (Threads::isSearchStopped())
             goto bestMoveDecided;
@@ -1249,6 +1247,10 @@ namespace Search {
             && settings.nodes
             && Threads::totalNodes() > settings.nodes)
             goto bestMoveDecided;
+
+            // The score of any root move is updated only if search wasn't yet stopped at the moment of updating.
+          // That means that the root moves' score is usable at any time
+          sortRootMoves(pvIdx);
 
           if (score <= alpha) {
             beta = (alpha + beta) / 2;
