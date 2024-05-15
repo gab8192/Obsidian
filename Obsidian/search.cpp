@@ -1238,7 +1238,10 @@ namespace Search {
 
           Score score = negamax<true>(rootPos, alpha, beta, adjustedDepth, false, ss);
 
-          // Discard any result if search was abruptly stopped
+          // The score of any root move is updated only if search wasn't yet stopped at the moment of updating.
+          // This means that the root moves' score is usable at any time
+          sortRootMoves(pvIdx);
+
           if (Threads::isSearchStopped())
             goto bestMoveDecided;
 
@@ -1246,8 +1249,6 @@ namespace Search {
             && settings.nodes
             && Threads::totalNodes() > settings.nodes)
             goto bestMoveDecided;
-
-          sortRootMoves(pvIdx);
 
           if (score <= alpha) {
             beta = (alpha + beta) / 2;
@@ -1337,14 +1338,14 @@ namespace Search {
 
       for (int i = 0; i < Threads::searchThreads.size(); i++) {
         Search::Thread* st = Threads::searchThreads[i];
-        if (st->rootMoves[0].score == - SCORE_INFINITE)
+        if (! st->completeDepth)
           continue;
         minScore = std::min(minScore, st->rootMoves[0].score);
       }
 
       for (int i = 0; i < Threads::searchThreads.size(); i++) {
         Search::Thread* st = Threads::searchThreads[i];
-        if (st->rootMoves[0].score == - SCORE_INFINITE)
+        if (! st->completeDepth)
           continue;
         votes[st->rootMoves[0].move] += (st->rootMoves[0].score - minScore + 9) * st->completeDepth;
       }
@@ -1352,21 +1353,21 @@ namespace Search {
       Search::Thread* bestThread = this;
 
       for (int i = 1; i < Threads::searchThreads.size(); i++) {
-        Search::Thread* currThread = Threads::searchThreads[i];
-        if (currThread->rootMoves[0].score == - SCORE_INFINITE)
+        Search::Thread* st = Threads::searchThreads[i];
+        if (! st->completeDepth)
           continue;
-        Score currScore = currThread->rootMoves[0].score;
-        int currVote = votes[currThread->rootMoves[0].move];
+        Score currScore = st->rootMoves[0].score;
+        int currVote = votes[st->rootMoves[0].move];
         Score bestScore = bestThread->rootMoves[0].score;
         int bestVote = votes[bestThread->rootMoves[0].move];
 
         if (abs(bestScore) >= SCORE_TB_WIN_IN_MAX_PLY) {
           if (currScore > bestScore)
-            bestThread = currThread;
+            bestThread = st;
         } else if (currScore >= SCORE_TB_WIN_IN_MAX_PLY)
-          bestThread = currThread;
+          bestThread = st;
         else if ( currScore > SCORE_TB_LOSS_IN_MAX_PLY && currVote > bestVote)
-          bestThread = currThread;
+          bestThread = st;
       }
 
       finalBestMove = bestThread->rootMoves[0].move;
