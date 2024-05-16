@@ -1340,6 +1340,7 @@ namespace Search {
         Search::Thread* st = Threads::searchThreads[i];
         if (! st->completeDepth)
           continue;
+        std::cout << "thread " << i << " move " << UCI::moveToString(st->rootMoves[0].move) << " score " << st->rootMoves[0].score << " depth " << st->completeDepth << std::endl;
         minScore = std::min(minScore, st->rootMoves[0].score);
       }
 
