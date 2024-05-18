@@ -226,7 +226,7 @@ void Position::doNullMove() {
   updateAttacks();
 }
 
-void Position::doMove(Move move, DirtyPieces& dp) {
+void Position::doMove(Move move) {
 
   const Color us = sideToMove, them = ~us;
 
@@ -251,21 +251,16 @@ void Position::doMove(Move move, DirtyPieces& dp) {
     const Piece movedPc = board[from];
     const Piece capturedPc = board[to];
 
-    dp.type = capturedPc ? DirtyPieces::CAPTURE : DirtyPieces::NORMAL;
-
     if (capturedPc != NO_PIECE) {
       halfMoveClock = 0;
 
       removePiece(to, capturedPc);
-      dp.sub1 = {to, capturedPc};
 
       if (piece_type(capturedPc) == ROOK)
         newCastlingRights &= ROOK_SQR_TO_CR[to];
     }
 
     movePiece(from, to, movedPc);
-    dp.sub0 = {from, movedPc};
-    dp.add0 = {to, movedPc};
 
     switch (piece_type(movedPc)) {
     case PAWN: {
@@ -306,12 +301,6 @@ void Position::doMove(Move move, DirtyPieces& dp) {
     movePiece(rookSrc, rookDest, ourRookPc);
     newCastlingRights &= (us == WHITE ? BLACK_CASTLING : WHITE_CASTLING);
 
-    dp.type = DirtyPieces::CASTLING;
-    dp.sub0 = {kingSrc, ourKingPc};
-    dp.add0 = {kingDest, ourKingPc};
-    dp.sub1 = {rookSrc, ourRookPc};
-    dp.add1 = {rookDest, ourRookPc};
-
     break;
   }
   case MT_EN_PASSANT: {
@@ -326,11 +315,6 @@ void Position::doMove(Move move, DirtyPieces& dp) {
 
     removePiece(capSq, theirPawnPc);
     movePiece(from, to, ourPawnPc);
-    
-    dp.type = DirtyPieces::CAPTURE;
-    dp.sub1 = {capSq, theirPawnPc};
-    dp.sub0 = {from, ourPawnPc};
-    dp.add0 = {to, ourPawnPc};
 
     break;
   }
@@ -344,11 +328,8 @@ void Position::doMove(Move move, DirtyPieces& dp) {
     const Piece capturedPc = board[to];
     const Piece promoteToPc = makePiece(us, promo_type(move));
 
-    dp.type = capturedPc ? DirtyPieces::CAPTURE : DirtyPieces::NORMAL;
-
     if (capturedPc != NO_PIECE) {
       removePiece(to, capturedPc);
-      dp.sub1 = {to, capturedPc};
       
       if (piece_type(capturedPc) == ROOK)
         newCastlingRights &= ROOK_SQR_TO_CR[to];
@@ -356,8 +337,6 @@ void Position::doMove(Move move, DirtyPieces& dp) {
 
     removePiece(from, movedPc);
     putPiece(to, promoteToPc);
-    dp.sub0 = {from, movedPc};
-    dp.add0 = {to, promoteToPc};
     
     break;
   }

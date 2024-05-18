@@ -53,6 +53,7 @@ void init(OptionsMap& o) {
   o["SyzygyPath"]        << Option("", syzygyPathChanged);
   o["Minimal"]           << Option("false");
   o["MultiPV"]           << Option(1, 1, MAX_MOVES);
+  o["Use NNUE"]          << Option("true");
 }
 
 

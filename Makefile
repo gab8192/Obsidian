@@ -10,11 +10,11 @@ MSSSE3  = $(MSSE2) -mssse3
 MAVX2   = $(MSSSE3) -msse4.1 -mbmi -mfma -mavx2
 MAVX512 = $(MAVX2) -mavx512f -mavx512bw
 
-FILES = Obsidian/*.cpp Obsidian/fathom/src/tbprobe.c
+FILES = Obsidian/*.cpp Obsidian/nnue/*.cpp Obsidian/nnue/features/*.cpp Obsidian/fathom/src/tbprobe.c
 
 OPTIMIZE = -O3 -fno-stack-protector -fno-math-errno -funroll-loops -fno-exceptions -flto -flto-partition=one
 
-FLAGS = -s -pthread -std=c++17 -DNDEBUG
+FLAGS = -s -pthread -std=c++17 -DNDEBUG -DUSE_SSE -DUSE_SSE2 -DUSE_SSE3 -DUSE_SSSE3 -DUSE_SSE41 -DUSE_SSE42 -DUSE_AVX2
 
 ifeq ($(build),)
 	build = native
