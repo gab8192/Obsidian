@@ -876,6 +876,8 @@ namespace Search {
         continue;
       
       seenMoves++;
+
+      ss->doubleExt = (ss - 1)->doubleExt;
       
       bool isQuiet = pos.isQuiet(move);
 
