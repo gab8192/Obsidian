@@ -958,7 +958,7 @@ namespace Search {
 
       if (depth >= 2 && seenMoves > 1 + 2 * IsRoot) {
 
-        int R = lmrTable[depth][seenMoves] / (1 + !isQuiet);
+        int R = lmrTable[depth][seenMoves];
 
         // Reduce or extend depending on history of this move
         R -= history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv);
@@ -976,7 +976,8 @@ namespace Search {
         R += !improving;
 
         // Reduce if we expect to fail high
-        R += 2 * cutNode;
+        if (cutNode)
+          R += 1 + isQuiet;
 
         // Clamp to avoid a qsearch or an extension in the child search
         int reducedDepth = std::clamp(newDepth - R, 1, newDepth + 1);
