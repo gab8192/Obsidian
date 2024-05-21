@@ -970,7 +970,7 @@ namespace Search {
         R -= ttPV + IsPV;
 
         // Reduce more if the expected best move is a capture
-        R += ttMoveNoisy;
+        R += (ttMoveNoisy && ttDepth >= 1);
 
         // Reduce if evaluation is trending down
         R += !improving;
