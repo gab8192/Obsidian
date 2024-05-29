@@ -174,6 +174,9 @@ namespace Search {
   }
 
   void printInfo(int depth, int pvIdx, Score score, const std::string& pvString) {
+    if (doingBench)
+      return;
+
     clock_t elapsed = elapsedTime();
     std::ostringstream infoStr;
         infoStr
@@ -189,6 +192,13 @@ namespace Search {
           << " pv "       << pvString;
 
     std::cout << infoStr.str() << std::endl;
+  }
+
+  void printBestMove(Move move) {
+    if (doingBench)
+      return;
+      
+    std::cout << "bestmove " << UCI::moveToString(move) << std::endl;
   }
 
   int stat_bonus(int d) {
@@ -1167,6 +1177,8 @@ namespace Search {
       searchStack[i].doubleExt = 0;
     }
 
+    bool naturalExit = true;
+
     int searchStability = 0;
 
     SearchInfo* ss = &searchStack[SsOffset];
@@ -1242,13 +1254,17 @@ namespace Search {
           // This means that the root moves' score is usable at any time
           sortRootMoves(pvIdx);
 
-          if (Threads::isSearchStopped())
+          if (Threads::isSearchStopped()) {
+            naturalExit = false;
             goto bestMoveDecided;
+          }
 
           if ( rootDepth > 1 
             && settings.nodes
-            && Threads::totalNodes() > settings.nodes)
+            && Threads::totalNodes() > settings.nodes) {
+            naturalExit = false;
             goto bestMoveDecided;
+          }
 
           if (score <= alpha) {
             beta = (alpha + beta) / 2;
@@ -1284,9 +1300,9 @@ namespace Search {
 
       const clock_t elapsed = elapsedTime();
 
-      if (!doingBench && std::string(Options["Minimal"]) != "true")
+      if (std::string(Options["Minimal"]) != "true")
         for (int i = 0; i < multiPV; i++)
-          printInfo(rootDepth, i+1, rootMoves[i].score, getPvString(rootMoves[i]));
+          printInfo(completeDepth, i+1, rootMoves[i].score, getPvString(rootMoves[i]));
 
       if (usedMostOfTime())
         goto bestMoveDecided;
@@ -1325,11 +1341,7 @@ namespace Search {
 
     Threads::waitForSearch(false);
 
-    if (!doingBench && std::string(Options["Minimal"]) == "true")
-        for (int i = 0; i < multiPV; i++)
-          printInfo(completeDepth, i+1, rootMoves[i].score, getPvString(rootMoves[i]));
-
-    Move finalBestMove = rootMoves[0].move;
+    Search::Thread* bestThread = this;
 
     if (rootMoves.size() > 1 && Threads::searchThreads.size() > 1) {
 
@@ -1350,8 +1362,6 @@ namespace Search {
         votes[st->rootMoves[0].move] += (st->rootMoves[0].score - minScore + 9) * st->completeDepth;
       }
 
-      Search::Thread* bestThread = this;
-
       for (int i = 1; i < Threads::searchThreads.size(); i++) {
         Search::Thread* st = Threads::searchThreads[i];
         if (! st->completeDepth)
@@ -1369,14 +1379,15 @@ namespace Search {
         else if ( currScore > SCORE_TB_LOSS_IN_MAX_PLY && currVote > bestVote)
           bestThread = st;
       }
+    }
 
-      finalBestMove = bestThread->rootMoves[0].move;
-    }
-    
-    if (!doingBench) {
-      previousScore = rootMoves[0].score;
-      std::cout << "bestmove " << UCI::moveToString(finalBestMove) << std::endl;
-    }
+    previousScore = bestThread->rootMoves[0].score;
+
+    if (!naturalExit || bestThread != this || std::string(Options["Minimal"]) == "true")
+        for (int i = 0; i < multiPV; i++)
+          printInfo(bestThread->completeDepth, i+1, bestThread->rootMoves[i].score, getPvString(bestThread->rootMoves[i]));
+
+    printBestMove(bestThread->rootMoves[0].move);
   }
 
   void Thread::idleLoop() {
