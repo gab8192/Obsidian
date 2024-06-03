@@ -83,7 +83,9 @@ namespace {
 
     uint64_t totalNodes = 0;
     clock_t elapsed = 0;
-    Search::doingBench = true;
+
+    std::string oldMinimal = Options["Minimal"];
+    Options["Minimal"] = std::string("true");
 
     for (int i = 0; i < posCount; i++) 
     {
@@ -113,7 +115,7 @@ namespace {
 
     std::cout << totalNodes << " nodes " << (totalNodes * 1000 / elapsed) << " nps" << std::endl;
 
-    Search::doingBench = false;
+    Options["Minimal"] = oldMinimal;
   }
 
   void setoption(std::istringstream& is) {

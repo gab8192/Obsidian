@@ -10,8 +10,6 @@
 
 namespace Search {
 
-  extern bool doingBench;
-
   struct Settings {
 
     clock_t time[COLOR_NB], inc[COLOR_NB], movetime, startTime;

@@ -60,8 +60,6 @@ namespace Search {
   DEFINE_PARAM_B(AspWindowStartDepth, 4, 4, 34);
   DEFINE_PARAM_B(AspWindowStartDelta, 13, 5, 45);
   
-  bool doingBench = false;
-
   int lmrTable[MAX_PLY][MAX_MOVES];
 
   Settings::Settings() {
@@ -174,9 +172,6 @@ namespace Search {
   }
 
   void printInfo(int depth, int pvIdx, Score score, const std::string& pvString) {
-    if (doingBench)
-      return;
-
     clock_t elapsed = elapsedTime();
     std::ostringstream infoStr;
         infoStr
@@ -194,10 +189,7 @@ namespace Search {
     std::cout << infoStr.str() << std::endl;
   }
 
-  void printBestMove(Move move) {
-    if (doingBench)
-      return;
-      
+  void printBestMove(Move move) {      
     std::cout << "bestmove " << UCI::moveToString(move) << std::endl;
   }
 
