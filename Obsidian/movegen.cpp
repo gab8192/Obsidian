@@ -128,29 +128,17 @@ void getStageMoves(const Position& pos, MoveGenFlags flags, MoveList* moveList) 
     addPawnMoves<BLACK>(pos, inCheckFilter, moveList, flags);
 
   if ((flags & ADD_QUIETS) && !pos.checkers) {
-    if (us == WHITE) {
-      if (pos.castlingRights & WHITE_OO) {
-        if (!(CASTLING_PATH[WHITE_OO] & occupied)) {
-          moveList->add(createCastlingMove(WHITE_OO));
-        }
-      }
-      if (pos.castlingRights & WHITE_OOO) {
-        if (!(CASTLING_PATH[WHITE_OOO] & occupied)) {
-          moveList->add(createCastlingMove(WHITE_OOO));
-        }
-      }
+    const CastlingRights castleShort = CastlingRights(WHITE_OO << (2 * us));
+    const CastlingRights castleLong =  CastlingRights(WHITE_OOO << (2 * us));
+
+    if (pos.castlingRights & castleShort) {
+      if (!(CASTLING_PATH[castleShort] & occupied))
+        moveList->add(createCastlingMove(castleShort));
     }
-    else {
-      if (pos.castlingRights & BLACK_OO) {
-        if (!(CASTLING_PATH[BLACK_OO] & occupied)) {
-          moveList->add(createCastlingMove(BLACK_OO));
-        }
-      }
-      if (pos.castlingRights & BLACK_OOO) {
-        if (!(CASTLING_PATH[BLACK_OOO] & occupied)) {
-          moveList->add(createCastlingMove(BLACK_OOO));
-        }
-      }
+    
+    if (pos.castlingRights & castleLong) {
+      if (!(CASTLING_PATH[castleLong] & occupied))
+        moveList->add(createCastlingMove(castleLong));
     }
   }
 
