@@ -1126,7 +1126,7 @@ namespace Search {
   DEFINE_PARAM_B(tm5, 10,   0, 150);
   DEFINE_PARAM_B(tm6, 15,   0, 150);
 
-  DEFINE_PARAM_B(lol0, 84, -150, 0);
+  DEFINE_PARAM_B(lol0, 84, 0, 150);
   DEFINE_PARAM_B(lol1, 152,   0,  150);
 
   void Thread::startSearch() {
