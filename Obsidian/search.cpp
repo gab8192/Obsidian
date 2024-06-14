@@ -16,45 +16,45 @@
 
 namespace Search {
     
-  DEFINE_PARAM_S(QsFpMargin, 153, 10);
+  DEFINE_PARAM_S(QsFpMargin, 151, 10);
 
-  DEFINE_PARAM_S(LmrBase, 50, 10);
-  DEFINE_PARAM_S(LmrDiv, 200, 10);
+  DEFINE_PARAM_S(LmrBase, 52, 10);
+  DEFINE_PARAM_S(LmrDiv, 192, 10);
 
-  DEFINE_PARAM_S(StatBonusLinear, 134, 10);
-  DEFINE_PARAM_S(StatBonusMax, 1153, 50);
-  DEFINE_PARAM_S(StatBonusBoostAt, 121, 10);
+  DEFINE_PARAM_S(StatBonusLinear, 142, 10);
+  DEFINE_PARAM_S(StatBonusMax, 1167, 50);
+  DEFINE_PARAM_S(StatBonusBoostAt, 123, 10);
 
-  DEFINE_PARAM_S(RazoringDepthMul, 418, 10);
+  DEFINE_PARAM_S(RazoringDepthMul, 413, 10);
 
   DEFINE_PARAM_S(RfpMaxDepth, 9, 1);
-  DEFINE_PARAM_S(RfpDepthMul, 125, 6);
+  DEFINE_PARAM_S(RfpDepthMul, 127, 6);
 
   DEFINE_PARAM_S(NmpBase, 4, 1);
   DEFINE_PARAM_B(NmpDepthDiv, 4, 1, 21);
-  DEFINE_PARAM_S(NmpEvalDiv, 195, 20);
+  DEFINE_PARAM_S(NmpEvalDiv, 172, 20);
   DEFINE_PARAM_S(NmpEvalDivMin, 4, 1);
 
-  DEFINE_PARAM_S(ProbcutBetaMargin, 225, 10);
+  DEFINE_PARAM_S(ProbcutBetaMargin, 217, 10);
 
   DEFINE_PARAM_S(LmpBase,    3, 1);
 
   DEFINE_PARAM_S(QsSeeMargin, -32, 15);
-  DEFINE_PARAM_S(PvsQuietSeeMargin, -87, 20);
-  DEFINE_PARAM_S(PvsCapSeeMargin, -118, 20);
+  DEFINE_PARAM_S(PvsQuietSeeMargin, -90, 20);
+  DEFINE_PARAM_S(PvsCapSeeMargin, -101, 20);
 
-  DEFINE_PARAM_S(EarlyLmrHistoryDiv, 5487, 300);
+  DEFINE_PARAM_S(EarlyLmrHistoryDiv, 5381, 300);
 
-  DEFINE_PARAM_S(FpBase, 184, 10);
+  DEFINE_PARAM_S(FpBase, 179, 10);
   DEFINE_PARAM_S(FpMaxDepth, 8, 1);
-  DEFINE_PARAM_S(FpDepthMul, 107, 6);
+  DEFINE_PARAM_S(FpDepthMul, 106, 6);
 
-  DEFINE_PARAM_S(TripleExtMargin, 129, 10);
-  DEFINE_PARAM_S(DoubleExtMargin, 17, 2);
+  DEFINE_PARAM_S(TripleExtMargin, 127, 10);
+  DEFINE_PARAM_S(DoubleExtMargin, 16, 2);
   DEFINE_PARAM_S(DoubleExtMax, 6, 1);
 
-  DEFINE_PARAM_S(LmrQuietHistoryDiv, 10638, 300);
-  DEFINE_PARAM_S(LmrCapHistoryDiv, 8125, 300);
+  DEFINE_PARAM_S(LmrQuietHistoryDiv, 10521, 300);
+  DEFINE_PARAM_S(LmrCapHistoryDiv, 7997, 300);
   DEFINE_PARAM_S(ZwsDeeperMargin, 78, 5);
 
   DEFINE_PARAM_B(AspWindowStartDepth, 4, 4, 34);
@@ -1116,18 +1116,18 @@ namespace Search {
     return output.str();
   }
 
-  DEFINE_PARAM_B(tm0, 177, 50, 200);
-  DEFINE_PARAM_B(tm1, 63,  20, 100);
+  DEFINE_PARAM_B(tm0, 180, 50, 200);
+  DEFINE_PARAM_B(tm1, 65,  20, 100);
 
-  DEFINE_PARAM_B(tm2, 141, 50, 200);
-  DEFINE_PARAM_B(tm3, 4,   0, 30);
+  DEFINE_PARAM_B(tm2, 145, 50, 200);
+  DEFINE_PARAM_B(tm3, 5,   0, 30);
 
-  DEFINE_PARAM_B(tm4, 96,   0, 150);
-  DEFINE_PARAM_B(tm5, 10,   0, 150);
-  DEFINE_PARAM_B(tm6, 15,   0, 150);
+  DEFINE_PARAM_B(tm4, 97,   0, 150);
+  DEFINE_PARAM_B(tm5, 12,   0, 150);
+  DEFINE_PARAM_B(tm6, 18,   0, 150);
 
-  DEFINE_PARAM_B(lol0, 84, -150, 0);
-  DEFINE_PARAM_B(lol1, 152,   0,  150);
+  DEFINE_PARAM_B(lol0, 83, -150, 0);
+  DEFINE_PARAM_B(lol1, 153,   0,  150);
 
   void Thread::startSearch() {
 
