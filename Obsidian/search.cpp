@@ -1337,44 +1337,6 @@ namespace Search {
 
     Search::Thread* bestThread = this;
 
-    if (rootMoves.size() > 1 && Threads::searchThreads.size() > 1) {
-
-      std::unordered_map<Move, int> votes;
-      Score minScore = SCORE_INFINITE;
-
-      for (int i = 0; i < Threads::searchThreads.size(); i++) {
-        Search::Thread* st = Threads::searchThreads[i];
-        if (! st->completeDepth)
-          continue;
-        minScore = std::min(minScore, st->rootMoves[0].score);
-      }
-
-      for (int i = 0; i < Threads::searchThreads.size(); i++) {
-        Search::Thread* st = Threads::searchThreads[i];
-        if (! st->completeDepth)
-          continue;
-        votes[st->rootMoves[0].move] += (st->rootMoves[0].score - minScore + 9) * st->completeDepth;
-      }
-
-      for (int i = 1; i < Threads::searchThreads.size(); i++) {
-        Search::Thread* st = Threads::searchThreads[i];
-        if (! st->completeDepth)
-          continue;
-        Score currScore = st->rootMoves[0].score;
-        int currVote = votes[st->rootMoves[0].move];
-        Score bestScore = bestThread->rootMoves[0].score;
-        int bestVote = votes[bestThread->rootMoves[0].move];
-
-        if (abs(bestScore) >= SCORE_TB_WIN_IN_MAX_PLY) {
-          if (currScore > bestScore)
-            bestThread = st;
-        } else if (currScore >= SCORE_TB_WIN_IN_MAX_PLY)
-          bestThread = st;
-        else if ( currScore > SCORE_TB_LOSS_IN_MAX_PLY && currVote > bestVote)
-          bestThread = st;
-      }
-    }
-
     previousScore = bestThread->rootMoves[0].score;
 
     if (!naturalExit || bestThread != this || std::string(Options["Minimal"]) == "true")
