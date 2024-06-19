@@ -780,6 +780,7 @@ namespace Search {
       && !excludedMove
       && (ss - 1)->playedMove != MOVE_NONE
       && eval >= beta
+      && !(ttBound == TT::FLAG_UPPER && ttScore < beta)
       && pos.hasNonPawns(pos.sideToMove)
       && beta > SCORE_TB_LOSS_IN_MAX_PLY) {
 
