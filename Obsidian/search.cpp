@@ -980,7 +980,8 @@ namespace Search {
         R += !improving;
 
         // Reduce if we expect to fail high
-        R += 2 * cutNode;
+        if (cutNode)
+          R += 2 - ttPV;
 
         // Clamp to avoid a qsearch or an extension in the child search
         int reducedDepth = std::clamp(newDepth - R, 1, newDepth + 1);
