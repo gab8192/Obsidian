@@ -481,6 +481,14 @@ namespace Search {
         bestScore = ss->staticEval = ttStaticEval;
       else
         bestScore = ss->staticEval = Eval::evaluate(pos, accumStack[accumStackHead]);
+    
+      if (! ttHit) {
+        // This (probably new) position has just been evaluated.
+        // Immediately save the evaluation in TT, so other threads who reach this position
+        // won't need to evaluate again
+        // This is also helpful when we cutoff early and no other store will be performed
+        ttEntry->store(pos.key, TT::NO_FLAG, 0, MOVE_NONE, SCORE_NONE, ss->staticEval, ttPV, ply);
+      }
 
       futility = bestScore + QsFpMargin;
 
