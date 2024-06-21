@@ -484,10 +484,6 @@ namespace Search {
 
       futility = bestScore + QsFpMargin;
 
-      // When tt bound allows it, use ttScore as a better standing pat
-      if (ttScore != SCORE_NONE && (ttBound & boundForTT(ttScore > bestScore)))
-        bestScore = ttScore;
-
       if (bestScore >= beta)
         return bestScore;
       if (bestScore > alpha)
