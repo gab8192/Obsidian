@@ -487,8 +487,14 @@ namespace Search {
       if (ttScore != SCORE_NONE && (ttBound & boundForTT(ttScore > bestScore)))
         bestScore = ttScore;
 
-      if (bestScore >= beta)
+      if (bestScore >= beta) {
+        if (!ttHit) {
+          // Same logic as in pvs.
+          // bestScore and staticEval are always the same here
+          ttEntry->store(pos.key, TT::FLAG_LOWER, 0, MOVE_NONE, bestScore, ss->staticEval, false, ply);
+        }
         return bestScore;
+      }
       if (bestScore > alpha)
         alpha = bestScore;
     }
@@ -556,7 +562,7 @@ namespace Search {
     if (pos.checkers && !foundLegalMoves)
       return ply - SCORE_MATE;
     
-    if (bestScore >= beta && abs(bestScore) < SCORE_TB_WIN_IN_MAX_PLY)
+    if (bestScore > beta && abs(bestScore) < SCORE_TB_WIN_IN_MAX_PLY)
       bestScore = (bestScore + beta) / 2;
 
     ttEntry->store(pos.key,
