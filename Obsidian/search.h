@@ -60,7 +60,6 @@ namespace Search {
 
     volatile bool searching = false;
     volatile bool exitThread = false;
-    std::thread thread;
 
     int completeDepth;
     uint64_t nodesSearched;
@@ -69,6 +68,8 @@ namespace Search {
     Thread();
 
     void resetHistories();
+    
+    void idleLoop();
     
   private:
     
@@ -137,8 +138,6 @@ namespace Search {
       bool cutNode, SearchInfo* ss, const Move excludedMove = MOVE_NONE);
 
     void startSearch();
-
-    void idleLoop();
   };
 
   template<bool root>

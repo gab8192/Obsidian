@@ -124,8 +124,7 @@ namespace Search {
     previousScore = SCORE_NONE;
   }
 
-  Thread::Thread() :
-    thread(std::thread(&Thread::idleLoop, this))
+  Thread::Thread()
   {
     resetHistories();
   }
