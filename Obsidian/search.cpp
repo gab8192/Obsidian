@@ -955,9 +955,7 @@ namespace Search {
 
       Score score;
 
-      // Late move reductions. Search at a reduced depth, moves that are late in the move list
-
-      bool needFullSearch = false;
+      // Late move reductions
 
       if (depth >= 2 && seenMoves > 1 + 2 * IsRoot) {
 
@@ -989,13 +987,15 @@ namespace Search {
         if (score > alpha && reducedDepth < newDepth) {
           newDepth += (score > bestScore + ZwsDeeperMargin && !IsRoot);
           newDepth -= (score < bestScore + newDepth        && !IsRoot);
-          needFullSearch = reducedDepth < newDepth;
+
+          if (reducedDepth < newDepth)
+            score = -negamax<false>(newPos, -alpha - 1, -alpha, newDepth, !cutNode, ss + 1);
+
+          int bonus = score <= alpha ? -stat_bonus(newDepth) : score >= beta ? stat_bonus(newDepth) : 0;
+          addToContHistory(pos, bonus, move, ss);
         }
       }
-      else
-        needFullSearch = !IsPV || seenMoves > 1;
-
-      if (needFullSearch)
+      else if (!IsPV || seenMoves > 1)
         score = -negamax<false>(newPos, -alpha - 1, -alpha, newDepth, !cutNode, ss + 1);
 
       if (IsPV && (seenMoves == 1 || score > alpha))
