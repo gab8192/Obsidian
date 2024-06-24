@@ -430,6 +430,10 @@ namespace Search {
     return int(nodesSearched & 2) - 1;
   }
 
+  Score scaleEvalOn50MR(Score eval, int fmr) {
+    return eval * (200 - fmr) / 200;
+  }
+
   template<bool IsPV>
   Score Thread::qsearch(Position& pos, Score alpha, Score beta, int depth, SearchInfo* ss) {
     
@@ -480,6 +484,8 @@ namespace Search {
         bestScore = ss->staticEval = ttStaticEval;
       else
         bestScore = ss->staticEval = Eval::evaluate(pos, accumStack[accumStackHead]);
+
+      bestScore = scaleEvalOn50MR(bestScore, pos.halfMoveClock);
 
       futility = bestScore + QsFpMargin;
 
@@ -735,6 +741,8 @@ namespace Search {
         ss->staticEval = eval = ttStaticEval;
       else
         ss->staticEval = eval = Eval::evaluate(pos, accumStack[accumStackHead]);
+
+      eval = scaleEvalOn50MR(eval, pos.halfMoveClock);
 
       if (! ttHit) {
         // This (probably new) position has just been evaluated.
