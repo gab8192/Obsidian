@@ -227,7 +227,6 @@ namespace Search {
   }
 
   void Thread::playNullMove(Position& pos, SearchInfo* ss) {
-    TT::prefetch(pos.key ^ ZOBRIST_TEMPO);
     nodesSearched++;
 
     ss->contHistory = contHistory[false][0];
@@ -291,8 +290,6 @@ namespace Search {
 
     ply++;
     pos.doMove(move, dirtyPieces);
-
-    TT::prefetch(pos.key);
 
     for (Color side = WHITE; side <= BLACK; ++side) {
       if (NNUE::needRefresh(side, oldKingSquares[side], pos.kingSquare(side)))
@@ -525,6 +522,8 @@ namespace Search {
         if (!pos.seeGe(move, QsSeeMargin))
           continue;
       }
+
+      TT::prefetch(pos.keyAfter(move));
 
       Position newPos = pos;
       playMove(newPos, move, ss);
@@ -782,6 +781,8 @@ namespace Search {
       && pos.hasNonPawns(pos.sideToMove)
       && beta > SCORE_TB_LOSS_IN_MAX_PLY) {
 
+      TT::prefetch(pos.key ^ ZOBRIST_TEMPO);
+
       int R = std::min((eval - beta) / NmpEvalDiv, (int)NmpEvalDivMin) + depth / NmpDepthDiv + NmpBase;
 
       Position newPos = pos;
@@ -817,6 +818,8 @@ namespace Search {
       while (move = pcMovePicker.nextMove(false)) {
         if (!pos.isLegal(move))
           continue;
+
+        TT::prefetch(pos.keyAfter(move));
 
         Position newPos = pos;
         playMove(newPos, move, ss);
@@ -947,6 +950,8 @@ namespace Search {
         else if (cutNode)
           extension = -2;
       }
+
+      TT::prefetch(pos.keyAfter(move));
 
       Position newPos = pos;
       playMove(newPos, move, ss);
