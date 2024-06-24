@@ -121,8 +121,8 @@ namespace NNUE {
     multiSub<HiddenWidth>(colors[side], colors[side], featureAddress(kingSq, side, pc, sq));
   }
 
-  void Accumulator::doUpdates(Square kingSq, Color side, DirtyPieces& dp, Accumulator& input) {
-    
+  void Accumulator::doUpdates(Square kingSq, Color side, Accumulator& input) {
+    DirtyPieces dp = this->dirtyPieces;
     if (dp.type == DirtyPieces::CASTLING) 
     {
       multiSubAddSubAdd<HiddenWidth>(colors[side], input.colors[side], 

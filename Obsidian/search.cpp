@@ -279,24 +279,16 @@ namespace Search {
     ss->playedMove = move;
     keyStack[keyStackHead++] = pos.key;
 
-    Square oldKingSquares[COLOR_NB];
-    oldKingSquares[WHITE] = pos.kingSquare(WHITE);
-    oldKingSquares[BLACK] = pos.kingSquare(BLACK);
-
-    NNUE::Accumulator& oldAcc = accumStack[accumStackHead];
+    const Color stm = pos.sideToMove;
+    Square oldKing = pos.kingSquare(stm);
+    
     NNUE::Accumulator& newAcc = accumStack[++accumStackHead];
 
-    DirtyPieces dirtyPieces;
-
     ply++;
-    pos.doMove(move, dirtyPieces);
+    pos.doMove(move, newAcc.dirtyPieces);
 
-    for (Color side = WHITE; side <= BLACK; ++side) {
-      if (NNUE::needRefresh(side, oldKingSquares[side], pos.kingSquare(side)))
-        refreshAccumulator(pos, newAcc, side);
-      else
-        newAcc.doUpdates(pos.kingSquare(side), side, dirtyPieces, oldAcc); 
-    }
+    newAcc.needRefresh[~stm] = false;
+    newAcc.needRefresh[stm] = NNUE::needRefresh(stm, oldKing, pos.kingSquare(stm));
   }
 
   void Thread::cancelMove() {
@@ -459,6 +451,16 @@ namespace Search {
     if (!IsPV && ttScore != SCORE_NONE) {
       if (ttBound & boundForTT(ttScore >= beta))
         return ttScore;
+    }
+
+    if ((ss-1)->playedMove) { // Update accumulator
+      NNUE::Accumulator& acc = accumStack[accumStackHead];
+      for (Color side = WHITE; side <= BLACK; ++side) {
+        if (acc.needRefresh[side])
+          refreshAccumulator(pos, acc, side);
+        else
+          acc.doUpdates(pos.kingSquare(side), side, accumStack[accumStackHead-1]);
+      }
     }
 
     Move bestMove = MOVE_NONE;
@@ -710,6 +712,16 @@ namespace Search {
         } else {
           maxScore = tbScore;
         }
+      }
+    }
+
+    if ((ss-1)->playedMove) { // Update accumulator
+      NNUE::Accumulator& acc = accumStack[accumStackHead];
+      for (Color side = WHITE; side <= BLACK; ++side) {
+        if (acc.needRefresh[side])
+          refreshAccumulator(pos, acc, side);
+        else
+          acc.doUpdates(pos.kingSquare(side), side, accumStack[accumStackHead-1]);
       }
     }
 
