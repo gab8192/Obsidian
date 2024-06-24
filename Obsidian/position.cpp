@@ -374,9 +374,7 @@ void Position::doMove(Move move, DirtyPieces& dp) {
   }
 }
 
-Threats& Position::getThreats() {
-  if (threatsUpdated)
-    return threats;
+void Position::calcThreats(Threats& threats) {
 
   Color them = ~sideToMove;
 
@@ -398,8 +396,6 @@ Threats& Position::getThreats() {
     Square sq = popLsb(rooks);
     threats.byRook |= getRookAttacks(sq, pieces());
   }
-  threatsUpdated = true;
-  return threats;
 }
 
 /// Only works for MT_NORMAL moves

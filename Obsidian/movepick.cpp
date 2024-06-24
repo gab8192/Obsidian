@@ -58,7 +58,9 @@ Move_Score nextMove0(MoveList& moveList, const int visitedCount) {
 }
 
 void MovePicker::scoreQuiets() {
-  Threats& threats = pos.getThreats();
+  Threats threats;
+  pos.calcThreats(threats);
+  
   int i = 0;
   while (i < quiets.size()) {
     Move move = quiets[i].move;

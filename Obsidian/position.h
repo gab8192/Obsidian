@@ -37,9 +37,6 @@ struct alignas(32) Position {
   // What pieces of the opponent are attacking the king of the side to move
   Bitboard checkers;
 
-  Threats threats;
-  bool threatsUpdated;
-
   inline Bitboard pieces(PieceType pt) const {
     return byPieceBB[pt];
   }
@@ -95,8 +92,6 @@ struct alignas(32) Position {
     updatePins(BLACK);
 
     checkers = attackersTo(kingSquare(sideToMove), ~sideToMove);
-
-    threatsUpdated = false;
   }
 
   void updateKey();
@@ -154,7 +149,7 @@ struct alignas(32) Position {
 
   void doMove(Move move, DirtyPieces& dp);
 
-  Threats& getThreats();
+  void calcThreats(Threats& threats);
 
   /// Only works for MT_NORMAL moves
   Key keyAfter(Move move) const;
