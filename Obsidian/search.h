@@ -120,8 +120,8 @@ namespace Search {
 
     int getCapHistory(Position& pos, Move move);
 
-    void updateHistories(Position& pos, int depth, Move bestMove, Score bestScore,
-      Score beta, Move* quietMoves, int quietCount, SearchInfo* ss);
+    void updateHistories(Position& pos, int bonus, Move bestMove, Score bestScore,
+      Score beta, Move* quietMoves, int quietCount, int depth, SearchInfo* ss);
 
     bool hasUpcomingRepetition(Position& pos, int ply);
 
