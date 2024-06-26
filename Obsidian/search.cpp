@@ -334,7 +334,22 @@ namespace Search {
   }
 
   void Thread::updateHistories(Position& pos, int bonus, Move bestMove, Score bestScore,
-                       Score beta, Move* quiets, int quietCount, SearchInfo* ss) {
+                       Score beta, Move* quiets, int quietCount, int depth, SearchInfo* ss) {
+
+    // Counter move
+    if ((ss - 1)->playedMove) {
+      Square prevSq = move_to((ss - 1)->playedMove);
+      counterMoveHistory[pos.board[prevSq] * SQUARE_NB + prevSq] = bestMove;
+    }
+
+    // Killer move
+    ss->killerMove = bestMove;
+
+    // Credits to Ethereal
+    // Don't prop up the best move if it was a quick low depth cutoff
+    if (depth <= 3 && !quietCount)
+      return;
+
     // Butterfly history
     addToHistory(mainHistory[pos.sideToMove][move_from_to(bestMove)], bonus);
 
@@ -347,15 +362,6 @@ namespace Search {
       addToContHistory(pos, -bonus, otherMove, ss);
       addToHistory(mainHistory[pos.sideToMove][move_from_to(otherMove)], -bonus);
     }
-
-    // Counter move
-    if ((ss - 1)->playedMove) {
-      Square prevSq = move_to((ss - 1)->playedMove);
-      counterMoveHistory[pos.board[prevSq] * SQUARE_NB + prevSq] = bestMove;
-    }
-
-    // Killer move
-    ss->killerMove = bestMove;
   }
 
   TT::Flag boundForTT(bool failsHigh) {
@@ -1066,7 +1072,7 @@ namespace Search {
 
       if (pos.isQuiet(bestMove)) 
       {
-        updateHistories(pos, bonus, bestMove, bestScore, beta, quiets, quietCount, ss);
+        updateHistories(pos, bonus, bestMove, bestScore, beta, quiets, quietCount, depth, ss);
       }
       else {
         PieceType captured = piece_type(pos.board[move_to(bestMove)]);
