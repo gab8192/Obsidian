@@ -61,9 +61,9 @@ namespace Search {
     volatile bool searching = false;
     volatile bool exitThread = false;
 
-    int completeDepth;
-    uint64_t nodesSearched;
-    uint64_t tbHits;
+    volatile int completeDepth;
+    volatile uint64_t nodesSearched;
+    volatile uint64_t tbHits;
 
     Thread();
 
