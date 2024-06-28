@@ -78,7 +78,7 @@ namespace {
     }
   }
 
-  void bench() {
+  void bench(bool fixedTime) {
     constexpr int posCount = sizeof(BENCH_POSITIONS) / sizeof(char*);
 
     uint64_t totalNodes = 0;
@@ -90,7 +90,11 @@ namespace {
     for (int i = 0; i < posCount; i++) 
     {
       Search::Settings searchSettings;
-      searchSettings.depth = 13;
+
+      if (fixedTime)
+        searchSettings.movetime = 5000;
+      else
+        searchSettings.depth = 13;
       
       std::istringstream posStr(BENCH_POSITIONS[i]);
       position(searchSettings.position, posStr);
@@ -220,7 +224,8 @@ void UCI::loop(int argc, char* argv[]) {
         << "uciok" << std::endl;
     }
     else if (token == "qc")         qc(pos);
-    else if (token == "bench")      bench();
+    else if (token == "bench")      bench(false);
+    else if (token == "numabench")  bench(true);
     else if (token == "setoption")  setoption(is);
     else if (token == "go")         go(pos, is);
     else if (token == "position")   position(pos, is);
