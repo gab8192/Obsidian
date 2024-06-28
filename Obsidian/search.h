@@ -58,6 +58,8 @@ namespace Search {
     std::mutex mutex;
     std::condition_variable cv;
 
+    std::thread thread;
+
     volatile bool searching = false;
     volatile bool exitThread = false;
 
