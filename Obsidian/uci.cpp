@@ -78,7 +78,7 @@ namespace {
     }
   }
 
-  void bench() {
+  void bench(bool fixedTime) {
     constexpr int posCount = sizeof(BENCH_POSITIONS) / sizeof(char*);
 
     uint64_t totalNodes = 0;
@@ -91,7 +91,10 @@ namespace {
     {
       Search::Settings searchSettings;
 
-      searchSettings.depth = 13;
+      if (fixedTime)
+        searchSettings.movetime = 5000;
+      else
+        searchSettings.depth = 13;
       
       std::istringstream posStr(BENCH_POSITIONS[i]);
       position(searchSettings.position, posStr);
@@ -117,54 +120,6 @@ namespace {
     std::cout << totalNodes << " nodes " << (totalNodes * 1000 / elapsed) << " nps" << std::endl;
 
     Options["Minimal"] = oldMinimal;
-  }
-
-  void numabench(std::istringstream& is) {
-    constexpr int posCount = sizeof(BENCH_POSITIONS) / sizeof(char*);
-
-    std::string arg0, arg1;
-
-    is >> arg0;
-    is >> arg1;
-
-    Options["Threads"] = arg0;
-    Options["Hash"] = arg1;
-
-
-    std::cout << "Threads=" << arg0 << "    Hash=" << arg1 << std::endl;
-
-    uint64_t totalNodes = 0;
-    clock_t elapsed = 0;
-
-    for (int i = 0; i < posCount; i++) 
-    {
-      Search::Settings searchSettings;
-
-      searchSettings.movetime = 5000;
-      
-      std::istringstream posStr(BENCH_POSITIONS[i]);
-      position(searchSettings.position, posStr);
-
-      newGame();
-
-      // Start search
-      searchSettings.startTime = timeMillis();
-      Threads::startSearch(searchSettings);
-
-      // And wait for it to finish..
-      Threads::waitForSearch();
-
-      if (i >= 5) {
-        // Skip the first 5 positions from nps calculation
-
-        elapsed += timeMillis() - searchSettings.startTime;
-
-        totalNodes += Threads::totalNodes();
-      }
-    }
-
-    std::cout << totalNodes << " nodes " << (totalNodes * 1000 / elapsed) << " nps" << std::endl;
-
   }
 
   void setoption(std::istringstream& is) {
@@ -269,8 +224,8 @@ void UCI::loop(int argc, char* argv[]) {
         << "uciok" << std::endl;
     }
     else if (token == "qc")         qc(pos);
-    else if (token == "bench")      bench();
-    else if (token == "numabench")  numabench(is);
+    else if (token == "bench")      bench(false);
+    else if (token == "numabench")  bench(true);
     else if (token == "setoption")  setoption(is);
     else if (token == "go")         go(pos, is);
     else if (token == "position")   position(pos, is);
