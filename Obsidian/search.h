@@ -130,6 +130,8 @@ namespace Search {
 
     Score makeDrawScore();
 
+    Score doEvaluation(Position& position);
+
     template<bool IsPV>
     Score qsearch(Position& position, Score alpha, Score beta, int depth, SearchInfo* ss);
 
