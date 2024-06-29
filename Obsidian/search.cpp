@@ -20,12 +20,13 @@ namespace Search {
 
   DEFINE_PARAM_S(LmrBase, 52, 10);
   DEFINE_PARAM_S(LmrDiv, 192, 10);
-
+  
+  DEFINE_PARAM_S(StatBonusBias, 0, 20);
   DEFINE_PARAM_S(StatBonusLinear, 142, 10);
   DEFINE_PARAM_S(StatBonusMax, 1167, 50);
   DEFINE_PARAM_S(StatBonusBoostAt, 123, 10);
 
-  DEFINE_PARAM_S(RazoringDepthMul, 413, 10);
+  DEFINE_PARAM_S(RazoringDepthMul, 413, 20);
 
   DEFINE_PARAM_S(RfpMaxDepth, 9, 1);
   DEFINE_PARAM_S(RfpDepthMul, 127, 6);
@@ -35,7 +36,7 @@ namespace Search {
   DEFINE_PARAM_S(NmpEvalDiv, 172, 20);
   DEFINE_PARAM_S(NmpEvalDivMin, 4, 1);
 
-  DEFINE_PARAM_S(ProbcutBetaMargin, 217, 10);
+  DEFINE_PARAM_S(ProbcutBetaMargin, 217, 20);
 
   DEFINE_PARAM_S(LmpBase,    3, 1);
 
@@ -43,7 +44,7 @@ namespace Search {
   DEFINE_PARAM_S(PvsQuietSeeMargin, -90, 20);
   DEFINE_PARAM_S(PvsCapSeeMargin, -101, 20);
 
-  DEFINE_PARAM_S(EarlyLmrHistoryDiv, 5381, 300);
+  DEFINE_PARAM_S(EarlyLmrHistoryDiv, 5381, 200);
 
   DEFINE_PARAM_S(FpBase, 179, 10);
   DEFINE_PARAM_S(FpMaxDepth, 8, 1);
@@ -53,9 +54,9 @@ namespace Search {
   DEFINE_PARAM_S(DoubleExtMargin, 16, 2);
   DEFINE_PARAM_S(DoubleExtMax, 6, 1);
 
-  DEFINE_PARAM_S(LmrQuietHistoryDiv, 10521, 300);
-  DEFINE_PARAM_S(LmrCapHistoryDiv, 7997, 300);
-  DEFINE_PARAM_S(ZwsDeeperMargin, 78, 5);
+  DEFINE_PARAM_S(LmrQuietHistoryDiv, 10521, 200);
+  DEFINE_PARAM_S(LmrCapHistoryDiv, 7997, 200);
+  DEFINE_PARAM_S(ZwsDeeperMargin, 78, 10);
 
   DEFINE_PARAM_B(AspWindowStartDepth, 4, 4, 34);
   DEFINE_PARAM_B(AspWindowStartDelta, 13, 5, 45);
@@ -193,7 +194,7 @@ namespace Search {
   }
 
   int stat_bonus(int d) {
-    return std::min(StatBonusLinear * d, (int)StatBonusMax);
+    return std::min(StatBonusLinear * d + StatBonusBias, (int)StatBonusMax);
   }
 
   void Thread::sortRootMoves(int offset) {
@@ -1160,8 +1161,8 @@ namespace Search {
   DEFINE_PARAM_B(tm5, 12,   0, 150);
   DEFINE_PARAM_B(tm6, 18,   0, 150);
 
-  DEFINE_PARAM_B(lol0, 83, -150, 0);
-  DEFINE_PARAM_B(lol1, 153,   0,  150);
+  DEFINE_PARAM_B(lol0, 83, 0, 150);
+  DEFINE_PARAM_B(lol1, 153,   75,  225);
 
   void Thread::startSearch() {
 
