@@ -100,6 +100,10 @@ namespace Search {
 
     Score previousScore;
 
+    void updateAcc(Position& pos, SearchInfo* ss);
+
+    Score doEvaluate(Position& pos, SearchInfo* ss);
+
     void refreshAccumulator(Position& pos, NNUE::Accumulator& acc, Color side);
 
     void sortRootMoves(int offset);

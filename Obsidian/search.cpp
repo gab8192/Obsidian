@@ -242,6 +242,28 @@ namespace Search {
     keyStackHead--;
   }
 
+  void Thread::updateAcc(Position& pos, SearchInfo* ss) {
+    if ((ss-1)->playedMove) { // Update accumulator
+      NNUE::Accumulator& acc = accumStack[accumStackHead];
+      for (Color side = WHITE; side <= BLACK; ++side) {
+        if (acc.correct[side])
+          continue;
+
+        if (acc.needRefresh[side])
+          refreshAccumulator(pos, acc, side);
+        else
+          acc.doUpdates(pos.kingSquare(side), side, accumStack[accumStackHead-1]);
+
+        acc.correct[side] = true;
+      }
+    }
+  }
+
+  Score Thread::doEvaluate(Position& pos, SearchInfo* ss) {
+    updateAcc(pos, ss);
+    return Eval::evaluate(pos, accumStack[accumStackHead]);
+  }
+
   void Thread::refreshAccumulator(Position& pos, NNUE::Accumulator& acc, Color side) {
     const Square king = pos.kingSquare(side);
     const int bucket = NNUE::KingBucketsScheme[relative_square(side, king)];
@@ -277,26 +299,17 @@ namespace Search {
     ss->playedMove = move;
     keyStack[keyStackHead++] = pos.key;
 
-    Square oldKingSquares[COLOR_NB];
-    oldKingSquares[WHITE] = pos.kingSquare(WHITE);
-    oldKingSquares[BLACK] = pos.kingSquare(BLACK);
-
-    NNUE::Accumulator& oldAcc = accumStack[accumStackHead];
+    const Color stm = pos.sideToMove;
+    Square oldKing = pos.kingSquare(stm);
+    
     NNUE::Accumulator& newAcc = accumStack[++accumStackHead];
 
-    DirtyPieces dirtyPieces;
-
     ply++;
-    pos.doMove(move, dirtyPieces);
+    pos.doMove(move, newAcc.dirtyPieces);
 
-    TT::prefetch(pos.key);
-
-    for (Color side = WHITE; side <= BLACK; ++side) {
-      if (NNUE::needRefresh(side, oldKingSquares[side], pos.kingSquare(side)))
-        refreshAccumulator(pos, newAcc, side);
-      else
-        newAcc.doUpdates(pos.kingSquare(side), side, dirtyPieces, oldAcc); 
-    }
+    newAcc.correct[BLACK] = newAcc.correct[WHITE] = false;
+    newAcc.needRefresh[~stm] = false;
+    newAcc.needRefresh[stm] = NNUE::needRefresh(stm, oldKing, pos.kingSquare(stm));
   }
 
   void Thread::cancelMove() {
@@ -440,7 +453,7 @@ namespace Search {
     
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY-4)
-      return pos.checkers ? SCORE_DRAW : Eval::evaluate(pos, accumStack[accumStackHead]);
+      return pos.checkers ? SCORE_DRAW : doEvaluate(pos, ss);
 
     // Detect draw
     if (isRepetition(pos, ply) || pos.halfMoveClock >= 100)
@@ -483,8 +496,9 @@ namespace Search {
     else {
       if (ttStaticEval != SCORE_NONE)
         bestScore = ss->staticEval = ttStaticEval;
-      else
-        bestScore = ss->staticEval = Eval::evaluate(pos, accumStack[accumStackHead]);
+      else {
+        bestScore = ss->staticEval = doEvaluate(pos, ss);
+      }
 
       futility = bestScore + QsFpMargin;
 
@@ -497,6 +511,8 @@ namespace Search {
       if (bestScore > alpha)
         alpha = bestScore;
     }
+
+    updateAcc(pos, ss);
 
     MovePicker movePicker(
       MovePicker::QSEARCH, pos,
@@ -636,7 +652,7 @@ namespace Search {
 
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY - 4)
-      return pos.checkers ? SCORE_DRAW : Eval::evaluate(pos, accumStack[accumStackHead]);
+      return pos.checkers ? SCORE_DRAW : doEvaluate(pos, ss);
 
     // Mate distance pruning
     alpha = std::max(alpha, ply - SCORE_MATE);
@@ -741,8 +757,9 @@ namespace Search {
     else {
       if (ttStaticEval != SCORE_NONE)
         ss->staticEval = eval = ttStaticEval;
-      else
-        ss->staticEval = eval = Eval::evaluate(pos, accumStack[accumStackHead]);
+      else {
+        ss->staticEval = eval = doEvaluate(pos, ss);
+      }
 
       if (! ttHit) {
         // This (probably new) position has just been evaluated.
@@ -768,6 +785,7 @@ namespace Search {
     if ( !IsPV
       && alpha < 2000
       && eval < alpha - RazoringDepthMul * depth) {
+        updateAcc(pos, ss);
       Score score = qsearch<IsPV>(pos, alpha, beta, 0, ss);
       if (score <= alpha)
         return score;
@@ -789,6 +807,7 @@ namespace Search {
       && eval >= beta
       && pos.hasNonPawns(pos.sideToMove)
       && beta > SCORE_TB_LOSS_IN_MAX_PLY) {
+        updateAcc(pos, ss);
 
       int R = std::min((eval - beta) / NmpEvalDiv, (int)NmpEvalDivMin) + depth / NmpDepthDiv + NmpBase;
 
@@ -825,6 +844,7 @@ namespace Search {
       while (move = pcMovePicker.nextMove(false)) {
         if (!pos.isLegal(move))
           continue;
+          updateAcc(pos, ss);
 
         Position newPos = pos;
         playMove(newPos, move, ss);
@@ -845,6 +865,8 @@ namespace Search {
     }
 
   moves_loop:
+
+  updateAcc(pos, ss);
 
     // Generate moves and score them
 

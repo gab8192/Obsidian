@@ -54,11 +54,15 @@ namespace NNUE {
       alignas(Alignment) weight_t both[COLOR_NB * HiddenWidth];
     };
 
+    bool correct[2];
+    bool needRefresh[2];
+    DirtyPieces dirtyPieces;
+
     void addPiece(Square kingSq, Color side, Piece pc, Square sq);
 
     void removePiece(Square kingSq, Color side, Piece pc, Square sq);
 
-    void doUpdates(Square kingSq, Color side, DirtyPieces& dp, Accumulator& input);
+    void doUpdates(Square kingSq, Color side, Accumulator& input);
 
     void reset(Color side);
 
