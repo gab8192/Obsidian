@@ -12,7 +12,7 @@ MAVX512 = $(MAVX2) -mavx512f -mavx512bw
 
 FILES = Obsidian/*.cpp Obsidian/fathom/src/tbprobe.c
 
-OPTIMIZE = -O3 -fno-stack-protector -fno-math-errno -funroll-loops -fno-exceptions -flto -flto-partition=one
+OPTIMIZE = -O3 -fno-stack-protector -fomit-frame-pointer -funroll-loops -fno-exceptions -flto -flto-partition=one
 
 FLAGS = -s -pthread -std=c++17 -DNDEBUG
 

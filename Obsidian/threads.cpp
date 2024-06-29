@@ -71,7 +71,7 @@ namespace Threads {
     startedThreadsCount++;
     searchThreads[index]->idleLoop();
   }
-
+  
   void setThreadCount(int threadCount) {
     waitForSearch();
 
