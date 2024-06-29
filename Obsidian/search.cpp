@@ -532,6 +532,8 @@ namespace Search {
 
     while (move = movePicker.nextMove(false)) {
 
+      TT::prefetch(pos.keyAfter(move));
+
       if (!pos.isLegal(move))
         continue;
 
@@ -548,8 +550,6 @@ namespace Search {
         if (!pos.seeGe(move, QsSeeMargin))
           continue;
       }
-
-      TT::prefetch(pos.keyAfter(move));
 
       Position newPos = pos;
       playMove(newPos, move, ss);
@@ -845,10 +845,11 @@ namespace Search {
       Move move;
 
       while (move = pcMovePicker.nextMove(false)) {
-        if (!pos.isLegal(move))
-          continue;
 
         TT::prefetch(pos.keyAfter(move));
+
+        if (!pos.isLegal(move))
+          continue;
 
         Position newPos = pos;
         playMove(newPos, move, ss);
@@ -903,6 +904,8 @@ namespace Search {
     while (move = movePicker.nextMove(skipQuiets)) {
       if (move == excludedMove)
         continue;
+
+      TT::prefetch(pos.keyAfter(move));
 
       if (!pos.isLegal(move))
         continue;
@@ -979,8 +982,6 @@ namespace Search {
         else if (cutNode)
           extension = -2;
       }
-
-      TT::prefetch(pos.keyAfter(move));
 
       Position newPos = pos;
       playMove(newPos, move, ss);
