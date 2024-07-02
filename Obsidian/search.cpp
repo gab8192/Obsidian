@@ -443,9 +443,12 @@ namespace Search {
           if (! lastEqual->updated[side])
             refreshAccumulator(* (accumPosStack[iter + 1]), *lastEqual, side);
 
-          if ( lastEqual != head)
-            refreshAccumulator(pos, *head, side);
-            
+          NNUE::Accumulator* lastUpdated = lastEqual;
+          while (lastUpdated != head) {
+            (lastUpdated+1)->doUpdates(kings[side], side, *lastUpdated);
+            lastUpdated++;
+          }
+
           break;
         }
 
