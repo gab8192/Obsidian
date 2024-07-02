@@ -281,6 +281,7 @@ namespace Search {
     ply++;
     pos.doMove(move, newAcc.dirtyPieces);
 
+    accumPosStack[accumStackHead] = &pos;
     for (Color side = WHITE; side <= BLACK; ++side) {
       newAcc.updated[side] = false;
       newAcc.kings[side] = pos.kingSquare(side);
@@ -429,17 +430,27 @@ namespace Search {
       if (head->updated[side])
         continue;
 
-      NNUE::Accumulator* iter = head;
+      int iter = accumStackHead;
       while (true) {
         iter--;
 
-        if (NNUE::needRefresh(side, iter->kings[side], kings[side])) {
-          refreshAccumulator(pos, *head, side);
+        NNUE::Accumulator* iterAcc = & accumStack[iter];
+
+        if (NNUE::needRefresh(side, iterAcc->kings[side], kings[side])) {
+
+          NNUE::Accumulator* lastEqual = iterAcc + 1;
+
+          if (! lastEqual->updated[side])
+            refreshAccumulator(* (accumPosStack[iter + 1]), *lastEqual, side);
+
+          if ( lastEqual != head)
+            refreshAccumulator(pos, *head, side);
+            
           break;
         }
 
-        if (iter->updated[side]) {
-          NNUE::Accumulator* lastUpdated = iter;
+        if (iterAcc->updated[side]) {
+          NNUE::Accumulator* lastUpdated = iterAcc;
           while (lastUpdated != head) {
             (lastUpdated+1)->doUpdates(kings[side], side, *lastUpdated);
             lastUpdated++;
@@ -1175,6 +1186,7 @@ namespace Search {
       accumStack[0].refresh(rootPos, side);
       accumStack[0].kings[side] = rootPos.kingSquare(side);
     }
+    accumPosStack[0] = &rootPos;
     
     for (int i = 0; i < 2; i++)
         for (int j = 0; j < NNUE::KingBuckets; j++)
