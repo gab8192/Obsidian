@@ -953,7 +953,7 @@ namespace Search {
       // Singular extension
       if ( !IsRoot
         && ply < 2 * rootDepth
-        && depth >= 4
+        && depth >= 6
         && !excludedMove
         && move == ttMove
         && abs(ttScore) < SCORE_TB_WIN_IN_MAX_PLY
