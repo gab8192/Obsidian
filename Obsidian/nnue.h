@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "net45.bin"
+#define EvalFile "quantised.bin"
 
 using namespace SIMD;
 
