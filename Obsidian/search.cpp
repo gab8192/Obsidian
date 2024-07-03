@@ -794,6 +794,15 @@ namespace Search {
         return score;
     }
 
+    if ( !IsPV
+      && !excludedMove
+      && ttScore != SCORE_NONE
+      && (ttBound & TT::FLAG_LOWER)
+      && ttDepth >= 4
+      && ttScore >= beta
+      && ttDepth + (ttScore - beta)/80 >= depth)
+        return ttScore;
+
     // Reverse futility pruning. When evaluation is far above beta, assume that at least a move
     // will return a similarly high score, so cut off
     if ( !IsPV
