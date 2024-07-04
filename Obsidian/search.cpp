@@ -995,7 +995,9 @@ namespace Search {
 
       if (depth >= 2 && seenMoves > 1 + 2 * IsRoot) {
 
-        int R = lmrTable[depth][seenMoves] / (1 + !isQuiet);
+        int R = lmrTable[depth][seenMoves];
+
+        R -= (ttPV && !isQuiet);
 
         // Reduce or extend depending on history of this move
         R -= history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv);
