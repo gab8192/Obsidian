@@ -978,9 +978,7 @@ namespace Search {
         }
         else if (singularBeta >= beta) // Multicut
           return singularBeta;
-        else if (ttScore >= beta) // Negative extensions
-          extension = -2 + IsPV;
-        else if (cutNode)
+        else if (ttScore >= beta || cutNode) // Negative extensions
           extension = -2;
       }
 
