@@ -1,6 +1,7 @@
 #include "search.h"
 #include "cuckoo.h"
 #include "evaluate.h"
+#include "lmrnn.h"
 #include "movepick.h"
 #include "fathom/src/tbprobe.h"
 #include "timeman.h"
@@ -1000,20 +1001,18 @@ namespace Search {
         // Reduce or extend depending on history of this move
         R -= history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv);
 
-        // Extend moves that give check
-        R -= (newPos.checkers != 0ULL);
+        bool inputs[] = {
+          IsPV,
+          ttPV,
+          improving,
+          isQuiet,
+          ttMoveNoisy,
+          cutNode,
+          newPos.checkers != 0ULL,
+          ttDepth >= depth
+        };
 
-        // Extend if this position *was* in a PV node. Even further if it *is*
-        R -= ttPV + IsPV;
-
-        // Reduce more if the expected best move is a capture
-        R += ttMoveNoisy;
-
-        // Reduce if evaluation is trending down
-        R += !improving;
-
-        // Reduce if we expect to fail high
-        R += 2 * cutNode;
+        R += LmrNN::evaluate(inputs);
 
         // Clamp to avoid a qsearch or an extension in the child search
         int reducedDepth = std::clamp(newDepth - R, 1, newDepth + 1);

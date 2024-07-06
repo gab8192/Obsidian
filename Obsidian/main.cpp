@@ -2,6 +2,7 @@
 //
 
 #include "cuckoo.h"
+#include "lmrnn.h"
 #include "threads.h"
 #include "tt.h"
 #include "uci.h"
@@ -29,6 +30,8 @@ int main(int argc, char** argv)
 
   Threads::setThreadCount(Options["Threads"]);
   TT::resize(Options["Hash"]);
+
+  LmrNN::init();
 
   NNUE::init();
 
