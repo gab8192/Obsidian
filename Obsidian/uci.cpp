@@ -118,6 +118,65 @@ namespace {
     Options["Minimal"] = oldMinimal;
   }
 
+  bool anyLegalMove(Position& pos) {
+    MoveList list;
+    getStageMoves(pos, ADD_ALL_MOVES, &list);
+    for (int i = 0; i < list.size(); i++)
+      if (pos.isLegal(list[i].move))
+        return true;
+    return false;
+  }
+
+  Move calcBestMove(Position& pos, int depth) {
+    Search::Settings searchSettings;
+    searchSettings.startTime = timeMillis();
+    searchSettings.position = pos;
+    searchSettings.depth = depth;
+
+    Search::doingPlan = true;
+    TT::nextSearch();
+    Threads::startSearch(searchSettings);
+    Threads::waitForSearch();
+    Search::doingPlan = false;
+    
+    return Search::lastBest;
+  }
+
+  void plan(Position& origPos, std::istringstream& is) {
+
+    int moves, depth;
+
+    is >> moves;
+    is >> depth;
+
+    Position pos = origPos;
+
+    for (int i = 0; i < moves; i++) {
+      Move ourBestMove = calcBestMove(pos, depth);
+
+      // Print the best move and play it
+      std::cout << UCI::moveToString(ourBestMove) << " ";
+
+      DirtyPieces dp;
+      pos.doMove(ourBestMove, dp);
+
+      if (!anyLegalMove(pos)) {
+        std::cout << "#";
+        break;
+      }
+
+      // Flip the side to move, but if the opponent is in check then play his move
+      if (pos.checkers) {
+        pos.doMove(calcBestMove(pos, depth), dp);
+      }
+      else {
+        pos.doNullMove();
+      }
+    }
+
+    std::cout << std::endl;
+  }
+
   void setoption(std::istringstream& is) {
     std::string token, name, value;
 
@@ -228,6 +287,7 @@ void UCI::loop(int argc, char* argv[]) {
     else if (token == "isready")    std::cout << "readyok" << std::endl;
     else if (token == "d")          std::cout << pos << std::endl;
     else if (token == "tune")       std::cout << paramsToSpsaInput();
+    else if (token == "plan")       plan(pos, is);
     else if (token == "eval") {
       NNUE::Accumulator tempAcc;
       tempAcc.refresh(pos, WHITE);

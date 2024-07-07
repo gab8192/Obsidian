@@ -15,6 +15,9 @@
 #include <unordered_map>
 
 namespace Search {
+
+  volatile Move lastBest;
+  volatile bool doingPlan = false;
     
   DEFINE_PARAM_S(QsFpMargin, 142, 10);
 
@@ -172,6 +175,8 @@ namespace Search {
   }
 
   void printInfo(int depth, int pvIdx, Score score, const std::string& pvString) {
+    if (doingPlan)
+      return;
     clock_t elapsed = elapsedTime();
     std::ostringstream infoStr;
         infoStr
@@ -190,6 +195,8 @@ namespace Search {
   }
 
   void printBestMove(Move move) {      
+    if (doingPlan)
+      return;
     std::cout << "bestmove " << UCI::moveToString(move) << std::endl;
   }
 
@@ -1419,6 +1426,8 @@ namespace Search {
           printInfo(bestThread->completeDepth, i+1, bestThread->rootMoves[i].score, getPvString(bestThread->rootMoves[i]));
 
     printBestMove(bestThread->rootMoves[0].move);
+
+    lastBest = bestThread->rootMoves[0].move;
   }
 
   void Thread::idleLoop() {

@@ -10,6 +10,9 @@
 
 namespace Search {
 
+  extern volatile Move lastBest;
+  extern volatile bool doingPlan;
+
   struct Settings {
 
     clock_t time[COLOR_NB], inc[COLOR_NB], movetime, startTime;
