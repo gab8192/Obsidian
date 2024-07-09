@@ -15,11 +15,9 @@ namespace NNUE {
   struct {
     alignas(SIMD::Alignment) weight_t FeatureWeights[KingBuckets][2][6][64][HiddenWidth];
     alignas(SIMD::Alignment) weight_t FeatureBiases[HiddenWidth];
-    alignas(SIMD::Alignment) weight_t OldOutputWeights[2 * HiddenWidth][OutputBuckets];
+    alignas(SIMD::Alignment) weight_t OutputWeights[OutputBuckets][2 * HiddenWidth];
                              weight_t OutputBias[OutputBuckets];
   } Content;
-
-  alignas(SIMD::Alignment) weight_t NewOutputWeights[OutputBuckets][2 * HiddenWidth];
 
   bool needRefresh(Color side, Square oldKing, Square newKing) {
     const bool oldMirrored = fileOf(oldKing) >= FILE_E;
@@ -171,11 +169,6 @@ namespace NNUE {
 
     memcpy(&Content, gEmbeddedNNUEData, sizeof(Content));
     
-    for (int i = 0; i < 2 * HiddenWidth; i++) {
-      for (int j = 0; j < OutputBuckets; j++) {
-        NewOutputWeights[j][i] = Content.OldOutputWeights[i][j];
-      }
-    }
   }
 
   Score evaluate(Position& pos, Accumulator& accumulator) {
@@ -186,8 +179,8 @@ namespace NNUE {
     Vec* stmAcc = (Vec*) accumulator.colors[pos.sideToMove];
     Vec* oppAcc = (Vec*) accumulator.colors[~pos.sideToMove];
 
-    Vec* stmWeights = (Vec*) &NewOutputWeights[outputBucket][0];
-    Vec* oppWeights = (Vec*) &NewOutputWeights[outputBucket][HiddenWidth];
+    Vec* stmWeights = (Vec*) &Content.OutputWeights[outputBucket][0];
+    Vec* oppWeights = (Vec*) &Content.OutputWeights[outputBucket][HiddenWidth];
 
     const Vec vecZero = vecSetZero();
     const Vec vecQA = vecSet1Epi16(NetworkQA);
