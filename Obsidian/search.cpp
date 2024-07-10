@@ -648,7 +648,6 @@ namespace Search {
     if (depth <= 0)
       return qsearch<IsPV>(pos, alpha, beta, 0, ss);
 
-
     ++nodesSearched;
 
     // Detect draw
