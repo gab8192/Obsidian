@@ -190,14 +190,14 @@ namespace NNUE {
 
     for (int i = 0; i < HiddenWidth / WeightsPerVec; ++i) {
       // Side to move
-      v0 = maxEpi16(stmAcc[i], vecZero); // clip
+      v0 = maxEpi16(_mm256_srai_epi16(stmAcc[i], 2), vecZero); // clip
       v0 = minEpi16(v0, vecQA); // clip
       v1 = mulloEpi16(v0, stmWeights[i]); // square
       v1 = maddEpi16(v1, v0); // multiply with output layer
       sum = addEpi32(sum, v1); // collect the result
 
       // Non side to move
-      v0 = maxEpi16(oppAcc[i], vecZero);
+      v0 = maxEpi16(_mm256_srai_epi16(oppAcc[i], 2), vecZero);
       v0 = minEpi16(v0, vecQA);
       v1 = mulloEpi16(v0, oppWeights[i]);
       v1 = maddEpi16(v1, v0);
