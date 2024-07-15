@@ -44,8 +44,8 @@ namespace NNUE {
   constexpr int OutputBuckets = 8;
 
   constexpr int NetworkScale = 400;
-  constexpr int NetworkQA = 260;
-  constexpr int NetworkQB = 64;
+  constexpr int NetworkQA = 277;
+  constexpr int NetworkQB = 60;
   constexpr int NetworkQAB = NetworkQA * NetworkQB;
 
   struct Accumulator {
