@@ -1289,13 +1289,6 @@ namespace Search {
             goto bestMoveDecided;
           }
 
-          if ( rootDepth > 1 
-            && settings.nodes
-            && Threads::totalNodes() > settings.nodes) {
-            naturalExit = false;
-            goto bestMoveDecided;
-          }
-
           if (score <= alpha) {
             beta = (alpha + beta) / 2;
             alpha = std::max(-SCORE_INFINITE, score - window);
@@ -1311,6 +1304,11 @@ namespace Search {
           else
             break;
 
+          if (settings.nodes && Threads::totalNodes() >= settings.nodes) {
+            naturalExit = false;
+            goto bestMoveDecided;
+          }
+
           window += window / 3;
         }
 
@@ -1324,6 +1322,11 @@ namespace Search {
       idStack[rootDepth].bestMove = bestMove;
 
       completeDepth = rootDepth;
+
+      if (settings.nodes && Threads::totalNodes() >= settings.nodes) {
+        naturalExit = false;
+        goto bestMoveDecided;
+      }
 
       if (this != Threads::mainThread())
         continue;

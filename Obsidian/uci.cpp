@@ -109,7 +109,7 @@ namespace {
 
         elapsed += timeMillis() - searchSettings.startTime;
 
-        totalNodes += Threads::mainThread()->nodesSearched;
+        totalNodes += Threads::totalNodes();
       }
     }
 
