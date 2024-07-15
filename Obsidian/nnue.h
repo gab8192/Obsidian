@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "net51.bin"
+#define EvalFile "quantised.bin"
 
 using namespace SIMD;
 
@@ -44,8 +44,8 @@ namespace NNUE {
   constexpr int OutputBuckets = 8;
 
   constexpr int NetworkScale = 400;
-  constexpr int NetworkQA = 255;
-  constexpr int NetworkQB = 64;
+  constexpr int NetworkQA = 360;
+  constexpr int NetworkQB = 90;
   constexpr int NetworkQAB = NetworkQA * NetworkQB;
 
   struct Accumulator {
