@@ -526,6 +526,7 @@ namespace Search {
 
     movePicker.genQuietChecks = (depth == 0);
 
+    bool anyGoodCap = false;
     bool foundLegalMoves = false;
 
     // Visit moves
@@ -551,6 +552,9 @@ namespace Search {
         if (!pos.seeGe(move, QsSeeMargin))
           continue;
       }
+
+      if (!isQuiet)
+        anyGoodCap = true;
 
       Position newPos = pos;
       playMove(newPos, move, ss);
@@ -588,6 +592,9 @@ namespace Search {
     ttEntry->store(pos.key,
       bestScore >= beta ? TT::FLAG_LOWER : TT::FLAG_UPPER,
       0, bestMove, bestScore, ss->staticEval, ttPV, ply);
+
+    if (!anyGoodCap && !pos.checkers && bestScore > 0)
+      bestScore = (bestScore * 15) / 16;
 
     return bestScore;
   }
