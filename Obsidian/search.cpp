@@ -824,7 +824,7 @@ namespace Search {
     }
 
     // IIR. Decrement the depth if we expect this search to have bad move ordering
-    if ((IsPV || cutNode) && depth >= 2+2*cutNode && !ttMove)
+    if ((IsPV || cutNode) && depth >= 2+2*cutNode && !ttMove && !timeAlmostUp)
       depth--;
 
     if (   !IsPV
@@ -1189,6 +1189,8 @@ namespace Search {
     else if (settings.movetime)
       maxTime = settings.movetime - int(Options["Move Overhead"]);
 
+    timeAlmostUp = false;
+
     ply = 0;
     maxTimeCounter = 0;
 
@@ -1258,6 +1260,10 @@ namespace Search {
     const int multiPV = std::min(int(Options["MultiPV"]), rootMoves.size());
 
     for (rootDepth = 1; rootDepth <= settings.depth; rootDepth++) {
+
+      if (settings.standardTimeLimit()) {
+        timeAlmostUp = elapsedTime() > (optimumTime * 2 / 3);
+      }
 
       // Only one legal move? For analysis purposes search, but with a limited depth
       if (rootDepth > 10 && oneLegalMove)

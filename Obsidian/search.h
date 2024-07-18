@@ -76,6 +76,8 @@ namespace Search {
     clock_t optimumTime, maxTime;
     uint32_t maxTimeCounter;
 
+    bool timeAlmostUp;
+
     int rootDepth;
 
     int ply = 0;
