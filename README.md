@@ -1,6 +1,9 @@
 # Obsidian
 A top tier UCI chess engine written in c++, that I started developing in april 2023.
 
+As of 18 July 2024, Obsidian is the 3rd strongest engine at 10+1s, after Stockfish and Torch.
+(Ipmanchess rating 3549)
+
 
 ### Neural network
 
