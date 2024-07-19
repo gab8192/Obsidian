@@ -186,22 +186,23 @@ namespace NNUE {
     const Vec vecQA = vecSet1Epi16(NetworkQA);
 
     Vec sum = vecSetZero();
-    Vec v0, v1;
+    Vec s0, s1, n0, n1;
 
     for (int i = 0; i < HiddenWidth / WeightsPerVec; ++i) {
-      // Side to move
-      v0 = maxEpi16(stmAcc[i], vecZero); // clip
-      v0 = minEpi16(v0, vecQA); // clip
-      v1 = mulloEpi16(v0, stmWeights[i]); // square
-      v1 = maddEpi16(v1, v0); // multiply with output layer
-      sum = addEpi32(sum, v1); // collect the result
+      s0 = maxEpi16(stmAcc[i], vecZero); // clip
+      n0 = maxEpi16(oppAcc[i], vecZero); // clip
 
-      // Non side to move
-      v0 = maxEpi16(oppAcc[i], vecZero);
-      v0 = minEpi16(v0, vecQA);
-      v1 = mulloEpi16(v0, oppWeights[i]);
-      v1 = maddEpi16(v1, v0);
-      sum = addEpi32(sum, v1);
+      s0 = minEpi16(s0, vecQA); // clip
+      n0 = minEpi16(n0, vecQA); // clip
+
+      s1 = mulloEpi16(s0, stmWeights[i]); // square
+      n1 = mulloEpi16(n0, oppWeights[i]);
+
+      s1 = maddEpi16(s1, s0); // multiply with output layer
+      n1 = maddEpi16(n1, n0);
+
+      sum = addEpi32(sum, s1); // collect the result
+      sum = addEpi32(sum, n1);
     }
 
     int unsquared = vecHaddEpi32(sum) / NetworkQA + Content.OutputBias[outputBucket];
