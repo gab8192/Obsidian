@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "net51.bin"
+#define EvalFile "net033-800_f_t.bin"
 
 using namespace SIMD;
 
@@ -27,19 +27,19 @@ namespace NNUE {
   using weight_t = int16_t;
 
   constexpr int FeaturesWidth = 768;
-  constexpr int HiddenWidth = 1536;
+  constexpr int HiddenWidth = 1280;
 
   constexpr int KingBucketsScheme[] = {
     0,  1,  2,  3,  3,  2,  1,  0,
     4,  5,  6,  7,  7,  6,  5,  4,
-    8,  8,  9,  9,  9,  9,  8,  8,
-    10, 10, 10, 10, 10, 10, 10, 10,
-    11, 11, 11, 11, 11, 11, 11, 11, 
-    11, 11, 11, 11, 11, 11, 11, 11, 
-    12, 12, 12, 12, 12, 12, 12, 12, 
-    12, 12, 12, 12, 12, 12, 12, 12, 
+    8,  9, 10, 11, 11, 10,  9,  8,
+    8,  9, 10, 11, 11, 10,  9,  8,
+   12, 12, 13, 13, 13, 13, 12, 12,
+   12, 12, 13, 13, 13, 13, 12, 12,
+   14, 14, 15, 15, 15, 15, 14, 14,
+   14, 14, 15, 15, 15, 15, 14, 14
   };
-  constexpr int KingBuckets = 13;
+  constexpr int KingBuckets = 16;
 
   constexpr int OutputBuckets = 8;
 
