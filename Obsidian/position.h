@@ -31,6 +31,8 @@ struct alignas(32) Position {
 
   Key key;
 
+  uint64_t nnKey;
+
   Bitboard blockersForKing[COLOR_NB];
   Bitboard pinners[COLOR_NB];
 

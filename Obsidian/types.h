@@ -229,6 +229,10 @@ constexpr Color operator~(Color d1) { return Color(int(d1) ^ 1); }
 constexpr int PIECE_VALUE[PIECE_NB] = { 0, 100, 370, 390, 610, 1210, 0, 0,
                                        0, 100, 370, 390, 610, 1210, 0, 0 };
 
+
+constexpr int NN_HISTORY_SIZE = 8192;
+                                  
+
 inline std::ostream& operator<<(std::ostream& stream, Color color) {
   stream << (color == WHITE ? "white" : "black");
   return stream;

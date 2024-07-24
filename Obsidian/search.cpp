@@ -121,6 +121,7 @@ namespace Search {
     memset(captureHistory, 0, sizeof(captureHistory));
     memset(counterMoveHistory, 0, sizeof(counterMoveHistory));
     memset(contHistory, 0, sizeof(contHistory));
+    memset(nnHistory, 0, sizeof(nnHistory));
     
     previousScore = SCORE_NONE;
   }
@@ -276,6 +277,8 @@ namespace Search {
     ss->playedMove = move;
     keyStack[keyStackHead++] = pos.key;
 
+    Bitboard oldKey = miniAccumStack[accumStackHead].genKey();
+
     NNUE::Accumulator& newAcc = accumStack[++accumStackHead];
 
     ply++;
@@ -284,7 +287,11 @@ namespace Search {
     for (Color side = WHITE; side <= BLACK; ++side) {
       newAcc.updated[side] = false;
       newAcc.kings[side] = pos.kingSquare(side);
+
+      miniAccumStack[accumStackHead].doUpdates(newAcc.dirtyPieces, side, miniAccumStack[accumStackHead-1]);
     }
+
+    Bitboard newKey = miniAccumStack[accumStackHead].genKey();
   }
 
   void Thread::cancelMove() {
@@ -1173,6 +1180,8 @@ namespace Search {
     for (Color side = WHITE; side <= BLACK; ++side) {
       accumStack[0].refresh(rootPos, side);
       accumStack[0].kings[side] = rootPos.kingSquare(side);
+
+      miniAccumStack[0].refresh(rootPos, side);
     }
     
     for (int i = 0; i < 2; i++)

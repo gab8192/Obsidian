@@ -32,6 +32,8 @@ int main(int argc, char** argv)
 
   NNUE::init();
 
+  MiniNNUE::init();
+
   UCI::loop(argc, argv);
 
   Threads::setThreadCount(0);

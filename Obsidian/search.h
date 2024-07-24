@@ -2,6 +2,7 @@
 
 #include "history.h"
 #include "nnue.h"
+#include "mininnue.h"
 #include "position.h"
 #include "types.h"
 
@@ -85,6 +86,7 @@ namespace Search {
 
     int accumStackHead;
     NNUE::Accumulator accumStack[MAX_PLY];
+    MiniNNUE::Accumulator miniAccumStack[MAX_PLY];
 
     SearchInfo searchStack[MAX_PLY + SsOffset];
 
@@ -95,6 +97,7 @@ namespace Search {
     CaptureHistory captureHistory;
     ContinuationHistory contHistory;
     CounterMoveHistory counterMoveHistory;
+    NnHistory nnHistory;
 
     NNUE::FinnyTable finny;
 
