@@ -38,7 +38,7 @@ public:
   MovePicker(
     SearchType _searchType, Position& _pos,
     Move _ttMove, Move _killerMove, Move _counterMove,
-    MainHistory& _mainHist, CaptureHistory& _capHist,
+    MainHistory& _mainHist, CaptureHistory& _capHist, NnHistory& _nnHist,
     int _seeMargin,
     Search::SearchInfo* _ss);
 
@@ -56,6 +56,7 @@ private:
 
   MainHistory& mainHist;
   CaptureHistory& capHist;
+  NnHistory& nnHist;
   
   int seeMargin;
   

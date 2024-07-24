@@ -291,7 +291,7 @@ namespace Search {
       miniAccumStack[accumStackHead].doUpdates(newAcc.dirtyPieces, side, miniAccumStack[accumStackHead-1]);
     }
 
-    Bitboard newKey = miniAccumStack[accumStackHead].genKey();
+    pos.nnKey = miniAccumStack[accumStackHead].genKey();
   }
 
   void Thread::cancelMove() {
@@ -342,6 +342,8 @@ namespace Search {
     if (depth <= 3 && !quietCount)
       return;
 
+    addToHistory(nnHistory[pos.nnKey][pieceTo(pos, bestMove)], bonus);
+
     // Butterfly history
     addToHistory(mainHistory[pos.sideToMove][move_from_to(bestMove)], bonus);
 
@@ -353,6 +355,7 @@ namespace Search {
       Move otherMove = quiets[i];
       addToContHistory(pos, -bonus, otherMove, ss);
       addToHistory(mainHistory[pos.sideToMove][move_from_to(otherMove)], -bonus);
+      addToHistory(nnHistory[pos.nnKey][pieceTo(pos, otherMove)], -bonus);
     }
   }
 
@@ -527,7 +530,7 @@ namespace Search {
     MovePicker movePicker(
       MovePicker::QSEARCH, pos,
       ttMove, MOVE_NONE, MOVE_NONE,
-      mainHistory, captureHistory,
+      mainHistory, captureHistory, nnHistory,
       0,
       ss);
 
@@ -845,7 +848,7 @@ namespace Search {
       MovePicker pcMovePicker(
         MovePicker::PROBCUT, pos,
         visitTTMove ? ttMove : MOVE_NONE, MOVE_NONE, MOVE_NONE,
-        mainHistory, captureHistory,
+        mainHistory, captureHistory, nnHistory,
         pcSeeMargin,
         ss);
 
@@ -900,7 +903,7 @@ namespace Search {
     MovePicker movePicker(
       MovePicker::PVS, pos,
       ttMove, ss->killerMove, counterMove,
-      mainHistory, captureHistory,
+      mainHistory, captureHistory, nnHistory,
       0,
       ss);
 
@@ -1183,6 +1186,8 @@ namespace Search {
 
       miniAccumStack[0].refresh(rootPos, side);
     }
+
+    rootPos.nnKey = miniAccumStack[0].genKey();
     
     for (int i = 0; i < 2; i++)
         for (int j = 0; j < NNUE::KingBuckets; j++)
