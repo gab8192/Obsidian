@@ -230,7 +230,7 @@ constexpr int PIECE_VALUE[PIECE_NB] = { 0, 100, 370, 390, 610, 1210, 0, 0,
                                        0, 100, 370, 390, 610, 1210, 0, 0 };
 
 
-constexpr int NN_HISTORY_SIZE = 8192;
+constexpr int NN_HISTORY_SIZE = 2048;
                                   
 
 inline std::ostream& operator<<(std::ostream& stream, Color color) {

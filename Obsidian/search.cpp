@@ -277,8 +277,6 @@ namespace Search {
     ss->playedMove = move;
     keyStack[keyStackHead++] = pos.key;
 
-    Bitboard oldKey = miniAccumStack[accumStackHead].genKey();
-
     NNUE::Accumulator& newAcc = accumStack[++accumStackHead];
 
     ply++;
