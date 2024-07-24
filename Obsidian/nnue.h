@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "net52.bin"
+#define EvalFile "net_mini.bin"
 
 using namespace SIMD;
 
@@ -27,21 +27,7 @@ namespace NNUE {
   using weight_t = int16_t;
 
   constexpr int FeaturesWidth = 768;
-  constexpr int HiddenWidth = 1536;
-
-  constexpr int KingBucketsScheme[] = {
-    0,  1,  2,  3,  3,  2,  1,  0,
-    4,  5,  6,  7,  7,  6,  5,  4,
-    8,  8,  9,  9,  9,  9,  8,  8,
-    10, 10, 10, 10, 10, 10, 10, 10,
-    11, 11, 11, 11, 11, 11, 11, 11, 
-    11, 11, 11, 11, 11, 11, 11, 11, 
-    12, 12, 12, 12, 12, 12, 12, 12, 
-    12, 12, 12, 12, 12, 12, 12, 12, 
-  };
-  constexpr int KingBuckets = 13;
-
-  constexpr int OutputBuckets = 8;
+  constexpr int HiddenWidth = 32;
 
   constexpr int NetworkScale = 400;
   constexpr int NetworkQA = 255;
@@ -53,7 +39,6 @@ namespace NNUE {
     alignas(Alignment) weight_t colors[COLOR_NB][HiddenWidth];
 
     bool updated[COLOR_NB];
-    Square kings[COLOR_NB];
     DirtyPieces dirtyPieces;
 
     void addPiece(Square kingSq, Color side, Piece pc, Square sq);
@@ -66,18 +51,6 @@ namespace NNUE {
 
     void refresh(Position& pos, Color side);
   };
-
-  struct FinnyEntry {
-    Bitboard byColorBB[COLOR_NB][COLOR_NB];
-    Bitboard byPieceBB[COLOR_NB][PIECE_TYPE_NB];
-    Accumulator acc;
-
-    void reset();
-  };
-
-  using FinnyTable = FinnyEntry[2][KingBuckets];
-
-  bool needRefresh(Color side, Square oldKing, Square newKing);
 
   void init();
 

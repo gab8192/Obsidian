@@ -96,8 +96,6 @@ namespace Search {
     ContinuationHistory contHistory;
     CounterMoveHistory counterMoveHistory;
 
-    NNUE::FinnyTable finny;
-
     Score previousScore;
 
     void refreshAccumulator(Position& pos, NNUE::Accumulator& acc, Color side);

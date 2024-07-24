@@ -241,34 +241,6 @@ namespace Search {
     keyStackHead--;
   }
 
-  void Thread::refreshAccumulator(Position& pos, NNUE::Accumulator& acc, Color side) {
-    const Square king = pos.kingSquare(side);
-    const int bucket = NNUE::KingBucketsScheme[relative_square(side, king)];
-    NNUE::FinnyEntry& entry = finny[fileOf(king) >= FILE_E][bucket];
-
-    for (Color c = WHITE; c <= BLACK; ++c) {
-      for (PieceType pt = PAWN; pt <= KING; ++pt) {
-        const Bitboard oldBB = entry.byColorBB[side][c] & entry.byPieceBB[side][pt];
-        const Bitboard newBB = pos.pieces(c, pt);
-        Bitboard toRemove = oldBB & ~newBB;
-        Bitboard toAdd = newBB & ~oldBB;
-
-        while (toRemove) {
-          Square sq = popLsb(toRemove);
-          entry.acc.removePiece(king, side, makePiece(c, pt), sq);
-        }
-        while (toAdd) {
-          Square sq = popLsb(toAdd);
-          entry.acc.addPiece(king, side, makePiece(c, pt), sq);
-        }
-      }
-    }
-    acc.updated[side] = true;
-    memcpy(acc.colors[side], entry.acc.colors[side], sizeof(acc.colors[0]));
-    memcpy(entry.byColorBB[side], pos.byColorBB, sizeof(entry.byColorBB[0]));
-    memcpy(entry.byPieceBB[side], pos.byPieceBB, sizeof(entry.byPieceBB[0]));
-  }
-
   void Thread::playMove(Position& pos, Move move, SearchInfo* ss) {
 
     const bool isCap = pos.board[move_to(move)] != NO_PIECE;
@@ -283,7 +255,6 @@ namespace Search {
 
     for (Color side = WHITE; side <= BLACK; ++side) {
       newAcc.updated[side] = false;
-      newAcc.kings[side] = pos.kingSquare(side);
     }
   }
 
@@ -432,11 +403,6 @@ namespace Search {
       NNUE::Accumulator* iter = head;
       while (true) {
         iter--;
-
-        if (NNUE::needRefresh(side, iter->kings[side], kings[side])) {
-          refreshAccumulator(pos, *head, side);
-          break;
-        }
 
         if (iter->updated[side]) {
           NNUE::Accumulator* lastUpdated = iter;
@@ -1172,12 +1138,7 @@ namespace Search {
     accumStackHead = 0;
     for (Color side = WHITE; side <= BLACK; ++side) {
       accumStack[0].refresh(rootPos, side);
-      accumStack[0].kings[side] = rootPos.kingSquare(side);
     }
-    
-    for (int i = 0; i < 2; i++)
-        for (int j = 0; j < NNUE::KingBuckets; j++)
-          finny[i][j].reset();
 
     keyStackHead = 0;
     for (int i = 0; i < settings.prevPositions.size(); i++)

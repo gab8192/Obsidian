@@ -13,32 +13,19 @@ namespace NNUE {
   constexpr int WeightsPerVec = sizeof(Vec) / sizeof(weight_t);
 
   struct {
-    alignas(Alignment) weight_t FeatureWeights[KingBuckets][2][6][64][HiddenWidth];
+    alignas(Alignment) weight_t FeatureWeights[2][6][64][HiddenWidth];
     alignas(Alignment) weight_t FeatureBiases[HiddenWidth];
-    alignas(Alignment) weight_t OutputWeights[OutputBuckets][2 * HiddenWidth];
-                       weight_t OutputBias[OutputBuckets];
+    alignas(Alignment) weight_t OutputWeights[2 * HiddenWidth];
+                       weight_t OutputBias;
   } Content;
 
-  bool needRefresh(Color side, Square oldKing, Square newKing) {
-    const bool oldMirrored = fileOf(oldKing) >= FILE_E;
-    const bool newMirrored = fileOf(newKing) >= FILE_E;
-
-    if (oldMirrored != newMirrored)
-      return true;
-
-    return   KingBucketsScheme[relative_square(side, oldKing)]
-          != KingBucketsScheme[relative_square(side, newKing)];
-  }
-
-  inline weight_t* featureAddress(Square kingSq, Color side, Piece pc, Square sq) {
-    if (fileOf(kingSq) >= FILE_E)
-      sq = Square(sq ^ 7);
+  inline weight_t* featureAddress(Color side, Piece pc, Square sq) {
 
     return Content.FeatureWeights
-            [KingBucketsScheme[relative_square(side, kingSq)]]
             [side != piece_color(pc)]
             [piece_type(pc)-1]
             [relative_square(side, sq)];
+            
   }
 
   template <int InputSize>
@@ -112,11 +99,11 @@ namespace NNUE {
   }
 
   void Accumulator::addPiece(Square kingSq, Color side, Piece pc, Square sq) {
-    multiAdd<HiddenWidth>(colors[side], colors[side], featureAddress(kingSq, side, pc, sq));
+    multiAdd<HiddenWidth>(colors[side], colors[side], featureAddress(side, pc, sq));
   }
 
   void Accumulator::removePiece(Square kingSq, Color side, Piece pc, Square sq) {
-    multiSub<HiddenWidth>(colors[side], colors[side], featureAddress(kingSq, side, pc, sq));
+    multiSub<HiddenWidth>(colors[side], colors[side], featureAddress(side, pc, sq));
   }
 
   void Accumulator::doUpdates(Square kingSq, Color side, Accumulator& input) {
@@ -124,21 +111,21 @@ namespace NNUE {
     if (dp.type == DirtyPieces::CASTLING) 
     {
       multiSubAddSubAdd<HiddenWidth>(colors[side], input.colors[side], 
-        featureAddress(kingSq, side, dp.sub0.pc, dp.sub0.sq),
-        featureAddress(kingSq, side, dp.add0.pc, dp.add0.sq),
-        featureAddress(kingSq, side, dp.sub1.pc, dp.sub1.sq),
-        featureAddress(kingSq, side, dp.add1.pc, dp.add1.sq));
+        featureAddress(side, dp.sub0.pc, dp.sub0.sq),
+        featureAddress(side, dp.add0.pc, dp.add0.sq),
+        featureAddress(side, dp.sub1.pc, dp.sub1.sq),
+        featureAddress(side, dp.add1.pc, dp.add1.sq));
     } else if (dp.type == DirtyPieces::CAPTURE) 
     { 
       multiSubAddSub<HiddenWidth>(colors[side], input.colors[side], 
-        featureAddress(kingSq, side, dp.sub0.pc, dp.sub0.sq),
-        featureAddress(kingSq, side, dp.add0.pc, dp.add0.sq),
-        featureAddress(kingSq, side, dp.sub1.pc, dp.sub1.sq));
+        featureAddress(side, dp.sub0.pc, dp.sub0.sq),
+        featureAddress(side, dp.add0.pc, dp.add0.sq),
+        featureAddress(side, dp.sub1.pc, dp.sub1.sq));
     } else
     {
       multiSubAdd<HiddenWidth>(colors[side], input.colors[side], 
-        featureAddress(kingSq, side, dp.sub0.pc, dp.sub0.sq),
-        featureAddress(kingSq, side, dp.add0.pc, dp.add0.sq));
+        featureAddress(side, dp.sub0.pc, dp.sub0.sq),
+        featureAddress(side, dp.add0.pc, dp.add0.sq));
     }
     updated[side] = true;
   }
@@ -158,29 +145,19 @@ namespace NNUE {
     updated[side] = true;
   }
 
-  void FinnyEntry::reset() {
-    memset(byColorBB, 0, sizeof(byColorBB));
-    memset(byPieceBB, 0, sizeof(byPieceBB));
-    acc.reset(WHITE);
-    acc.reset(BLACK);
-  }
-
   void init() {
 
     memcpy(&Content, gEmbeddedNNUEData, sizeof(Content));
-    
+
   }
 
   Score evaluate(Position& pos, Accumulator& accumulator) {
 
-    constexpr int divisor = (32 + OutputBuckets - 1) / OutputBuckets;
-    int outputBucket = (BitCount(pos.pieces()) - 2) / divisor;
-
     Vec* stmAcc = (Vec*) accumulator.colors[pos.sideToMove];
     Vec* oppAcc = (Vec*) accumulator.colors[~pos.sideToMove];
 
-    Vec* stmWeights = (Vec*) &Content.OutputWeights[outputBucket][0];
-    Vec* oppWeights = (Vec*) &Content.OutputWeights[outputBucket][HiddenWidth];
+    Vec* stmWeights = (Vec*) &Content.OutputWeights[0];
+    Vec* oppWeights = (Vec*) &Content.OutputWeights[HiddenWidth];
 
     const Vec vecZero = vecSetZero();
     const Vec vecQA = vecSet1Epi16(NetworkQA);
@@ -204,7 +181,7 @@ namespace NNUE {
       sum = addEpi32(sum, v1);
     }
 
-    int unsquared = vecHaddEpi32(sum) / NetworkQA + Content.OutputBias[outputBucket];
+    int unsquared = vecHaddEpi32(sum) / NetworkQA + Content.OutputBias;
 
     return (unsquared * NetworkScale) / NetworkQAB;
   }
