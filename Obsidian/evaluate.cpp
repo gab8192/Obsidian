@@ -4,14 +4,16 @@
 
 namespace Eval {
 
+  constexpr int bpScale[] = {0, 0, 250, 240, 225, 200, 165, 125, 75};
+
   Score evaluate(Position& pos, NNUE::Accumulator& accumulator) {
 
     Score score = NNUE::evaluate(pos, accumulator);
 
-    int blockedPawns = BitCount( pos.pieces(WHITE, PAWN) && (pos.pieces(BLACK, PAWN) >> 8) );
+    int blockedPawns = BitCount( pos.pieces(WHITE, PAWN) & (pos.pieces(BLACK, PAWN) >> 8) );
 
     if (blockedPawns >= 2)
-      score = score * (256 - blockedPawns*blockedPawns) / 256;
+      score = score * bpScale[blockedPawns] / 256;
 
     int phase =  3 * BitCount(pos.pieces(KNIGHT))
                + 3 * BitCount(pos.pieces(BISHOP))
