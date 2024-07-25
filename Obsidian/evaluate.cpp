@@ -8,6 +8,11 @@ namespace Eval {
 
     Score score = NNUE::evaluate(pos, accumulator);
 
+    int blockedPawns = BitCount( pos.pieces(WHITE, PAWN) && (pos.pieces(BLACK, PAWN) >> 8) );
+
+    if (blockedPawns >= 2)
+      score = score * (256 - blockedPawns*blockedPawns) / 256;
+
     int phase =  3 * BitCount(pos.pieces(KNIGHT))
                + 3 * BitCount(pos.pieces(BISHOP))
                + 5 * BitCount(pos.pieces(ROOK))
