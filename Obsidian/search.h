@@ -94,7 +94,6 @@ namespace Search {
     MainHistory mainHistory;
     CaptureHistory captureHistory;
     ContinuationHistory contHistory;
-    CounterMoveHistory counterMoveHistory;
 
     NNUE::FinnyTable finny;
 
