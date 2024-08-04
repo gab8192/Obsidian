@@ -122,7 +122,7 @@ namespace Search {
     memset(counterMoveHistory, 0, sizeof(counterMoveHistory));
     memset(contHistory, 0, sizeof(contHistory));
     
-    previousScore = SCORE_NONE;
+    searchPrevScore = SCORE_NONE;
   }
 
   Thread::Thread()
@@ -1192,7 +1192,9 @@ namespace Search {
     ply = 0;
     maxTimeCounter = 0;
 
-    SearchLoopInfo idStack[MAX_PLY];
+    // Setup search stack
+
+    SearchInfo* ss = &searchStack[SsOffset];
 
     for (int i = 0; i < MAX_PLY + SsOffset; i++) {
       searchStack[i].staticEval = SCORE_NONE;
@@ -1209,9 +1211,10 @@ namespace Search {
 
     bool naturalExit = true;
 
+    // TM variables
+    Move idPrevMove = MOVE_NONE;
+    Score idPrevScore = SCORE_NONE;
     int searchStability = 0;
-
-    SearchInfo* ss = &searchStack[SsOffset];
 
     // Setup root moves
     rootMoves = RootMoveList();
@@ -1309,12 +1312,6 @@ namespace Search {
         sortRootMoves(0);
       }
 
-      const Move bestMove = rootMoves[0].move;
-      const Score score = rootMoves[0].score;
-
-      idStack[rootDepth].score = score;
-      idStack[rootDepth].bestMove = bestMove;
-
       completeDepth = rootDepth;
 
       if (settings.nodes && Threads::totalNodes() >= settings.nodes) {
@@ -1334,7 +1331,10 @@ namespace Search {
       if (usedMostOfTime())
         goto bestMoveDecided;
 
-      if (bestMove == idStack[rootDepth - 1].bestMove)
+      const Move bestMove = rootMoves[0].move;
+      const Score score = rootMoves[0].score;
+
+      if (bestMove == idPrevMove)
         searchStability = std::min(searchStability + 1, 8);
       else
         searchStability = 0;
@@ -1347,14 +1347,17 @@ namespace Search {
         double stabilityFactor = (tm2/100.0) - searchStability * (tm3/100.0);
 
         double scoreLoss =   (tm4/100.0)
-                           + (tm5/1000.0) * (idStack[rootDepth - 1].score - score)
-                           + (tm6/1000.0) * (previousScore - score);
+                           + (tm5/1000.0) * (idPrevScore     - score)
+                           + (tm6/1000.0) * (searchPrevScore - score);
 
-        double scoreFactor     = std::clamp(scoreLoss, lol0 / 100.0, lol1 / 100.0);
+        double scoreFactor = std::clamp(scoreLoss, lol0 / 100.0, lol1 / 100.0);
 
         if (elapsed > stabilityFactor * nodesFactor * scoreFactor * optimumTime)
           goto bestMoveDecided;
       }
+
+      idPrevMove = bestMove;
+      idPrevScore = score;
     }
 
   bestMoveDecided:
@@ -1412,9 +1415,9 @@ namespace Search {
         for (int i = 0; i < multiPV; i++)
           printInfo(bestThread->completeDepth, i+1, bestThread->rootMoves[i].score, getPvString(bestThread->rootMoves[i]));
 
-    previousScore = bestThread->rootMoves[0].score;
+    searchPrevScore = bestThread->rootMoves[0].score;
 
-    if (tbBestMove && std::abs(previousScore) < SCORE_MATE_IN_MAX_PLY)
+    if (tbBestMove && std::abs(searchPrevScore) < SCORE_MATE_IN_MAX_PLY)
       printBestMove(tbBestMove);
     else
       printBestMove(bestThread->rootMoves[0].move);

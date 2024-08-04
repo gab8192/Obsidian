@@ -27,11 +27,6 @@ namespace Search {
     }
   };
 
-  struct SearchLoopInfo {
-    Score score;
-    Move bestMove;
-  };
-
   struct SearchInfo {
     Score staticEval;
     Move playedMove;
@@ -98,7 +93,7 @@ namespace Search {
 
     NNUE::FinnyTable finny;
 
-    Score previousScore;
+    Score searchPrevScore;
 
     void refreshAccumulator(Position& pos, NNUE::Accumulator& acc, Color side);
 
