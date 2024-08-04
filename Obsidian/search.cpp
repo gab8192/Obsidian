@@ -1226,7 +1226,7 @@ namespace Search {
       }
     }
 
-    const bool oneLegalMove = (rootMoves.size() == 1);
+    Move tbBestMove = MOVE_NONE;
 
     if ( this == Threads::mainThread()
       && BitCount(rootPos.pieces()) <= TB_LARGEST) {
@@ -1241,14 +1241,8 @@ namespace Search {
           rootPos.sideToMove == WHITE,
           nullptr);
 
-      if (result != TB_RESULT_FAILED) {
-        Move tbBestMove = moveFromTbProbeRoot(rootPos, result);
-
-        // Clear all the root moves, and set the only root move as the tablebases best move
-        // For analysis purposes, we don't want to instantly just print the move (though we could)
-        rootMoves = RootMoveList();
-        rootMoves.add(tbBestMove);
-      }
+      if (result != TB_RESULT_FAILED)
+        tbBestMove = moveFromTbProbeRoot(rootPos, result);
     }
 
     // Search starting. Zero out the nodes of each root move
@@ -1260,7 +1254,7 @@ namespace Search {
     for (rootDepth = 1; rootDepth <= settings.depth; rootDepth++) {
 
       // Only one legal move? For analysis purposes search, but with a limited depth
-      if (rootDepth > 10 && oneLegalMove)
+      if (rootDepth > 10 && rootMoves.size() == 1)
         break;
 
       for (pvIdx = 0; pvIdx < multiPV; pvIdx++) {
@@ -1414,13 +1408,16 @@ namespace Search {
       }
     }
 
-    previousScore = bestThread->rootMoves[0].score;
-
     if (!naturalExit || bestThread != this || std::string(Options["Minimal"]) == "true")
         for (int i = 0; i < multiPV; i++)
           printInfo(bestThread->completeDepth, i+1, bestThread->rootMoves[i].score, getPvString(bestThread->rootMoves[i]));
 
-    printBestMove(bestThread->rootMoves[0].move);
+    previousScore = bestThread->rootMoves[0].score;
+
+    if (tbBestMove && std::abs(previousScore) < SCORE_MATE_IN_MAX_PLY)
+      printBestMove(tbBestMove);
+    else
+      printBestMove(bestThread->rootMoves[0].move);
   }
 
   void Thread::idleLoop() {

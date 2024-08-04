@@ -160,7 +160,6 @@ Move MovePicker::nextMove(bool skipQuiets) {
       badCaptures.add(move);
     }
 
-
     if (searchType == PROBCUT)
       return MOVE_NONE;
 
