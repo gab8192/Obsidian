@@ -271,6 +271,8 @@ namespace Search {
 
   void Thread::playMove(Position& pos, Move move, SearchInfo* ss) {
 
+    nodesSearched++;
+
     const bool isCap = pos.board[move_to(move)] != NO_PIECE;
     ss->contHistory = contHistory[isCap][pieceTo(pos, move)];
     ss->playedMove = move;
@@ -455,8 +457,6 @@ namespace Search {
   template<bool IsPV>
   Score Thread::qsearch(Position& pos, Score alpha, Score beta, int depth, SearchInfo* ss) {
 
-    ++nodesSearched;
-    
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY-4)
       return pos.checkers ? SCORE_DRAW : doEvaluation(pos);
@@ -647,8 +647,6 @@ namespace Search {
     // Enter qsearch when depth is 0
     if (depth <= 0)
       return qsearch<IsPV>(pos, alpha, beta, 0, ss);
-
-    ++nodesSearched;
 
     // Detect draw
     if (!IsRoot && (isRepetition(pos, ply) || pos.halfMoveClock >= 100))
