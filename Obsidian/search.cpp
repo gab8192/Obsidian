@@ -931,6 +931,9 @@ namespace Search {
                                   depth    * PvsCapSeeMargin;
         if (!pos.seeGe(move, seeMargin))
           continue;
+      
+        if (history < -4096 * depth)
+            skipQuiets = true;
 
         // Late move pruning. At low depths, only visit a few quiet moves
         if (seenMoves >= (depth * depth + LmpBase) / (2 - improving))
