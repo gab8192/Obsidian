@@ -5,6 +5,7 @@ uint64_t ZOBRIST_TEMPO;
 uint64_t ZOBRIST_PSQ[PIECE_NB][SQUARE_NB];
 uint64_t ZOBRIST_EP[FILE_NB];
 uint64_t ZOBRIST_CASTLING[16];
+uint64_t ZOBRIST_50MR[10];
 
 namespace Zobrist {
 
@@ -41,6 +42,9 @@ namespace Zobrist {
 
       ZOBRIST_CASTLING[i] = delta;
     }
+
+    for (int i = 0; i < 10; i++)
+      ZOBRIST_50MR[i] = dis(gen);
   }
 
 }

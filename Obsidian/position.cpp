@@ -90,6 +90,8 @@ void Position::updateKey() {
 
   newKey ^= ZOBRIST_CASTLING[castlingRights];
 
+  newKey ^= ZOBRIST_50MR[halfMoveClock / 16];
+
   if (epSquare != SQ_NONE)
     newKey ^= ZOBRIST_EP[fileOf(epSquare)];
 
@@ -218,8 +220,6 @@ void Position::doNullMove() {
 
   gamePly++;
 
-  halfMoveClock++;
-
   sideToMove = them;
   key ^= ZOBRIST_TEMPO;
 
@@ -229,6 +229,7 @@ void Position::doNullMove() {
 void Position::doMove(Move move, DirtyPieces& dp) {
 
   const Color us = sideToMove, them = ~us;
+  const int oldHMC = halfMoveClock;
 
   if (epSquare != SQ_NONE) {
     key ^= ZOBRIST_EP[fileOf(epSquare)];
@@ -367,6 +368,8 @@ void Position::doMove(Move move, DirtyPieces& dp) {
   key ^= ZOBRIST_TEMPO;
 
   updateAttacks();
+
+  key ^= ZOBRIST_50MR[oldHMC / 16] ^ ZOBRIST_50MR[halfMoveClock / 16];
 
   if (newCastlingRights != castlingRights) {
     key ^= ZOBRIST_CASTLING[castlingRights ^ newCastlingRights];
