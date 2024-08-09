@@ -176,25 +176,25 @@ namespace NNUE {
     constexpr int divisor = (32 + OutputBuckets - 1) / OutputBuckets;
     int outputBucket = (BitCount(pos.pieces()) - 2) / divisor;
 
-    weight_t* stmAcc = accumulator.colors[pos.sideToMove];
-    weight_t* oppAcc = accumulator.colors[~pos.sideToMove];
+    Vec vecZero = vecSetZero();
+    Vec vecQA = vecSet1Epi16(NetworkQA);
 
-    weight_t* stmWeights = &Content.OutputWeights[outputBucket][0];
-    weight_t* oppWeights =  &Content.OutputWeights[outputBucket][HiddenWidth];
+    Vec sum = vecZero;
 
-    int sum = 0;
-
-    for (int them = 0; them <= 1; ++them) {
-      weight_t* acc = accumulator.colors[pos.sideToMove ^ them];
-      weight_t* weights = &Content.OutputWeights[outputBucket][them * HiddenWidth / 2];
-      for (int i = 0; i < HiddenWidth/2; ++i) {
-        int16_t crelu0 = std::clamp<int16_t>(acc[i], 0, NetworkQA);
-        int16_t crelu1 = std::clamp<int16_t>(acc[i + HiddenWidth/2], 0, NetworkQA);
-        sum += int(crelu0) * int(crelu1) * int(weights[i]);
+    for (int them = 0; them <= 1; ++them) 
+    {
+      Vec* acc = (Vec*) accumulator.colors[pos.sideToMove ^ them];
+      Vec* weights = (Vec*) &Content.OutputWeights[outputBucket][them * HiddenWidth / 2];
+      for (int i = 0; i < (HiddenWidth / WeightsPerVec) / 2; ++i) 
+      {
+        Vec c0 = minEpi16(maxEpi16(acc[i], vecZero), vecQA);
+        Vec c1 = minEpi16(maxEpi16(acc[i + (HiddenWidth / WeightsPerVec) / 2], vecZero), vecQA);
+        Vec prod = maddEpi16(mulloEpi16(c0, weights[i]), c1);
+        sum = addEpi32(sum, prod);
       }
     }
 
-    int unsquared = sum / NetworkQA + Content.OutputBias[outputBucket];
+    int unsquared = vecHaddEpi32(sum) / NetworkQA + Content.OutputBias[outputBucket];
 
     return (unsquared * NetworkScale) / NetworkQAB;
   }
