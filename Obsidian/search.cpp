@@ -798,8 +798,8 @@ namespace Search {
     if ( !IsPV
       && depth <= RfpMaxDepth
       && eval < SCORE_TB_WIN_IN_MAX_PLY
-      && eval - std::max(RfpDepthMul * (depth - improving), 20) >= beta)
-      return (eval + beta) / 2;
+      && ss->staticEval - std::max(RfpDepthMul * (depth - improving), 20) >= beta)
+      return (ss->staticEval + beta) / 2;
 
     // Null move pruning. When our evaluation is above beta, we give the opponent
     // a free move, and if we are still better, cut off
