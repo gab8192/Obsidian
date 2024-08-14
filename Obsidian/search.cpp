@@ -1007,6 +1007,8 @@ namespace Search {
 
         // Extend if this position *was* in a PV node. Even further if it *is*
         R -= ttPV + IsPV;
+        
+        R -= (ttDepth >= depth);
 
         // Reduce more if the expected best move is a capture
         R += ttMoveNoisy;
