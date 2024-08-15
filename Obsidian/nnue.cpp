@@ -15,7 +15,7 @@ namespace NNUE {
   struct {
     alignas(Alignment) weight_t FeatureWeights[KingBuckets][2][6][64][HiddenWidth];
     alignas(Alignment) weight_t FeatureBiases[HiddenWidth];
-    alignas(Alignment) weight_t OutputWeights[OutputBuckets][2 * HiddenWidth];
+    alignas(Alignment) weight_t OutputWeights[OutputBuckets][HiddenWidth];
                        weight_t OutputBias[OutputBuckets];
   } Content;
 
@@ -176,32 +176,22 @@ namespace NNUE {
     constexpr int divisor = (32 + OutputBuckets - 1) / OutputBuckets;
     int outputBucket = (BitCount(pos.pieces()) - 2) / divisor;
 
-    Vec* stmAcc = (Vec*) accumulator.colors[pos.sideToMove];
-    Vec* oppAcc = (Vec*) accumulator.colors[~pos.sideToMove];
+    Vec vecZero = vecSetZero();
+    Vec vecQA = vecSet1Epi16(NetworkQA);
 
-    Vec* stmWeights = (Vec*) &Content.OutputWeights[outputBucket][0];
-    Vec* oppWeights = (Vec*) &Content.OutputWeights[outputBucket][HiddenWidth];
+    Vec sum = vecZero;
 
-    const Vec vecZero = vecSetZero();
-    const Vec vecQA = vecSet1Epi16(NetworkQA);
-
-    Vec sum = vecSetZero();
-    Vec v0, v1;
-
-    for (int i = 0; i < HiddenWidth / WeightsPerVec; ++i) {
-      // Side to move
-      v0 = maxEpi16(stmAcc[i], vecZero); // clip
-      v0 = minEpi16(v0, vecQA); // clip
-      v1 = mulloEpi16(v0, stmWeights[i]); // square
-      v1 = maddEpi16(v1, v0); // multiply with output layer
-      sum = addEpi32(sum, v1); // collect the result
-
-      // Non side to move
-      v0 = maxEpi16(oppAcc[i], vecZero);
-      v0 = minEpi16(v0, vecQA);
-      v1 = mulloEpi16(v0, oppWeights[i]);
-      v1 = maddEpi16(v1, v0);
-      sum = addEpi32(sum, v1);
+    for (int them = 0; them <= 1; ++them) 
+    {
+      Vec* acc = (Vec*) accumulator.colors[pos.sideToMove ^ them];
+      Vec* weights = (Vec*) &Content.OutputWeights[outputBucket][them * HiddenWidth / 2];
+      for (int i = 0; i < (HiddenWidth / WeightsPerVec) / 2; ++i) 
+      {
+        Vec c0 = minEpi16(maxEpi16(acc[i], vecZero), vecQA);
+        Vec c1 = minEpi16(maxEpi16(acc[i + (HiddenWidth / WeightsPerVec) / 2], vecZero), vecQA);
+        Vec prod = maddEpi16(mulloEpi16(c0, weights[i]), c1);
+        sum = addEpi32(sum, prod);
+      }
     }
 
     int unsquared = vecHaddEpi32(sum) / NetworkQA + Content.OutputBias[outputBucket];
