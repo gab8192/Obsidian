@@ -999,6 +999,13 @@ namespace Search {
 
         int R = lmrTable[depth][seenMoves] / (1 + !isQuiet);
 
+        if (depth >= 9) {
+          int lolAlpha = alpha - 100;
+          Score lolScore = -negamax<false>(newPos, -lolAlpha - 1, -lolAlpha, depth/3, true, ss + 1);
+          if (lolScore <= lolAlpha)
+            R++;
+        }
+
         // Reduce or extend depending on history of this move
         R -= history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv);
 
