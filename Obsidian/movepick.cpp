@@ -58,6 +58,7 @@ Move_Score nextMove0(MoveList& moveList, const int visitedCount) {
 }
 
 void MovePicker::scoreQuiets() {
+  Color us = pos.sideToMove;
   Threats threats;
   pos.calcThreats(threats);
   
@@ -85,6 +86,12 @@ void MovePicker::scoreQuiets() {
     } else if (pt == KNIGHT || pt == BISHOP) {
       if (threats.byPawn & from) threatScore += 16384;
       if (threats.byPawn & to) threatScore -= 16384;
+    }
+
+    if (pos.blockersForKing[~us] & from) {
+      Bitboard line = LINE_BB[from][pos.kingSquare(~us)];
+      if (!(line & to))
+        threatScore += 16384;
     }
 
     quiets[i++].score =
