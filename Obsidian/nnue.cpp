@@ -48,7 +48,7 @@ namespace NNUE {
     Vec* add0Vec = (Vec*) add0;
 
     for (int i = 0; i < InputSize / WeightsPerVec; ++i)
-      outputVec[i] = addEpi16(inputVec[i], add0Vec[i]);
+      outputVec[i] = _mm256_add_ps(inputVec[i], add0Vec[i]);
   }
 
   template <int InputSize>
@@ -58,7 +58,7 @@ namespace NNUE {
     Vec* sub0Vec = (Vec*) sub0;
 
     for (int i = 0; i < InputSize / WeightsPerVec; ++i)
-      outputVec[i] = subEpi16(inputVec[i], sub0Vec[i]);
+      outputVec[i] = _mm256_sub_ps(inputVec[i], sub0Vec[i]);
   }
 
   template <int InputSize>
@@ -69,7 +69,7 @@ namespace NNUE {
     Vec* add1Vec = (Vec*) add1;
 
     for (int i = 0; i < InputSize / WeightsPerVec; ++i)
-      outputVec[i] = addEpi16(inputVec[i], addEpi16(add0Vec[i], add1Vec[i]));
+      outputVec[i] = _mm256_add_ps(inputVec[i], _mm256_add_ps(add0Vec[i], add1Vec[i]));
   }
 
   template <int InputSize>
@@ -81,7 +81,7 @@ namespace NNUE {
     Vec* add0Vec = (Vec*) add0;
         
     for (int i = 0; i < InputSize / WeightsPerVec; ++i)
-      outputVec[i] = subEpi16(addEpi16(inputVec[i], add0Vec[i]), sub0Vec[i]);
+      outputVec[i] = _mm256_sub_ps(_mm256_add_ps(inputVec[i], add0Vec[i]), sub0Vec[i]);
   }
 
   template <int InputSize>
@@ -94,7 +94,7 @@ namespace NNUE {
     Vec* sub1Vec = (Vec*) sub1;
 
     for (int i = 0; i < InputSize / WeightsPerVec; ++i)
-      outputVec[i] = subEpi16(subEpi16(addEpi16(inputVec[i], add0Vec[i]), sub0Vec[i]), sub1Vec[i]);
+      outputVec[i] = _mm256_sub_ps(_mm256_sub_ps(_mm256_add_ps(inputVec[i], add0Vec[i]), sub0Vec[i]), sub1Vec[i]);
   }
 
    template <int InputSize>
@@ -108,7 +108,7 @@ namespace NNUE {
     Vec* add1Vec = (Vec*) add1;
 
     for (int i = 0; i < InputSize / WeightsPerVec; ++i)
-      outputVec[i] = addEpi16(subEpi16(subEpi16(addEpi16(inputVec[i], add0Vec[i]), sub0Vec[i]), sub1Vec[i]), add1Vec[i]);
+      outputVec[i] = _mm256_add_ps(_mm256_sub_ps(_mm256_sub_ps(_mm256_add_ps(inputVec[i], add0Vec[i]), sub0Vec[i]), sub1Vec[i]), add1Vec[i]);
   }
 
   void Accumulator::addPiece(Square kingSq, Color side, Piece pc, Square sq) {
@@ -171,13 +171,24 @@ namespace NNUE {
     
   }
 
+  float vecHadd(__m256 x) {
+    float sum = 0;
+    float lol[8];
+    _mm256_storeu_ps(lol, x);
+
+    for (int i = 0; i < 8; i++)
+      sum += lol[i];
+
+    return sum;
+  }
+
   Score evaluate(Position& pos, Accumulator& accumulator) {
 
     constexpr int divisor = (32 + OutputBuckets - 1) / OutputBuckets;
     int outputBucket = (BitCount(pos.pieces()) - 2) / divisor;
 
-    Vec vecZero = vecSetZero();
-    Vec vecQA = vecSet1Epi16(NetworkQA);
+    Vec vecZero = _mm256_setzero_ps();
+    Vec vecQA = _mm256_set1_ps(1.0f);
 
     Vec sum = vecZero;
 
@@ -187,16 +198,14 @@ namespace NNUE {
       Vec* weights = (Vec*) &Content.OutputWeights[outputBucket][them * HiddenWidth / 2];
       for (int i = 0; i < (HiddenWidth / WeightsPerVec) / 2; ++i) 
       {
-        Vec c0 = minEpi16(maxEpi16(acc[i], vecZero), vecQA);
-        Vec c1 = minEpi16(maxEpi16(acc[i + (HiddenWidth / WeightsPerVec) / 2], vecZero), vecQA);
-        Vec prod = maddEpi16(mulloEpi16(c0, weights[i]), c1);
-        sum = addEpi32(sum, prod);
+        Vec c0 = _mm256_min_ps(_mm256_max_ps(acc[i], vecZero), vecQA);
+        Vec c1 = _mm256_min_ps(_mm256_max_ps(acc[i + (HiddenWidth / WeightsPerVec) / 2], vecZero), vecQA);
+        Vec prod = _mm256_mul_ps(_mm256_mul_ps(c0, weights[i]), c1);
+        sum = _mm256_add_ps(sum, prod);
       }
     }
 
-    int unsquared = vecHaddEpi32(sum) / NetworkQA + Content.OutputBias[outputBucket];
-
-    return (unsquared * NetworkScale) / NetworkQAB;
+    return (vecHadd(sum) + Content.OutputBias[outputBucket]) * NetworkScale;
   }
 
 }
