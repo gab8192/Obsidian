@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "net53.bin"
+#define EvalFile "net53float.bin"
 
 using namespace SIMD;
 
@@ -24,7 +24,7 @@ struct DirtyPieces {
 
 namespace NNUE {
 
-  using weight_t = int16_t;
+  using weight_t = float;
 
   constexpr int FeaturesWidth = 768;
   constexpr int HiddenWidth = 1536;
@@ -44,9 +44,6 @@ namespace NNUE {
   constexpr int OutputBuckets = 8;
 
   constexpr int NetworkScale = 400;
-  constexpr int NetworkQA = 255;
-  constexpr int NetworkQB = 64;
-  constexpr int NetworkQAB = NetworkQA * NetworkQB;
 
   struct Accumulator {
     
