@@ -13,10 +13,17 @@ namespace NNUE {
   constexpr int WeightsPerVec = sizeof(Vec) / sizeof(weight_t);
 
   struct {
-    alignas(Alignment) weight_t FeatureWeights[KingBuckets][2][6][64][HiddenWidth];
-    alignas(Alignment) weight_t FeatureBiases[HiddenWidth];
-    alignas(Alignment) weight_t OutputWeights[OutputBuckets][HiddenWidth];
-                       weight_t OutputBias[OutputBuckets];
+    alignas(Alignment) weight_t FeatureWeights[KingBuckets][2][6][64][L1];
+    alignas(Alignment) weight_t FeatureBiases[L1];
+
+    alignas(Alignment) weight_t L1Weights[L1][OutputBuckets][L2];
+    alignas(Alignment) weight_t L1Biases[OutputBuckets][L2];
+
+    alignas(Alignment) weight_t L2Weights[L2][OutputBuckets][L3];
+    alignas(Alignment) weight_t L2Biases[OutputBuckets][L3];
+
+    alignas(Alignment) weight_t L3Weights[L3][OutputBuckets];
+    alignas(Alignment) weight_t L3Biases[OutputBuckets];
   } Content;
 
   bool needRefresh(Color side, Square oldKing, Square newKing) {
@@ -112,31 +119,31 @@ namespace NNUE {
   }
 
   void Accumulator::addPiece(Square kingSq, Color side, Piece pc, Square sq) {
-    multiAdd<HiddenWidth>(colors[side], colors[side], featureAddress(kingSq, side, pc, sq));
+    multiAdd<L1>(colors[side], colors[side], featureAddress(kingSq, side, pc, sq));
   }
 
   void Accumulator::removePiece(Square kingSq, Color side, Piece pc, Square sq) {
-    multiSub<HiddenWidth>(colors[side], colors[side], featureAddress(kingSq, side, pc, sq));
+    multiSub<L1>(colors[side], colors[side], featureAddress(kingSq, side, pc, sq));
   }
 
   void Accumulator::doUpdates(Square kingSq, Color side, Accumulator& input) {
     DirtyPieces dp = this->dirtyPieces;
     if (dp.type == DirtyPieces::CASTLING) 
     {
-      multiSubAddSubAdd<HiddenWidth>(colors[side], input.colors[side], 
+      multiSubAddSubAdd<L1>(colors[side], input.colors[side], 
         featureAddress(kingSq, side, dp.sub0.pc, dp.sub0.sq),
         featureAddress(kingSq, side, dp.add0.pc, dp.add0.sq),
         featureAddress(kingSq, side, dp.sub1.pc, dp.sub1.sq),
         featureAddress(kingSq, side, dp.add1.pc, dp.add1.sq));
     } else if (dp.type == DirtyPieces::CAPTURE) 
     { 
-      multiSubAddSub<HiddenWidth>(colors[side], input.colors[side], 
+      multiSubAddSub<L1>(colors[side], input.colors[side], 
         featureAddress(kingSq, side, dp.sub0.pc, dp.sub0.sq),
         featureAddress(kingSq, side, dp.add0.pc, dp.add0.sq),
         featureAddress(kingSq, side, dp.sub1.pc, dp.sub1.sq));
     } else
     {
-      multiSubAdd<HiddenWidth>(colors[side], input.colors[side], 
+      multiSubAdd<L1>(colors[side], input.colors[side], 
         featureAddress(kingSq, side, dp.sub0.pc, dp.sub0.sq),
         featureAddress(kingSq, side, dp.add0.pc, dp.add0.sq));
     }
@@ -185,27 +192,64 @@ namespace NNUE {
   Score evaluate(Position& pos, Accumulator& accumulator) {
 
     constexpr int divisor = (32 + OutputBuckets - 1) / OutputBuckets;
-    int outputBucket = (BitCount(pos.pieces()) - 2) / divisor;
+    int bucket = (BitCount(pos.pieces()) - 2) / divisor;
 
-    Vec vecZero = _mm256_setzero_ps();
-    Vec vecQA = _mm256_set1_ps(1.0f);
+    float ftOut[L1];
+    float l1Out[L2];
+    float l2Out[L3];
+    float l3Out;
 
-    Vec sum = vecZero;
+    { // activate FT
+      for (int them = 0; them <= 1; ++them) 
+        {
+          float* acc = accumulator.colors[pos.sideToMove ^ them];
+          for (int i = 0; i < L1 / 2; ++i) 
+          {
+            float c0 = std::clamp(acc[i], 0.0f, 1.0f);
+            float c1 = std::clamp(acc[i + L1 / 2], 0.0f, 1.0f);
+            ftOut[them * L1 / 2 + i] = c0 * c1;
+          }
+        }
+    }
+    
+    { // propagate l1
+      float sums[L2];
+      for (int i = 0; i < L2; i++)
+        sums[i] = Content.L1Biases[bucket][i];
 
-    for (int them = 0; them <= 1; ++them) 
-    {
-      Vec* acc = (Vec*) accumulator.colors[pos.sideToMove ^ them];
-      Vec* weights = (Vec*) &Content.OutputWeights[outputBucket][them * HiddenWidth / 2];
-      for (int i = 0; i < (HiddenWidth / WeightsPerVec) / 2; ++i) 
-      {
-        Vec c0 = _mm256_min_ps(_mm256_max_ps(acc[i], vecZero), vecQA);
-        Vec c1 = _mm256_min_ps(_mm256_max_ps(acc[i + (HiddenWidth / WeightsPerVec) / 2], vecZero), vecQA);
-        Vec prod = _mm256_mul_ps(_mm256_mul_ps(c0, weights[i]), c1);
-        sum = _mm256_add_ps(sum, prod);
+      for (int i = 0; i < L2; ++i) {
+        for (int j = 0; j < L1; ++j)
+          sums[i] += ftOut[j] * Content.L1Weights[j][bucket][i];
       }
+
+      for (int i = 0; i < L2; ++i)
+        l1Out[i] = std::clamp(sums[i], 0.0f, 1.0f);
     }
 
-    return (vecHadd(sum) + Content.OutputBias[outputBucket]) * NetworkScale;
+    { // propagate l2
+      float sums[L3] = {};
+      for (int i = 0; i < L3; i++)
+        sums[i] = Content.L2Biases[bucket][i];
+
+      for (int i = 0; i < L3; ++i) {
+        for (int j = 0; j < L2; ++j)
+          sums[i] += l1Out[j] * Content.L2Weights[j][bucket][i];
+      }
+
+      for (int i = 0; i < L3; ++i)
+        l2Out[i] = std::clamp(sums[i], 0.0f, 1.0f);
+    }
+
+    { // propagate l3
+      float sums = 0.0f;
+      for (int i = 0; i < L3; ++i)
+        sums += l2Out[i] * Content.L3Weights[i][bucket];
+
+      l3Out = sums + Content.L3Biases[bucket];
+    }
+
+
+    return l3Out * NetworkScale;
   }
 
 }

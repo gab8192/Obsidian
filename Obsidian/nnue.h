@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "net53float.bin"
+#define EvalFile "quantised.bin"
 
 using namespace SIMD;
 
@@ -27,7 +27,9 @@ namespace NNUE {
   using weight_t = float;
 
   constexpr int FeaturesWidth = 768;
-  constexpr int HiddenWidth = 1536;
+  constexpr int L1 = 1536;
+  constexpr int L2 = 16;
+  constexpr int L3 = 32;
 
   constexpr int KingBucketsScheme[] = {
     0,  1,  2,  3,  3,  2,  1,  0,
@@ -47,7 +49,7 @@ namespace NNUE {
 
   struct Accumulator {
     
-    alignas(Alignment) weight_t colors[COLOR_NB][HiddenWidth];
+    alignas(Alignment) weight_t colors[COLOR_NB][L1];
 
     bool updated[COLOR_NB];
     Square kings[COLOR_NB];
