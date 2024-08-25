@@ -24,7 +24,7 @@ struct DirtyPieces {
 
 namespace NNUE {
 
-  using weight_t = float;
+  using weight_t = int16_t;
 
   constexpr int FeaturesWidth = 768;
   constexpr int L1 = 1536;
@@ -46,10 +46,12 @@ namespace NNUE {
   constexpr int OutputBuckets = 8;
 
   constexpr int NetworkScale = 400;
+  constexpr int NetworkQA = 181;
+  constexpr int NetworkQB = 64;
 
   struct Accumulator {
     
-    alignas(Alignment) weight_t colors[COLOR_NB][L1];
+    alignas(Alignment) int16_t colors[COLOR_NB][L1];
 
     bool updated[COLOR_NB];
     Square kings[COLOR_NB];

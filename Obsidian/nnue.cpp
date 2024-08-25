@@ -8,24 +8,29 @@
 
 INCBIN(EmbeddedNNUE, EvalFile);
 
-#define AsVec(x) *(Vec*)(&x)
+#define AsVecI(x) *(VecI*)(&x)
+#define AsVecF(x) *(VecF*)(&x)
 
 namespace NNUE {
 
-  constexpr int WeightsPerVec = sizeof(Vec) / sizeof(weight_t);
+  constexpr int FloatInVec = sizeof(VecI) / sizeof(float);
+  constexpr int I16InVec = sizeof(VecI) / sizeof(int16_t);
+  constexpr int I8InVec = sizeof(VecI) / sizeof(int8_t);
+
+  constexpr int FtShift = 10;
 
   struct {
-    alignas(Alignment) weight_t FeatureWeights[KingBuckets][2][6][64][L1];
-    alignas(Alignment) weight_t FeatureBiases[L1];
+    alignas(Alignment) int16_t FeatureWeights[KingBuckets][2][6][64][L1];
+    alignas(Alignment) int16_t FeatureBiases[L1];
 
-    alignas(Alignment) weight_t L1Weights[L1][OutputBuckets][L2];
-    alignas(Alignment) weight_t L1Biases[OutputBuckets][L2];
+    alignas(Alignment) int8_t L1Weights[L1][OutputBuckets][L2];
+    alignas(Alignment) float L1Biases[OutputBuckets][L2];
 
-    alignas(Alignment) weight_t L2Weights[L2][OutputBuckets][L3];
-    alignas(Alignment) weight_t L2Biases[OutputBuckets][L3];
+    alignas(Alignment) float L2Weights[L2][OutputBuckets][L3];
+    alignas(Alignment) float L2Biases[OutputBuckets][L3];
 
-    alignas(Alignment) weight_t L3Weights[L3][OutputBuckets];
-    alignas(Alignment) weight_t L3Biases[OutputBuckets];
+    alignas(Alignment) float L3Weights[L3][OutputBuckets];
+    alignas(Alignment) float L3Biases[OutputBuckets];
   } Content;
 
   bool needRefresh(Color side, Square oldKing, Square newKing) {
@@ -39,7 +44,7 @@ namespace NNUE {
           != KingBucketsScheme[relative_square(side, newKing)];
   }
 
-  inline weight_t* featureAddress(Square kingSq, Color side, Piece pc, Square sq) {
+  inline int16_t* featureAddress(Square kingSq, Color side, Piece pc, Square sq) {
     if (fileOf(kingSq) >= FILE_E)
       sq = Square(sq ^ 7);
 
@@ -52,72 +57,72 @@ namespace NNUE {
 
   template <int InputSize>
   inline void multiAdd(weight_t* output, weight_t* input, weight_t* add0){
-    Vec* inputVec = (Vec*)input;
-    Vec* outputVec = (Vec*)output;
-    Vec* add0Vec = (Vec*) add0;
+    VecI* inputVec = (VecI*)input;
+    VecI* outputVec = (VecI*)output;
+    VecI* add0Vec = (VecI*) add0;
 
-    for (int i = 0; i < InputSize / WeightsPerVec; ++i)
-      outputVec[i] = _mm256_add_ps(inputVec[i], add0Vec[i]);
+    for (int i = 0; i < InputSize / I16InVec; ++i)
+      outputVec[i] = addEpi16(inputVec[i], add0Vec[i]);
   }
 
   template <int InputSize>
   inline void multiSub(weight_t* output, weight_t* input, weight_t* sub0){
-    Vec* inputVec = (Vec*)input;
-    Vec* outputVec = (Vec*)output;
-    Vec* sub0Vec = (Vec*) sub0;
+    VecI* inputVec = (VecI*)input;
+    VecI* outputVec = (VecI*)output;
+    VecI* sub0Vec = (VecI*) sub0;
 
-    for (int i = 0; i < InputSize / WeightsPerVec; ++i)
-      outputVec[i] = _mm256_sub_ps(inputVec[i], sub0Vec[i]);
+    for (int i = 0; i < InputSize / I16InVec; ++i)
+      outputVec[i] = subEpi16(inputVec[i], sub0Vec[i]);
   }
 
   template <int InputSize>
   inline void multiAddAdd(weight_t* output, weight_t* input, weight_t* add0, weight_t* add1){
-    Vec* inputVec = (Vec*)input;
-    Vec* outputVec = (Vec*)output;
-    Vec* add0Vec = (Vec*) add0;
-    Vec* add1Vec = (Vec*) add1;
+    VecI* inputVec = (VecI*)input;
+    VecI* outputVec = (VecI*)output;
+    VecI* add0Vec = (VecI*) add0;
+    VecI* add1Vec = (VecI*) add1;
 
-    for (int i = 0; i < InputSize / WeightsPerVec; ++i)
-      outputVec[i] = _mm256_add_ps(inputVec[i], _mm256_add_ps(add0Vec[i], add1Vec[i]));
+    for (int i = 0; i < InputSize / I16InVec; ++i)
+      outputVec[i] = addEpi16(inputVec[i], addEpi16(add0Vec[i], add1Vec[i]));
   }
 
   template <int InputSize>
   inline void multiSubAdd(weight_t* output, weight_t* input, weight_t* sub0, weight_t* add0) {
-    Vec* inputVec = (Vec*)input;
-    Vec* outputVec = (Vec*)output;
+    VecI* inputVec = (VecI*)input;
+    VecI* outputVec = (VecI*)output;
 
-    Vec* sub0Vec = (Vec*) sub0;
-    Vec* add0Vec = (Vec*) add0;
+    VecI* sub0Vec = (VecI*) sub0;
+    VecI* add0Vec = (VecI*) add0;
         
-    for (int i = 0; i < InputSize / WeightsPerVec; ++i)
-      outputVec[i] = _mm256_sub_ps(_mm256_add_ps(inputVec[i], add0Vec[i]), sub0Vec[i]);
+    for (int i = 0; i < InputSize / I16InVec; ++i)
+      outputVec[i] = subEpi16(addEpi16(inputVec[i], add0Vec[i]), sub0Vec[i]);
   }
 
   template <int InputSize>
   inline void multiSubAddSub(weight_t* output, weight_t* input, weight_t* sub0, weight_t* add0, weight_t* sub1) {
-    Vec* inputVec = (Vec*)input;
-    Vec* outputVec = (Vec*)output;
+    VecI* inputVec = (VecI*)input;
+    VecI* outputVec = (VecI*)output;
 
-    Vec* sub0Vec = (Vec*) sub0;
-    Vec* add0Vec = (Vec*) add0;
-    Vec* sub1Vec = (Vec*) sub1;
+    VecI* sub0Vec = (VecI*) sub0;
+    VecI* add0Vec = (VecI*) add0;
+    VecI* sub1Vec = (VecI*) sub1;
 
-    for (int i = 0; i < InputSize / WeightsPerVec; ++i)
-      outputVec[i] = _mm256_sub_ps(_mm256_sub_ps(_mm256_add_ps(inputVec[i], add0Vec[i]), sub0Vec[i]), sub1Vec[i]);
+    for (int i = 0; i < InputSize / I16InVec; ++i)
+      outputVec[i] = subEpi16(subEpi16(addEpi16(inputVec[i], add0Vec[i]), sub0Vec[i]), sub1Vec[i]);
   }
 
    template <int InputSize>
   inline void multiSubAddSubAdd(weight_t* output, weight_t* input, weight_t* sub0, weight_t* add0, weight_t* sub1, weight_t* add1) {
-    Vec* inputVec = (Vec*)input;
-    Vec* outputVec = (Vec*)output;
+    VecI* inputVec = (VecI*)input;
+    VecI* outputVec = (VecI*)output;
 
-    Vec* sub0Vec = (Vec*) sub0;
-    Vec* add0Vec = (Vec*) add0;
-    Vec* sub1Vec = (Vec*) sub1;
-    Vec* add1Vec = (Vec*) add1;
+    VecI* sub0Vec = (VecI*) sub0;
+    VecI* add0Vec = (VecI*) add0;
+    VecI* sub1Vec = (VecI*) sub1;
+    VecI* add1Vec = (VecI*) add1;
 
-    for (int i = 0; i < InputSize / WeightsPerVec; ++i)
-      outputVec[i] = _mm256_add_ps(_mm256_sub_ps(_mm256_sub_ps(_mm256_add_ps(inputVec[i], add0Vec[i]), sub0Vec[i]), sub1Vec[i]), add1Vec[i]);
+    for (int i = 0; i < InputSize / I16InVec; ++i)
+      outputVec[i] = addEpi16(subEpi16(subEpi16(addEpi16(inputVec[i], add0Vec[i]), sub0Vec[i]), sub1Vec[i]), add1Vec[i]);
   }
 
   void Accumulator::addPiece(Square kingSq, Color side, Piece pc, Square sq) {
@@ -196,10 +201,12 @@ namespace NNUE {
     constexpr int divisor = (32 + OutputBuckets - 1) / OutputBuckets;
     int bucket = (BitCount(pos.pieces()) - 2) / divisor;
 
-    Vec vecZero = _mm256_setzero_ps();
-    Vec vecOne = _mm256_set1_ps(1.0f);
+    VecF vecfZero = _mm256_setzero_ps();
+    VecF vecOne = _mm256_set1_ps(1.0f);
+    VecI veciZero = _mm256_setzero_si256();
+    VecI vecQA = _mm256_set1_epi16(NetworkQA);
 
-    alignas(Alignment) float ftOut[L1];
+    alignas(Alignment) uint8_t ftOut[L1];
     alignas(Alignment) float l1Out[L2];
     alignas(Alignment) float l2Out[L3];
     float l3Out;
@@ -207,32 +214,45 @@ namespace NNUE {
     { // activate FT
       for (int them = 0; them <= 1; ++them) 
         {
-          float* acc = accumulator.colors[pos.sideToMove ^ them];
-          for (int i = 0; i < L1 / 2; i += WeightsPerVec) 
+          int16_t* acc = accumulator.colors[pos.sideToMove ^ them];
+          for (int i = 0; i < L1 / 2; i += I8InVec) 
           {
-            Vec c0 = _mm256_min_ps(_mm256_max_ps(AsVec(acc[i]), vecZero), vecOne);
-            Vec c1 = _mm256_min_ps(_mm256_max_ps(AsVec(acc[i + L1/2]), vecZero), vecOne);
+            VecI c0 = minEpi16(maxEpi16(AsVecI(acc[i]), veciZero), vecQA);
+            VecI c1 = minEpi16(maxEpi16(AsVecI(acc[i + L1/2]), veciZero), vecQA);
 
-            AsVec(ftOut[them * L1 / 2 + i]) = _mm256_mul_ps(c0, c1);
+            VecI d0 = minEpi16(maxEpi16(AsVecI(acc[i + 16]), veciZero), vecQA);
+            VecI d1 = minEpi16(maxEpi16(AsVecI(acc[i + L1/2 + 16]), veciZero), vecQA);
+
+            // FtShift ensures the values are on a range 0 <-> 31
+            VecI cProd = _mm256_srli_epi16(_mm256_mullo_epi16(c0, c1), FtShift);
+            VecI dProd = _mm256_srli_epi16(_mm256_mullo_epi16(d0, d1), FtShift);
+
+            VecI packed = _mm256_packus_epi16(cProd, dProd);
+            // packus does not concatenate the two vectors. it takes half
+            // of one, and half of the other, twice, so we must sort it back
+            AsVecI(ftOut[them * L1 / 2 + i]) = _mm256_permute4x64_epi64(packed, _MM_SHUFFLE(3, 1, 2, 0));
           }
         }
     }
     
     { // propagate l1
-      float sums[L2];
-      for (int i = 0; i < L2; i++)
-        sums[i] = Content.L1Biases[bucket][i];
+      int32_t sums[L2];
+      memset(sums, 0, sizeof(sums));
 
       for (int i = 0; i < L1; ++i) {
-        Vec vecFtOut = _mm256_set1_ps(ftOut[i]);
-        for (int j = 0; j < L2; j += WeightsPerVec) {
-          Vec vecWeight = AsVec(Content.L1Weights[i][bucket][j]);
-          AsVec(sums[j]) = _mm256_add_ps(AsVec(sums[j]), _mm256_mul_ps(vecFtOut, vecWeight));
+        VecI vecFtOut = _mm256_set1_epi16(ftOut[i]);
+        for (int j = 0; j < L2; j += I16InVec) {
+          VecI vecWeight = AsVecI(Content.L1Weights[i][bucket][j]);
+          AsVecI(sums[j]) = _mm256_add_epi16(AsVecI(sums[j]), mulloEpi16(vecFtOut, vecWeight));
         }
       }
 
-      for (int i = 0; i < L2; i += WeightsPerVec)
-        AsVec(l1Out[i]) = _mm256_min_ps(_mm256_max_ps(AsVec(sums[i]), vecZero), vecOne);
+      float kek[L2];
+      for (int i = 0; i < L2; i++)
+        kek[i] = Content.L1Biases[bucket][i] + float(sums[i]) / 32258.0f;
+
+      for (int i = 0; i < L2; i += FloatInVec)
+        AsVecF(l1Out[i]) = _mm256_min_ps(_mm256_max_ps(AsVecF(kek[i]), vecfZero), vecOne);
     }
 
     { // propagate l2
