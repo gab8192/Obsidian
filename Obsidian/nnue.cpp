@@ -17,7 +17,7 @@ namespace NNUE {
   constexpr int I16InVec = sizeof(VecI) / sizeof(int16_t);
   constexpr int I8InVec = sizeof(VecI) / sizeof(int8_t);
 
-  constexpr int FtShift = 8;
+  constexpr int FtShift = 9;
 
   struct {
     alignas(Alignment) int16_t FeatureWeights[KingBuckets][2][6][64][L1];
@@ -217,6 +217,9 @@ namespace NNUE {
     alignas(Alignment) float l2Out[L3];
     float l3Out;
 
+    constexpr int owo = (NetworkQA * NetworkQA) >> FtShift;
+    constexpr int uwu = owo * int(NetworkQB * 1.98) * 2;
+
     float fuc = 1.0f / float(NetworkQA * NetworkQA * NetworkQB >> FtShift);
     VecF L1MulVec = _mm256_set1_ps(fuc);
 
@@ -227,14 +230,14 @@ namespace NNUE {
       for (int i = 0; i < L1 / 2; i += I8InVec) 
       {
         VecI c0 = minEpi16(maxEpi16(AsVecI(acc[i]), veciZero), veciOne);
-        VecI c1 = minEpi16(maxEpi16(AsVecI(acc[i + L1/2]), veciZero), veciOne);
+        VecI c1 = minEpi16(AsVecI(acc[i + L1/2]), veciOne);
 
         VecI d0 = minEpi16(maxEpi16(AsVecI(acc[i + 16]), veciZero), veciOne);
-        VecI d1 = minEpi16(maxEpi16(AsVecI(acc[i + L1/2 + 16]), veciZero), veciOne);
+        VecI d1 = minEpi16(AsVecI(acc[i + L1/2 + 16]), veciOne);
 
         // FtShift ensures the values are on a range 0 <-> 31
-        VecI cProd = _mm256_srli_epi16(_mm256_mullo_epi16(c0, c1), FtShift);
-        VecI dProd = _mm256_srli_epi16(_mm256_mullo_epi16(d0, d1), FtShift);
+        VecI cProd = _mm256_mulhi_epi16(_mm256_slli_epi16(c0, 16 - FtShift), c1);
+        VecI dProd = _mm256_mulhi_epi16(_mm256_slli_epi16(d0, 16 - FtShift), d1);
 
         VecI packed = _mm256_packus_epi16(cProd, dProd);
         // packus does not concatenate the two vectors. it takes half
