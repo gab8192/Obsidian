@@ -200,7 +200,19 @@ namespace NNUE {
     const VecI product16 = _mm256_maddubs_epi16(vec0, vec1);
     const VecI product32 = _mm256_madd_epi16(product16, _mm256_set1_epi16(1));
     return _mm256_add_epi32(sum, product32);
-}
+  }
+
+  inline float vecHaddPs(VecF vec) {
+    __m128 sum_128 = _mm_add_ps(_mm256_castps256_ps128(vec), _mm256_extractf128_ps(vec, 1));
+
+    __m128 upper_64 = _mm_movehl_ps(sum_128, sum_128);
+    __m128 sum_64 = _mm_add_ps(sum_128, upper_64);
+
+    __m128 upper_32 = _mm_shuffle_ps(sum_64, sum_64, 1);
+    __m128 sum_32 = _mm_add_ss(sum_64, upper_32);
+
+    return _mm_cvtss_f32(sum_32);
+  }
 
   Score evaluate(Position& pos, Accumulator& accumulator) {
 
@@ -268,26 +280,25 @@ namespace NNUE {
 
     { // propagate l2
       float sums[L3];
-      for (int i = 0; i < L3; i++)
-        sums[i] = Content.L2Biases[bucket][i];
+      memcpy(sums, Content.L2Biases[bucket], sizeof(sums));
 
       for (int i = 0; i < L2; ++i) {
-        for (int j = 0; j < L3; ++j)
-          sums[j] += l1Out[i] * Content.L2Weights[bucket][i][j];
+        VecF vecL1Out = _mm256_set1_ps(l1Out[i]);
+        for (int j = 0; j < L3; j += FloatInVec)
+          AsVecF(sums[j]) = _mm256_fmadd_ps(AsVecF(Content.L2Weights[bucket][i][j]), vecL1Out, AsVecF(sums[j]));
       }
 
-      for (int i = 0; i < L3; ++i)
-        l2Out[i] = std::clamp(sums[i], 0.0f, 1.0f);
+      for (int i = 0; i < L3; i += FloatInVec)
+        AsVecF(l2Out[i]) = _mm256_min_ps(_mm256_max_ps(AsVecF(sums[i]), vecfZero), vecfOne);
     }
 
     { // propagate l3
-      float sums = Content.L3Biases[bucket];
-      for (int i = 0; i < L3; ++i)
-        sums += l2Out[i] * Content.L3Weights[bucket][i];
+      VecF sums = _mm256_setzero_ps();
+      for (int i = 0; i < L3; i += FloatInVec)
+        sums = _mm256_fmadd_ps(AsVecF(l2Out[i]), AsVecF( Content.L3Weights[bucket][i]), sums);
 
-      l3Out = sums;
+      l3Out = vecHaddPs(sums) + Content.L3Biases[bucket];
     }
-
 
     return l3Out * NetworkScale;
   }
