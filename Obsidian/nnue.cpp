@@ -183,6 +183,33 @@ namespace NNUE {
 
     memcpy(&Content, gEmbeddedNNUEData, sizeof(Content));
     
+    // Transpose weights so that we don't need to permute after packus
+
+    // We drag around blocks of __m128i because that's how packus works:
+    // it interleaves each 128 block from a and each 128 block from b, alternately.
+
+    constexpr int weightsPerBlock = sizeof(__m128i) / sizeof(int16_t);
+    constexpr int NumRegs = sizeof(VecI) / 8;
+    __m128i regs[NumRegs];
+
+    __m128i* weights = (__m128i*) Content.FeatureWeights;
+    __m128i* biases = (__m128i*) Content.FeatureBiases;
+
+    for (int i = 0; i < KingBuckets * 768 * L1 / weightsPerBlock; i += NumRegs) {
+      for (int j = 0; j < NumRegs; j++)
+            regs[j] = weights[i + j];
+
+        for (int j = 0; j < NumRegs; j++)
+            weights[i + j] = regs[PackusOrder[j]];
+    }
+
+    for (int i = 0; i < L1 / weightsPerBlock; i += NumRegs) {
+      for (int j = 0; j < NumRegs; j++)
+            regs[j] = biases[i + j];
+
+        for (int j = 0; j < NumRegs; j++)
+            biases[i + j] = regs[PackusOrder[j]];
+    }
   }
 
   float vecHadd(__m256 x) {
@@ -251,10 +278,7 @@ namespace NNUE {
         VecI cProd = _mm256_mulhi_epi16(_mm256_slli_epi16(c0, 16 - FtShift), c1);
         VecI dProd = _mm256_mulhi_epi16(_mm256_slli_epi16(d0, 16 - FtShift), d1);
 
-        VecI packed = _mm256_packus_epi16(cProd, dProd);
-        // packus does not concatenate the two vectors. it takes half
-        // of one, and half of the other, twice, so we must sort it back
-        AsVecI(ftOut[them * L1 / 2 + i]) = _mm256_permute4x64_epi64(packed, _MM_SHUFFLE(3, 1, 2, 0));
+        AsVecI(ftOut[them * L1 / 2 + i]) = _mm256_packus_epi16(cProd, dProd);
       }
     }
 

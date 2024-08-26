@@ -10,6 +10,8 @@ namespace SIMD {
 
   using VecI = __m512i;
 
+  constexpr int PackusOrder[8] = {0, 2, 4, 6, 1, 3, 5, 7};
+
   inline VecI addEpi16(VecI x, VecI y) {
     return _mm512_add_epi16(x, y);
   }
@@ -54,6 +56,8 @@ namespace SIMD {
 
   using VecI = __m256i;
   using VecF = __m256;
+
+  constexpr int PackusOrder[4] = {0, 2, 1, 3};
 
   inline VecI addEpi16(VecI x, VecI y) {
     return _mm256_add_epi16(x, y);
