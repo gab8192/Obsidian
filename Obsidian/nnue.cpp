@@ -23,13 +23,13 @@ namespace NNUE {
     alignas(Alignment) int16_t FeatureWeights[KingBuckets][2][6][64][L1];
     alignas(Alignment) int16_t FeatureBiases[L1];
 
-    alignas(Alignment) int8_t L1Weights[L1][OutputBuckets][L2];
+    alignas(Alignment) int8_t L1Weights[OutputBuckets][L1][L2];
     alignas(Alignment) float L1Biases[OutputBuckets][L2];
 
-    alignas(Alignment) float L2Weights[L2][OutputBuckets][L3];
+    alignas(Alignment) float L2Weights[OutputBuckets][L2][L3];
     alignas(Alignment) float L2Biases[OutputBuckets][L3];
 
-    alignas(Alignment) float L3Weights[L3][OutputBuckets];
+    alignas(Alignment) float L3Weights[OutputBuckets][L3];
     alignas(Alignment) float L3Biases[OutputBuckets];
   } Content;
 
@@ -196,63 +196,71 @@ namespace NNUE {
     return sum;
   }
 
+  inline VecI vec_dpbusd_epi32(const VecI sum, const VecI vec0, const VecI vec1) {
+    const VecI product16 = _mm256_maddubs_epi16(vec0, vec1);
+    const VecI product32 = _mm256_madd_epi16(product16, _mm256_set1_epi16(1));
+    return _mm256_add_epi32(sum, product32);
+}
+
   Score evaluate(Position& pos, Accumulator& accumulator) {
 
     constexpr int divisor = (32 + OutputBuckets - 1) / OutputBuckets;
     int bucket = (BitCount(pos.pieces()) - 2) / divisor;
 
     VecF vecfZero = _mm256_setzero_ps();
-    VecF vecOne = _mm256_set1_ps(1.0f);
+    VecF vecfOne = _mm256_set1_ps(1.0f);
     VecI veciZero = _mm256_setzero_si256();
-    VecI vecQA = _mm256_set1_epi16(NetworkQA);
+    VecI veciOne = _mm256_set1_epi16(NetworkQA);
 
     alignas(Alignment) uint8_t ftOut[L1];
     alignas(Alignment) float l1Out[L2];
     alignas(Alignment) float l2Out[L3];
     float l3Out;
 
-    { // activate FT
-      for (int them = 0; them <= 1; ++them) 
-        {
-          int16_t* acc = accumulator.colors[pos.sideToMove ^ them];
-          for (int i = 0; i < L1 / 2; i += I8InVec) 
-          {
-            VecI c0 = minEpi16(maxEpi16(AsVecI(acc[i]), veciZero), vecQA);
-            VecI c1 = minEpi16(maxEpi16(AsVecI(acc[i + L1/2]), veciZero), vecQA);
+    float fuc = 1.0f / float(NetworkQA * NetworkQA * NetworkQB >> FtShift);
+    VecF L1MulVec = _mm256_set1_ps(fuc);
 
-            VecI d0 = minEpi16(maxEpi16(AsVecI(acc[i + 16]), veciZero), vecQA);
-            VecI d1 = minEpi16(maxEpi16(AsVecI(acc[i + L1/2 + 16]), veciZero), vecQA);
+    // activate FT
+    for (int them = 0; them <= 1; ++them) 
+    {
+      int16_t* acc = accumulator.colors[pos.sideToMove ^ them];
+      for (int i = 0; i < L1 / 2; i += I8InVec) 
+      {
+        VecI c0 = minEpi16(maxEpi16(AsVecI(acc[i]), veciZero), veciOne);
+        VecI c1 = minEpi16(maxEpi16(AsVecI(acc[i + L1/2]), veciZero), veciOne);
 
-            // FtShift ensures the values are on a range 0 <-> 31
-            VecI cProd = _mm256_srli_epi16(_mm256_mullo_epi16(c0, c1), FtShift);
-            VecI dProd = _mm256_srli_epi16(_mm256_mullo_epi16(d0, d1), FtShift);
+        VecI d0 = minEpi16(maxEpi16(AsVecI(acc[i + 16]), veciZero), veciOne);
+        VecI d1 = minEpi16(maxEpi16(AsVecI(acc[i + L1/2 + 16]), veciZero), veciOne);
 
-            VecI packed = _mm256_packus_epi16(cProd, dProd);
-            // packus does not concatenate the two vectors. it takes half
-            // of one, and half of the other, twice, so we must sort it back
-            AsVecI(ftOut[them * L1 / 2 + i]) = _mm256_permute4x64_epi64(packed, _MM_SHUFFLE(3, 1, 2, 0));
-          }
-        }
+        // FtShift ensures the values are on a range 0 <-> 31
+        VecI cProd = _mm256_srli_epi16(_mm256_mullo_epi16(c0, c1), FtShift);
+        VecI dProd = _mm256_srli_epi16(_mm256_mullo_epi16(d0, d1), FtShift);
+
+        VecI packed = _mm256_packus_epi16(cProd, dProd);
+        // packus does not concatenate the two vectors. it takes half
+        // of one, and half of the other, twice, so we must sort it back
+        AsVecI(ftOut[them * L1 / 2 + i]) = _mm256_permute4x64_epi64(packed, _MM_SHUFFLE(3, 1, 2, 0));
+      }
     }
-    
+
     { // propagate l1
+
       int32_t sums[L2];
       memset(sums, 0, sizeof(sums));
-
-      for (int i = 0; i < L1; ++i) {
-        VecI vecFtOut = _mm256_set1_epi16(ftOut[i]);
-        for (int j = 0; j < L2; j += I16InVec) {
-          VecI vecWeight = AsVecI(Content.L1Weights[i][bucket][j]);
-          AsVecI(sums[j]) = _mm256_add_epi16(AsVecI(sums[j]), mulloEpi16(vecFtOut, vecWeight));
+      
+      for (int i = 0; i < L1; i += sizeof(int32_t)/sizeof(int8_t)) {
+        VecI vecFtOut = _mm256_set1_epi32( *(uint32_t*)(ftOut + i) );
+        for (int j = 0; j < L2; j += FloatInVec) {
+          VecI vecWeight = AsVecI(Content.L1Weights[bucket][i + j/4]);
+          AsVecI(sums[j]) = vec_dpbusd_epi32(AsVecI(sums[j]), vecFtOut, vecWeight);
         }
       }
 
-      float kek[L2];
-      for (int i = 0; i < L2; i++)
-        kek[i] = Content.L1Biases[bucket][i] + float(sums[i]) / 32258.0f;
-
-      for (int i = 0; i < L2; i += FloatInVec)
-        AsVecF(l1Out[i]) = _mm256_min_ps(_mm256_max_ps(AsVecF(kek[i]), vecfZero), vecOne);
+      for (int i = 0; i < L2; i += FloatInVec) {
+        VecF vecBias = AsVecF(Content.L1Biases[bucket][i]);
+        VecF casted = _mm256_fmadd_ps(_mm256_cvtepi32_ps(AsVecI(sums[i])), L1MulVec, vecBias);
+        AsVecF(l1Out[i]) = _mm256_min_ps(_mm256_max_ps(casted, vecfZero), vecfOne);
+      }
     }
 
     { // propagate l2
@@ -262,7 +270,7 @@ namespace NNUE {
 
       for (int i = 0; i < L2; ++i) {
         for (int j = 0; j < L3; ++j)
-          sums[j] += l1Out[i] * Content.L2Weights[i][bucket][j];
+          sums[j] += l1Out[i] * Content.L2Weights[bucket][i][j];
       }
 
       for (int i = 0; i < L3; ++i)
@@ -272,7 +280,7 @@ namespace NNUE {
     { // propagate l3
       float sums = Content.L3Biases[bucket];
       for (int i = 0; i < L3; ++i)
-        sums += l2Out[i] * Content.L3Weights[i][bucket];
+        sums += l2Out[i] * Content.L3Weights[bucket][i];
 
       l3Out = sums;
     }
