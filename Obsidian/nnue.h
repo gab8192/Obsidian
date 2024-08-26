@@ -24,8 +24,6 @@ struct DirtyPieces {
 
 namespace NNUE {
 
-  using weight_t = int16_t;
-
   constexpr int FeaturesWidth = 768;
   constexpr int L1 = 1536;
   constexpr int L2 = 16;

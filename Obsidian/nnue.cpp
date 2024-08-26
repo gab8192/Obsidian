@@ -56,7 +56,7 @@ namespace NNUE {
   }
 
   template <int InputSize>
-  inline void multiAdd(weight_t* output, weight_t* input, weight_t* add0){
+  inline void multiAdd(int16_t* output, int16_t* input, int16_t* add0){
     VecI* inputVec = (VecI*)input;
     VecI* outputVec = (VecI*)output;
     VecI* add0Vec = (VecI*) add0;
@@ -66,7 +66,7 @@ namespace NNUE {
   }
 
   template <int InputSize>
-  inline void multiSub(weight_t* output, weight_t* input, weight_t* sub0){
+  inline void multiSub(int16_t* output, int16_t* input, int16_t* sub0){
     VecI* inputVec = (VecI*)input;
     VecI* outputVec = (VecI*)output;
     VecI* sub0Vec = (VecI*) sub0;
@@ -76,7 +76,7 @@ namespace NNUE {
   }
 
   template <int InputSize>
-  inline void multiAddAdd(weight_t* output, weight_t* input, weight_t* add0, weight_t* add1){
+  inline void multiAddAdd(int16_t* output, int16_t* input, int16_t* add0, int16_t* add1){
     VecI* inputVec = (VecI*)input;
     VecI* outputVec = (VecI*)output;
     VecI* add0Vec = (VecI*) add0;
@@ -87,7 +87,7 @@ namespace NNUE {
   }
 
   template <int InputSize>
-  inline void multiSubAdd(weight_t* output, weight_t* input, weight_t* sub0, weight_t* add0) {
+  inline void multiSubAdd(int16_t* output, int16_t* input, int16_t* sub0, int16_t* add0) {
     VecI* inputVec = (VecI*)input;
     VecI* outputVec = (VecI*)output;
 
@@ -99,7 +99,7 @@ namespace NNUE {
   }
 
   template <int InputSize>
-  inline void multiSubAddSub(weight_t* output, weight_t* input, weight_t* sub0, weight_t* add0, weight_t* sub1) {
+  inline void multiSubAddSub(int16_t* output, int16_t* input, int16_t* sub0, int16_t* add0, int16_t* sub1) {
     VecI* inputVec = (VecI*)input;
     VecI* outputVec = (VecI*)output;
 
@@ -112,7 +112,7 @@ namespace NNUE {
   }
 
    template <int InputSize>
-  inline void multiSubAddSubAdd(weight_t* output, weight_t* input, weight_t* sub0, weight_t* add0, weight_t* sub1, weight_t* add1) {
+  inline void multiSubAddSubAdd(int16_t* output, int16_t* input, int16_t* sub0, int16_t* add0, int16_t* sub1, int16_t* add1) {
     VecI* inputVec = (VecI*)input;
     VecI* outputVec = (VecI*)output;
 
@@ -210,17 +210,6 @@ namespace NNUE {
         for (int j = 0; j < NumRegs; j++)
             biases[i + j] = regs[PackusOrder[j]];
     }
-  }
-
-  float vecHadd(__m256 x) {
-    float sum = 0;
-    float lol[8];
-    _mm256_storeu_ps(lol, x);
-
-    for (int i = 0; i < 8; i++)
-      sum += lol[i];
-
-    return sum;
   }
 
   inline VecI vec_dpbusd_epi32(const VecI sum, const VecI vec0, const VecI vec1) {
