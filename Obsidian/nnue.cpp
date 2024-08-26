@@ -212,44 +212,23 @@ namespace NNUE {
     }
   }
 
-  inline VecI vec_dpbusd_epi32(const VecI sum, const VecI vec0, const VecI vec1) {
-    const VecI product16 = _mm256_maddubs_epi16(vec0, vec1);
-    const VecI product32 = _mm256_madd_epi16(product16, _mm256_set1_epi16(1));
-    return _mm256_add_epi32(sum, product32);
-  }
-
-  inline float vecHaddPs(VecF vec) {
-    __m128 sum_128 = _mm_add_ps(_mm256_castps256_ps128(vec), _mm256_extractf128_ps(vec, 1));
-
-    __m128 upper_64 = _mm_movehl_ps(sum_128, sum_128);
-    __m128 sum_64 = _mm_add_ps(sum_128, upper_64);
-
-    __m128 upper_32 = _mm_shuffle_ps(sum_64, sum_64, 1);
-    __m128 sum_32 = _mm_add_ss(sum_64, upper_32);
-
-    return _mm_cvtss_f32(sum_32);
-  }
-
   Score evaluate(Position& pos, Accumulator& accumulator) {
 
     constexpr int divisor = (32 + OutputBuckets - 1) / OutputBuckets;
     int bucket = (BitCount(pos.pieces()) - 2) / divisor;
 
-    VecF vecfZero = _mm256_setzero_ps();
-    VecF vecfOne = _mm256_set1_ps(1.0f);
-    VecI veciZero = _mm256_setzero_si256();
-    VecI veciOne = _mm256_set1_epi16(NetworkQA);
+    VecF vecfZero = setzeroPs();
+    VecF vecfOne = set1Ps(1.0f);
+    VecI veciZero = setzeroSi();
+    VecI veciOne = set1Epi16(NetworkQA);
 
     alignas(Alignment) uint8_t ftOut[L1];
     alignas(Alignment) float l1Out[L2];
     alignas(Alignment) float l2Out[L3];
     float l3Out;
 
-    constexpr int owo = (NetworkQA * NetworkQA) >> FtShift;
-    constexpr int uwu = owo * int(NetworkQB * 1.98) * 2;
-
-    float fuc = 1.0f / float(NetworkQA * NetworkQA * NetworkQB >> FtShift);
-    VecF L1MulVec = _mm256_set1_ps(fuc);
+    constexpr float L1Mul = 1.0f / float(NetworkQA * NetworkQA * NetworkQB >> FtShift);
+    VecF L1MulVec = set1Ps(L1Mul);
 
     // activate FT
     for (int them = 0; them <= 1; ++them) 
@@ -260,57 +239,57 @@ namespace NNUE {
         VecI c0 = minEpi16(maxEpi16(AsVecI(acc[i]), veciZero), veciOne);
         VecI c1 = minEpi16(AsVecI(acc[i + L1/2]), veciOne);
 
-        VecI d0 = minEpi16(maxEpi16(AsVecI(acc[i + 16]), veciZero), veciOne);
-        VecI d1 = minEpi16(AsVecI(acc[i + L1/2 + 16]), veciOne);
+        VecI d0 = minEpi16(maxEpi16(AsVecI(acc[i + I16InVec]), veciZero), veciOne);
+        VecI d1 = minEpi16(AsVecI(acc[i + L1/2 + I16InVec]), veciOne);
 
         // FtShift ensures the values are on a range 0 <-> 31
-        VecI cProd = _mm256_mulhi_epi16(_mm256_slli_epi16(c0, 16 - FtShift), c1);
-        VecI dProd = _mm256_mulhi_epi16(_mm256_slli_epi16(d0, 16 - FtShift), d1);
+        VecI cProd = mulhiEpi16(slliEpi16(c0, 16 - FtShift), c1);
+        VecI dProd = mulhiEpi16(slliEpi16(d0, 16 - FtShift), d1);
 
-        AsVecI(ftOut[them * L1 / 2 + i]) = _mm256_packus_epi16(cProd, dProd);
+        AsVecI(ftOut[them * L1 / 2 + i]) = packusEpi16(cProd, dProd);
       }
     }
 
     { // propagate l1
 
-      int32_t sums[L2];
+      alignas(Alignment) int32_t sums[L2];
       memset(sums, 0, sizeof(sums));
       
       for (int i = 0; i < L1; i += sizeof(int32_t)/sizeof(int8_t)) {
-        VecI vecFtOut = _mm256_set1_epi32( *(uint32_t*)(ftOut + i) );
+        VecI vecFtOut = set1Epi32( *(uint32_t*)(ftOut + i) );
         for (int j = 0; j < L2; j += FloatInVec) {
           VecI vecWeight = AsVecI(Content.L1Weights[bucket][i + j/4]);
-          AsVecI(sums[j]) = vec_dpbusd_epi32(AsVecI(sums[j]), vecFtOut, vecWeight);
+          AsVecI(sums[j]) = dpbusdEpi32(AsVecI(sums[j]), vecFtOut, vecWeight);
         }
       }
 
       for (int i = 0; i < L2; i += FloatInVec) {
         VecF vecBias = AsVecF(Content.L1Biases[bucket][i]);
-        VecF casted = _mm256_fmadd_ps(_mm256_cvtepi32_ps(AsVecI(sums[i])), L1MulVec, vecBias);
-        AsVecF(l1Out[i]) = _mm256_min_ps(_mm256_max_ps(casted, vecfZero), vecfOne);
+        VecF casted = mulAddPs(castEpi32ToPs(AsVecI(sums[i])), L1MulVec, vecBias);
+        AsVecF(l1Out[i]) = minPs(maxPs(casted, vecfZero), vecfOne);
       }
     }
 
     { // propagate l2
-      float sums[L3];
+      alignas(Alignment) float sums[L3];
       memcpy(sums, Content.L2Biases[bucket], sizeof(sums));
 
       for (int i = 0; i < L2; ++i) {
-        VecF vecL1Out = _mm256_set1_ps(l1Out[i]);
+        VecF vecL1Out = set1Ps(l1Out[i]);
         for (int j = 0; j < L3; j += FloatInVec)
-          AsVecF(sums[j]) = _mm256_fmadd_ps(AsVecF(Content.L2Weights[bucket][i][j]), vecL1Out, AsVecF(sums[j]));
+          AsVecF(sums[j]) = mulAddPs(AsVecF(Content.L2Weights[bucket][i][j]), vecL1Out, AsVecF(sums[j]));
       }
 
       for (int i = 0; i < L3; i += FloatInVec)
-        AsVecF(l2Out[i]) = _mm256_min_ps(_mm256_max_ps(AsVecF(sums[i]), vecfZero), vecfOne);
+        AsVecF(l2Out[i]) = minPs(maxPs(AsVecF(sums[i]), vecfZero), vecfOne);
     }
 
     { // propagate l3
-      VecF sums = _mm256_setzero_ps();
+      VecF sums = setzeroPs();
       for (int i = 0; i < L3; i += FloatInVec)
-        sums = _mm256_fmadd_ps(AsVecF(l2Out[i]), AsVecF( Content.L3Weights[bucket][i]), sums);
+        sums = mulAddPs(AsVecF(l2Out[i]), AsVecF( Content.L3Weights[bucket][i]), sums);
 
-      l3Out = vecHaddPs(sums) + Content.L3Biases[bucket];
+      l3Out = reduceAddPs(sums) + Content.L3Biases[bucket];
     }
 
     return l3Out * NetworkScale;
