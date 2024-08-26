@@ -17,7 +17,7 @@ namespace NNUE {
   constexpr int I16InVec = sizeof(VecI) / sizeof(int16_t);
   constexpr int I8InVec = sizeof(VecI) / sizeof(int8_t);
 
-  constexpr int FtShift = 10;
+  constexpr int FtShift = 8;
 
   struct {
     alignas(Alignment) int16_t FeatureWeights[KingBuckets][2][6][64][L1];
