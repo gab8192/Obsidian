@@ -33,6 +33,10 @@ namespace NNUE {
     alignas(Alignment) float L3Biases[OutputBuckets];
   } Content;
 
+  // For every possible uint16 number, store the count of active bits,
+  // and the index of each active bit
+  NNZEntry nnzTable[256];
+
   bool needRefresh(Color side, Square oldKing, Square newKing) {
     const bool oldMirrored = fileOf(oldKing) >= FILE_E;
     const bool newMirrored = fileOf(newKing) >= FILE_E;
@@ -182,11 +186,19 @@ namespace NNUE {
   void init() {
 
     memcpy(&Content, gEmbeddedNNUEData, sizeof(Content));
-    
-    // Transpose weights so that we don't need to permute after packus
 
-    // We drag around blocks of __m128i because that's how packus works:
+    // Init NNZ table
+    for (int i = 0; i < 256; i++) {
+      nnzTable[i].count = BitCount(i);
+      int j = 0;
+      Bitboard bits = i;
+      while (bits)
+        nnzTable[i].indexes[j++] = popLsb(bits);
+    }
+    
+    // Transpose weights so that we don't need to permute after packus, because
     // it interleaves each 128 block from a and each 128 block from b, alternately.
+    // Instead we want it to concatenate a and b
 
     constexpr int weightsPerBlock = sizeof(__m128i) / sizeof(int16_t);
     constexpr int NumRegs = sizeof(VecI) / 8;
@@ -222,6 +234,10 @@ namespace NNUE {
     VecI veciZero = setzeroSi();
     VecI veciOne = set1Epi16(NetworkQA);
 
+    // L1 propagation is int8 -> float, so we multiply 4 ft outputs at a time
+    alignas(Alignment) uint16_t nnzIndexes[L1 / 4];
+    int nnzCount;
+
     alignas(Alignment) uint8_t ftOut[L1];
     alignas(Alignment) float l1Out[L2];
     alignas(Alignment) float l2Out[L3];
@@ -242,7 +258,6 @@ namespace NNUE {
         VecI d0 = minEpi16(maxEpi16(AsVecI(acc[i + I16InVec]), veciZero), veciOne);
         VecI d1 = minEpi16(AsVecI(acc[i + L1/2 + I16InVec]), veciOne);
 
-        // FtShift ensures the values are on a range 0 <-> 31
         VecI cProd = mulhiEpi16(slliEpi16(c0, 16 - FtShift), c1);
         VecI dProd = mulhiEpi16(slliEpi16(d0, 16 - FtShift), d1);
 

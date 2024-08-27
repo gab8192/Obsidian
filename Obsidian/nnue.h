@@ -66,6 +66,11 @@ namespace NNUE {
     void refresh(Position& pos, Color side);
   };
 
+  struct NNZEntry {
+    uint16_t indexes[8];
+    int count; // skip popcount during evaluation
+  };
+
   struct FinnyEntry {
     Bitboard byColorBB[COLOR_NB][COLOR_NB];
     Bitboard byPieceBB[COLOR_NB][PIECE_TYPE_NB];
