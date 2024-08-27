@@ -35,6 +35,8 @@ namespace Search {
   DEFINE_PARAM_B(NmpDepthDiv, 4, 1, 21);
   DEFINE_PARAM_S(NmpEvalDiv, 158, 20);
   DEFINE_PARAM_S(NmpEvalDivMin, 4, 1);
+  DEFINE_PARAM_S(NmpMarginBase, -260, 20);
+  DEFINE_PARAM_S(NmpMarginLinear, 16, 2);
 
   DEFINE_PARAM_S(ProbcutBetaMargin, 202, 20);
   
@@ -807,6 +809,7 @@ namespace Search {
       && !excludedMove
       && (ss - 1)->playedMove != MOVE_NONE
       && eval >= beta
+      && ss->staticEval + NmpMarginLinear * depth + NmpMarginBase >= beta
       && pos.hasNonPawns(pos.sideToMove)
       && beta > SCORE_TB_LOSS_IN_MAX_PLY) {
 
