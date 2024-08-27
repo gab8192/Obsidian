@@ -229,14 +229,17 @@ namespace NNUE {
     constexpr int divisor = (32 + OutputBuckets - 1) / OutputBuckets;
     int bucket = (BitCount(pos.pieces()) - 2) / divisor;
 
+    __m128i base = _mm_setzero_si128();
+    __m128i lookupInc = _mm_set1_epi16(8);
+
     VecF vecfZero = setzeroPs();
     VecF vecfOne = set1Ps(1.0f);
     VecI veciZero = setzeroSi();
     VecI veciOne = set1Epi16(NetworkQA);
 
     // L1 propagation is int8 -> float, so we multiply 4 ft outputs at a time
-    alignas(Alignment) uint16_t nnzIndexes[L1 / 4];
-    int nnzCount;
+    uint16_t nnzIndexes[L1 / 4];
+    int nnzCount = 0;
 
     alignas(Alignment) uint8_t ftOut[L1];
     alignas(Alignment) float l1Out[L2];
@@ -261,7 +264,20 @@ namespace NNUE {
         VecI cProd = mulhiEpi16(slliEpi16(c0, 16 - FtShift), c1);
         VecI dProd = mulhiEpi16(slliEpi16(d0, 16 - FtShift), d1);
 
-        AsVecI(ftOut[them * L1 / 2 + i]) = packusEpi16(cProd, dProd);
+        VecI packed = packusEpi16(cProd, dProd);
+        AsVecI(ftOut[them * L1 / 2 + i]) = packed;
+
+        // a bit mask where each bit (x) is 1, if the xth int32 in the product is > 0
+        uint16_t nnzMask = getNnzMask(packed);
+
+        // Usually (in AVX2) only one lookup is needed, as there are 8 ints in a vec.
+        for (int lookup = 0; lookup < FloatInVec; lookup += 8) {
+          uint8_t slice = (nnzMask >> lookup) & 0xFF;
+          __m128i indexes = _mm_loadu_si128((__m128i*)nnzTable[slice].indexes);
+          _mm_storeu_si128((__m128i*)(nnzIndexes + nnzCount), _mm_add_epi16(base, indexes));
+          nnzCount += nnzTable[slice].count;
+          base = _mm_add_epi16(base, lookupInc);
+        }
       }
     }
 

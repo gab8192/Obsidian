@@ -41,6 +41,8 @@ namespace SIMD {
 
   inline VecI packusEpi16(VecI x, VecI y) { return _mm512_packus_epi16(x, y); }
 
+  inline uint16_t getNnzMask(VecI x) { return _mm512_cmpgt_epi32_mask(x, _mm512_setzero_si512()); }
+
   inline VecF setzeroPs() { return _mm512_setzero_ps(); }
 
   inline VecF set1Ps(float x) { return _mm512_set1_ps(x); }
@@ -91,6 +93,11 @@ namespace SIMD {
   inline VecI mulhiEpi16(VecI x, VecI y) { return _mm256_mulhi_epi16(x, y); }
 
   inline VecI packusEpi16(VecI x, VecI y) { return _mm256_packus_epi16(x, y); }
+
+  inline uint8_t getNnzMask(VecI x) {
+    return _mm256_movemask_ps(_mm256_castsi256_ps(
+              _mm256_cmpgt_epi32(x, _mm256_setzero_si256())));
+  }
 
   inline VecF setzeroPs() { return _mm256_setzero_ps(); }
 
