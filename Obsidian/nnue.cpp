@@ -285,11 +285,12 @@ namespace NNUE {
 
       alignas(Alignment) int32_t sums[L2];
       memset(sums, 0, sizeof(sums));
-      
-      for (int i = 0; i < L1; i += sizeof(int32_t)/sizeof(int8_t)) {
-        VecI vecFtOut = set1Epi32( *(uint32_t*)(ftOut + i) );
+
+      for (int i = 0; i < nnzCount; i++) {
+        int l1in = nnzIndexes[i]*4;
+        VecI vecFtOut = set1Epi32( *(uint32_t*)(ftOut + l1in) );
         for (int j = 0; j < L2; j += FloatInVec) {
-          VecI vecWeight = AsVecI(Content.L1Weights[bucket][i + j/4]);
+          VecI vecWeight = AsVecI(Content.L1Weights[bucket][l1in + j/4]);
           AsVecI(sums[j]) = dpbusdEpi32(AsVecI(sums[j]), vecFtOut, vecWeight);
         }
       }
