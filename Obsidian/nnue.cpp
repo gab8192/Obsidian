@@ -19,11 +19,14 @@ namespace NNUE {
 
   constexpr int FtShift = 9;
 
-  struct {
+  struct NetFormat {
     alignas(Alignment) int16_t FeatureWeights[KingBuckets][2][6][64][L1];
     alignas(Alignment) int16_t FeatureBiases[L1];
 
+  union {
+    alignas(Alignment) int8_t L1WeightsAlt[OutputBuckets][L1 *L2];
     alignas(Alignment) int8_t L1Weights[OutputBuckets][L1][L2];
+  };
     alignas(Alignment) float L1Biases[OutputBuckets][L2];
 
     alignas(Alignment) float L2Weights[OutputBuckets][L2][L3];
@@ -31,7 +34,9 @@ namespace NNUE {
 
     alignas(Alignment) float L3Weights[OutputBuckets][L3];
     alignas(Alignment) float L3Biases[OutputBuckets];
-  } Content;
+  };
+
+  NetFormat Content;
 
   // For every possible uint16 number, store the count of active bits,
   // and the index of each active bit
@@ -156,8 +161,22 @@ namespace NNUE {
   }
 
   void init() {
+    NetFormat* rawContent = new NetFormat();
 
-    memcpy(&Content, gEmbeddedNNUEData, sizeof(Content));
+    memcpy(rawContent, gEmbeddedNNUEData, sizeof(NetFormat));
+
+    memcpy(&Content, rawContent, sizeof(NetFormat));
+
+    for (int bucket = 0; bucket < OutputBuckets; bucket++)
+      for (int i = 0; i < L1; i += 4)
+        for (int j = 0; j < L2; ++j)
+          for (int k = 0; k < 4; k ++)
+            Content.L1WeightsAlt[bucket][i * L2
+            + j * 4
+            + k] = rawContent->L1Weights[bucket][i + k][j];
+
+    delete rawContent;
+
 
     // Init NNZ table
     for (int i = 0; i < 256; i++) {
