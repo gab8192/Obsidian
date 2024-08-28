@@ -48,11 +48,11 @@ namespace NNUE {
           != KingBucketsScheme[relative_square(side, newKing)];
   }
 
-  inline int16_t* featureAddress(Square kingSq, Color side, Piece pc, Square sq) {
+  inline VecI* featureAddress(Square kingSq, Color side, Piece pc, Square sq) {
     if (fileOf(kingSq) >= FILE_E)
       sq = Square(sq ^ 7);
 
-    return Content.FeatureWeights
+    return (VecI*) Content.FeatureWeights
             [KingBucketsScheme[relative_square(side, kingSq)]]
             [side != piece_color(pc)]
             [piece_type(pc)-1]
@@ -60,101 +60,73 @@ namespace NNUE {
   }
 
   template <int InputSize>
-  inline void multiAdd(int16_t* output, int16_t* input, int16_t* add0){
-    VecI* inputVec = (VecI*)input;
-    VecI* outputVec = (VecI*)output;
-    VecI* add0Vec = (VecI*) add0;
+  inline void multiAdd(VecI* output, VecI* input, VecI* add0){
 
     for (int i = 0; i < InputSize / I16InVec; ++i)
-      outputVec[i] = addEpi16(inputVec[i], add0Vec[i]);
+      output[i] = addEpi16(input[i], add0[i]);
   }
 
   template <int InputSize>
-  inline void multiSub(int16_t* output, int16_t* input, int16_t* sub0){
-    VecI* inputVec = (VecI*)input;
-    VecI* outputVec = (VecI*)output;
-    VecI* sub0Vec = (VecI*) sub0;
+  inline void multiSub(VecI* output, VecI* input, VecI* sub0){
 
     for (int i = 0; i < InputSize / I16InVec; ++i)
-      outputVec[i] = subEpi16(inputVec[i], sub0Vec[i]);
+      output[i] = subEpi16(input[i], sub0[i]);
   }
 
   template <int InputSize>
-  inline void multiAddAdd(int16_t* output, int16_t* input, int16_t* add0, int16_t* add1){
-    VecI* inputVec = (VecI*)input;
-    VecI* outputVec = (VecI*)output;
-    VecI* add0Vec = (VecI*) add0;
-    VecI* add1Vec = (VecI*) add1;
+  inline void multiAddAdd(VecI* output, VecI* input, VecI* add0, VecI* add1){
 
     for (int i = 0; i < InputSize / I16InVec; ++i)
-      outputVec[i] = addEpi16(inputVec[i], addEpi16(add0Vec[i], add1Vec[i]));
+      output[i] = addEpi16(input[i], addEpi16(add0[i], add1[i]));
   }
 
   template <int InputSize>
-  inline void multiSubAdd(int16_t* output, int16_t* input, int16_t* sub0, int16_t* add0) {
-    VecI* inputVec = (VecI*)input;
-    VecI* outputVec = (VecI*)output;
+  inline void multiSubAdd(VecI* output, VecI* input, VecI* sub0, VecI* add0) {
 
-    VecI* sub0Vec = (VecI*) sub0;
-    VecI* add0Vec = (VecI*) add0;
-        
     for (int i = 0; i < InputSize / I16InVec; ++i)
-      outputVec[i] = subEpi16(addEpi16(inputVec[i], add0Vec[i]), sub0Vec[i]);
+      output[i] = subEpi16(addEpi16(input[i], add0[i]), sub0[i]);
   }
 
   template <int InputSize>
-  inline void multiSubAddSub(int16_t* output, int16_t* input, int16_t* sub0, int16_t* add0, int16_t* sub1) {
-    VecI* inputVec = (VecI*)input;
-    VecI* outputVec = (VecI*)output;
-
-    VecI* sub0Vec = (VecI*) sub0;
-    VecI* add0Vec = (VecI*) add0;
-    VecI* sub1Vec = (VecI*) sub1;
+  inline void multiSubAddSub(VecI* output, VecI* input, VecI* sub0, VecI* add0, VecI* sub1) {
 
     for (int i = 0; i < InputSize / I16InVec; ++i)
-      outputVec[i] = subEpi16(subEpi16(addEpi16(inputVec[i], add0Vec[i]), sub0Vec[i]), sub1Vec[i]);
+      output[i] = subEpi16(subEpi16(addEpi16(input[i], add0[i]), sub0[i]), sub1[i]);
   }
 
-   template <int InputSize>
-  inline void multiSubAddSubAdd(int16_t* output, int16_t* input, int16_t* sub0, int16_t* add0, int16_t* sub1, int16_t* add1) {
-    VecI* inputVec = (VecI*)input;
-    VecI* outputVec = (VecI*)output;
-
-    VecI* sub0Vec = (VecI*) sub0;
-    VecI* add0Vec = (VecI*) add0;
-    VecI* sub1Vec = (VecI*) sub1;
-    VecI* add1Vec = (VecI*) add1;
+  template <int InputSize>
+  inline void multiSubAddSubAdd(VecI* output, VecI* input, VecI* sub0, VecI* add0, VecI* sub1, VecI* add1) {
 
     for (int i = 0; i < InputSize / I16InVec; ++i)
-      outputVec[i] = addEpi16(subEpi16(subEpi16(addEpi16(inputVec[i], add0Vec[i]), sub0Vec[i]), sub1Vec[i]), add1Vec[i]);
+      output[i] = addEpi16(subEpi16(subEpi16(addEpi16(input[i], add0[i]), sub0[i]), sub1[i]), add1[i]);
   }
 
   void Accumulator::addPiece(Square kingSq, Color side, Piece pc, Square sq) {
-    multiAdd<L1>(colors[side], colors[side], featureAddress(kingSq, side, pc, sq));
+    multiAdd<L1>((VecI*) colors[side], (VecI*) colors[side], featureAddress(kingSq, side, pc, sq));
   }
 
   void Accumulator::removePiece(Square kingSq, Color side, Piece pc, Square sq) {
-    multiSub<L1>(colors[side], colors[side], featureAddress(kingSq, side, pc, sq));
+    multiSub<L1>((VecI*) colors[side], (VecI*) colors[side], featureAddress(kingSq, side, pc, sq));
   }
 
   void Accumulator::doUpdates(Square kingSq, Color side, Accumulator& input) {
     DirtyPieces dp = this->dirtyPieces;
     if (dp.type == DirtyPieces::CASTLING) 
     {
-      multiSubAddSubAdd<L1>(colors[side], input.colors[side], 
+      multiSubAddSubAdd<L1>((VecI*) colors[side], (VecI*) input.colors[side], 
         featureAddress(kingSq, side, dp.sub0.pc, dp.sub0.sq),
         featureAddress(kingSq, side, dp.add0.pc, dp.add0.sq),
         featureAddress(kingSq, side, dp.sub1.pc, dp.sub1.sq),
         featureAddress(kingSq, side, dp.add1.pc, dp.add1.sq));
     } else if (dp.type == DirtyPieces::CAPTURE) 
     { 
-      multiSubAddSub<L1>(colors[side], input.colors[side], 
+      multiSubAddSub<L1>((VecI*) colors[side], (VecI*) input.colors[side], 
         featureAddress(kingSq, side, dp.sub0.pc, dp.sub0.sq),
         featureAddress(kingSq, side, dp.add0.pc, dp.add0.sq),
         featureAddress(kingSq, side, dp.sub1.pc, dp.sub1.sq));
     } else
     {
-      multiSubAdd<L1>(colors[side], input.colors[side], 
+      multiSubAdd<L1>((VecI*) colors[side], (VecI*) input.colors[side], 
         featureAddress(kingSq, side, dp.sub0.pc, dp.sub0.sq),
         featureAddress(kingSq, side, dp.add0.pc, dp.add0.sq));
     }
