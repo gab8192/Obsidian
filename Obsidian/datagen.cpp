@@ -18,7 +18,7 @@ namespace Datagen {
   }
 
   bool playRandomMoves(Position& pos, int numMoves) {
-    std::mt19937 gen(123);
+    std::mt19937 gen(timeMillis());
     for (int i = 0; i < numMoves; i++) {
       MoveList legals;
       genLegals(pos, legals);
@@ -149,8 +149,8 @@ void datagen(int numPositions, std::string outFile) {
     Position pos;
     pos.setToFen(line);
 
-    //if (! playRandomMoves(pos, 4))
-      //continue;
+    if (! playRandomMoves(pos, 2))
+      continue;
 
     playGame(pos, outStream);
 
