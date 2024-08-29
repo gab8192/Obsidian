@@ -134,6 +134,12 @@ void datagen(int numPositions, std::string outFile) {
   numGenerated = 0;
 
   std::ofstream outStream(outFile);
+
+  const std::size_t customBufferSize = 1024 * 1024; // 1 MB.  30K positions roughly
+  char customBuffer[customBufferSize];
+  outStream.rdbuf()->pubsetbuf(customBuffer, customBufferSize);
+
+
   std::ifstream book("UHO_Lichess_4852_v1.epd");
 
   clock_t startTime = timeMillis();
@@ -143,8 +149,8 @@ void datagen(int numPositions, std::string outFile) {
     Position pos;
     pos.setToFen(line);
 
-    if (! playRandomMoves(pos, 4))
-      continue;
+    //if (! playRandomMoves(pos, 4))
+      //continue;
 
     playGame(pos, outStream);
 
