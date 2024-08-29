@@ -242,7 +242,9 @@ void UCI::loop(int argc, char* argv[]) {
     else if (token == "datagen") {
       int numPositions;
       is >> numPositions;
-      Datagen::datagen(numPositions);
+      std::string outFile;
+      is >> outFile;
+      Datagen::datagen(numPositions, outFile);
     }
     else if (!token.empty() && token[0] != '#')
       std::cout << "Unknown command: '" << cmd << "'." << std::endl;

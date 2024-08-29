@@ -58,7 +58,7 @@ namespace Datagen {
 
   int numGenerated = 0;
 
-  void playGame(Position pos /* copy on purpose */) {
+  void playGame(Position pos, std::ofstream& outStream) {
     TT::clear();
 
     int ply = 0;
@@ -97,7 +97,7 @@ namespace Datagen {
           && !isCap
           && std::abs(score) < SCORE_TB_WIN_IN_MAX_PLY) 
       {
-        std::cout << pos.toFenString() << " | " << score << std::endl;
+        outStream << pos.toFenString() << " | " << score << "\n";
         numGenerated++;
       }
 
@@ -129,21 +129,34 @@ namespace Datagen {
     }
   }*/
 
- void datagen(int numPositions) {
-    std::ifstream book("UHO_Lichess_4852_v1.epd");
+void datagen(int numPositions, std::string outFile) {
 
-    std::string line;
-    while (std::getline(book, line)) {
-      Position pos;
-      pos.setToFen(line);
+  numGenerated = 0;
 
-      if (! playRandomMoves(pos, 4))
-        continue;
+  std::ofstream outStream(outFile);
+  std::ifstream book("UHO_Lichess_4852_v1.epd");
 
-      playGame(pos);
+  clock_t startTime = timeMillis();
 
-      if (numGenerated >= numPositions)
-        return;
+  std::string line;
+  while (std::getline(book, line)) {
+    Position pos;
+    pos.setToFen(line);
+
+    if (! playRandomMoves(pos, 4))
+      continue;
+
+    playGame(pos, outStream);
+
+    clock_t elapsed = timeMillis() - startTime;
+    std::cout << "generated " << numGenerated << " positions.  " 
+              << "pos/sec = " << ((1000*numGenerated)/elapsed) << std::endl;
+
+    if (numGenerated >= numPositions)
+      break;
+
     }
+
+    std::cout << "finished" << std::endl;
   }
 }
