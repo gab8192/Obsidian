@@ -1308,11 +1308,6 @@ namespace Search {
           else
             break;
 
-          if (settings.nodes && Threads::totalNodes() >= settings.nodes) {
-            naturalExit = false;
-            goto bestMoveDecided;
-          }
-
           window += window / 3;
         }
 
