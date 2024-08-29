@@ -60,11 +60,15 @@ namespace Search {
     volatile uint64_t nodesSearched;
     volatile uint64_t tbHits;
 
+    RootMoveList rootMoves;
+
     Thread();
 
     void resetHistories();
     
     void idleLoop();
+
+    void startSearch();
     
   private:
     
@@ -82,8 +86,7 @@ namespace Search {
     NNUE::Accumulator accumStack[MAX_PLY];
 
     SearchInfo searchStack[MAX_PLY + SsOffset];
-
-    RootMoveList rootMoves;
+    
     int pvIdx;
 
     MainHistory mainHistory;
@@ -134,7 +137,7 @@ namespace Search {
     Score negamax(Position& position, Score alpha, Score beta, int depth,
       bool cutNode, SearchInfo* ss, const Move excludedMove = MOVE_NONE);
 
-    void startSearch();
+    
   };
 
   template<bool root>

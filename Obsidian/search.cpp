@@ -174,6 +174,8 @@ namespace Search {
   }
 
   void printInfo(int depth, int pvIdx, Score score, const std::string& pvString) {
+    if (true) return;
+
     clock_t elapsed = elapsedTime();
     std::ostringstream infoStr;
         infoStr
@@ -192,6 +194,8 @@ namespace Search {
   }
 
   void printBestMove(Move move) {      
+    if (true) return;
+    
     std::cout << "bestmove " << UCI::moveToString(move) << std::endl;
   }
 

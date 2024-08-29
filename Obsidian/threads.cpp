@@ -56,6 +56,18 @@ namespace Threads {
     }
   }
 
+  void startSync(Search::Settings& settings) {
+    searchSettings = settings;
+    searchStopped = false;
+    Search::Thread* st = searchThreads[0];
+    st->nodesSearched = 0;
+    st->tbHits = 0;
+    st->completeDepth = 0;
+    st->searching = true;
+    st->startSearch();
+    st->searching = false;
+  }
+
   Search::Settings& getSearchSettings() {
     return searchSettings;
   }

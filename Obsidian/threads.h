@@ -20,6 +20,8 @@ namespace Threads {
 
   void startSearch(Search::Settings& settings);
 
+  void startSync(Search::Settings& settings);
+
   Search::Settings& getSearchSettings();
 
   void stopSearch();

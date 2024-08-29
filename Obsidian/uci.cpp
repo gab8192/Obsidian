@@ -1,5 +1,6 @@
 #include "uci.h"
 #include "bench.h"
+#include "datagen.h"
 #include "evaluate.h"
 #include "move.h"
 #include "movegen.h"
@@ -237,6 +238,9 @@ void UCI::loop(int argc, char* argv[]) {
         eval = -eval;
       std::cout << "Evaluation: " << UCI::normalizeToCp(eval) 
                 << "  (not normalized: " << eval << ")" << std::endl;
+    }
+    else if (token == "datagen") {
+      Datagen::datagen();
     }
     else if (!token.empty() && token[0] != '#')
       std::cout << "Unknown command: '" << cmd << "'." << std::endl;
