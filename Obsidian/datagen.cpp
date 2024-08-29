@@ -111,24 +111,6 @@ namespace Datagen {
     }
   }
 
-  /*
-  void datagen() {
-    int gameN = 0;
-    while (true) {
-      Position pos;
-      pos.setToFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-      int ply = 9 + (gameN & 1); // 9 or 10 random moves
-      if (! playRandomMoves(pos, ply))
-        continue;
-      if (! anyLegalMove(pos))
-        return;
-
-      playGame(pos, ply);
-
-      gameN++;
-    }
-  }*/
-
 void datagen(int numPositions, std::string outFile) {
 
   numGenerated = 0;
