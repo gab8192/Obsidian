@@ -111,37 +111,37 @@ namespace Datagen {
     }
   }
 
-void datagen(int numPositions, std::string outFile) {
+  void datagen(int numPositions, std::string outFile) {
 
-  numGenerated = 0;
+    numGenerated = 0;
 
-  std::ofstream outStream(outFile);
+    std::ofstream outStream(outFile);
 
-  const std::size_t customBufferSize = 1024 * 1024; // 1 MB.  30K positions roughly
-  char customBuffer[customBufferSize];
-  outStream.rdbuf()->pubsetbuf(customBuffer, customBufferSize);
+    const std::size_t customBufferSize = 1024 * 1024; // 1 MB.  30K positions roughly
+    char customBuffer[customBufferSize];
+    outStream.rdbuf()->pubsetbuf(customBuffer, customBufferSize);
 
 
-  std::ifstream book("UHO_Lichess_4852_v1.epd");
+    std::ifstream book("UHO_Lichess_4852_v1.epd");
 
-  clock_t startTime = timeMillis();
+    clock_t startTime = timeMillis();
 
-  std::string line;
-  while (std::getline(book, line)) {
-    Position pos;
-    pos.setToFen(line);
+    std::string line;
+    while (std::getline(book, line)) {
+      Position pos;
+      pos.setToFen(line);
 
-    if (! playRandomMoves(pos, 2))
-      continue;
+      if (! playRandomMoves(pos, 2))
+        continue;
 
-    playGame(pos, outStream);
+      playGame(pos, outStream);
 
-    clock_t elapsed = timeMillis() - startTime;
-    std::cout << "generated " << numGenerated << " positions.  " 
-              << "pos/sec = " << ((1000*numGenerated)/elapsed) << std::endl;
+      clock_t elapsed = timeMillis() - startTime;
+      std::cout << "generated " << numGenerated << " positions.  " 
+                << "pos/sec = " << ((1000*numGenerated)/elapsed) << std::endl;
 
-    if (numGenerated >= numPositions)
-      break;
+      if (numGenerated >= numPositions)
+        break;
 
     }
 
