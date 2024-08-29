@@ -240,7 +240,9 @@ void UCI::loop(int argc, char* argv[]) {
                 << "  (not normalized: " << eval << ")" << std::endl;
     }
     else if (token == "datagen") {
-      Datagen::datagen();
+      int numPositions;
+      is >> numPositions;
+      Datagen::datagen(numPositions);
     }
     else if (!token.empty() && token[0] != '#')
       std::cout << "Unknown command: '" << cmd << "'." << std::endl;

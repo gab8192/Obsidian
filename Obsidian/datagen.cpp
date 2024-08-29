@@ -4,6 +4,7 @@
 #include "threads.h"
 #include "tt.h"
 #include "uci.h"
+#include <fstream>
 #include <random>
 
 namespace Datagen {
@@ -17,7 +18,7 @@ namespace Datagen {
   }
 
   bool playRandomMoves(Position& pos, int numMoves) {
-    std::mt19937 gen(__rdtsc());
+    std::mt19937 gen(123);
     for (int i = 0; i < numMoves; i++) {
       MoveList legals;
       genLegals(pos, legals);
@@ -55,17 +56,20 @@ namespace Datagen {
 
   constexpr int MAX_GAME_PLY = 400;
 
-  void playGame(Position pos /* copy on purpose */, int ply) {
+  int numGenerated = 0;
+
+  void playGame(Position pos /* copy on purpose */) {
     TT::clear();
 
+    int ply = 0;
     Key prevPositions[MAX_GAME_PLY+4];
 
     Search::Thread* st = Threads::mainThread();
     while (true) {
       if (pos.halfMoveClock >= 100 || ply >= MAX_GAME_PLY)
         return;
-      for (int i = ply - 4; i >= ply - pos.halfMoveClock; i -= 2)
-        if (prevPositions[i] == pos.key)
+      for (int i = 4; i <= pos.halfMoveClock; i += 2)
+        if (prevPositions[ply - i] == pos.key)
           return;
       if (!enoughMaterialToMate(pos, WHITE) && !enoughMaterialToMate(pos, BLACK))
         return;
@@ -89,11 +93,13 @@ namespace Datagen {
 
       bool isCap = move_type(move) == MT_EN_PASSANT || pos.board[move_to(move)];
 
-      if (   ply >= 16
-          && !pos.checkers
+      if (   !pos.checkers
           && !isCap
-          && std::abs(score) < SCORE_TB_WIN_IN_MAX_PLY)
+          && std::abs(score) < SCORE_TB_WIN_IN_MAX_PLY) 
+      {
         std::cout << pos.toFenString() << " | " << score << std::endl;
+        numGenerated++;
+      }
 
       prevPositions[ply++] = pos.key;
 
@@ -105,6 +111,7 @@ namespace Datagen {
     }
   }
 
+  /*
   void datagen() {
     int gameN = 0;
     while (true) {
@@ -113,7 +120,6 @@ namespace Datagen {
       int ply = 9 + (gameN & 1); // 9 or 10 random moves
       if (! playRandomMoves(pos, ply))
         continue;
-      pos.halfMoveClock = 0;
       if (! anyLegalMove(pos))
         return;
 
@@ -121,6 +127,23 @@ namespace Datagen {
 
       gameN++;
     }
-  }
+  }*/
 
+ void datagen(int numPositions) {
+    std::ifstream book("UHO_Lichess_4852_v1.epd");
+
+    std::string line;
+    while (std::getline(book, line)) {
+      Position pos;
+      pos.setToFen(line);
+
+      if (! playRandomMoves(pos, 4))
+        continue;
+
+      playGame(pos);
+
+      if (numGenerated >= numPositions)
+        return;
+    }
+  }
 }

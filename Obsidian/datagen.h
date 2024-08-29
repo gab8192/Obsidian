@@ -2,6 +2,6 @@
 
 namespace Datagen {
 
-    void datagen();
+    void datagen(int numPositions);
 
 }
