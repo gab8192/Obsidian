@@ -426,7 +426,7 @@ namespace Search {
   }
 
   Score Thread::makeDrawScore() {
-    return int(nodesSearched & 2) - 1;
+    return 0;
   }
 
   Score Thread::doEvaluation(Position& pos) {
