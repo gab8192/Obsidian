@@ -9,19 +9,21 @@
 
 namespace Datagen {
 
-  void genLegals(Position& pos, MoveList& legals) {
-    MoveList pseudoLegals;
-    getStageMoves(pos, ADD_ALL_MOVES, &pseudoLegals);
-    for (const auto& m : pseudoLegals)
-      if (pos.isLegal(m.move))
-        legals.add(m);
-  }
-
   bool playRandomMoves(Position& pos, int numMoves) {
+    // Don't hang even knights, if there's no compensation
+    constexpr int MaxThrow = PIECE_VALUE[KNIGHT] - 10;
+
     std::mt19937 gen(timeMillis());
     for (int i = 0; i < numMoves; i++) {
       MoveList legals;
-      genLegals(pos, legals);
+      {
+        MoveList pseudoLegals;
+        getStageMoves(pos, ADD_ALL_MOVES, &pseudoLegals);
+        for (const auto& m : pseudoLegals) {
+          if (pos.isLegal(m.move) && pos.seeGe(m.move, -MaxThrow))
+            legals.add(m);
+        }
+      }
 
       if (! legals.size())
         return false;
@@ -49,9 +51,13 @@ namespace Datagen {
   }
 
   bool anyLegalMove(Position& pos) {
-    MoveList legals;
-    genLegals(pos, legals);
-    return legals.size();
+    MoveList pseudoLegals;
+    getStageMoves(pos, ADD_ALL_MOVES, &pseudoLegals);
+    for (const auto& m : pseudoLegals)
+      if (pos.isLegal(m.move))
+        return true;
+
+    return false;
   }
 
   constexpr int MAX_GAME_PLY = 400;
@@ -131,7 +137,7 @@ namespace Datagen {
       Position pos;
       pos.setToFen(line);
 
-      if (! playRandomMoves(pos, 2))
+      if (! playRandomMoves(pos, 4))
         continue;
 
       playGame(pos, outStream);
