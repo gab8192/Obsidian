@@ -938,8 +938,9 @@ namespace Search {
             skipQuiets = true;
 
         // Late move pruning. At low depths, only visit a few quiet moves
-        if (seenMoves >= (depth * depth + LmpBase) / (2 - improving))
-          skipQuiets = true;
+        if (bestScore > alpha-100)
+          if (seenMoves >= (depth * depth + LmpBase) / (2 - improving))
+            skipQuiets = true;
 
         // Futility pruning. If our evaluation is far below alpha,
         // only visit a few quiet moves
