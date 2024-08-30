@@ -37,17 +37,21 @@ namespace Datagen {
     return true;
   }
 
-  bool enoughMaterialToMate(Position& pos, Color side) {
-    if (pos.pieces(side, PAWN) || pos.pieces(side, ROOK) || pos.pieces(side, QUEEN))
+   bool enoughMaterialToMate(Position& pos) {
+    if (pos.pieces(PAWN) || pos.pieces(ROOK) || pos.pieces(QUEEN))
       return true;
 
-    const Bitboard knights = pos.pieces(side, KNIGHT);
-    const Bitboard bishops = pos.pieces(side, BISHOP);
+    for (Color side = WHITE; side <= BLACK; ++side) {
+      const Bitboard knights = pos.pieces(side, KNIGHT);
+      const Bitboard bishops = pos.pieces(side, BISHOP);
 
-    if (knights && bishops)
-      return true;
+      if (knights && bishops)
+        return true;
 
-    return BitCount(knights) >= 3 || BitCount(bishops) >= 2;
+      if (BitCount(knights) >= 3 || BitCount(bishops) >= 2)
+        return true;
+    }
+    return false;
   }
 
   bool anyLegalMove(Position& pos) {
@@ -77,7 +81,7 @@ namespace Datagen {
       for (int i = 4; i <= pos.halfMoveClock; i += 2)
         if (prevPositions[ply - i] == pos.key)
           return;
-      if (!enoughMaterialToMate(pos, WHITE) && !enoughMaterialToMate(pos, BLACK))
+      if (!enoughMaterialToMate(pos))
         return;
       if (!anyLegalMove(pos))
         return;
