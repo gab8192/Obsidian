@@ -11,7 +11,7 @@ namespace Datagen {
 
   bool playRandomMoves(Position& pos, int numMoves) {
     // Don't hang even knights, if there's no compensation
-    constexpr int MaxThrow = PIECE_VALUE[KNIGHT] - 10;
+    constexpr int MaxThrow = 2 * PIECE_VALUE[PAWN];
 
     std::mt19937 gen(timeMillis());
     for (int i = 0; i < numMoves; i++) {
