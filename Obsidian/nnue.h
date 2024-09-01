@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "permuted.bin"
+#define EvalFile "net55-2.bin"
 
 using namespace SIMD;
 

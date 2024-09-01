@@ -289,7 +289,8 @@ namespace NNUE {
       for (int i = 0; i < L2; i += FloatInVec) {
         VecF vecBias = AsVecF(Content.L1Biases[bucket][i]);
         VecF casted = mulAddPs(castEpi32ToPs(AsVecI(sums[i])), L1MulVec, vecBias);
-        AsVecF(l1Out[i]) = minPs(maxPs(casted, vecfZero), vecfOne);
+        VecF clamped = minPs(maxPs(casted, vecfZero), vecfOne);
+        AsVecF(l1Out[i]) = mulPs(clamped, clamped);
       }
     }
 
@@ -303,8 +304,10 @@ namespace NNUE {
           AsVecF(sums[j]) = mulAddPs(AsVecF(Content.L2Weights[bucket][i][j]), vecL1Out, AsVecF(sums[j]));
       }
 
-      for (int i = 0; i < L3; i += FloatInVec)
-        AsVecF(l2Out[i]) = minPs(maxPs(AsVecF(sums[i]), vecfZero), vecfOne);
+      for (int i = 0; i < L3; i += FloatInVec) {
+        VecF clamped = minPs(maxPs(AsVecF(sums[i]), vecfZero), vecfOne);
+        AsVecF(l2Out[i]) = mulPs(clamped, clamped);
+      }
     }
 
     { // propagate l3
