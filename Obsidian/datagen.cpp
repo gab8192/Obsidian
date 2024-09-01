@@ -64,23 +64,26 @@ namespace Datagen {
     return false;
   }
 
+  std::vector<Key> prevPositions;
+
   constexpr int MAX_GAME_PLY = 400;
 
   int numGenerated = 0;
 
   void playGame(Position pos, std::ofstream& outStream) {
     TT::clear();
+    prevPositions.clear();
 
     int ply = 0;
-    Key prevPositions[MAX_GAME_PLY+4];
 
     Search::Thread* st = Threads::mainThread();
     while (true) {
       if (pos.halfMoveClock >= 100 || ply >= MAX_GAME_PLY)
         return;
-      for (int i = 4; i <= pos.halfMoveClock; i += 2)
-        if (prevPositions[ply - i] == pos.key)
+      for (int i = prevPositions.size()-4; i >= 0; i -= 2)
+        if (prevPositions[i] == pos.key) {
           return;
+        }
       if (!enoughMaterialToMate(pos))
         return;
       if (!anyLegalMove(pos))
@@ -91,6 +94,7 @@ namespace Datagen {
       // Intentionally hide previous positions from search
       Search::Settings settings;
       settings.startTime = timeMillis();
+      settings.prevPositions = prevPositions;
       settings.position = pos;
       settings.nodes = 5000;
 
@@ -111,17 +115,23 @@ namespace Datagen {
         numGenerated++;
       }
 
-      prevPositions[ply++] = pos.key;
+      if (std::abs(score) > 2000)
+        return;
+
+      prevPositions.push_back(pos.key);
 
       DirtyPieces dp;
       pos.doMove(move, dp);
+      ply++;
 
-      if (std::abs(score) > 2000)
-        return;
+      if (pos.halfMoveClock == 0)
+        prevPositions.clear();
     }
   }
 
   void datagen(int numPositions, std::string outFile) {
+
+    prevPositions.reserve(MAX_GAME_PLY+4);
 
     numGenerated = 0;
 

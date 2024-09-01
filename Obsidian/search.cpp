@@ -410,16 +410,9 @@ namespace Search {
 
     const int maxDist = std::min(pos.halfMoveClock, keyStackHead);
 
-    bool hitBeforeRoot = false;
-
     for (int i = 4; i <= maxDist; i += 2) {
-      if (pos.key == keyStack[keyStackHead - i]) {
-        if (ply >= i)
-          return true;
-        if (hitBeforeRoot)
-          return true;
-        hitBeforeRoot = true;
-      }
+      if (pos.key == keyStack[keyStackHead - i])
+        return true;
     }
 
     return false;
