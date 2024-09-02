@@ -122,7 +122,10 @@ namespace Search {
     memset(mainHistory, 0, sizeof(mainHistory));
     memset(captureHistory, 0, sizeof(captureHistory));
     memset(counterMoveHistory, 0, sizeof(counterMoveHistory));
-    memset(contHistory, 0, sizeof(contHistory));
+    
+    int* contHistoryInt = (int*) contHistory;
+    for (int i = 0; i < sizeof(contHistory)/sizeof(int); i++)
+      contHistoryInt[i] = -512;
     
     searchPrevScore = SCORE_NONE;
   }
