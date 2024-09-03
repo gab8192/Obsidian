@@ -456,12 +456,16 @@ namespace Search {
     return Eval::evaluate(pos, *head);
   }
 
+  Score scaleOnHMC(Position& pos, Score eval) {
+    return (eval * (200 - pos.halfMoveClock)) / 200;
+  }
+
   template<bool IsPV>
   Score Thread::qsearch(Position& pos, Score alpha, Score beta, int depth, SearchInfo* ss) {
 
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY-4)
-      return pos.checkers ? SCORE_DRAW : doEvaluation(pos);
+      return pos.checkers ? SCORE_DRAW : scaleOnHMC(pos, doEvaluation(pos));
 
     // Detect draw
     if (isRepetition(pos, ply) || pos.halfMoveClock >= 100)
@@ -506,6 +510,8 @@ namespace Search {
         bestScore = ss->staticEval = ttStaticEval;
       else
         bestScore = ss->staticEval = doEvaluation(pos);
+
+      bestScore = scaleOnHMC(pos, bestScore);
 
       futility = bestScore + QsFpMargin;
 
@@ -656,7 +662,7 @@ namespace Search {
 
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY - 4)
-      return pos.checkers ? SCORE_DRAW : doEvaluation(pos);
+      return pos.checkers ? SCORE_DRAW : scaleOnHMC(pos, doEvaluation(pos));
 
     // Mate distance pruning
     alpha = std::max(alpha, ply - SCORE_MATE);
@@ -763,6 +769,8 @@ namespace Search {
         ss->staticEval = eval = ttStaticEval;
       else
         ss->staticEval = eval = doEvaluation(pos);
+
+      eval = scaleOnHMC(pos, eval);
 
       if (! ttHit) {
         // This (probably new) position has just been evaluated.
