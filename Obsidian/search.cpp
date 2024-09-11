@@ -123,6 +123,7 @@ namespace Search {
     memset(captureHistory, 0, sizeof(captureHistory));
     memset(counterMoveHistory, 0, sizeof(counterMoveHistory));
     memset(contHistory, 0, sizeof(contHistory));
+    memset(pawnCorrhist, 0, sizeof(pawnCorrhist));
     
     searchPrevScore = SCORE_NONE;
   }
@@ -310,6 +311,14 @@ namespace Search {
             + (ss - 4)->contHistory[chIndex];
   }
 
+  Score Thread::correctStaticEval(Position &position, Score staticEval){
+    int rawPawnCorrection = pawnCorrhist[position.sideToMove][getPawnCorrhistIndex(position.pawnKey)];
+
+    staticEval += 60 * rawPawnCorrection / 512;
+
+    return std::clamp(staticEval, SCORE_TB_LOSS_IN_MAX_PLY + 1, SCORE_TB_WIN_IN_MAX_PLY - 1);
+  }
+
   void addToContHistory(Position& pos, int bonus, Move move, SearchInfo* ss) {
     int chIndex = pieceTo(pos, move);
     if ((ss - 1)->playedMove)
@@ -477,6 +486,7 @@ namespace Search {
     TT::Flag ttBound = TT::NO_FLAG;
     Score ttScore = SCORE_NONE;
     Move ttMove = MOVE_NONE;
+    Score uncorrectedStaticEval;
     Score ttStaticEval = SCORE_NONE;
     bool ttPV = false;
 
@@ -510,6 +520,9 @@ namespace Search {
         bestScore = ss->staticEval = ttStaticEval;
       else
         bestScore = ss->staticEval = doEvaluation(pos);
+
+      uncorrectedStaticEval = ss->staticEval;
+      bestScore = ss->staticEval = correctStaticEval(pos, uncorrectedStaticEval);
 
       bestScore = scaleOnHMC(pos, bestScore);
 
@@ -679,6 +692,7 @@ namespace Search {
     Move ttMove     = MOVE_NONE;
     int ttDepth     = -1;
     Score ttStaticEval = SCORE_NONE;
+    Score uncorrectedStaticEval;
     bool ttPV = IsPV;
 
     if (ttHit) {
@@ -770,9 +784,12 @@ namespace Search {
       else
         ss->staticEval = eval = doEvaluation(pos);
 
+      uncorrectedStaticEval = ss->staticEval;
+      eval = ss->staticEval = correctStaticEval(pos, uncorrectedStaticEval);
+
       eval = scaleOnHMC(pos, eval);
 
-      if (! ttHit) {
+      if (!ttHit) {
         // This (probably new) position has just been evaluated.
         // Immediately save the evaluation in TT, so other threads who reach this position
         // won't need to evaluate again
@@ -1129,6 +1146,17 @@ namespace Search {
     // Only in pv nodes we could probe tt and not cut off immediately
     if (IsPV)
       bestScore = std::min(bestScore, maxScore);
+
+    // update corrhist
+    const bool isCap = pos.board[move_to(move)] != NO_PIECE;
+    if(!pos.checkers && (!bestMove || !isCap) 
+        && !(bestScore >= beta && bestScore <= ss->staticEval) 
+        && !(!bestMove && bestScore >= ss->staticEval)){
+        auto bonus = std::clamp(static_cast<int>(bestScore - ss->staticEval) * depth / 8, 
+                                      -CORRHIST_LIMIT / 4, CORRHIST_LIMIT /4);
+
+        addToCorrhist(pawnCorrhist[pos.sideToMove][getPawnCorrhistIndex(pos.pawnKey)], bonus);
+      }
 
     // Store to TT
     if (!excludedMove && !(IsRoot && pvIdx > 0)) {
