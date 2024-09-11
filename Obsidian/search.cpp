@@ -486,7 +486,6 @@ namespace Search {
     TT::Flag ttBound = TT::NO_FLAG;
     Score ttScore = SCORE_NONE;
     Move ttMove = MOVE_NONE;
-    Score uncorrectedStaticEval;
     Score ttStaticEval = SCORE_NONE;
     bool ttPV = false;
 
@@ -505,6 +504,7 @@ namespace Search {
     }
 
     Move bestMove = MOVE_NONE;
+    Score uncorrectedStaticEval = SCORE_NONE;
     Score bestScore;
     Score futility;
 
@@ -608,7 +608,7 @@ namespace Search {
 
     ttEntry->store(pos.key,
       bestScore >= beta ? TT::FLAG_LOWER : TT::FLAG_UPPER,
-      0, bestMove, bestScore, ss->staticEval, ttPV, ply);
+      0, bestMove, bestScore, uncorrectedStaticEval, ttPV, ply);
 
     return bestScore;
   }
@@ -692,7 +692,6 @@ namespace Search {
     Move ttMove     = MOVE_NONE;
     int ttDepth     = -1;
     Score ttStaticEval = SCORE_NONE;
-    Score uncorrectedStaticEval;
     bool ttPV = IsPV;
 
     if (ttHit) {
@@ -713,6 +712,7 @@ namespace Search {
 
     Score eval;
     Move bestMove = MOVE_NONE;
+    Score uncorrectedStaticEval= SCORE_NONE;
     Score bestScore = -SCORE_INFINITE;
     Score maxScore  =  SCORE_INFINITE; 
 
@@ -776,7 +776,7 @@ namespace Search {
     }
     else if (excludedMove) {
       // We have already evaluated the position in the node which invoked this singular search
-      eval = ss->staticEval;
+      uncorrectedStaticEval = eval = ss->staticEval;
     }
     else {
       if (ttStaticEval != SCORE_NONE)
@@ -794,7 +794,7 @@ namespace Search {
         // Immediately save the evaluation in TT, so other threads who reach this position
         // won't need to evaluate again
         // This is also helpful when we cutoff early and no other store will be performed
-        ttEntry->store(pos.key, TT::NO_FLAG, 0, MOVE_NONE, SCORE_NONE, ss->staticEval, ttPV, ply);
+        ttEntry->store(pos.key, TT::NO_FLAG, 0, MOVE_NONE, SCORE_NONE, uncorrectedStaticEval, ttPV, ply);
       }
 
       // When tt bound allows it, use ttScore as a better evaluation
@@ -888,7 +888,7 @@ namespace Search {
         cancelMove();
 
         if (score >= probcutBeta) {
-          ttEntry->store(pos.key, TT::FLAG_LOWER, depth - 3, move, score, ss->staticEval, ttPV, ply);
+          ttEntry->store(pos.key, TT::FLAG_LOWER, depth - 3, move, score, uncorrectedStaticEval, ttPV, ply);
           return score;
         }
       }
@@ -1166,7 +1166,7 @@ namespace Search {
       else
         flag = (IsPV && bestMove) ? TT::FLAG_EXACT : TT::FLAG_UPPER;
 
-      ttEntry->store(pos.key, flag, depth, bestMove, bestScore, ss->staticEval, ttPV, ply);
+      ttEntry->store(pos.key, flag, depth, bestMove, bestScore, uncorrectedStaticEval, ttPV, ply);
     }
 
     return bestScore;
