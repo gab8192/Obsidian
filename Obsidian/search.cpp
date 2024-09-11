@@ -1148,7 +1148,7 @@ namespace Search {
       bestScore = std::min(bestScore, maxScore);
 
     // update corrhist
-    const bool isCap = pos.board[move_to(move)] != NO_PIECE;
+    const bool isCap = pos.board[move_to(bestMove)] != NO_PIECE;
     if(!pos.checkers && (!bestMove || !isCap) 
         && !(bestScore >= beta && bestScore <= ss->staticEval) 
         && !(!bestMove && bestScore >= ss->staticEval)){
