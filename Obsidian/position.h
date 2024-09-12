@@ -30,6 +30,7 @@ struct alignas(32) Position {
   int gamePly;
 
   Key key;
+  Key pawnKey;
 
   Bitboard blockersForKing[COLOR_NB];
   Bitboard pinners[COLOR_NB];
@@ -94,7 +95,7 @@ struct alignas(32) Position {
     checkers = attackersTo(kingSquare(sideToMove), ~sideToMove);
   }
 
-  void updateKey();
+  void updateKeys();
 
   /// <summary>
   /// Assmue there is a piece in the given square.
@@ -103,9 +104,14 @@ struct alignas(32) Position {
   inline void removePiece(Square sq, Piece pc) {
     key ^= ZOBRIST_PSQ[pc][sq];
 
+    if(piece_type(pc) == PAWN)
+      pawnKey ^= ZOBRIST_PSQ[pc][sq];
+
     board[sq] = NO_PIECE;
     byColorBB[piece_color(pc)] ^= sq;
     byPieceBB[piece_type(pc)] ^= sq;
+
+
   }
 
   /// <summary>
@@ -113,6 +119,9 @@ struct alignas(32) Position {
   /// </summary>
   inline void putPiece(Square sq, Piece pc) {
     key ^= ZOBRIST_PSQ[pc][sq];
+
+    if(piece_type(pc) == PAWN)
+      pawnKey ^= ZOBRIST_PSQ[pc][sq];
 
     board[sq] = pc;
     byColorBB[piece_color(pc)] ^= sq;
@@ -126,6 +135,9 @@ struct alignas(32) Position {
   inline void movePiece(Square from, Square to, Piece pc) {
 
     key ^= ZOBRIST_PSQ[pc][from] ^ ZOBRIST_PSQ[pc][to];
+
+  if(piece_type(pc) == PAWN)
+      pawnKey ^= ZOBRIST_PSQ[pc][from] ^ ZOBRIST_PSQ[pc][to];
 
     board[from] = NO_PIECE;
     board[to] = pc;

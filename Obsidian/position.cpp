@@ -77,8 +77,9 @@ void Position::updatePins(Color us) {
   }
 }
 
-void Position::updateKey() {
+void Position::updateKeys() {
   uint64_t newKey = 0;
+  uint64_t newPawnKey = 0;
 
   Bitboard allPieces = pieces();
   while (allPieces) {
@@ -86,6 +87,10 @@ void Position::updateKey() {
     Piece pc = board[sq];
 
     newKey ^= ZOBRIST_PSQ[pc][sq];
+
+    if(piece_type(pc) == PAWN)
+      newPawnKey ^= ZOBRIST_PSQ[pc][sq];
+    
   }
 
   newKey ^= ZOBRIST_CASTLING[castlingRights];
@@ -514,7 +519,7 @@ void Position::setToFen(const std::string& fen) {
   gamePly = std::max(2 * (gamePly - 1), 0) + (sideToMove == BLACK);
 
   updateAttacks();
-  updateKey();
+  updateKeys();
 }
 
 std::string Position::toFenString() const {

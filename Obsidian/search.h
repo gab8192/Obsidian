@@ -90,6 +90,7 @@ namespace Search {
     CaptureHistory captureHistory;
     ContinuationHistory contHistory;
     CounterMoveHistory counterMoveHistory;
+    PawnCorrectionHistory pawnCorrhist;
 
     NNUE::FinnyTable finny;
 
@@ -114,6 +115,8 @@ namespace Search {
     int getQuietHistory(Position& pos, Move move, SearchInfo* ss);
 
     int getCapHistory(Position& pos, Move move);
+
+    int correctStaticEval(Position &pos, Score staticEval);
 
     void updateHistories(Position& pos, int bonus, Move bestMove, Score bestScore,
       Score beta, Move* quietMoves, int quietCount, int depth, SearchInfo* ss);

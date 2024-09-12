@@ -123,6 +123,7 @@ namespace Search {
     memset(captureHistory, 0, sizeof(captureHistory));
     memset(counterMoveHistory, 0, sizeof(counterMoveHistory));
     memset(contHistory, 0, sizeof(contHistory));
+    memset(pawnCorrhist, 0, sizeof(pawnCorrhist));
     
     searchPrevScore = SCORE_NONE;
   }
@@ -310,6 +311,14 @@ namespace Search {
             + (ss - 4)->contHistory[chIndex];
   }
 
+  Score Thread::correctStaticEval(Position &position, Score staticEval){
+    int rawPawnCorrection = pawnCorrhist[position.sideToMove][getCorrHistIndex(position.pawnKey)];
+
+    staticEval += 60 * rawPawnCorrection / 512;
+
+    return std::clamp(staticEval, SCORE_TB_LOSS_IN_MAX_PLY + 1, SCORE_TB_WIN_IN_MAX_PLY - 1);
+  }
+
   void addToContHistory(Position& pos, int bonus, Move move, SearchInfo* ss) {
     int chIndex = pieceTo(pos, move);
     if ((ss - 1)->playedMove)
@@ -495,6 +504,7 @@ namespace Search {
     }
 
     Move bestMove = MOVE_NONE;
+    Score rawStaticEval = SCORE_NONE;
     Score bestScore;
     Score futility;
 
@@ -507,9 +517,11 @@ namespace Search {
     }
     else {
       if (ttStaticEval != SCORE_NONE)
-        bestScore = ss->staticEval = ttStaticEval;
+        rawStaticEval = ttStaticEval;
       else
-        bestScore = ss->staticEval = doEvaluation(pos);
+        rawStaticEval = doEvaluation(pos);
+
+      bestScore = ss->staticEval = correctStaticEval(pos, rawStaticEval);
 
       bestScore = scaleOnHMC(pos, bestScore);
 
@@ -595,7 +607,7 @@ namespace Search {
 
     ttEntry->store(pos.key,
       bestScore >= beta ? TT::FLAG_LOWER : TT::FLAG_UPPER,
-      0, bestMove, bestScore, ss->staticEval, ttPV, ply);
+      0, bestMove, bestScore, rawStaticEval, ttPV, ply);
 
     return bestScore;
   }
@@ -699,6 +711,7 @@ namespace Search {
 
     Score eval;
     Move bestMove = MOVE_NONE;
+    Score rawStaticEval = SCORE_NONE;
     Score bestScore = -SCORE_INFINITE;
     Score maxScore  =  SCORE_INFINITE; 
 
@@ -762,22 +775,24 @@ namespace Search {
     }
     else if (excludedMove) {
       // We have already evaluated the position in the node which invoked this singular search
-      eval = ss->staticEval;
+      rawStaticEval = eval = ss->staticEval;
     }
     else {
       if (ttStaticEval != SCORE_NONE)
-        ss->staticEval = eval = ttStaticEval;
+        rawStaticEval = ttStaticEval;
       else
-        ss->staticEval = eval = doEvaluation(pos);
+        rawStaticEval = doEvaluation(pos);
+
+      eval = ss->staticEval = correctStaticEval(pos, rawStaticEval);
 
       eval = scaleOnHMC(pos, eval);
 
-      if (! ttHit) {
+      if (!ttHit) {
         // This (probably new) position has just been evaluated.
         // Immediately save the evaluation in TT, so other threads who reach this position
         // won't need to evaluate again
         // This is also helpful when we cutoff early and no other store will be performed
-        ttEntry->store(pos.key, TT::NO_FLAG, 0, MOVE_NONE, SCORE_NONE, ss->staticEval, ttPV, ply);
+        ttEntry->store(pos.key, TT::NO_FLAG, 0, MOVE_NONE, SCORE_NONE, rawStaticEval, ttPV, ply);
       }
 
       // When tt bound allows it, use ttScore as a better evaluation
@@ -871,7 +886,7 @@ namespace Search {
         cancelMove();
 
         if (score >= probcutBeta) {
-          ttEntry->store(pos.key, TT::FLAG_LOWER, depth - 3, move, score, ss->staticEval, ttPV, ply);
+          ttEntry->store(pos.key, TT::FLAG_LOWER, depth - 3, move, score, rawStaticEval, ttPV, ply);
           return score;
         }
       }
@@ -1130,6 +1145,21 @@ namespace Search {
     if (IsPV)
       bestScore = std::min(bestScore, maxScore);
 
+    // update corrhist
+    const bool bestMoveCap = pos.board[move_to(bestMove)] != NO_PIECE;
+    if (   pos.checkers
+        || (bestMove && bestMoveCap)
+        || (bestScore >= beta && bestScore <= ss->staticEval)
+        || (!bestMove && bestScore >= ss->staticEval)) 
+    {
+      // In any of these cases, avoid updating correction history
+    } else {
+      int bonus = std::clamp((bestScore - ss->staticEval) * depth / 8, 
+                             -CORRHIST_LIMIT / 4, CORRHIST_LIMIT /4);
+
+      addToCorrhist(pawnCorrhist[pos.sideToMove][getCorrHistIndex(pos.pawnKey)], bonus);
+    }
+
     // Store to TT
     if (!excludedMove && !(IsRoot && pvIdx > 0)) {
       TT::Flag flag;
@@ -1138,7 +1168,7 @@ namespace Search {
       else
         flag = (IsPV && bestMove) ? TT::FLAG_EXACT : TT::FLAG_UPPER;
 
-      ttEntry->store(pos.key, flag, depth, bestMove, bestScore, ss->staticEval, ttPV, ply);
+      ttEntry->store(pos.key, flag, depth, bestMove, bestScore, rawStaticEval, ttPV, ply);
     }
 
     return bestScore;
