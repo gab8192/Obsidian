@@ -16,20 +16,22 @@
 
 namespace Search {
     
-  DEFINE_PARAM_S(QsFpMargin, 142, 10);
+  DEFINE_PARAM_S(QsFpMargin, 142, 15);
 
   DEFINE_PARAM_S(LmrBase, 47, 10);
   DEFINE_PARAM_S(LmrDiv, 192, 10);
+
+  DEFINE_PARAM_S(CorrHistWeight, 60, 6);
   
-  DEFINE_PARAM_S(StatBonusBias, -15, 20);
+  DEFINE_PARAM_S(StatBonusBias, -15, 15);
   DEFINE_PARAM_S(StatBonusLinear, 146, 10);
   DEFINE_PARAM_S(StatBonusMax, 1167, 50);
   DEFINE_PARAM_S(StatBonusBoostAt, 113, 10);
 
-  DEFINE_PARAM_S(RazoringDepthMul, 396, 20);
+  DEFINE_PARAM_S(RazoringDepthMul, 396, 30);
 
   DEFINE_PARAM_S(RfpMaxDepth, 9, 1);
-  DEFINE_PARAM_S(RfpDepthMul, 127, 6);
+  DEFINE_PARAM_S(RfpDepthMul, 127, 12);
 
   DEFINE_PARAM_S(NmpBase, 4, 1);
   DEFINE_PARAM_B(NmpDepthDiv, 4, 1, 21);
@@ -38,26 +40,26 @@ namespace Search {
 
   DEFINE_PARAM_S(ProbcutBetaMargin, 202, 20);
   
-  DEFINE_PARAM_S(HistPrDepthMul, -4096, 200);
+  DEFINE_PARAM_S(HistPrDepthMul, -4096, 400);
 
   DEFINE_PARAM_S(LmpBase,    3, 1);
 
   DEFINE_PARAM_S(QsSeeMargin, -32, 15);
-  DEFINE_PARAM_S(PvsQuietSeeMargin, -99, 20);
-  DEFINE_PARAM_S(PvsCapSeeMargin, -102, 20);
+  DEFINE_PARAM_S(PvsQuietSeeMargin, -99, 10);
+  DEFINE_PARAM_S(PvsCapSeeMargin, -102, 10);
 
-  DEFINE_PARAM_S(EarlyLmrHistoryDiv, 5408, 200);
+  DEFINE_PARAM_S(EarlyLmrHistoryDiv, 5408, 400);
 
-  DEFINE_PARAM_S(FpBase, 173, 10);
+  DEFINE_PARAM_S(FpBase, 173, 15);
   DEFINE_PARAM_S(FpMaxDepth, 8, 1);
-  DEFINE_PARAM_S(FpDepthMul, 104, 6);
+  DEFINE_PARAM_S(FpDepthMul, 104, 10);
 
   DEFINE_PARAM_S(TripleExtMargin, 121, 10);
   DEFINE_PARAM_S(DoubleExtMargin, 14, 2);
   DEFINE_PARAM_S(DoubleExtMax, 6, 1);
 
-  DEFINE_PARAM_S(LmrQuietHistoryDiv, 10620, 200);
-  DEFINE_PARAM_S(LmrCapHistoryDiv, 8045, 200);
+  DEFINE_PARAM_S(LmrQuietHistoryDiv, 10620, 800);
+  DEFINE_PARAM_S(LmrCapHistoryDiv, 8045, 800);
   DEFINE_PARAM_S(ZwsDeeperMargin, 75, 10);
 
   DEFINE_PARAM_B(AspWindowStartDepth, 4, 4, 34);
@@ -314,7 +316,7 @@ namespace Search {
   Score Thread::correctStaticEval(Position &position, Score staticEval){
     int rawPawnCorrection = pawnCorrhist[position.sideToMove][getCorrHistIndex(position.pawnKey)];
 
-    staticEval += 60 * rawPawnCorrection / 512;
+    staticEval += CorrHistWeight * rawPawnCorrection / 512;
 
     return std::clamp(staticEval, SCORE_TB_LOSS_IN_MAX_PLY + 1, SCORE_TB_WIN_IN_MAX_PLY - 1);
   }
@@ -1198,8 +1200,8 @@ namespace Search {
   DEFINE_PARAM_B(tm3, 6,   0, 30);
 
   DEFINE_PARAM_B(tm4, 91,   0, 150);
-  DEFINE_PARAM_B(tm5, 10,   0, 150);
-  DEFINE_PARAM_B(tm6, 25,   0, 150);
+  DEFINE_PARAM_B(tm5, 10,   0, 20);
+  DEFINE_PARAM_B(tm6, 25,   0, 50);
 
   DEFINE_PARAM_B(lol0, 86, 0, 150);
   DEFINE_PARAM_B(lol1, 149,   75,  225);
