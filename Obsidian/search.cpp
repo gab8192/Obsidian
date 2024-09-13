@@ -454,7 +454,7 @@ namespace Search {
 
   Score scaleOnHmc(SearchInfo* ss, int ply, Position& pos, Score eval) {
     int newEval = eval;
-    
+
     newEval = newEval * (141 - pos.halfMoveClock) / 140;
 
     if (ss->cyclingRate >= 3)
@@ -811,8 +811,7 @@ namespace Search {
     // Razoring. When evaluation is far below alpha, we could probably only catch up with a capture,
     // thus do a qsearch. If the qsearch still can't hit alpha, cut off
     if (  !IsPV
-       && !ss->canCycle
-       && !excludedMove
+       && ss->cyclingRate < 2
        && alpha < 2000
        && eval < alpha - RazoringDepthMul * depth) {
        Score score = qsearch<IsPV>(pos, alpha, beta, 0, ss);
@@ -823,8 +822,6 @@ namespace Search {
     // Reverse futility pruning. When evaluation is far above beta, assume that at least a move
     // will return a similarly high score, so cut off
     if ( !IsPV
-      && !ss->canCycle
-      && !excludedMove
       && depth <= RfpMaxDepth
       && eval < SCORE_TB_WIN_IN_MAX_PLY
       && eval - std::max(RfpDepthMul * (depth - improving), 20) >= beta)
@@ -833,7 +830,7 @@ namespace Search {
       // Null move pruning. When our evaluation is above beta, we give the opponent
     // a free move, and if we are still better, cut off
     if ( !IsPV
-      && !ss->canCycle
+      && ss->cyclingRate < 2
       && !excludedMove
       && (ss - 1)->playedMove != MOVE_NONE
       && eval >= beta
