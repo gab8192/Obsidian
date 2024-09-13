@@ -480,7 +480,7 @@ namespace Search {
         return alpha;
     }
 
-    ss->cyclingRate = (ss - 1)->cyclingRate + ss->canCycle - (ss - 12)->cyclingRate;
+    ss->cyclingRate = (ss - 1)->cyclingRate + ss->canCycle - (ss - 12)->canCycle;
 
     // Detect draw
     if (isRepetition(pos, ply) || pos.halfMoveClock >= 100)
@@ -661,6 +661,10 @@ namespace Search {
     if (IsPV)
       ss->pvLength = ply;
 
+    // Enter qsearch when depth is 0
+    if (depth <= 0)
+      return qsearch<IsPV>(pos, alpha, beta, 0, ss);
+
     // Detect upcoming draw
     ss->canCycle = hasUpcomingRepetition(pos, ply);
     if (!IsRoot && ss->canCycle) {
@@ -670,11 +674,7 @@ namespace Search {
         return alpha;
     }
 
-    ss->cyclingRate = (ss - 1)->cyclingRate + ss->canCycle - (ss - 12)->cyclingRate;
-
-    // Enter qsearch when depth is 0
-    if (depth <= 0)
-      return qsearch<IsPV>(pos, alpha, beta, 0, ss);
+    ss->cyclingRate = (ss - 1)->cyclingRate + ss->canCycle - (ss - 12)->canCycle;
 
     // Detect draw
     if (!IsRoot && (isRepetition(pos, ply) || pos.halfMoveClock >= 100))
