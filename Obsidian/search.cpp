@@ -482,6 +482,8 @@ namespace Search {
         return alpha;
     }
 
+    ss->cyclingRate = (ss - 1)->cyclingRate + ss->canCycle - (ss - 12)->cyclingRate;
+
     // Detect draw
     if (isRepetition(pos, ply) || pos.halfMoveClock >= 100)
       return SCORE_DRAW;
@@ -669,6 +671,8 @@ namespace Search {
       if (alpha >= beta)
         return alpha;
     }
+
+    ss->cyclingRate = (ss - 1)->cyclingRate + ss->canCycle - (ss - 12)->cyclingRate;
 
     // Enter qsearch when depth is 0
     if (depth <= 0)
@@ -1239,6 +1243,7 @@ namespace Search {
       searchStack[i].contHistory = contHistory[false][0];
       searchStack[i].doubleExt = 0;
       searchStack[i].canCycle = false;
+      searchStack[i].cyclingRate = 0;
     }
 
     bool naturalExit = true;
