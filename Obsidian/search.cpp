@@ -234,12 +234,10 @@ namespace Search {
     ss->playedMove = MOVE_NONE;
     keyStack[keyStackHead++] = pos.key;
 
-    ply++;
     pos.doNullMove();
   }
 
   void Thread::cancelNullMove() {
-    ply--;
     keyStackHead--;
   }
 
@@ -282,7 +280,6 @@ namespace Search {
 
     NNUE::Accumulator& newAcc = accumStack[++accumStackHead];
 
-    ply++;
     pos.doMove(move, newAcc.dirtyPieces);
 
     for (Color side = WHITE; side <= BLACK; ++side) {
@@ -292,7 +289,6 @@ namespace Search {
   }
 
   void Thread::cancelMove() {
-    ply--;
     keyStackHead--;
     accumStackHead--;
   }
@@ -476,6 +472,8 @@ namespace Search {
   template<bool IsPV>
   Score Thread::qsearch(Position& pos, Score alpha, Score beta, int depth, SearchInfo* ss) {
 
+    const int ply = ss->ply;
+
     // Detect upcoming draw
     ss->canCycle = hasUpcomingRepetition(pos, ply);
     if (ss->canCycle) {
@@ -646,6 +644,7 @@ namespace Search {
   template<bool IsPV>
   Score Thread::negamax(Position& pos, Score alpha, Score beta, int depth, bool cutNode, SearchInfo* ss, const Move excludedMove) {
 
+    const int ply = ss->ply;
     const bool IsRoot = IsPV && ply == 0;
 
     // Check time
@@ -1225,7 +1224,6 @@ namespace Search {
     else if (settings.movetime)
       maxTime = settings.movetime - int(Options["Move Overhead"]);
 
-    ply = 0;
     maxTimeCounter = 0;
 
     // Setup search stack
@@ -1233,17 +1231,13 @@ namespace Search {
     SearchInfo* ss = &searchStack[SsOffset];
 
     for (int i = 0; i < MAX_PLY + SsOffset; i++) {
+      searchStack[i].ply = i - SsOffset;
       searchStack[i].staticEval = SCORE_NONE;
-
       searchStack[i].pvLength = 0;
-
       searchStack[i].killerMove   = MOVE_NONE;
       searchStack[i].playedMove   = MOVE_NONE;
-
       searchStack[i].contHistory = contHistory[false][0];
-
       searchStack[i].doubleExt = 0;
-
       searchStack[i].canCycle = false;
     }
 

@@ -28,6 +28,8 @@ namespace Search {
   };
 
   struct SearchInfo {
+    int ply;
+
     Score staticEval;
     Move playedMove;
 
@@ -74,8 +76,6 @@ namespace Search {
     uint32_t maxTimeCounter;
 
     int rootDepth;
-
-    int ply = 0;
 
     int keyStackHead;
     Key keyStack[100 + MAX_PLY];
