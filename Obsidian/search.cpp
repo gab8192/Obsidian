@@ -458,7 +458,7 @@ namespace Search {
 
     int cyclingRate = 0;
 
-    if (ply > 12) {
+    if (ply >= 12) {
       for (int i = 0; i < 12; i++)
         cyclingRate += (ss - i)->canCycle;
     }
