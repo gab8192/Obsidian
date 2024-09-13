@@ -458,10 +458,8 @@ namespace Search {
 
     int cyclingRate = 0;
 
-    if (ply >= 12) {
-      for (int i = 0; i < 12; i++)
-        cyclingRate += (ss - i)->canCycle;
-    }
+    for (int i = 0; i < 12; i++)
+      cyclingRate += (ss - i)->canCycle;
 
     if (cyclingRate >= 3)
       newEval = newEval * (6 - cyclingRate) / 6;
