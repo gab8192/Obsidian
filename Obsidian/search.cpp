@@ -422,7 +422,7 @@ namespace Search {
   }
 
   Score Thread::makeDrawScore() {
-    return int(nodesSearched & 2) - 1;
+    return 0;
   }
 
   Score Thread::doEvaluation(Position& pos) {
@@ -456,20 +456,41 @@ namespace Search {
     return Eval::evaluate(pos, *head);
   }
 
-  Score scaleOnHMC(Position& pos, Score eval) {
-    return (eval * (200 - pos.halfMoveClock)) / 200;
+  Score scaleOnHmc(SearchInfo* ss, int ply, Position& pos, Score eval) {
+    int newEval = eval;
+    newEval = newEval * (141 - pos.halfMoveClock) / 140;
+
+    int cyclingRate = 0;
+
+    if (ply > 12) {
+      for (int i = 0; i < 12; i++)
+        cyclingRate += (ss - i)->canCycle;
+    }
+
+    if (cyclingRate >= 3)
+      newEval = newEval * (6 - cyclingRate) / 6;
+
+    return newEval;
   }
 
   template<bool IsPV>
   Score Thread::qsearch(Position& pos, Score alpha, Score beta, int depth, SearchInfo* ss) {
 
-    // Quit if we are close to reaching max ply
-    if (ply >= MAX_PLY-4)
-      return pos.checkers ? SCORE_DRAW : scaleOnHMC(pos, doEvaluation(pos));
+    // Detect upcoming draw
+    ss->canCycle = hasUpcomingRepetition(pos, ply);
+    if (ss->canCycle) {
+      alpha = std::max(alpha, makeDrawScore());
+      if (alpha >= beta)
+        return alpha;
+    }
 
     // Detect draw
     if (isRepetition(pos, ply) || pos.halfMoveClock >= 100)
       return SCORE_DRAW;
+
+    // Quit if we are close to reaching max plys
+    if (ply >= MAX_PLY-4)
+      return pos.checkers ? SCORE_DRAW : scaleOnHmc(ss, ply, pos, doEvaluation(pos));
 
     // Probe TT
     bool ttHit;
@@ -489,7 +510,7 @@ namespace Search {
     }
 
     // In non PV nodes, if tt bound allows it, return ttScore
-    if (!IsPV && ttScore != SCORE_NONE) {
+    if (!IsPV && ttScore != SCORE_NONE && !ss->canCycle) {
       if (ttBound & boundForTT(ttScore >= beta))
         return ttScore;
     }
@@ -511,13 +532,9 @@ namespace Search {
       else
         bestScore = ss->staticEval = doEvaluation(pos);
 
-      bestScore = scaleOnHMC(pos, bestScore);
+      bestScore = scaleOnHmc(ss, ply, pos, bestScore);
 
       futility = bestScore + QsFpMargin;
-
-      // When tt bound allows it, use ttScore as a better standing pat
-      if (ttScore != SCORE_NONE && (ttBound & boundForTT(ttScore > bestScore)))
-        bestScore = ttScore;
 
       if (bestScore >= beta)
         return bestScore;
@@ -646,8 +663,10 @@ namespace Search {
       ss->pvLength = ply;
 
     // Detect upcoming draw
-    if (!IsRoot && alpha < SCORE_DRAW && hasUpcomingRepetition(pos, ply)) {
-      alpha = makeDrawScore();
+    ss->canCycle = hasUpcomingRepetition(pos, ply);
+    if (!IsRoot && ss->canCycle) {
+      
+      alpha = std::max(alpha, makeDrawScore());
       if (alpha >= beta)
         return alpha;
     }
@@ -662,7 +681,7 @@ namespace Search {
 
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY - 4)
-      return pos.checkers ? SCORE_DRAW : scaleOnHMC(pos, doEvaluation(pos));
+      return pos.checkers ? SCORE_DRAW : scaleOnHmc(ss, ply, pos, doEvaluation(pos));
 
     // Mate distance pruning
     alpha = std::max(alpha, ply - SCORE_MATE);
@@ -705,6 +724,7 @@ namespace Search {
     // In non PV nodes, if tt depth and bound allow it, return ttScore
     if ( !IsPV
       && !excludedMove
+      && !ss->canCycle
       && ttScore != SCORE_NONE
       && ttDepth >= depth
       && (ttBound & boundForTT(ttScore >= beta))
@@ -770,7 +790,7 @@ namespace Search {
       else
         ss->staticEval = eval = doEvaluation(pos);
 
-      eval = scaleOnHMC(pos, eval);
+      eval = scaleOnHmc(ss, ply, pos, eval);
 
       if (! ttHit) {
         // This (probably new) position has just been evaluated.
@@ -793,25 +813,30 @@ namespace Search {
 
     // Razoring. When evaluation is far below alpha, we could probably only catch up with a capture,
     // thus do a qsearch. If the qsearch still can't hit alpha, cut off
-    if ( !IsPV
-      && alpha < 2000
-      && eval < alpha - RazoringDepthMul * depth) {
-      Score score = qsearch<IsPV>(pos, alpha, beta, 0, ss);
-      if (score <= alpha)
-        return score;
+    if (  !IsPV
+       && !ss->canCycle
+       && !excludedMove
+       && alpha < 2000
+       && eval < alpha - RazoringDepthMul * depth) {
+       Score score = qsearch<IsPV>(pos, alpha, beta, 0, ss);
+       if (score <= alpha)
+         return score;
     }
 
     // Reverse futility pruning. When evaluation is far above beta, assume that at least a move
     // will return a similarly high score, so cut off
     if ( !IsPV
+      && !ss->canCycle
+      && !excludedMove
       && depth <= RfpMaxDepth
       && eval < SCORE_TB_WIN_IN_MAX_PLY
       && eval - std::max(RfpDepthMul * (depth - improving), 20) >= beta)
       return (eval + beta) / 2;
 
-    // Null move pruning. When our evaluation is above beta, we give the opponent
+      // Null move pruning. When our evaluation is above beta, we give the opponent
     // a free move, and if we are still better, cut off
     if ( !IsPV
+      && !ss->canCycle
       && !excludedMove
       && (ss - 1)->playedMove != MOVE_NONE
       && eval >= beta
@@ -1218,6 +1243,8 @@ namespace Search {
       searchStack[i].contHistory = contHistory[false][0];
 
       searchStack[i].doubleExt = 0;
+
+      searchStack[i].canCycle = false;
     }
 
     bool naturalExit = true;

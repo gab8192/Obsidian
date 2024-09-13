@@ -40,6 +40,8 @@ namespace Search {
 
     // [piece to]
     int* contHistory;
+
+    bool canCycle;
   };
 
   // A sort of header of the search stack, so that plies behind 0 are accessible and
