@@ -454,15 +454,11 @@ namespace Search {
 
   Score scaleOnHmc(SearchInfo* ss, int ply, Position& pos, Score eval) {
     int newEval = eval;
+    
     newEval = newEval * (141 - pos.halfMoveClock) / 140;
 
-    int cyclingRate = 0;
-
-    for (int i = 0; i < 12; i++)
-      cyclingRate += (ss - i)->canCycle;
-
-    if (cyclingRate >= 3)
-      newEval = newEval * (6 - cyclingRate) / 6;
+    if (ss->cyclingRate >= 3)
+      newEval = newEval * (6 - ss->cyclingRate) / 6;
 
     return newEval;
   }
