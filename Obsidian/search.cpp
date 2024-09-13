@@ -530,6 +530,10 @@ namespace Search {
 
       futility = bestScore + QsFpMargin;
 
+      // When tt bound allows it, use ttScore as a better standing pat
+      if (ttScore != SCORE_NONE && (ttBound & boundForTT(ttScore > bestScore)))
+        bestScore = ttScore;
+
       if (bestScore >= beta)
         return bestScore;
       if (bestScore > alpha)
@@ -810,10 +814,10 @@ namespace Search {
 
     // Razoring. When evaluation is far below alpha, we could probably only catch up with a capture,
     // thus do a qsearch. If the qsearch still can't hit alpha, cut off
-    if (  !IsPV
-       && ss->cyclingRate < 2
-       && alpha < 2000
-       && eval < alpha - RazoringDepthMul * depth) {
+    if ( !IsPV
+      && ss->cyclingRate < 2
+      && alpha < 2000
+      && eval < alpha - RazoringDepthMul * depth) {
        Score score = qsearch<IsPV>(pos, alpha, beta, 0, ss);
        if (score <= alpha)
          return score;
