@@ -523,9 +523,7 @@ namespace Search {
       else
         rawStaticEval = doEvaluation(pos);
 
-      bestScore = ss->staticEval = correctStaticEval(pos, rawStaticEval);
-
-      bestScore = scaleOnHMC(pos, bestScore);
+      bestScore = ss->staticEval = correctStaticEval(pos, scaleOnHMC(pos, rawStaticEval));
 
       futility = bestScore + QsFpMargin;
 
@@ -785,9 +783,7 @@ namespace Search {
       else
         rawStaticEval = doEvaluation(pos);
 
-      eval = ss->staticEval = correctStaticEval(pos, rawStaticEval);
-
-      eval = scaleOnHMC(pos, eval);
+      eval = ss->staticEval = correctStaticEval(pos, scaleOnHMC(pos, rawStaticEval));
 
       if (!ttHit) {
         // This (probably new) position has just been evaluated.
