@@ -126,8 +126,6 @@ namespace Search {
     // Should not be called from Root node
     bool isRepetition(Position& pos, int ply);
 
-    Score makeDrawScore();
-
     Score doEvaluation(Position& position);
 
     template<bool IsPV>

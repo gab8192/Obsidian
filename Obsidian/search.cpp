@@ -432,10 +432,6 @@ namespace Search {
     return false;
   }
 
-  Score Thread::makeDrawScore() {
-    return int(nodesSearched & 2) - 1;
-  }
-
   Score Thread::doEvaluation(Position& pos) {
     Square kings[] = { pos.kingSquare(WHITE), pos.kingSquare(BLACK) };
     NNUE::Accumulator* head = & accumStack[accumStackHead];
@@ -659,7 +655,7 @@ namespace Search {
 
     // Detect upcoming draw
     if (!IsRoot && alpha < SCORE_DRAW && hasUpcomingRepetition(pos, ply)) {
-      alpha = makeDrawScore();
+      alpha = SCORE_DRAW;
       if (alpha >= beta)
         return alpha;
     }
@@ -670,7 +666,7 @@ namespace Search {
 
     // Detect draw
     if (!IsRoot && (isRepetition(pos, ply) || pos.halfMoveClock >= 100))
-      return makeDrawScore();
+      return SCORE_DRAW;
 
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY - 4)
