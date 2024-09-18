@@ -513,7 +513,7 @@ namespace Search {
     }
 
     // In non PV nodes, if tt bound allows it, return ttScore
-    if (!IsPV && ttScore != SCORE_NONE) {
+    if (!IsPV && ttScore != SCORE_NONE && !ss->canCycle) {
       if (ttBound & boundForTT(ttScore >= beta))
         return ttScore;
     }
@@ -541,7 +541,7 @@ namespace Search {
       futility = bestScore + QsFpMargin;
 
       // When tt bound allows it, use ttScore as a better standing pat
-      if (ttScore != SCORE_NONE && (ttBound & boundForTT(ttScore > bestScore)))
+      if (ttScore != SCORE_NONE && !ss->canCycle && (ttBound & boundForTT(ttScore > bestScore)))
         bestScore = ttScore;
 
       if (bestScore >= beta)
@@ -736,6 +736,7 @@ namespace Search {
       && !excludedMove
       && ttScore != SCORE_NONE
       && ttDepth >= depth
+      && !ss->canCycle
       && (ttBound & boundForTT(ttScore >= beta))
       && pos.halfMoveClock < 90) // The TT entry might trick us into thinking this is not a draw
         return ttScore;
@@ -810,7 +811,7 @@ namespace Search {
       }
 
       // When tt bound allows it, use ttScore as a better evaluation
-      if (ttScore != SCORE_NONE && (ttBound & boundForTT(ttScore > eval)))
+      if (ttScore != SCORE_NONE && !ss->canCycle && (ttBound & boundForTT(ttScore > eval)))
         eval = ttScore;
     }
 
