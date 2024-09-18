@@ -469,7 +469,7 @@ namespace Search {
     newEval = (newEval * (200 - pos.halfMoveClock)) / 200;
 
     if (ss->cyclingRate >= 3)
-      newEval = newEval * (6 - ss->cyclingRate) / 6;
+      newEval = newEval * (16 - ss->cyclingRate) / 16;
 
     return newEval;
   }
