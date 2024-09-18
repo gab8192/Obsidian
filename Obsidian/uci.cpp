@@ -179,6 +179,10 @@ namespace {
     }
     else {
       TT::nextSearch();
+
+      if (pos.halfMoveClock >= 10 && pos.halfMoveClock % 10 == 0)
+        TT::clear();
+        
       Threads::startSearch(searchSettings);
     }
   }
