@@ -468,9 +468,6 @@ namespace Search {
     
     newEval = (newEval * (200 - pos.halfMoveClock)) / 200;
 
-    if (ss->cyclingRate >= 3)
-      newEval = newEval * (6 - ss->cyclingRate) / 6;
-
     return newEval;
   }
 
@@ -484,8 +481,6 @@ namespace Search {
       if (alpha >= beta)
         return alpha;
     }
-
-    ss->cyclingRate = (ss - 1)->cyclingRate + ss->canCycle - (ss - 12)->canCycle;
 
     // Detect draw
     if (isRepetition(pos, ply) || pos.halfMoveClock >= 100)
@@ -681,8 +676,6 @@ namespace Search {
       if (alpha >= beta)
         return alpha;
     }
-
-    ss->cyclingRate = (ss - 1)->cyclingRate + ss->canCycle - (ss - 12)->canCycle;
 
     // Detect draw
     if (!IsRoot && (isRepetition(pos, ply) || pos.halfMoveClock >= 100))
