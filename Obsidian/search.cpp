@@ -508,7 +508,7 @@ namespace Search {
     }
 
     // In non PV nodes, if tt bound allows it, return ttScore
-    if (!IsPV && ttScore != SCORE_NONE && !ss->canCycle) {
+    if (!IsPV && ttScore != SCORE_NONE && pos.halfMoveClock < 15) {
       if (ttBound & boundForTT(ttScore >= beta))
         return ttScore;
     }
@@ -729,9 +729,8 @@ namespace Search {
       && !excludedMove
       && ttScore != SCORE_NONE
       && ttDepth >= depth
-      && !ss->canCycle
       && (ttBound & boundForTT(ttScore >= beta))
-      && pos.halfMoveClock < 90) // The TT entry might trick us into thinking this is not a draw
+      && pos.halfMoveClock < 15) // The TT entry might trick us into thinking this is not a draw
         return ttScore;
 
     // Probe tablebases
