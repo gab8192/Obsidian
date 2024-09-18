@@ -463,19 +463,29 @@ namespace Search {
     return Eval::evaluate(pos, *head);
   }
 
-  Score scaleOnHMC(Position& pos, Score eval) {
-    return (eval * (200 - pos.halfMoveClock)) / 200;
+  Score scaleOnHMC(SearchInfo* ss, Position& pos, Score eval) {
+    int newEval = eval;
+    
+    newEval = (newEval * (200 - pos.halfMoveClock)) / 200;
+
+    if (ss->cyclingRate >= 3)
+      newEval = newEval * (6 - ss->cyclingRate) / 6;
+
+    return newEval;
   }
 
   template<bool IsPV>
   Score Thread::qsearch(Position& pos, Score alpha, Score beta, int depth, SearchInfo* ss) {
 
     // Detect upcoming draw
-    if (alpha < SCORE_DRAW && hasUpcomingRepetition(pos, ply)) {
+    ss->canCycle = hasUpcomingRepetition(pos, ply);
+    if (alpha < SCORE_DRAW && ss->canCycle) {
       alpha = SCORE_DRAW;
       if (alpha >= beta)
         return alpha;
     }
+
+    ss->cyclingRate = (ss - 1)->cyclingRate + ss->canCycle - (ss - 12)->canCycle;
 
     // Detect draw
     if (isRepetition(pos, ply) || pos.halfMoveClock >= 100)
@@ -483,7 +493,7 @@ namespace Search {
 
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY-4)
-      return pos.checkers ? SCORE_DRAW : scaleOnHMC(pos, doEvaluation(pos));
+      return pos.checkers ? SCORE_DRAW : scaleOnHMC(ss, pos, doEvaluation(pos));
 
     // Probe TT
     bool ttHit;
@@ -526,7 +536,7 @@ namespace Search {
       else
         rawStaticEval = doEvaluation(pos);
 
-      bestScore = ss->staticEval = correctStaticEval(pos, scaleOnHMC(pos, rawStaticEval));
+      bestScore = ss->staticEval = correctStaticEval(pos, scaleOnHMC(ss, pos, rawStaticEval));
 
       futility = bestScore + QsFpMargin;
 
@@ -665,11 +675,14 @@ namespace Search {
       return qsearch<IsPV>(pos, alpha, beta, 0, ss);
 
     // Detect upcoming draw
-    if (!IsRoot && alpha < SCORE_DRAW && hasUpcomingRepetition(pos, ply)) {
+    ss->canCycle = hasUpcomingRepetition(pos, ply);
+    if (!IsRoot && alpha < SCORE_DRAW && ss->canCycle) {
       alpha = SCORE_DRAW;
       if (alpha >= beta)
         return alpha;
     }
+
+    ss->cyclingRate = (ss - 1)->cyclingRate + ss->canCycle - (ss - 12)->canCycle;
 
     // Detect draw
     if (!IsRoot && (isRepetition(pos, ply) || pos.halfMoveClock >= 100))
@@ -677,7 +690,7 @@ namespace Search {
 
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY - 4)
-      return pos.checkers ? SCORE_DRAW : scaleOnHMC(pos, doEvaluation(pos));
+      return pos.checkers ? SCORE_DRAW : scaleOnHMC(ss, pos, doEvaluation(pos));
 
     // Mate distance pruning
     alpha = std::max(alpha, ply - SCORE_MATE);
@@ -786,7 +799,7 @@ namespace Search {
       else
         rawStaticEval = doEvaluation(pos);
 
-      eval = ss->staticEval = correctStaticEval(pos, scaleOnHMC(pos, rawStaticEval));
+      eval = ss->staticEval = correctStaticEval(pos, scaleOnHMC(ss, pos, rawStaticEval));
 
       if (!ttHit) {
         // This (probably new) position has just been evaluated.
@@ -1249,6 +1262,9 @@ namespace Search {
       searchStack[i].contHistory = contHistory[false][0];
 
       searchStack[i].doubleExt = 0;
+      
+      searchStack[i].canCycle = false;
+      searchStack[i].cyclingRate = 0;
     }
 
     bool naturalExit = true;
