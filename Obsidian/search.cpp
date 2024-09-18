@@ -541,7 +541,7 @@ namespace Search {
       futility = bestScore + QsFpMargin;
 
       // When tt bound allows it, use ttScore as a better standing pat
-      if (ttScore != SCORE_NONE && !ss->canCycle && (ttBound & boundForTT(ttScore > bestScore)))
+      if (ttScore != SCORE_NONE && pos.halfMoveClock < 10 && (ttBound & boundForTT(ttScore > bestScore)))
         bestScore = ttScore;
 
       if (bestScore >= beta)
@@ -811,7 +811,7 @@ namespace Search {
       }
 
       // When tt bound allows it, use ttScore as a better evaluation
-      if (ttScore != SCORE_NONE && !ss->canCycle && (ttBound & boundForTT(ttScore > eval)))
+      if (ttScore != SCORE_NONE && pos.halfMoveClock < 10 && (ttBound & boundForTT(ttScore > eval)))
         eval = ttScore;
     }
 
