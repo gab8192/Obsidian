@@ -1024,7 +1024,7 @@ namespace Search {
       int wnd = alpha;
 
       if (pos.halfMoveClock > 12 && newPos.halfMoveClock == 0) {
-        wnd = wnd * 8 / 7;
+        wnd = wnd * 7 / 8;
       }
 
       int newDepth = depth + extension - 1;
@@ -1067,14 +1067,14 @@ namespace Search {
           if (reducedDepth < newDepth)
             score = -negamax<false>(newPos, -wnd - 1, -wnd, newDepth, !cutNode, ss + 1);
 
-          int bonus = score <= wnd ? -stat_bonus(newDepth) : score >= beta ? stat_bonus(newDepth) : 0;
+          int bonus = score <= alpha ? -stat_bonus(newDepth) : score >= beta ? stat_bonus(newDepth) : 0;
           addToContHistory(pos, bonus, move, ss);
         }
       }
       else if (!IsPV || seenMoves > 1)
-        score = -negamax<false>(newPos, -wnd - 1, -wnd, newDepth, !cutNode, ss + 1);
+        score = -negamax<false>(newPos, -alpha - 1, -alpha, newDepth, !cutNode, ss + 1);
 
-      if (IsPV && (seenMoves == 1 || score > wnd))
+      if (IsPV && (seenMoves == 1 || score > alpha))
         score = -negamax<true>(newPos, -beta, -alpha, newDepth, false, ss + 1);
 
       cancelMove();
