@@ -1024,7 +1024,7 @@ namespace Search {
       int wnd = alpha;
 
       if (pos.halfMoveClock > 12 && newPos.halfMoveClock == 0) {
-        wnd = wnd * 7 / 8;
+        wnd = wnd * 8 / 7;
       }
 
       int newDepth = depth + extension - 1;
