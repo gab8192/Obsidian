@@ -527,8 +527,11 @@ namespace Search {
       if (ttScore != SCORE_NONE && (ttBound & boundForTT(ttScore > bestScore)))
         bestScore = ttScore;
 
-      if (bestScore >= beta)
+      if (bestScore >= beta) {
+        if (! ttHit)
+          ttEntry->store(pos.key, TT::FLAG_LOWER, 0, MOVE_NONE, bestScore, rawStaticEval, false, ply);
         return bestScore;
+      }
       if (bestScore > alpha)
         alpha = bestScore;
     }
