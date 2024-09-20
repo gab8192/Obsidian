@@ -528,6 +528,8 @@ namespace Search {
         bestScore = ttScore;
 
       if (bestScore >= beta) {
+        if (abs(bestScore) < SCORE_TB_WIN_IN_MAX_PLY)
+          bestScore = (bestScore + beta) / 2;
         if (! ttHit)
           ttEntry->store(pos.key, TT::FLAG_LOWER, 0, MOVE_NONE, bestScore, rawStaticEval, false, ply);
         return bestScore;
