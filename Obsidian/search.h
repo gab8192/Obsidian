@@ -98,6 +98,10 @@ namespace Search {
 
     void refreshAccumulator(Position& pos, NNUE::Accumulator& acc, Color side);
 
+    void updateAccumulator(Position& pos, NNUE::Accumulator& acc);
+
+    Score doEvaluation(Position& position);
+
     void sortRootMoves(int offset);
 
     bool visitRootMove(Move move);
@@ -125,8 +129,6 @@ namespace Search {
 
     // Should not be called from Root node
     bool isRepetition(Position& pos, int ply);
-
-    Score doEvaluation(Position& position);
 
     template<bool IsPV>
     Score qsearch(Position& position, Score alpha, Score beta, int depth, SearchInfo* ss);

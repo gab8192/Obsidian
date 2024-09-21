@@ -274,6 +274,40 @@ namespace Search {
     memcpy(entry.byPieceBB[side], pos.byPieceBB, sizeof(entry.byPieceBB[0]));
   }
 
+  void Thread::updateAccumulator(Position& pos, NNUE::Accumulator& head) {
+
+    for (Color side = WHITE; side <= BLACK; ++side) {
+      if (head.updated[side])
+        continue;
+
+      const Square king = head.kings[side];
+      NNUE::Accumulator* iter = &head;
+      while (true) {
+        iter--;
+
+        if (NNUE::needRefresh(side, iter->kings[side], king)) {
+          refreshAccumulator(pos, head, side);
+          break;
+        }
+
+        if (iter->updated[side]) {
+          NNUE::Accumulator* lastUpdated = iter;
+          while (lastUpdated != &head) {
+            (lastUpdated+1)->doUpdates(king, side, *lastUpdated);
+            lastUpdated++;
+          }
+          break;
+        }
+      }
+    }
+  }
+
+  Score Thread::doEvaluation(Position& pos) {
+    NNUE::Accumulator& acc = accumStack[accumStackHead];
+    updateAccumulator(pos, acc);
+    return Eval::evaluate(pos, acc);
+  }
+
   void Thread::playMove(Position& pos, Move move, SearchInfo* ss) {
 
     nodesSearched++;
@@ -430,37 +464,6 @@ namespace Search {
     }
 
     return false;
-  }
-
-  Score Thread::doEvaluation(Position& pos) {
-    Square kings[] = { pos.kingSquare(WHITE), pos.kingSquare(BLACK) };
-    NNUE::Accumulator* head = & accumStack[accumStackHead];
-
-    for (Color side = WHITE; side <= BLACK; ++side) {
-      if (head->updated[side])
-        continue;
-
-      NNUE::Accumulator* iter = head;
-      while (true) {
-        iter--;
-
-        if (NNUE::needRefresh(side, iter->kings[side], kings[side])) {
-          refreshAccumulator(pos, *head, side);
-          break;
-        }
-
-        if (iter->updated[side]) {
-          NNUE::Accumulator* lastUpdated = iter;
-          while (lastUpdated != head) {
-            (lastUpdated+1)->doUpdates(kings[side], side, *lastUpdated);
-            lastUpdated++;
-          }
-          break;
-        }
-      }
-    }
-
-    return Eval::evaluate(pos, *head);
   }
 
   Score scaleOnHMC(Position& pos, Score eval) {
@@ -774,11 +777,15 @@ namespace Search {
     }
     else if (excludedMove) {
       // We have already evaluated the position in the node which invoked this singular search
+      updateAccumulator(pos, accumStack[accumStackHead]);
       rawStaticEval = eval = ss->staticEval;
     }
     else {
-      if (ttStaticEval != SCORE_NONE)
+      if (ttStaticEval != SCORE_NONE) {
         rawStaticEval = ttStaticEval;
+        if (IsPV)
+          updateAccumulator(pos, accumStack[accumStackHead]);
+      }
       else
         rawStaticEval = doEvaluation(pos);
 
