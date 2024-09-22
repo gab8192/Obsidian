@@ -20,10 +20,8 @@ namespace NNUE {
   } Content;
 
   bool needRefresh(Color side, Square oldKing, Square newKing) {
-    const bool oldMirrored = fileOf(oldKing) >= FILE_E;
-    const bool newMirrored = fileOf(newKing) >= FILE_E;
-
-    if (oldMirrored != newMirrored)
+    // Crossed half?
+    if ((oldKing & 0b100) != (newKing & 0b100))
       return true;
 
     return   KingBucketsScheme[relative_square(side, oldKing)]
@@ -31,7 +29,7 @@ namespace NNUE {
   }
 
   inline weight_t* featureAddress(Square kingSq, Color side, Piece pc, Square sq) {
-    if (fileOf(kingSq) >= FILE_E)
+    if (kingSq & 0b100)
       sq = Square(sq ^ 7);
 
     return Content.FeatureWeights
