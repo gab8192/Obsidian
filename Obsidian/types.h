@@ -8,7 +8,7 @@
 #include <nmmintrin.h>
 #include <thread>
 
-const std::string engineVersion = "dev-13.19";
+const std::string engineVersion = "dev-13.20";
 
 using Key = uint64_t;
 using Bitboard = uint64_t;
@@ -30,9 +30,7 @@ inline void sleep(int millis) {
 }
 
 inline int64_t timeMillis() {
-
   auto sinceEpoch = std::chrono::steady_clock::now().time_since_epoch();
-
   return std::chrono::duration_cast<std::chrono::milliseconds>(sinceEpoch).count();
 }
 

@@ -12,7 +12,7 @@ namespace Search {
 
   struct Settings {
 
-    clock_t time[COLOR_NB], inc[COLOR_NB], movetime, startTime;
+    int64_t time[COLOR_NB], inc[COLOR_NB], movetime, startTime;
     int movestogo, depth;
     uint64_t nodes;
 
@@ -68,7 +68,7 @@ namespace Search {
     
   private:
     
-    clock_t optimumTime, maxTime;
+    int64_t optimumTime, maxTime;
     uint32_t maxTimeCounter;
 
     int rootDepth;
@@ -105,8 +105,6 @@ namespace Search {
     void sortRootMoves(int offset);
 
     bool visitRootMove(Move move);
-
-    bool usedMostOfTime();
 
     void playNullMove(Position& pos, SearchInfo* ss);
 

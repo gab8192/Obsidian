@@ -172,12 +172,12 @@ namespace Search {
   template int64_t perft<false>(Position&, int);
   template int64_t perft<true>(Position&, int);
 
-  clock_t elapsedTime() {
+  int64_t elapsedTime() {
     return timeMillis() - Threads::getSearchSettings().startTime;
   }
 
   void printInfo(int depth, int pvIdx, Score score, const std::string& pvString) {
-    clock_t elapsed = elapsedTime();
+    const int64_t elapsed = elapsedTime();
     std::ostringstream infoStr;
         infoStr
           << "info"
@@ -185,7 +185,7 @@ namespace Search {
           << " multipv "  << pvIdx
           << " score "    << UCI::scoreToString(score)
           << " nodes "    << Threads::totalNodes()
-          << " nps "      << (Threads::totalNodes() * 1000ULL) / std::max(elapsed, 1L)
+          << " nps "      << (Threads::totalNodes() * 1000ULL) / std::max<int64_t>(elapsed, 1LL)
           << " hashfull " << TT::hashfull()
           << " tbhits "   << Threads::totalTbHits()
           << " time "     << elapsed
@@ -220,15 +220,6 @@ namespace Search {
       if (move == rootMoves[i].move)
         return true;
     }
-    return false;
-  }
-
-  bool Thread::usedMostOfTime() {
-
-    if ( Threads::getSearchSettings().standardTimeLimit()
-      || Threads::getSearchSettings().movetime)
-      return elapsedTime() >= maxTime;
-
     return false;
   }
 
@@ -648,8 +639,8 @@ namespace Search {
     // Check time
     ++maxTimeCounter;
     if ( this == Threads::mainThread() 
-      && (maxTimeCounter & 16383) == 0
-      && usedMostOfTime())
+      && (maxTimeCounter & 4095) == 0
+      && elapsedTime() >= maxTime)
         Threads::stopSearch();
 
     if (Threads::isSearchStopped())
@@ -1228,11 +1219,15 @@ namespace Search {
     for (int i = 0; i < settings.prevPositions.size(); i++)
       keyStack[keyStackHead++] = settings.prevPositions[i];
 
-    if (settings.standardTimeLimit())
-      TimeMan::calcOptimumTime(settings, rootPos.sideToMove,
-                              &optimumTime, &maxTime);
-    else if (settings.movetime)
-      maxTime = settings.movetime - int(Options["Move Overhead"]);
+    maxTime = 999999999999LL;
+
+    if (settings.standardTimeLimit()) {
+      int64_t stdMaxTime;
+      TimeMan::calcOptimumTime(settings, rootPos.sideToMove, &optimumTime, &stdMaxTime);
+      maxTime = std::min(maxTime, stdMaxTime);
+    }
+    if (settings.movetime)
+      maxTime = std::min(maxTime, settings.movetime - int64_t(Options["Move Overhead"]));
 
     ply = 0;
     maxTimeCounter = 0;
@@ -1367,13 +1362,13 @@ namespace Search {
       if (this != Threads::mainThread())
         continue;
 
-      const clock_t elapsed = elapsedTime();
+      const int64_t elapsed = elapsedTime();
 
       if (std::string(Options["Minimal"]) != "true")
         for (int i = 0; i < multiPV; i++)
           printInfo(completeDepth, i+1, rootMoves[i].score, getPvString(rootMoves[i]));
 
-      if (usedMostOfTime())
+      if (elapsedTime() >= maxTime)
         goto bestMoveDecided;
 
       const Move bestMove = rootMoves[0].move;

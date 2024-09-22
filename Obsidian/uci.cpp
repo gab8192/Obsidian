@@ -82,7 +82,7 @@ namespace {
     constexpr int posCount = sizeof(BENCH_POSITIONS) / sizeof(char*);
 
     uint64_t totalNodes = 0;
-    clock_t elapsed = 0;
+    int64_t elapsed = 0;
 
     std::string oldMinimal = Options["Minimal"];
     Options["Minimal"] = std::string("true");
@@ -168,9 +168,9 @@ namespace {
     Threads::waitForSearch();
 
     if (perftPlies) {
-      clock_t begin = timeMillis();
+      int64_t begin = timeMillis();
       int64_t nodes = Search::perft<true>(pos, perftPlies);
-      clock_t took = timeMillis() - begin;
+      int64_t took = timeMillis() - begin;
 
       std::cout << "nodes: " << nodes << std::endl;
       std::cout << "time: " << took << std::endl;

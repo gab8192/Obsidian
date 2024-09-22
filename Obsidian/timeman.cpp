@@ -9,7 +9,7 @@ namespace TimeMan {
 
   /// Calcaulate how much of our time we should use
   void calcOptimumTime(const Search::Settings& settings, Color us,
-                       clock_t* optimumTime, clock_t* maximumTime)
+                       int64_t* optimumTime, int64_t* maximumTime)
   {
     double optScale;
 
@@ -17,7 +17,7 @@ namespace TimeMan {
 
     int mtg = settings.movestogo ? std::min(settings.movestogo, 50) : 50;
 
-    clock_t timeLeft = std::max(clock_t(1),
+    int64_t timeLeft = std::max<int64_t>(1LL,
       settings.time[us] + settings.inc[us] * (mtg - 1) - overhead * (2 + mtg));
 
     if (settings.movestogo == 0) {
@@ -29,7 +29,7 @@ namespace TimeMan {
         0.88 * settings.time[us] / double(timeLeft));
     }
 
-    *optimumTime = clock_t(optScale * timeLeft);
+    *optimumTime = optScale * timeLeft;
     *maximumTime = settings.time[us] * 0.8 - overhead;
   }
 }

@@ -5,5 +5,5 @@
 namespace TimeMan {
 
   void calcOptimumTime(const Search::Settings& settings, Color us,
-                       clock_t* optimumTime, clock_t* maximumTime);
+                       int64_t* optimumTime, int64_t* maximumTime);
 }
