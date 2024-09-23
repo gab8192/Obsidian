@@ -973,14 +973,14 @@ namespace Search {
       // Singular extension
       if ( !IsRoot
         && ply < 2 * rootDepth
-        && depth >= 6
+        && depth >= 5
         && !excludedMove
         && move == ttMove
         && abs(ttScore) < SCORE_TB_WIN_IN_MAX_PLY
         && ttBound & TT::FLAG_LOWER
         && ttDepth >= depth - 3) 
       {
-        Score singularBeta = ttScore - depth;
+        Score singularBeta = ttScore - (depth * 24) / 32;
         
         Score seScore = negamax<false>(pos, singularBeta - 1, singularBeta, (depth - 1) / 2, cutNode, ss, move);
         
