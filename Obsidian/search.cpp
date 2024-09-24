@@ -1147,15 +1147,18 @@ namespace Search {
     if (IsPV)
       bestScore = std::min(bestScore, maxScore);
 
+    TT::Flag resultBound;
+    if (bestScore >= beta)
+      resultBound = TT::FLAG_LOWER;
+    else
+      resultBound = (IsPV && bestMove) ? TT::FLAG_EXACT : TT::FLAG_UPPER;
+
     // update corrhist
     const bool bestMoveCap = pos.board[move_to(bestMove)] != NO_PIECE;
-    if (   pos.checkers
-        || (bestMove && bestMoveCap)
-        || (bestScore >= beta && bestScore <= ss->staticEval)
-        || (!bestMove && bestScore >= ss->staticEval)) 
+    if (   !pos.checkers
+        && !(bestMove && bestMoveCap)
+        && resultBound & boundForTT(bestScore >= ss->staticEval)) 
     {
-      // In any of these cases, avoid updating correction history
-    } else {
       int bonus = std::clamp((bestScore - ss->staticEval) * depth / 8, 
                              -CORRHIST_LIMIT / 4, CORRHIST_LIMIT /4);
 
@@ -1163,15 +1166,8 @@ namespace Search {
     }
 
     // Store to TT
-    if (!excludedMove && !(IsRoot && pvIdx > 0)) {
-      TT::Flag flag;
-      if (bestScore >= beta)
-        flag = TT::FLAG_LOWER;
-      else
-        flag = (IsPV && bestMove) ? TT::FLAG_EXACT : TT::FLAG_UPPER;
-
-      ttEntry->store(pos.key, flag, depth, bestMove, bestScore, rawStaticEval, ttPV, ply);
-    }
+    if (!excludedMove && !(IsRoot && pvIdx > 0))
+      ttEntry->store(pos.key, resultBound, depth, bestMove, bestScore, rawStaticEval, ttPV, ply);
 
     return bestScore;
   }

@@ -18,7 +18,7 @@ using Move = int;
 
 const std::string piecesChar = " PNBRQK  pnbrqk";
 
-constexpr int MAX_PLY = 128;
+constexpr int MAX_PLY = 127;
 constexpr int MAX_MOVES = 224; // 32*7
 
 inline int BitCount(uint64_t x) {
