@@ -464,13 +464,20 @@ namespace Search {
   template<bool IsPV>
   Score Thread::qsearch(Position& pos, Score alpha, Score beta, int depth, SearchInfo* ss) {
 
-    // Quit if we are close to reaching max ply
-    if (ply >= MAX_PLY-4)
-      return pos.checkers ? SCORE_DRAW : scaleOnHMC(pos, doEvaluation(pos));
+    // Detect upcoming draw
+    if (alpha < SCORE_DRAW && hasUpcomingRepetition(pos, ply)) {
+      alpha = SCORE_DRAW;
+      if (alpha >= beta)
+        return alpha;
+    }
 
     // Detect draw
     if (isRepetition(pos, ply) || pos.halfMoveClock >= 100)
       return SCORE_DRAW;
+
+    // Quit if we are close to reaching max ply
+    if (ply >= MAX_PLY-4)
+      return pos.checkers ? SCORE_DRAW : scaleOnHMC(pos, doEvaluation(pos));
 
     // Probe TT
     bool ttHit;
@@ -650,17 +657,17 @@ namespace Search {
     if (IsPV)
       ss->pvLength = ply;
 
+    // Enter qsearch when depth is 0
+    if (depth <= 0)
+      return qsearch<IsPV>(pos, alpha, beta, 0, ss);
+
     // Detect upcoming draw
     if (!IsRoot && alpha < SCORE_DRAW && hasUpcomingRepetition(pos, ply)) {
       alpha = SCORE_DRAW;
       if (alpha >= beta)
         return alpha;
     }
-
-    // Enter qsearch when depth is 0
-    if (depth <= 0)
-      return qsearch<IsPV>(pos, alpha, beta, 0, ss);
-
+      
     // Detect draw
     if (!IsRoot && (isRepetition(pos, ply) || pos.halfMoveClock >= 100))
       return SCORE_DRAW;
