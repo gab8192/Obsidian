@@ -389,8 +389,8 @@ namespace Search {
     }
   }
 
-  TT::Flag boundForTT(bool failsHigh) {
-    return failsHigh ? TT::FLAG_LOWER : TT::FLAG_UPPER;
+  bool canUseScore(TT::Flag bound, Score score, Score operand) {
+    return bound & (score >= operand ? TT::FLAG_LOWER : TT::FLAG_UPPER);
   }
 
   bool Thread::hasUpcomingRepetition(Position& pos, int ply) {
@@ -497,10 +497,10 @@ namespace Search {
     }
 
     // In non PV nodes, if tt bound allows it, return ttScore
-    if (!IsPV && ttScore != SCORE_NONE) {
-      if (ttBound & boundForTT(ttScore >= beta))
+    if ( !IsPV 
+      && ttScore != SCORE_NONE 
+      && canUseScore(ttBound, ttScore, beta))
         return ttScore;
-    }
 
     Move bestMove = MOVE_NONE;
     Score rawStaticEval = SCORE_NONE;
@@ -525,7 +525,7 @@ namespace Search {
       futility = bestScore + QsFpMargin;
 
       // When tt bound allows it, use ttScore as a better standing pat
-      if (ttScore != SCORE_NONE && (ttBound & boundForTT(ttScore > bestScore)))
+      if (ttScore != SCORE_NONE && canUseScore(ttBound, ttScore, bestScore))
         bestScore = ttScore;
 
       if (bestScore >= beta) {
@@ -720,7 +720,7 @@ namespace Search {
       && !excludedMove
       && ttScore != SCORE_NONE
       && ttDepth >= depth
-      && (ttBound & boundForTT(ttScore >= beta))
+      && canUseScore(ttBound, ttScore, beta)
       && pos.halfMoveClock < 90) // The TT entry might trick us into thinking this is not a draw
         return ttScore;
 
@@ -798,7 +798,7 @@ namespace Search {
       }
 
       // When tt bound allows it, use ttScore as a better evaluation
-      if (ttScore != SCORE_NONE && (ttBound & boundForTT(ttScore > eval)))
+      if (ttScore != SCORE_NONE && canUseScore(ttBound, ttScore, eval))
         eval = ttScore;
     }
 
@@ -1157,7 +1157,7 @@ namespace Search {
     const bool bestMoveCap = pos.board[move_to(bestMove)] != NO_PIECE;
     if (   !pos.checkers
         && !(bestMove && bestMoveCap)
-        && resultBound & boundForTT(bestScore >= ss->staticEval)) 
+        && canUseScore(resultBound, bestScore, ss->staticEval)) 
     {
       int bonus = std::clamp((bestScore - ss->staticEval) * depth / 8, 
                              -CORRHIST_LIMIT / 4, CORRHIST_LIMIT /4);
