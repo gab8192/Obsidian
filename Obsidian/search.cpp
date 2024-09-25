@@ -458,7 +458,8 @@ namespace Search {
   }
 
   Score scaleOnHMC(Position& pos, Score eval) {
-    return (eval * (200 - pos.halfMoveClock)) / 200;
+    int s = std::clamp(pos.halfMoveClock - 5, 0, 20);
+    return (eval * (40 - s)) / 40;
   }
 
   template<bool IsPV>
