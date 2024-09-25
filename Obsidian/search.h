@@ -120,7 +120,7 @@ namespace Search {
 
     int correctStaticEval(Position &pos, Score staticEval);
 
-    void updateHistories(Position& pos, int bonus, Move bestMove, Score bestScore,
+    void updateHistories(Position& pos, Move bestMove, Score bestScore,
       Score beta, Move* quietMoves, int quietCount, int depth, SearchInfo* ss);
 
     bool hasUpcomingRepetition(Position& pos, int ply);
