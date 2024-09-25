@@ -87,11 +87,11 @@ namespace {
     std::string oldMinimal = Options["Minimal"];
     Options["Minimal"] = std::string("true");
 
-    for (int i = 0; i < posCount; i++) 
+    for (int i = 0; i < posCount; i++)
     {
       Search::Settings searchSettings;
       searchSettings.depth = 13;
-      
+
       std::istringstream posStr(BENCH_POSITIONS[i]);
       position(searchSettings.position, posStr);
 
@@ -189,7 +189,7 @@ void UCI::loop(int argc, char* argv[]) {
 
   std::string token, cmd;
 
-  
+
   Position pos;
   pos.setToFen(StartFEN);
 
@@ -235,7 +235,7 @@ void UCI::loop(int argc, char* argv[]) {
       Score eval = NNUE::evaluate(pos, tempAcc);
       if (pos.sideToMove == BLACK)
         eval = -eval;
-      std::cout << "Evaluation: " << UCI::normalizeToCp(eval) 
+      std::cout << "Evaluation: " << UCI::normalizeToCp(eval)
                 << "  (not normalized: " << eval << ")" << std::endl;
     }
     else if (!token.empty() && token[0] != '#')

@@ -33,7 +33,7 @@ public:
     IN_CHECK_GEN_QUIETS,
     IN_CHECK_PLAY_QUIETS
   };
-  
+
   // Constructor for pvs and probcut
   MovePicker(
     SearchType _searchType, Position& _pos,
@@ -56,9 +56,9 @@ private:
 
   MainHistory& mainHist;
   CaptureHistory& capHist;
-  
+
   int seeMargin;
-  
+
   Search::SearchInfo* ss;
 
   Stage stage;

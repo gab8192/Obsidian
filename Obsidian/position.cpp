@@ -90,7 +90,7 @@ void Position::updateKeys() {
 
     if(piece_type(pc) == PAWN)
       newPawnKey ^= ZOBRIST_PSQ[pc][sq];
-    
+
   }
 
   newKey ^= ZOBRIST_CASTLING[castlingRights];
@@ -133,7 +133,7 @@ bool Position::isPseudoLegal(Move move) const {
   }
 
   if (moveType == MT_EN_PASSANT) {
-    return 
+    return
              to == epSquare /* implies epSquare != SQ_NONE */
           && piece_type(pc) == PAWN
           && (getPawnAttacks(epSquare, them) & from);
@@ -331,7 +331,7 @@ void Position::doMove(Move move, DirtyPieces& dp) {
 
     removePiece(capSq, theirPawnPc);
     movePiece(from, to, ourPawnPc);
-    
+
     dp.type = DirtyPieces::CAPTURE;
     dp.sub1 = {capSq, theirPawnPc};
     dp.sub0 = {from, ourPawnPc};
@@ -354,7 +354,7 @@ void Position::doMove(Move move, DirtyPieces& dp) {
     if (capturedPc != NO_PIECE) {
       removePiece(to, capturedPc);
       dp.sub1 = {to, capturedPc};
-      
+
       if (piece_type(capturedPc) == ROOK)
         newCastlingRights &= ROOK_SQR_TO_CR[to];
     }
@@ -363,7 +363,7 @@ void Position::doMove(Move move, DirtyPieces& dp) {
     putPiece(to, promoteToPc);
     dp.sub0 = {from, movedPc};
     dp.add0 = {to, promoteToPc};
-    
+
     break;
   }
   }
@@ -480,7 +480,7 @@ void Position::setToFen(const std::string& fen) {
 
   if (fen[idx] != '-') {
     char c;
-    
+
     while ((c = fen[idx++]) != ' ') {
       switch (c) {
       case 'k': castlingRights |= BLACK_OO;  break;
@@ -577,7 +577,7 @@ std::ostream& operator<<(std::ostream& stream, Position& pos) {
   const std::string rowSeparator = "\n +---+---+---+---+---+---+---+---+";
 
   std::ostringstream ss;
-  
+
   for (Rank rank = RANK_8; rank >= RANK_1; --rank)
   {
     ss << rowSeparator << '\n';
@@ -677,7 +677,7 @@ bool Position::seeGe(Move m, int threshold) const {
       attackers |= (getBishopAttacks(to, occupied) & pieces(BISHOP, QUEEN))
                  | (getRookAttacks(to, occupied) & pieces(ROOK, QUEEN));
     }
-    else 
+    else
       return (attackers & ~pieces(stm)) ? res ^ 1 : res;
   }
 

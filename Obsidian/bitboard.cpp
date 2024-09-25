@@ -100,19 +100,19 @@ Bitboard set_occupancy(int index, int bits_in_mask, Bitboard attack_mask)
 {
     // occupancy map
     Bitboard occupancy = 0ULL;
-    
+
     // loop over the range of bits within attack mask
     for (int count = 0; count < bits_in_mask; count++)
     {
         // get LS1B index of attacks mask
         Square square = popLsb(attack_mask);
-        
+
         // make sure occupancy is on board
         if (index & (1 << count))
             // populate occupancy map
             occupancy |= square;
     }
-    
+
     // return occupancy map
     return occupancy;
 }
@@ -252,13 +252,13 @@ uint32_t attack_index_rook(Square sq, Bitboard occupied) {
 #endif
 }
 
-// lookup bishop attacks 
+// lookup bishop attacks
 Bitboard getBishopAttacks(Square sq, Bitboard occupied) {
 	return BishopAttacks[sq][attack_index_bishop(sq, occupied)];
 }
 
-// lookup rook attacks 
-Bitboard getRookAttacks(Square sq, Bitboard occupied) {  
+// lookup rook attacks
+Bitboard getRookAttacks(Square sq, Bitboard occupied) {
 	return RookAttacks[sq][attack_index_rook(sq, occupied)];
 }
 
@@ -303,7 +303,7 @@ Bitboard getPawnBbAttacks(Bitboard pawns, Color pawnColor) {
 void init_pext_attacks(Bitboard table[], Bitboard* attacks[], Bitboard masks[],
   const Direction deltas[], AttackIndexFunc index)
 {
-  
+
   for (Square sq = SQ_A1; sq < SQUARE_NB; ++sq) {
     attacks[sq] = table;
 
@@ -329,21 +329,21 @@ void init_fancy_magic_attacks(Bitboard masks[],
     {
         // count attack mask bits
         int bit_count = BitCount(masks[sq]);
-        
+
         // occupancy variations count
         int occupancy_variations = 1 << bit_count;
-        
+
         // loop over occupancy variations
         for (int count = 0; count < occupancy_variations; count++)
         {
             Bitboard occupancy = set_occupancy(count, bit_count, masks[sq]);
 
             if (pt == BISHOP) {
-              Bitboard magic_index = occupancy * BISHOP_MAGICS[sq] >> 55; 
-              BishopAttacks[sq][magic_index] = sliding_attack(deltas, sq, occupancy); 
+              Bitboard magic_index = occupancy * BISHOP_MAGICS[sq] >> 55;
+              BishopAttacks[sq][magic_index] = sliding_attack(deltas, sq, occupancy);
             } else {
-              Bitboard magic_index = occupancy * ROOK_MAGICS[sq] >> 52; 
-              RookAttacks[sq][magic_index] = sliding_attack(deltas, sq, occupancy); 
+              Bitboard magic_index = occupancy * ROOK_MAGICS[sq] >> 52;
+              RookAttacks[sq][magic_index] = sliding_attack(deltas, sq, occupancy);
             }
         }
     }
@@ -378,7 +378,7 @@ namespace Bitboards {
     init_fancy_magic_attacks(BishopMasks, BishopDirs, BISHOP); // bishop
     init_fancy_magic_attacks(RookMasks, RookDirs, ROOK); // rook
     #endif
-    
+
 
     memset(LINE_BB, 0, sizeof(LINE_BB));
     memset(BETWEEN_BB, 0, sizeof(BETWEEN_BB));

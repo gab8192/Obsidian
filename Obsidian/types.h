@@ -34,7 +34,7 @@ inline int64_t timeMillis() {
   return std::chrono::duration_cast<std::chrono::milliseconds>(sinceEpoch).count();
 }
 
-constexpr Score 
+constexpr Score
   SCORE_DRAW = 0,
   SCORE_MATE = 32000,
   SCORE_INFINITE = 32001,
@@ -177,7 +177,7 @@ enum Piece : char {
   W_ROOK = makePiece(WHITE, ROOK),
   W_QUEEN = makePiece(WHITE, QUEEN),
   W_KING = makePiece(WHITE, KING),
-  
+
   B_PAWN = makePiece(BLACK, PAWN),
   B_KNIGHT = makePiece(BLACK, KNIGHT),
   B_BISHOP = makePiece(BLACK, BISHOP),

@@ -5,7 +5,7 @@
 
 enum MoveGenFlags {
     ADD_QUIETS = 1,
-    ADD_CAPTURES = 2, 
+    ADD_CAPTURES = 2,
     ADD_ALL_MOVES = ADD_QUIETS | ADD_CAPTURES
 };
 
