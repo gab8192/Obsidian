@@ -94,6 +94,8 @@ namespace Search {
 
     NNUE::FinnyTable finny;
 
+    Score stuckScore;
+
     Score searchPrevScore;
 
     void refreshAccumulator(Position& pos, NNUE::Accumulator& acc, Color side);

@@ -498,7 +498,7 @@ namespace Search {
 
     // In non PV nodes, if tt bound allows it, return ttScore
     if ( !IsPV 
-      && ttScore != SCORE_NONE 
+      && ttScore != SCORE_NONE && ttScore != stuckScore
       && canUseScore(ttBound, ttScore, beta))
         return ttScore;
 
@@ -525,7 +525,7 @@ namespace Search {
       futility = bestScore + QsFpMargin;
 
       // When tt bound allows it, use ttScore as a better standing pat
-      if (ttScore != SCORE_NONE && canUseScore(ttBound, ttScore, bestScore))
+      if (ttScore != SCORE_NONE && ttScore != stuckScore && canUseScore(ttBound, ttScore, bestScore))
         bestScore = ttScore;
 
       if (bestScore >= beta) {
@@ -798,7 +798,7 @@ namespace Search {
       }
 
       // When tt bound allows it, use ttScore as a better evaluation
-      if (ttScore != SCORE_NONE && canUseScore(ttBound, ttScore, eval))
+      if (ttScore != SCORE_NONE && ttScore != stuckScore && canUseScore(ttBound, ttScore, eval))
         eval = ttScore;
     }
 
@@ -831,6 +831,7 @@ namespace Search {
     if ( !IsPV
       && !excludedMove
       && (ss - 1)->playedMove != MOVE_NONE
+      && stuckScore == SCORE_NONE
       && eval >= beta
       && pos.hasNonPawns(pos.sideToMove)
       && beta > SCORE_TB_LOSS_IN_MAX_PLY) {
@@ -1235,6 +1236,8 @@ namespace Search {
     ply = 0;
     maxTimeCounter = 0;
 
+    Score scoreHist[MAX_PLY+20];
+
     // Setup search stack
 
     SearchInfo* ss = &searchStack[SsOffset];
@@ -1290,6 +1293,8 @@ namespace Search {
       if (result != TB_RESULT_FAILED)
         tbBestMove = moveFromTbProbeRoot(rootPos, result);
     }
+
+    stuckScore = SCORE_NONE;
 
     // Search starting. Zero out the nodes of each root move
     for (int i = 0; i < rootMoves.size(); i++)
@@ -1356,6 +1361,24 @@ namespace Search {
       }
 
       completeDepth = rootDepth;
+
+      scoreHist[completeDepth] = rootMoves[0].score;
+
+      if (completeDepth > 5) {
+        bool isStuck = true;
+        for (int i = 1; i <= 4; i++) {
+          if (scoreHist[completeDepth - i] != scoreHist[completeDepth]) {
+            isStuck = false;
+            break;
+          }
+        }
+        if (isStuck) {
+          stuckScore = scoreHist[completeDepth];
+          std::cout << "set to " << UCI::normalizeToCp(stuckScore) << std::endl;
+        }
+        else
+          stuckScore = SCORE_NONE;
+      }
 
       if (settings.nodes && Threads::totalNodes() >= settings.nodes) {
         naturalExit = false;
