@@ -226,6 +226,7 @@ namespace Search {
   void Thread::playNullMove(Position& pos, SearchInfo* ss) {
     ss->contHistory = contHistory[false][0];
     ss->playedMove = MOVE_NONE;
+    ss->playedQuiet = true;
     keyStack[keyStackHead++] = pos.key;
 
     ply++;
@@ -306,6 +307,7 @@ namespace Search {
     const bool isCap = pos.board[move_to(move)] != NO_PIECE;
     ss->contHistory = contHistory[isCap][pieceTo(pos, move)];
     ss->playedMove = move;
+    ss->playedQuiet = pos.isQuiet(move);
     keyStack[keyStackHead++] = pos.key;
 
     NNUE::Accumulator& newAcc = accumStack[++accumStackHead];
@@ -892,6 +894,15 @@ namespace Search {
           return score;
         }
       }
+    }
+
+    if ( depth == 1
+      && (ss-1)->playedQuiet
+      && (ss-1)->staticEval != SCORE_NONE)
+    {
+      int theirGain = (- ss->staticEval) - (ss-1)->staticEval;
+      if (theirGain > 300)
+        depth++;
     }
 
   moves_loop:

@@ -30,6 +30,7 @@ namespace Search {
   struct SearchInfo {
     Score staticEval;
     Move playedMove;
+    bool playedQuiet;
 
     Move killerMove;
 
