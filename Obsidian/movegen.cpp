@@ -181,19 +181,26 @@ void getQuietChecks(const Position& pos, MoveList* moveList) {
   const Bitboard occupied = ourPieces | theirPieces;
   const Bitboard pinned = ourPieces & pos.blockersForKing[us];
 
-  Bitboard pawnChecks = getPawnAttacks(theirKing, them)  & ~occupied;
-  while (pawnChecks) {
-    Square to = popLsb(pawnChecks);
-    Square from = to - (us == WHITE ? 8 : -8);
-    if (ourPieces & pos.pieces(PAWN) & from)
-      moveList->add(createMove(from, to, MT_NORMAL));
-  }
-
   Bitboard checkSquares[PIECE_TYPE_NB];
+  checkSquares[PAWN]   = getPawnAttacks(theirKing, them)       & ~occupied;
   checkSquares[KNIGHT] = getKnightAttacks(theirKing)           & ~occupied;
   checkSquares[BISHOP] = getBishopAttacks(theirKing, occupied) & ~occupied;
-  checkSquares[ROOK] =   getRookAttacks(theirKing, occupied)   & ~occupied;
-  checkSquares[QUEEN] =  checkSquares[BISHOP] | checkSquares[ROOK];
+  checkSquares[ROOK]   = getRookAttacks(theirKing, occupied)   & ~occupied;
+  checkSquares[QUEEN]  = checkSquares[BISHOP] | checkSquares[ROOK];
+
+  if (us == WHITE) {
+    Bitboard pawns = (checkSquares[PAWN] >> 8) & ourPieces & pos.pieces(PAWN);
+    while (pawns) {
+      Square from = popLsb(pawns);
+      moveList->add(createMove(from, from + 8, MT_NORMAL));
+    }
+  } else {
+    Bitboard pawns = (checkSquares[PAWN] << 8) & ourPieces & pos.pieces(PAWN);
+    while (pawns) {
+      Square from = popLsb(pawns);
+      moveList->add(createMove(from, from - 8, MT_NORMAL));
+    }
+  }
 
   Bitboard knights = ourPieces & pos.pieces(KNIGHT) & ~pinned;
   while (knights) {
