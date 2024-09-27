@@ -60,7 +60,7 @@ else
 endif
 	$(COMMAND) -fprofile-use="obs_pgo"
 ifeq ($(OS),Windows_NT)
-	rmdir /s /q obs_pgo
+	powershell.exe -Command "Remove-Item -Recurse -Force obs_pgo"
 else
 	rm -rf obs_pgo
 endif
