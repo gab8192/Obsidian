@@ -411,6 +411,7 @@ void Position::calcCheckSquares(Bitboard* checkSquares) const {
   checkSquares[BISHOP] = getBishopAttacks(theirKing, occupied) & ~occupied;
   checkSquares[ROOK]   = getRookAttacks(theirKing, occupied)   & ~occupied;
   checkSquares[QUEEN]  = checkSquares[BISHOP] | checkSquares[ROOK];
+  checkSquares[KING]   = 0ull;
 }
 
 /// Only works for MT_NORMAL moves
