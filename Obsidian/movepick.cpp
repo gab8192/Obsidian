@@ -90,6 +90,8 @@ void MovePicker::scoreQuiets() {
       if (threats.byPawn & to) score -= 16384;
     }
 
+    if (checkSquares[pt] & to) score += 16384;
+
     score += mainHist[pos.sideToMove][move_from_to(move)]
           + (ss - 1)->contHistory[chIndex]
           + (ss - 2)->contHistory[chIndex]
