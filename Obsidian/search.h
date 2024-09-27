@@ -63,11 +63,11 @@ namespace Search {
     Thread();
 
     void resetHistories();
-    
+
     void idleLoop();
-    
+
   private:
-    
+
     int64_t optimumTime, maxTime;
     uint32_t maxTimeCounter;
 

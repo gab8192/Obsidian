@@ -77,7 +77,7 @@ namespace NNUE {
 
     Vec* sub0Vec = (Vec*) sub0;
     Vec* add0Vec = (Vec*) add0;
-        
+
     for (int i = 0; i < InputSize / WeightsPerVec; ++i)
       outputVec[i] = subEpi16(addEpi16(inputVec[i], add0Vec[i]), sub0Vec[i]);
   }
@@ -119,22 +119,22 @@ namespace NNUE {
 
   void Accumulator::doUpdates(Square kingSq, Color side, Accumulator& input) {
     DirtyPieces dp = this->dirtyPieces;
-    if (dp.type == DirtyPieces::CASTLING) 
+    if (dp.type == DirtyPieces::CASTLING)
     {
-      multiSubAddSubAdd<HiddenWidth>(colors[side], input.colors[side], 
+      multiSubAddSubAdd<HiddenWidth>(colors[side], input.colors[side],
         featureAddress(kingSq, side, dp.sub0.pc, dp.sub0.sq),
         featureAddress(kingSq, side, dp.add0.pc, dp.add0.sq),
         featureAddress(kingSq, side, dp.sub1.pc, dp.sub1.sq),
         featureAddress(kingSq, side, dp.add1.pc, dp.add1.sq));
-    } else if (dp.type == DirtyPieces::CAPTURE) 
-    { 
-      multiSubAddSub<HiddenWidth>(colors[side], input.colors[side], 
+    } else if (dp.type == DirtyPieces::CAPTURE)
+    {
+      multiSubAddSub<HiddenWidth>(colors[side], input.colors[side],
         featureAddress(kingSq, side, dp.sub0.pc, dp.sub0.sq),
         featureAddress(kingSq, side, dp.add0.pc, dp.add0.sq),
         featureAddress(kingSq, side, dp.sub1.pc, dp.sub1.sq));
     } else
     {
-      multiSubAdd<HiddenWidth>(colors[side], input.colors[side], 
+      multiSubAdd<HiddenWidth>(colors[side], input.colors[side],
         featureAddress(kingSq, side, dp.sub0.pc, dp.sub0.sq),
         featureAddress(kingSq, side, dp.add0.pc, dp.add0.sq));
     }
@@ -166,7 +166,7 @@ namespace NNUE {
   void init() {
 
     memcpy(&Content, gEmbeddedNNUEData, sizeof(Content));
-    
+
   }
 
   Score evaluate(Position& pos, Accumulator& accumulator) {
@@ -179,11 +179,11 @@ namespace NNUE {
 
     Vec sum = vecZero;
 
-    for (int them = 0; them <= 1; ++them) 
+    for (int them = 0; them <= 1; ++them)
     {
       Vec* acc = (Vec*) accumulator.colors[pos.sideToMove ^ them];
       Vec* weights = (Vec*) &Content.OutputWeights[outputBucket][them * HiddenWidth / 2];
-      for (int i = 0; i < (HiddenWidth / WeightsPerVec) / 2; ++i) 
+      for (int i = 0; i < (HiddenWidth / WeightsPerVec) / 2; ++i)
       {
         Vec c0 = minEpi16(maxEpi16(acc[i], vecZero), vecQA);
         Vec c1 = minEpi16(maxEpi16(acc[i + (HiddenWidth / WeightsPerVec) / 2], vecZero), vecQA);

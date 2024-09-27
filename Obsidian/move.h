@@ -33,7 +33,7 @@ constexpr Move createCastlingMove(CastlingRights type) {
 }
 
 inline Square move_from(Move move) {
-  // being these the first bits, we do not need to SHR anything 
+  // being these the first bits, we do not need to SHR anything
   return Square(move & 63);
 }
 

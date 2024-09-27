@@ -86,7 +86,7 @@ namespace Threads {
 
     searchThreads.resize(threadCount);
     stdThreads.resize(threadCount);
-    
+
     startedThreadsCount = 0;
 
      for (int i = 0; i < threadCount; i++) {

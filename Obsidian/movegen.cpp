@@ -29,7 +29,7 @@ void addPawnMoves(const Position& pos, Bitboard inCheckFilter, MoveList* receive
   constexpr int Diag0 = Us == WHITE ? 9 : -7;
   constexpr int Diag1 = Us == WHITE ? 7 : -9;
   const Bitboard emptySquares = ~ pos.pieces();
-  const Bitboard ourPawnsNot7 = pos.pieces(Us, PAWN) & ~OurRank7BB;  
+  const Bitboard ourPawnsNot7 = pos.pieces(Us, PAWN) & ~OurRank7BB;
   const Bitboard ourPawns7 = pos.pieces(Us, PAWN) & OurRank7BB;
 
   if (flags & ADD_QUIETS) {
@@ -53,7 +53,7 @@ void addPawnMoves(const Position& pos, Bitboard inCheckFilter, MoveList* receive
     {
       Bitboard cap0 = shl<Diag0>(ourPawnsNot7 & ~FILE_HBB) & pos.pieces(~Us) & inCheckFilter;
       Bitboard cap1 = shl<Diag1>(ourPawnsNot7 & ~FILE_ABB) & pos.pieces(~Us) & inCheckFilter;
-      
+
       while (cap0) {
         Square to = popLsb(cap0);
         receiver->add(createMove(to - Diag0, to, MT_NORMAL));
@@ -97,7 +97,7 @@ void addPawnMoves(const Position& pos, Bitboard inCheckFilter, MoveList* receive
 }
 
 void getStageMoves(const Position& pos, MoveGenFlags flags, MoveList* moveList) {
-  
+
   const Color us = pos.sideToMove, them = ~us;
   const Square ourKing = pos.kingSquare(us);
   const Bitboard ourPieces = pos.pieces(us);
@@ -112,7 +112,7 @@ void getStageMoves(const Position& pos, MoveGenFlags flags, MoveList* moveList) 
     targets |= theirPieces;
 
   Bitboard inCheckFilter = ~0; // Normally all squares are allowed
-  
+
   if (pos.checkers) {
     if (moreThanOne(pos.checkers)) {
       addNormalMovesToList(ourKing, getKingAttacks(ourKing) & targets, moveList);
@@ -135,7 +135,7 @@ void getStageMoves(const Position& pos, MoveGenFlags flags, MoveList* moveList) 
       if (!(CASTLING_PATH[castleShort] & occupied))
         moveList->add(createCastlingMove(castleShort));
     }
-    
+
     if (pos.castlingRights & castleLong) {
       if (!(CASTLING_PATH[castleLong] & occupied))
         moveList->add(createCastlingMove(castleLong));

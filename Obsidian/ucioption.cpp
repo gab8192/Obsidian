@@ -14,15 +14,15 @@ UCI::OptionsMap Options;
 namespace UCI {
 
 void clearHashClicked(const Option&)   {
-   TT::clear(); 
+   TT::clear();
 }
 
 void hashChanged(const Option& o) {
-   TT::resize(size_t(o)); 
+   TT::resize(size_t(o));
 }
 
-void threadsChanged(const Option& o) { 
-  Threads::setThreadCount(int(o)); 
+void threadsChanged(const Option& o) {
+  Threads::setThreadCount(int(o));
 }
 
 void syzygyPathChanged(const Option& o) {

@@ -149,7 +149,7 @@ struct alignas(32) Position {
   inline bool isQuiet(Move move) const {
     MoveType mt = move_type(move);
 
-    return    (mt == MT_NORMAL && ! board[move_to(move)]) 
+    return    (mt == MT_NORMAL && ! board[move_to(move)])
            || (mt == MT_CASTLING);
   }
 

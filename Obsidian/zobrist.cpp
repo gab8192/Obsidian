@@ -28,7 +28,7 @@ namespace Zobrist {
     ZOBRIST_CASTLING[BLACK_OOO] = dis(gen);
 
     for (int i = 1; i < 16; i++) {
-      
+
       if (BitCount(i) < 2)
         continue;
 

@@ -7,7 +7,7 @@ namespace TT {
 
   using Flag = uint8_t;
 
-  constexpr Flag 
+  constexpr Flag
     NO_FLAG = 0,
     FLAG_LOWER = 1,
     FLAG_UPPER = 2,

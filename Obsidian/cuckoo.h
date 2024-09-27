@@ -11,7 +11,7 @@ namespace Cuckoo {
   inline int h2(Key key) {
     return (key >> 16) & 0x1fff;
   }
-  
+
   extern Key keys[8192];
   extern Move moves[8192];
 

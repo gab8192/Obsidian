@@ -36,7 +36,7 @@ namespace TT {
     madvise(buckets, bytes, MADV_HUGEPAGE);
 #else
     buckets = (Bucket*) malloc(sizeof(Bucket) * bucketCount);
-#endif 
+#endif
 
     clear();
   }
@@ -69,7 +69,7 @@ namespace TT {
       if (entries[i].getQuality() < worstEntry->getQuality())
         worstEntry = & entries[i];
     }
-    
+
     hit = false;
     return worstEntry;
   }
@@ -97,7 +97,7 @@ namespace TT {
       else if (score <= SCORE_TB_LOSS_IN_MAX_PLY)
         _score -= ply;
     }
-    
+
     if ( _bound == FLAG_EXACT
       || !matches(_key)
       || _depth + 4 + 2*isPV > this->depth) {

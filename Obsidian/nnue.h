@@ -34,10 +34,10 @@ namespace NNUE {
     4,  5,  6,  7,  7,  6,  5,  4,
     8,  8,  9,  9,  9,  9,  8,  8,
     10, 10, 10, 10, 10, 10, 10, 10,
-    11, 11, 11, 11, 11, 11, 11, 11, 
-    11, 11, 11, 11, 11, 11, 11, 11, 
-    12, 12, 12, 12, 12, 12, 12, 12, 
-    12, 12, 12, 12, 12, 12, 12, 12, 
+    11, 11, 11, 11, 11, 11, 11, 11,
+    11, 11, 11, 11, 11, 11, 11, 11,
+    12, 12, 12, 12, 12, 12, 12, 12,
+    12, 12, 12, 12, 12, 12, 12, 12,
   };
   constexpr int KingBuckets = 13;
 
@@ -49,7 +49,7 @@ namespace NNUE {
   constexpr int NetworkQAB = NetworkQA * NetworkQB;
 
   struct Accumulator {
-    
+
     alignas(Alignment) weight_t colors[COLOR_NB][HiddenWidth];
 
     bool updated[COLOR_NB];

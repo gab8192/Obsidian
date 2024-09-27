@@ -10,7 +10,7 @@ MovePicker::MovePicker(
   Search::SearchInfo* _ss) :
   searchType(_searchType), pos(_pos),
   ttMove(_ttMove),
-  mainHist(_mainHist), capHist(_capHist), 
+  mainHist(_mainHist), capHist(_capHist),
   seeMargin(_seeMargin),
   ss(_ss)
 {
@@ -60,7 +60,7 @@ Move_Score nextMove0(MoveList& moveList, const int visitedCount) {
 void MovePicker::scoreQuiets() {
   Threats threats;
   pos.calcThreats(threats);
-  
+
   int i = 0;
   while (i < quiets.size()) {
     Move move = quiets[i].move;
@@ -110,7 +110,7 @@ void MovePicker::scoreCaptures() {
     MoveType mt = move_type(move);
     PieceType captured = piece_type(pos.board[move_to(move)]);
 
-    captures[i++].score = 
+    captures[i++].score =
         PIECE_VALUE[mt == MT_EN_PASSANT ? PAWN : captured] * 32
       + (mt == MT_PROMOTION) * 32768
       + capHist[pieceTo(pos, move)][captured];
@@ -130,7 +130,7 @@ Move MovePicker::nextMove(bool skipQuiets) {
   }
   case IN_CHECK_GEN_CAPTURES:
   case QS_GEN_CAPTURES:
-  case GEN_CAPTURES: 
+  case GEN_CAPTURES:
   {
     getStageMoves(pos, ADD_CAPTURES, &captures);
     scoreCaptures();
@@ -156,7 +156,7 @@ Move MovePicker::nextMove(bool skipQuiets) {
       int realMargin = searchType == PVS ? (- move.score / 64) : seeMargin;
       if (pos.seeGe(move.move, realMargin) && !isUnderPromo(move.move)) // good capture
         return move.move;
-        
+
       badCaptures.add(move);
     }
 
@@ -181,7 +181,7 @@ Move MovePicker::nextMove(bool skipQuiets) {
     goto select;
   }
   case IN_CHECK_GEN_QUIETS:
-  case GEN_QUIETS: 
+  case GEN_QUIETS:
   {
     if (skipQuiets) {
       stage = PLAY_BAD_CAPTURES;
@@ -195,13 +195,13 @@ Move MovePicker::nextMove(bool skipQuiets) {
     goto select;
   }
   case IN_CHECK_PLAY_QUIETS:
-  case PLAY_QUIETS: 
+  case PLAY_QUIETS:
   {
     if (skipQuiets) {
       stage = PLAY_BAD_CAPTURES;
       goto select;
     }
-    
+
     if (quietIndex < quiets.size())
       return nextMove0(quiets, quietIndex++).move;
 
@@ -215,10 +215,10 @@ Move MovePicker::nextMove(bool skipQuiets) {
   {
     if (badCapIndex < badCaptures.size())
       return badCaptures[badCapIndex++].move;
-      
+
     return MOVE_NONE;
   }
-  case QS_GEN_QUIET_CHECKS: 
+  case QS_GEN_QUIET_CHECKS:
   {
     getQuietChecks(pos, &quiets);
     ++stage;

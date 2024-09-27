@@ -11,7 +11,7 @@ namespace Eval {
     int phase =  3 * BitCount(pos.pieces(KNIGHT))
                + 3 * BitCount(pos.pieces(BISHOP))
                + 5 * BitCount(pos.pieces(ROOK))
-               + 12 * BitCount(pos.pieces(QUEEN));    
+               + 12 * BitCount(pos.pieces(QUEEN));
 
     score = score * (200 + phase) / 256;
 

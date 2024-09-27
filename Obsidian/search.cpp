@@ -15,14 +15,14 @@
 #include <unordered_map>
 
 namespace Search {
-    
+
   DEFINE_PARAM_S(QsFpMargin, 136, 15);
 
   DEFINE_PARAM_S(LmrBase, 48, 10);
   DEFINE_PARAM_S(LmrDiv, 192, 10);
 
   DEFINE_PARAM_S(CorrHistWeight, 53, 6);
-  
+
   DEFINE_PARAM_S(StatBonusBias, -17, 15);
   DEFINE_PARAM_S(StatBonusLinear, 148, 10);
   DEFINE_PARAM_S(StatBonusMax, 1160, 50);
@@ -39,7 +39,7 @@ namespace Search {
   DEFINE_PARAM_S(NmpEvalDivMin, 4, 1);
 
   DEFINE_PARAM_S(ProbcutBetaMargin, 191, 20);
-  
+
   DEFINE_PARAM_S(HistPrDepthMul, -4173, 400);
 
   DEFINE_PARAM_S(LmpBase,    3, 1);
@@ -64,7 +64,7 @@ namespace Search {
 
   DEFINE_PARAM_B(AspWindowStartDepth, 4, 4, 34);
   DEFINE_PARAM_B(AspWindowStartDelta, 11, 5, 45);
-  
+
   int lmrTable[MAX_PLY][MAX_MOVES];
 
   Settings::Settings() {
@@ -126,7 +126,7 @@ namespace Search {
     memset(counterMoveHistory, 0, sizeof(counterMoveHistory));
     memset(contHistory, 0, sizeof(contHistory));
     memset(pawnCorrhist, 0, sizeof(pawnCorrhist));
-    
+
     searchPrevScore = SCORE_NONE;
   }
 
@@ -194,7 +194,7 @@ namespace Search {
     std::cout << infoStr.str() << std::endl;
   }
 
-  void printBestMove(Move move) {      
+  void printBestMove(Move move) {
     std::cout << "bestmove " << UCI::moveToString(move) << std::endl;
   }
 
@@ -350,11 +350,11 @@ namespace Search {
     int chIndex = pieceTo(pos, move);
     if ((ss - 1)->playedMove)
       addToHistory((ss - 1)->contHistory[chIndex], bonus);
-    if ((ss - 2)->playedMove)              
+    if ((ss - 2)->playedMove)
       addToHistory((ss - 2)->contHistory[chIndex], bonus);
-    if ((ss - 4)->playedMove)              
+    if ((ss - 4)->playedMove)
       addToHistory((ss - 4)->contHistory[chIndex], bonus);
-    if ((ss - 6)->playedMove)              
+    if ((ss - 6)->playedMove)
       addToHistory((ss - 6)->contHistory[chIndex], bonus);
   }
 
@@ -422,7 +422,7 @@ namespace Search {
       // Repetition after root
       if (ply > i)
         return true;
-      
+
       Piece pc = pos.board[ pos.board[from] ? from : to ];
 
       if (piece_color(pc) != pos.sideToMove)
@@ -497,8 +497,8 @@ namespace Search {
     }
 
     // In non PV nodes, if tt bound allows it, return ttScore
-    if ( !IsPV 
-      && ttScore != SCORE_NONE 
+    if ( !IsPV
+      && ttScore != SCORE_NONE
       && canUseScore(ttBound, ttScore, beta))
         return ttScore;
 
@@ -601,7 +601,7 @@ namespace Search {
 
     if (pos.checkers && !foundLegalMoves)
       return ply - SCORE_MATE;
-    
+
     if (bestScore >= beta && abs(bestScore) < SCORE_TB_WIN_IN_MAX_PLY)
       bestScore = (bestScore + beta) / 2;
 
@@ -632,8 +632,8 @@ namespace Search {
       pos.pieces(WHITE), pos.pieces(BLACK),
       pos.pieces(KING), pos.pieces(QUEEN), pos.pieces(ROOK),
       pos.pieces(BISHOP), pos.pieces(KNIGHT), pos.pieces(PAWN),
-      pos.halfMoveClock, 
-      pos.castlingRights, 
+      pos.halfMoveClock,
+      pos.castlingRights,
       pos.epSquare == SQ_NONE ? 0 : pos.epSquare,
       pos.sideToMove == WHITE);
   }
@@ -645,14 +645,14 @@ namespace Search {
 
     // Check time
     ++maxTimeCounter;
-    if ( this == Threads::mainThread() 
+    if ( this == Threads::mainThread()
       && (maxTimeCounter & 4095) == 0
       && elapsedTime() >= maxTime)
         Threads::stopSearch();
 
     if (Threads::isSearchStopped())
       return SCORE_DRAW;
-    
+
     // Init node
     if (IsPV)
       ss->pvLength = ply;
@@ -667,7 +667,7 @@ namespace Search {
       if (alpha >= beta)
         return alpha;
     }
-      
+
     // Detect draw
     if (!IsRoot && (isRepetition(pos, ply) || pos.halfMoveClock >= 100))
       return SCORE_DRAW;
@@ -713,7 +713,7 @@ namespace Search {
     Move bestMove = MOVE_NONE;
     Score rawStaticEval = SCORE_NONE;
     Score bestScore = -SCORE_INFINITE;
-    Score maxScore  =  SCORE_INFINITE; 
+    Score maxScore  =  SCORE_INFINITE;
 
     // In non PV nodes, if tt depth and bound allow it, return ttScore
     if ( !IsPV
@@ -937,9 +937,9 @@ namespace Search {
 
       if (IsRoot && !visitRootMove(move))
         continue;
-      
+
       seenMoves++;
-      
+
       bool isQuiet = pos.isQuiet(move);
 
       int history = isQuiet ? getQuietHistory(pos, move, ss) : getCapHistory(pos, move);
@@ -958,7 +958,7 @@ namespace Search {
                                   depth    * PvsCapSeeMargin;
         if (!pos.seeGe(move, seeMargin))
           continue;
-      
+
         if (isQuiet && history < HistPrDepthMul * depth)
             skipQuiets = true;
 
@@ -969,14 +969,14 @@ namespace Search {
         // Futility pruning. If our evaluation is far below alpha,
         // only visit a few quiet moves
         if (   isQuiet
-            && lmrDepth <= FpMaxDepth 
-            && !pos.checkers 
+            && lmrDepth <= FpMaxDepth
+            && !pos.checkers
             && ss->staticEval + FpBase + FpDepthMul * lmrDepth <= alpha)
           skipQuiets = true;
       }
 
       int extension = 0;
-      
+
       // Singular extension
       if ( !IsRoot
         && ply < 2 * rootDepth
@@ -985,16 +985,16 @@ namespace Search {
         && move == ttMove
         && abs(ttScore) < SCORE_TB_WIN_IN_MAX_PLY
         && ttBound & TT::FLAG_LOWER
-        && ttDepth >= depth - 3) 
+        && ttDepth >= depth - 3)
       {
         Score singularBeta = ttScore - depth;
-        
+
         Score seScore = negamax<false>(pos, singularBeta - 1, singularBeta, (depth - 1) / 2, cutNode, ss, move);
-        
+
         if (seScore < singularBeta) {
           // Extend even more if s. value is smaller than s. beta by some margin
-          if (   !IsPV 
-              && ss->doubleExt <= DoubleExtMax 
+          if (   !IsPV
+              && ss->doubleExt <= DoubleExtMax
               && seScore < singularBeta - DoubleExtMargin)
           {
             extension = 2 + (isQuiet && seScore < singularBeta - TripleExtMargin);
@@ -1082,7 +1082,7 @@ namespace Search {
             rm.pv[i] = (ss+1)->pv[i];
         }
         else // this move gave an upper bound, so we don't know how to sort it
-          rm.score = - SCORE_INFINITE; 
+          rm.score = - SCORE_INFINITE;
       }
 
       if (score > bestScore) {
@@ -1116,7 +1116,7 @@ namespace Search {
     }
 
     if (!seenMoves) {
-      if (excludedMove) 
+      if (excludedMove)
         return alpha;
 
       return pos.checkers ? ply - SCORE_MATE : SCORE_DRAW;
@@ -1127,7 +1127,7 @@ namespace Search {
     {
       int bonus = stat_bonus(depth + (bestScore > beta + StatBonusBoostAt));
 
-      if (pos.isQuiet(bestMove)) 
+      if (pos.isQuiet(bestMove))
       {
         updateHistories(pos, bonus, bestMove, bestScore, beta, quiets, quietCount, depth, ss);
       }
@@ -1157,9 +1157,9 @@ namespace Search {
     const bool bestMoveCap = pos.board[move_to(bestMove)] != NO_PIECE;
     if (   !pos.checkers
         && !(bestMove && bestMoveCap)
-        && canUseScore(resultBound, bestScore, ss->staticEval)) 
+        && canUseScore(resultBound, bestScore, ss->staticEval))
     {
-      int bonus = std::clamp((bestScore - ss->staticEval) * depth / 8, 
+      int bonus = std::clamp((bestScore - ss->staticEval) * depth / 8,
                              -CORRHIST_LIMIT / 4, CORRHIST_LIMIT /4);
 
       addToCorrhist(pawnCorrhist[pos.sideToMove][getCorrHistIndex(pos.pawnKey)], bonus);
@@ -1213,7 +1213,7 @@ namespace Search {
       accumStack[0].refresh(rootPos, side);
       accumStack[0].kings[side] = rootPos.kingSquare(side);
     }
-    
+
     for (int i = 0; i < 2; i++)
         for (int j = 0; j < NNUE::KingBuckets; j++)
           finny[i][j].reset();
@@ -1281,8 +1281,8 @@ namespace Search {
           rootPos.pieces(WHITE), rootPos.pieces(BLACK),
           rootPos.pieces(KING), rootPos.pieces(QUEEN), rootPos.pieces(ROOK),
           rootPos.pieces(BISHOP), rootPos.pieces(KNIGHT), rootPos.pieces(PAWN),
-          rootPos.halfMoveClock, 
-          rootPos.castlingRights, 
+          rootPos.halfMoveClock,
+          rootPos.castlingRights,
           rootPos.epSquare == SQ_NONE ? 0 : rootPos.epSquare,
           rootPos.sideToMove == WHITE,
           nullptr);
