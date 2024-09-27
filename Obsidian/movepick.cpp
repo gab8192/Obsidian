@@ -61,6 +61,9 @@ void MovePicker::scoreQuiets() {
   Threats threats;
   pos.calcThreats(threats);
 
+  Bitboard checkSquares[PIECE_TYPE_NB];
+  pos.calcCheckSquares(checkSquares);
+
   int i = 0;
   while (i < quiets.size()) {
     Move move = quiets[i].move;
@@ -74,26 +77,26 @@ void MovePicker::scoreQuiets() {
     PieceType pt = piece_type(pos.board[from]);
     int chIndex = pieceTo(pos, move);
 
-    int threatScore = 0;
+    int score = 0;
 
     if (pt == QUEEN) {
-      if (threats.byRook & from) threatScore += 32768;
-      if (threats.byRook & to) threatScore -= 32768;
+      if (threats.byRook & from) score += 32768;
+      if (threats.byRook & to) score -= 32768;
     } else if (pt == ROOK) {
-      if (threats.byMinor & from) threatScore += 16384;
-      if (threats.byMinor & to) threatScore -= 16384;
+      if (threats.byMinor & from) score += 16384;
+      if (threats.byMinor & to) score -= 16384;
     } else if (pt == KNIGHT || pt == BISHOP) {
-      if (threats.byPawn & from) threatScore += 16384;
-      if (threats.byPawn & to) threatScore -= 16384;
+      if (threats.byPawn & from) score += 16384;
+      if (threats.byPawn & to) score -= 16384;
     }
 
-    quiets[i++].score =
-        threatScore
-      + mainHist[pos.sideToMove][move_from_to(move)]
-      + (ss - 1)->contHistory[chIndex]
-      + (ss - 2)->contHistory[chIndex]
-      + (ss - 4)->contHistory[chIndex]/2
-      + (ss - 6)->contHistory[chIndex]/2;
+    score += mainHist[pos.sideToMove][move_from_to(move)]
+          + (ss - 1)->contHistory[chIndex]
+          + (ss - 2)->contHistory[chIndex]
+          + (ss - 4)->contHistory[chIndex]/2
+          + (ss - 6)->contHistory[chIndex]/2;
+
+    quiets[i++].score = score;
   }
 }
 

@@ -379,7 +379,7 @@ void Position::doMove(Move move, DirtyPieces& dp) {
   }
 }
 
-void Position::calcThreats(Threats& threats) {
+void Position::calcThreats(Threats& threats) const {
 
   Color them = ~sideToMove;
 
@@ -401,6 +401,16 @@ void Position::calcThreats(Threats& threats) {
     Square sq = popLsb(rooks);
     threats.byRook |= getRookAttacks(sq, pieces());
   }
+}
+
+void Position::calcCheckSquares(Bitboard* checkSquares) const {
+  const Square theirKing = kingSquare(~sideToMove);
+  const Bitboard occupied = pieces();
+  checkSquares[PAWN]   = getPawnAttacks(theirKing, ~sideToMove)       & ~occupied;
+  checkSquares[KNIGHT] = getKnightAttacks(theirKing)           & ~occupied;
+  checkSquares[BISHOP] = getBishopAttacks(theirKing, occupied) & ~occupied;
+  checkSquares[ROOK]   = getRookAttacks(theirKing, occupied)   & ~occupied;
+  checkSquares[QUEEN]  = checkSquares[BISHOP] | checkSquares[ROOK];
 }
 
 /// Only works for MT_NORMAL moves
