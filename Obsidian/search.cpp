@@ -34,7 +34,7 @@ namespace Search {
   DEFINE_PARAM_S(RfpDepthMul, 111, 12);
 
   DEFINE_PARAM_S(NmpBase, 4, 1);
-  DEFINE_PARAM_B(NmpDepthDiv, 4, 1, 21);
+  DEFINE_PARAM_B(NmpDepthDiv, 3, 1, 21);
   DEFINE_PARAM_S(NmpEvalDiv, 141, 20);
   DEFINE_PARAM_S(NmpEvalDivMin, 4, 1);
 
