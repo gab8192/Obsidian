@@ -837,7 +837,7 @@ namespace Search {
 
       TT::prefetch(pos.key ^ ZOBRIST_TEMPO);
 
-      int R = std::min((eval - beta) / NmpEvalDiv, (int)NmpEvalDivMin) + depth / NmpDepthDiv + NmpBase;
+      int R = std::min((eval - beta) / NmpEvalDiv, (int)NmpEvalDivMin) + depth / NmpDepthDiv + NmpBase + ttMoveNoisy;
 
       Position newPos = pos;
       playNullMove(newPos, ss);
