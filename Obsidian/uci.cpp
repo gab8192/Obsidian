@@ -95,22 +95,16 @@ namespace {
       std::istringstream posStr(BENCH_POSITIONS[i]);
       position(searchSettings.position, posStr);
 
-      newGame();
-
       // Start search
       searchSettings.startTime = timeMillis();
+      TT::nextSearch();
       Threads::startSearch(searchSettings);
 
       // And wait for it to finish..
       Threads::waitForSearch();
 
-      if (i >= 5) {
-        // Skip the first 5 positions from nps calculation
-
-        elapsed += timeMillis() - searchSettings.startTime;
-
-        totalNodes += Threads::totalNodes();
-      }
+      elapsed += timeMillis() - searchSettings.startTime;
+      totalNodes += Threads::totalNodes();
     }
 
     std::cout << totalNodes << " nodes " << (totalNodes * 1000 / elapsed) << " nps" << std::endl;
