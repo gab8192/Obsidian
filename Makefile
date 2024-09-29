@@ -17,7 +17,7 @@ OPTIMIZE = -O3 -fno-stack-protector -fno-math-errno -funroll-loops -fno-exceptio
 FLAGS = -s -pthread -std=c++17 -DNDEBUG
 
 ifeq ($(build),)
-	build = native
+	build = avx2
 endif
 
 ifeq ($(build), native)
