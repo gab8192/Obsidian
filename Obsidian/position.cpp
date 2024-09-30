@@ -17,6 +17,9 @@ void positionInit() {
   ROOK_SQR_TO_CR[SQ_H1] = ~WHITE_OO;
   ROOK_SQR_TO_CR[SQ_A8] = ~BLACK_OOO;
   ROOK_SQR_TO_CR[SQ_H8] = ~BLACK_OO;
+
+  ROOK_SQR_TO_CR[SQ_E1] = ~WHITE_CASTLING;
+  ROOK_SQR_TO_CR[SQ_E8] = ~BLACK_CASTLING;
 }
 
 Bitboard Position::attackersTo(Square s, Bitboard occupied) const {
@@ -180,13 +183,8 @@ bool Position::isPseudoLegal(Move move) const {
 bool Position::isLegal(Move move) const {
 
   if (move_type(move) == MT_CASTLING) {
-    switch (castling_type(move))
-    {
-    case WHITE_OO: return !attackersTo(SQ_F1, BLACK) && !attackersTo(SQ_G1, BLACK);
-    case WHITE_OOO: return !attackersTo(SQ_D1, BLACK) && !attackersTo(SQ_C1, BLACK);
-    case BLACK_OO: return !attackersTo(SQ_F8, WHITE) && !attackersTo(SQ_G8, WHITE);
-    case BLACK_OOO: return !attackersTo(SQ_D8, WHITE) && !attackersTo(SQ_C8, WHITE);
-    }
+    const CastlingData& cd = CASTLING_DATA[castling_type(move)];
+    return !attackersTo(cd.kingDest, ~sideToMove) && !attackersTo(cd.rookDest, ~sideToMove);
   }
 
   const Square from = move_from(move);
@@ -264,36 +262,24 @@ void Position::doMove(Move move, DirtyPieces& dp) {
       removePiece(to, capturedPc);
       dp.sub1 = {to, capturedPc};
 
-      if (piece_type(capturedPc) == ROOK)
-        newCastlingRights &= ROOK_SQR_TO_CR[to];
+      newCastlingRights &= ROOK_SQR_TO_CR[to];
     }
 
     movePiece(from, to, movedPc);
     dp.sub0 = {from, movedPc};
     dp.add0 = {to, movedPc};
 
-    switch (piece_type(movedPc)) {
-    case PAWN: {
+    newCastlingRights &= ROOK_SQR_TO_CR[from];
+
+    if (piece_type(movedPc) == PAWN) {
       halfMoveClock = 0;
-
       int push = (us == WHITE ? 8 : -8);
-
       if (to == from + 2*push) {
         if (getPawnAttacks(from + push, us) & pieces(them, PAWN)) {
           epSquare = from + push;
           key ^= ZOBRIST_EP[fileOf(epSquare)];
         }
       }
-      break;
-    }
-    case ROOK: {
-      newCastlingRights &= ROOK_SQR_TO_CR[from];
-      break;
-    }
-    case KING: {
-      newCastlingRights &= (us == WHITE ? BLACK_CASTLING : WHITE_CASTLING);
-      break;
-    }
     }
 
     break;
@@ -355,8 +341,7 @@ void Position::doMove(Move move, DirtyPieces& dp) {
       removePiece(to, capturedPc);
       dp.sub1 = {to, capturedPc};
 
-      if (piece_type(capturedPc) == ROOK)
-        newCastlingRights &= ROOK_SQR_TO_CR[to];
+      newCastlingRights &= ROOK_SQR_TO_CR[to];
     }
 
     removePiece(from, movedPc);

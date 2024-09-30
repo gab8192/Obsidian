@@ -87,6 +87,8 @@ namespace {
     std::string oldMinimal = Options["Minimal"];
     Options["Minimal"] = std::string("true");
 
+    newGame();
+
     for (int i = 0; i < posCount; i++)
     {
       Search::Settings searchSettings;

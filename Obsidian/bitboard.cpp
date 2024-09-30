@@ -298,6 +298,17 @@ Bitboard getPawnBbAttacks(Bitboard pawns, Color pawnColor) {
   }
 }
 
+Bitboard getPieceAttacks(PieceType pt, Square s, Bitboard occupied) {
+  switch (pt) {
+  case KNIGHT: return getKnightAttacks(s);
+  case BISHOP: return getBishopAttacks(s, occupied);
+  case ROOK:   return getRookAttacks(s, occupied);
+  case QUEEN:  return getBishopAttacks(s, occupied) | getRookAttacks(s, occupied);
+  case KING:   return getKingAttacks(s);
+  default:     return 0;
+  }
+}
+
 #if defined(USE_PEXT)
 
 void init_pext_attacks(Bitboard table[], Bitboard* attacks[], Bitboard masks[],

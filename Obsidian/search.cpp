@@ -74,7 +74,7 @@ namespace Search {
     nodes = 0;
   }
 
-  Move moveFromTbProbeRoot(Position& pos, unsigned tbResult) {
+  Move moveFromTbProbeRoot(unsigned tbResult) {
 
     constexpr PieceType PROMO_TYPE_TABLE[5] = {
       NO_PIECE_TYPE,
@@ -358,8 +358,8 @@ namespace Search {
       addToHistory((ss - 6)->contHistory[chIndex], bonus);
   }
 
-  void Thread::updateHistories(Position& pos, int bonus, Move bestMove, Score bestScore,
-                       Score beta, Move* quiets, int quietCount, int depth, SearchInfo* ss) {
+  void Thread::updateHistories(Position& pos, int bonus, Move bestMove,
+                       Move* quiets, int quietCount, int depth, SearchInfo* ss) {
 
     // Counter move
     if ((ss - 1)->playedMove) {
@@ -503,7 +503,7 @@ namespace Search {
         return ttScore;
 
     Move bestMove = MOVE_NONE;
-    Score rawStaticEval = SCORE_NONE;
+    Score rawStaticEval;
     Score bestScore;
     Score futility;
 
@@ -512,7 +512,7 @@ namespace Search {
     if (pos.checkers) {
       // When in check avoid evaluating
       bestScore = -SCORE_INFINITE;
-      ss->staticEval = SCORE_NONE;
+      futility = ss->staticEval = rawStaticEval = SCORE_NONE;
     }
     else {
       if (ttStaticEval != SCORE_NONE)
@@ -1129,7 +1129,7 @@ namespace Search {
 
       if (pos.isQuiet(bestMove))
       {
-        updateHistories(pos, bonus, bestMove, bestScore, beta, quiets, quietCount, depth, ss);
+        updateHistories(pos, bonus, bestMove, quiets, quietCount, depth, ss);
       }
       else {
         PieceType captured = piece_type(pos.board[move_to(bestMove)]);
@@ -1288,7 +1288,7 @@ namespace Search {
           nullptr);
 
       if (result != TB_RESULT_FAILED)
-        tbBestMove = moveFromTbProbeRoot(rootPos, result);
+        tbBestMove = moveFromTbProbeRoot(result);
     }
 
     // Search starting. Zero out the nodes of each root move
