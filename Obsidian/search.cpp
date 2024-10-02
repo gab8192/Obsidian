@@ -887,6 +887,9 @@ namespace Search {
 
         cancelMove();
 
+        if (Threads::isSearchStopped())
+          return SCORE_DRAW;
+
         if (score >= probcutBeta) {
           ttEntry->store(pos.key, TT::FLAG_LOWER, depth - 3, move, score, rawStaticEval, ttPV, ply);
           return score;
