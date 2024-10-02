@@ -18,6 +18,8 @@ namespace Threads {
 
   void waitForSearch(bool waitMain = true);
 
+  void startSync(Search::Settings& settings);
+
   void startSearch(Search::Settings& settings);
 
   Search::Settings& getSearchSettings();

@@ -177,6 +177,9 @@ namespace Search {
   }
 
   void printInfo(int depth, int pvIdx, Score score, const std::string& pvString) {
+    if (true)
+      return;
+
     const int64_t elapsed = elapsedTime();
     std::ostringstream infoStr;
         infoStr
@@ -195,6 +198,9 @@ namespace Search {
   }
 
   void printBestMove(Move move) {
+    if (true)
+      return;
+      
     std::cout << "bestmove " << UCI::moveToString(move) << std::endl;
   }
 
@@ -419,20 +425,7 @@ namespace Search {
       if ((BETWEEN_BB[from][to] ^ to) & occ)
         continue;
 
-      // Repetition after root
-      if (ply > i)
-        return true;
-
-      Piece pc = pos.board[ pos.board[from] ? from : to ];
-
-      if (piece_color(pc) != pos.sideToMove)
-        continue;
-
-      // We want one more repetition before root
-      for (int j = i+4; j <= maxDist; j += 2) {
-        if (keyStack[keyStackHead - j] == keyStack[keyStackHead - i])
-          return true;
-      }
+      return true;
     }
 
     return false;
@@ -442,23 +435,16 @@ namespace Search {
 
     const int maxDist = std::min(pos.halfMoveClock, keyStackHead);
 
-    bool hitBeforeRoot = false;
-
     for (int i = 4; i <= maxDist; i += 2) {
-      if (pos.key == keyStack[keyStackHead - i]) {
-        if (ply >= i)
-          return true;
-        if (hitBeforeRoot)
-          return true;
-        hitBeforeRoot = true;
-      }
+      if (pos.key == keyStack[keyStackHead - i])
+        return true;
     }
 
     return false;
   }
 
   Score scaleOnHMC(Position& pos, Score eval) {
-    return (eval * (200 - pos.halfMoveClock)) / 200;
+    return eval;
   }
 
   template<bool IsPV>
@@ -1343,11 +1329,6 @@ namespace Search {
           }
           else
             break;
-
-          if (settings.nodes && Threads::totalNodes() >= settings.nodes) {
-            naturalExit = false;
-            goto bestMoveDecided;
-          }
 
           window += window / 3;
         }
