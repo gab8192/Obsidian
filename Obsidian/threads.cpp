@@ -1,4 +1,5 @@
 #include "threads.h"
+#include "obsnuma.h"
 #include <atomic>
 
 namespace Threads {
@@ -64,9 +65,38 @@ namespace Threads {
     searchStopped = true;
   }
 
+  std::vector<cpu_set_t> makeNodeMappings() {
+
+    std::vector<cpu_set_t> mappings;
+
+    for (int node = 0; node < numaNodeCount(); node++) {
+      // See what CPUs are associated with this node
+      bitmask* cpuMask = numa_allocate_cpumask();
+      numa_node_to_cpus(node, cpuMask);
+      
+      cpu_set_t cpus;
+      CPU_ZERO(&cpus);
+
+      for (int i = 0; i < cpuMask->size; i++)
+        if (numa_bitmask_isbitset(cpuMask, i))
+          CPU_SET(i, &cpus);
+
+      numa_free_cpumask(cpuMask);
+      mappings.push_back(cpus);
+    }
+    return mappings;
+  }
+
+  // A map of numa node index -> CPUs
+  std::vector<cpu_set_t> nodeMappings;
+
   std::atomic<int> startedThreadsCount;
 
   void threadEntry(int index) {
+    // Before doing anything else, bind this thread
+    int node = index % numaNodeCount();
+    pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), & nodeMappings[node]);
+
     searchThreads[index] = new Search::Thread();
     startedThreadsCount++;
     searchThreads[index]->idleLoop();
@@ -83,6 +113,11 @@ namespace Threads {
       delete searchThreads[i];
       delete stdThreads[i];
     }
+
+    // Every thread from before, is now destroyed
+
+    // We could do this just once at startup, but w/e
+    nodeMappings = makeNodeMappings();
 
     searchThreads.resize(threadCount);
     stdThreads.resize(threadCount);

@@ -1,6 +1,7 @@
 #include "nnue.h"
 #include "bitboard.h"
 #include "incbin.h"
+#include "obsnuma.h"
 #include "position.h"
 
 #include <iostream>
@@ -12,12 +13,14 @@ namespace NNUE {
 
   constexpr int WeightsPerVec = sizeof(Vec) / sizeof(weight_t);
 
-  struct {
+  struct NNWeights {
     alignas(Alignment) weight_t FeatureWeights[KingBuckets][2][6][64][HiddenWidth];
     alignas(Alignment) weight_t FeatureBiases[HiddenWidth];
     alignas(Alignment) weight_t OutputWeights[OutputBuckets][HiddenWidth];
                        weight_t OutputBias[OutputBuckets];
-  } Content;
+  };
+
+  NNWeights Content;
 
   bool needRefresh(Color side, Square oldKing, Square newKing) {
     // Crossed half?
@@ -167,6 +170,12 @@ namespace NNUE {
 
     memcpy(&Content, gEmbeddedNNUEData, sizeof(Content));
 
+    NNWeights** weightsPool = new NNWeights*[numaNodeCount()];
+    for (int node = 0; node < numaNodeCount(); node++) {
+      NNWeights* thisWeights = (NNWeights*) numa_alloc_onnode(sizeof(NNWeights), node);
+      mempcpy(thisWeights, gEmbeddedNNUEData, sizeof(NNWeights));
+      weightsPool[node] = thisWeights;
+    }
   }
 
   Score evaluate(Position& pos, Accumulator& accumulator) {
