@@ -65,6 +65,13 @@ namespace Threads {
     searchStopped = true;
   }
 
+
+  
+  bool bindDone;
+  std::mutex mtx;
+  std::condition_variable cv;
+
+
   std::vector<cpu_set_t> makeNodeMappings() {
 
     std::vector<cpu_set_t> mappings;
@@ -93,12 +100,12 @@ namespace Threads {
   std::atomic<int> startedThreadsCount;
 
   void threadEntry(int index) {
+    {
+      std::unique_lock<std::mutex> lock(mtx);
+      cv.wait(lock, [] { return bindDone; });
+    }
     // Before doing anything else, bind this thread
     int node = index % numaNodeCount();
-    pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), & nodeMappings[node]);
-
-    sched_yield();
-    
     searchThreads[index] = new Search::Thread(*(NNUE::weightsPool[node]));
     startedThreadsCount++;
     searchThreads[index]->idleLoop();
@@ -125,10 +132,21 @@ namespace Threads {
     stdThreads.resize(threadCount);
 
     startedThreadsCount = 0;
+    bindDone = false;
 
      for (int i = 0; i < threadCount; i++) {
       stdThreads[i] = new std::thread(threadEntry, i);
+
+      int node = i % numaNodeCount();
+      pthread_setaffinity_np(stdThreads[i]->native_handle(),
+            sizeof(cpu_set_t), & nodeMappings[node]);
     }
+
+    {
+      std::lock_guard<std::mutex> lock(mtx);
+      bindDone = true;
+    }
+    cv.notify_all();
 
     while (startedThreadsCount < threadCount) {
       // This is necessary because some Search::Thread(s) may not be ready yet.
