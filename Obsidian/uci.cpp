@@ -114,6 +114,51 @@ namespace {
     Options["Minimal"] = oldMinimal;
   }
 
+  void benccch(std::istringstream& is) {
+
+    int movetime, hash, threads;
+    is >> movetime;
+    is >> hash;
+    is >> threads;
+
+    Threads::setThreadCount(threads);
+    TT::resize(hash);
+
+    constexpr int posCount = sizeof(BENCH_POSITIONS) / sizeof(char*);
+
+    uint64_t totalNodes = 0;
+    int64_t elapsed = 0;
+
+    std::string oldMinimal = Options["Minimal"];
+    Options["Minimal"] = std::string("true");
+
+    newGame();
+
+    for (int i = 0; i < posCount; i++)
+    {
+      Search::Settings searchSettings;
+      searchSettings.movetime = movetime;
+
+      std::istringstream posStr(BENCH_POSITIONS[i]);
+      position(searchSettings.position, posStr);
+
+      // Start search
+      searchSettings.startTime = timeMillis();
+      TT::nextSearch();
+      Threads::startSearch(searchSettings);
+
+      // And wait for it to finish..
+      Threads::waitForSearch();
+
+      elapsed += timeMillis() - searchSettings.startTime;
+      totalNodes += Threads::totalNodes();
+    }
+
+    std::cout << totalNodes << " nodes " << (totalNodes * 1000 / elapsed) << " nps" << std::endl;
+
+    Options["Minimal"] = oldMinimal;
+  }
+
   void setoption(std::istringstream& is) {
     std::string token, name, value;
 
@@ -217,6 +262,7 @@ void UCI::loop(int argc, char* argv[]) {
     }
     else if (token == "qc")         qc(pos);
     else if (token == "bench")      bench();
+    else if (token == "benccch")      benccch(is);
     else if (token == "setoption")  setoption(is);
     else if (token == "go")         go(pos, is);
     else if (token == "position")   position(pos, is);
