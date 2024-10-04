@@ -97,7 +97,9 @@ namespace Threads {
     int node = index % numaNodeCount();
     pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), & nodeMappings[node]);
 
-    searchThreads[index] = new Search::Thread();
+    sched_yield();
+    
+    searchThreads[index] = new Search::Thread(*(NNUE::weightsPool[node]));
     startedThreadsCount++;
     searchThreads[index]->idleLoop();
   }

@@ -130,7 +130,7 @@ namespace Search {
     searchPrevScore = SCORE_NONE;
   }
 
-  Thread::Thread()
+  Thread::Thread(NNUE::NNWeights& _nWeights) : nWeights(_nWeights)
   {
     resetHistories();
   }
@@ -251,11 +251,11 @@ namespace Search {
 
         while (toRemove) {
           Square sq = popLsb(toRemove);
-          entry.acc.removePiece(king, side, makePiece(c, pt), sq);
+          entry.acc.removePiece(king, side, makePiece(c, pt), sq, nWeights);
         }
         while (toAdd) {
           Square sq = popLsb(toAdd);
-          entry.acc.addPiece(king, side, makePiece(c, pt), sq);
+          entry.acc.addPiece(king, side, makePiece(c, pt), sq, nWeights);
         }
       }
     }
@@ -284,7 +284,7 @@ namespace Search {
         if (iter->updated[side]) {
           NNUE::Accumulator* lastUpdated = iter;
           while (lastUpdated != &head) {
-            (lastUpdated+1)->doUpdates(king, side, *lastUpdated);
+            (lastUpdated+1)->doUpdates(king, side, *lastUpdated, nWeights);
             lastUpdated++;
           }
           break;
@@ -296,7 +296,7 @@ namespace Search {
   Score Thread::doEvaluation(Position& pos) {
     NNUE::Accumulator& acc = accumStack[accumStackHead];
     updateAccumulator(pos, acc);
-    return Eval::evaluate(pos, acc);
+    return Eval::evaluate(pos, acc, nWeights);
   }
 
   void Thread::playMove(Position& pos, Move move, SearchInfo* ss) {
@@ -1213,13 +1213,13 @@ namespace Search {
 
     accumStackHead = 0;
     for (Color side = WHITE; side <= BLACK; ++side) {
-      accumStack[0].refresh(rootPos, side);
+      accumStack[0].refresh(rootPos, side, nWeights);
       accumStack[0].kings[side] = rootPos.kingSquare(side);
     }
 
     for (int i = 0; i < 2; i++)
         for (int j = 0; j < NNUE::KingBuckets; j++)
-          finny[i][j].reset();
+          finny[i][j].reset(nWeights);
 
     keyStackHead = 0;
     for (int i = 0; i < settings.prevPositions.size(); i++)

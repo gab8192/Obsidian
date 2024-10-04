@@ -225,14 +225,14 @@ void UCI::loop(int argc, char* argv[]) {
     else if (token == "d")          std::cout << pos << std::endl;
     else if (token == "tune")       std::cout << paramsToSpsaInput();
     else if (token == "eval") {
-      NNUE::Accumulator tempAcc;
+      /*NNUE::Accumulator tempAcc;
       tempAcc.refresh(pos, WHITE);
       tempAcc.refresh(pos, BLACK);
       Score eval = NNUE::evaluate(pos, tempAcc);
       if (pos.sideToMove == BLACK)
         eval = -eval;
       std::cout << "Evaluation: " << UCI::normalizeToCp(eval)
-                << "  (not normalized: " << eval << ")" << std::endl;
+                << "  (not normalized: " << eval << ")" << std::endl;*/
     }
     else if (!token.empty() && token[0] != '#')
       std::cout << "Unknown command: '" << cmd << "'." << std::endl;

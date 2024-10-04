@@ -4,9 +4,9 @@
 
 namespace Eval {
 
-  Score evaluate(Position& pos, NNUE::Accumulator& accumulator) {
+  Score evaluate(Position& pos, NNUE::Accumulator& accumulator, NNUE::NNWeights& nWeights) {
 
-    Score score = NNUE::evaluate(pos, accumulator);
+    Score score = NNUE::evaluate(pos, accumulator, nWeights);
 
     int phase =  3 * BitCount(pos.pieces(KNIGHT))
                + 3 * BitCount(pos.pieces(BISHOP))

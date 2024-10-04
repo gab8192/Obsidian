@@ -22,6 +22,8 @@ int main(int argc, char** argv)
 
   positionInit();
 
+  NNUE::init();
+
   Cuckoo::init();
 
   Search::init();
@@ -30,8 +32,6 @@ int main(int argc, char** argv)
 
   Threads::setThreadCount(Options["Threads"]);
   TT::resize(Options["Hash"]);
-
-  NNUE::init();
 
   UCI::loop(argc, argv);
 

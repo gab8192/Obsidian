@@ -48,23 +48,34 @@ namespace NNUE {
   constexpr int NetworkQB = 64;
   constexpr int NetworkQAB = NetworkQA * NetworkQB;
 
+  struct NNWeights {
+    alignas(Alignment) weight_t FeatureWeights[KingBuckets][2][6][64][HiddenWidth];
+    alignas(Alignment) weight_t FeatureBiases[HiddenWidth];
+    alignas(Alignment) weight_t OutputWeights[OutputBuckets][HiddenWidth];
+                       weight_t OutputBias[OutputBuckets];
+  };
+
+  extern NNWeights** weightsPool;
+
   struct Accumulator {
 
     alignas(Alignment) weight_t colors[COLOR_NB][HiddenWidth];
+
+    NNWeights* nWeights;
 
     bool updated[COLOR_NB];
     Square kings[COLOR_NB];
     DirtyPieces dirtyPieces;
 
-    void addPiece(Square kingSq, Color side, Piece pc, Square sq);
+    void addPiece(Square kingSq, Color side, Piece pc, Square sq, NNWeights& nWeights);
 
-    void removePiece(Square kingSq, Color side, Piece pc, Square sq);
+    void removePiece(Square kingSq, Color side, Piece pc, Square sq, NNWeights& nWeights);
 
-    void doUpdates(Square kingSq, Color side, Accumulator& input);
+    void doUpdates(Square kingSq, Color side, Accumulator& input, NNWeights& nWeights);
 
-    void reset(Color side);
+    void reset(Color side, NNWeights& nWeights);
 
-    void refresh(Position& pos, Color side);
+    void refresh(Position& pos, Color side, NNWeights& nWeights);
   };
 
   struct FinnyEntry {
@@ -72,7 +83,7 @@ namespace NNUE {
     Bitboard byPieceBB[COLOR_NB][PIECE_TYPE_NB];
     Accumulator acc;
 
-    void reset();
+    void reset(NNWeights& nWeights);
   };
 
   using FinnyTable = FinnyEntry[2][KingBuckets];
@@ -81,5 +92,5 @@ namespace NNUE {
 
   void init();
 
-  Score evaluate(Position& pos, Accumulator& accumulator);
+  Score evaluate(Position& pos, Accumulator& accumulator, NNWeights& nWeights);
 }

@@ -13,14 +13,7 @@ namespace NNUE {
 
   constexpr int WeightsPerVec = sizeof(Vec) / sizeof(weight_t);
 
-  struct NNWeights {
-    alignas(Alignment) weight_t FeatureWeights[KingBuckets][2][6][64][HiddenWidth];
-    alignas(Alignment) weight_t FeatureBiases[HiddenWidth];
-    alignas(Alignment) weight_t OutputWeights[OutputBuckets][HiddenWidth];
-                       weight_t OutputBias[OutputBuckets];
-  };
-
-  NNWeights Content;
+  NNWeights** weightsPool;
 
   bool needRefresh(Color side, Square oldKing, Square newKing) {
     // Crossed half?
@@ -31,11 +24,11 @@ namespace NNUE {
           != KingBucketsScheme[relative_square(side, newKing)];
   }
 
-  inline weight_t* featureAddress(Square kingSq, Color side, Piece pc, Square sq) {
+  inline weight_t* featureAddress(Square kingSq, Color side, Piece pc, Square sq, NNWeights& nWeights) {
     if (kingSq & 0b100)
       sq = Square(sq ^ 7);
 
-    return Content.FeatureWeights
+    return nWeights.FeatureWeights
             [KingBucketsScheme[relative_square(side, kingSq)]]
             [side != piece_color(pc)]
             [piece_type(pc)-1]
@@ -112,73 +105,78 @@ namespace NNUE {
       outputVec[i] = addEpi16(subEpi16(subEpi16(addEpi16(inputVec[i], add0Vec[i]), sub0Vec[i]), sub1Vec[i]), add1Vec[i]);
   }
 
-  void Accumulator::addPiece(Square kingSq, Color side, Piece pc, Square sq) {
-    multiAdd<HiddenWidth>(colors[side], colors[side], featureAddress(kingSq, side, pc, sq));
+  void Accumulator::addPiece(Square kingSq, Color side, Piece pc, Square sq, NNWeights& nWeights) {
+    multiAdd<HiddenWidth>(colors[side], colors[side], featureAddress(kingSq, side, pc, sq, nWeights));
   }
 
-  void Accumulator::removePiece(Square kingSq, Color side, Piece pc, Square sq) {
-    multiSub<HiddenWidth>(colors[side], colors[side], featureAddress(kingSq, side, pc, sq));
+  void Accumulator::removePiece(Square kingSq, Color side, Piece pc, Square sq, NNWeights& nWeights) {
+    multiSub<HiddenWidth>(colors[side], colors[side], featureAddress(kingSq, side, pc, sq, nWeights));
   }
 
-  void Accumulator::doUpdates(Square kingSq, Color side, Accumulator& input) {
+  void Accumulator::doUpdates(Square kingSq, Color side, Accumulator& input, NNWeights& nWeights) {
     DirtyPieces dp = this->dirtyPieces;
     if (dp.type == DirtyPieces::CASTLING)
     {
       multiSubAddSubAdd<HiddenWidth>(colors[side], input.colors[side],
-        featureAddress(kingSq, side, dp.sub0.pc, dp.sub0.sq),
-        featureAddress(kingSq, side, dp.add0.pc, dp.add0.sq),
-        featureAddress(kingSq, side, dp.sub1.pc, dp.sub1.sq),
-        featureAddress(kingSq, side, dp.add1.pc, dp.add1.sq));
+        featureAddress(kingSq, side, dp.sub0.pc, dp.sub0.sq, nWeights),
+        featureAddress(kingSq, side, dp.add0.pc, dp.add0.sq, nWeights),
+        featureAddress(kingSq, side, dp.sub1.pc, dp.sub1.sq, nWeights),
+        featureAddress(kingSq, side, dp.add1.pc, dp.add1.sq, nWeights));
     } else if (dp.type == DirtyPieces::CAPTURE)
     {
       multiSubAddSub<HiddenWidth>(colors[side], input.colors[side],
-        featureAddress(kingSq, side, dp.sub0.pc, dp.sub0.sq),
-        featureAddress(kingSq, side, dp.add0.pc, dp.add0.sq),
-        featureAddress(kingSq, side, dp.sub1.pc, dp.sub1.sq));
+        featureAddress(kingSq, side, dp.sub0.pc, dp.sub0.sq, nWeights),
+        featureAddress(kingSq, side, dp.add0.pc, dp.add0.sq, nWeights),
+        featureAddress(kingSq, side, dp.sub1.pc, dp.sub1.sq, nWeights));
     } else
     {
       multiSubAdd<HiddenWidth>(colors[side], input.colors[side],
-        featureAddress(kingSq, side, dp.sub0.pc, dp.sub0.sq),
-        featureAddress(kingSq, side, dp.add0.pc, dp.add0.sq));
+        featureAddress(kingSq, side, dp.sub0.pc, dp.sub0.sq, nWeights),
+        featureAddress(kingSq, side, dp.add0.pc, dp.add0.sq, nWeights));
     }
     updated[side] = true;
   }
 
-  void Accumulator::reset(Color side) {
-    memcpy(colors[side], Content.FeatureBiases, sizeof(Content.FeatureBiases));
+  void Accumulator::reset(Color side, NNWeights& nWeights) {
+    memcpy(colors[side], nWeights.FeatureBiases, sizeof(nWeights.FeatureBiases));
   }
 
-  void Accumulator::refresh(Position& pos, Color side) {
-    reset(side);
+  void Accumulator::refresh(Position& pos, Color side, NNWeights& nWeights) {
+    reset(side, nWeights);
     const Square kingSq = pos.kingSquare(side);
     Bitboard occupied = pos.pieces();
     while (occupied) {
       const Square sq = popLsb(occupied);
-      addPiece(kingSq, side, pos.board[sq], sq);
+      addPiece(kingSq, side, pos.board[sq], sq, nWeights);
     }
     updated[side] = true;
   }
 
-  void FinnyEntry::reset() {
+  void FinnyEntry::reset(NNWeights& nWeights) {
     memset(byColorBB, 0, sizeof(byColorBB));
     memset(byPieceBB, 0, sizeof(byPieceBB));
-    acc.reset(WHITE);
-    acc.reset(BLACK);
+    acc.reset(WHITE, nWeights);
+    acc.reset(BLACK, nWeights);
+  }
+
+
+  void* aligned_numa_alloc(size_t align, size_t size, int node) {
+    void *ptr = numa_alloc_onnode(size + align - 1, node);
+    uintptr_t aligned_ptr = ((uintptr_t)ptr + align - 1) & ~(align - 1);
+    return (void *)aligned_ptr;
   }
 
   void init() {
 
-    memcpy(&Content, gEmbeddedNNUEData, sizeof(Content));
-
-    NNWeights** weightsPool = new NNWeights*[numaNodeCount()];
+    weightsPool = new NNWeights*[numaNodeCount()];
     for (int node = 0; node < numaNodeCount(); node++) {
-      NNWeights* thisWeights = (NNWeights*) numa_alloc_onnode(sizeof(NNWeights), node);
-      mempcpy(thisWeights, gEmbeddedNNUEData, sizeof(NNWeights));
+      NNWeights* thisWeights = (NNWeights*) aligned_numa_alloc(SIMD::Alignment, sizeof(NNWeights), node);
+      memcpy(thisWeights, gEmbeddedNNUEData, sizeof(NNWeights));
       weightsPool[node] = thisWeights;
     }
   }
 
-  Score evaluate(Position& pos, Accumulator& accumulator) {
+  Score evaluate(Position& pos, Accumulator& accumulator, NNWeights& nWeights) {
 
     constexpr int divisor = (32 + OutputBuckets - 1) / OutputBuckets;
     int outputBucket = (BitCount(pos.pieces()) - 2) / divisor;
@@ -191,7 +189,7 @@ namespace NNUE {
     for (int them = 0; them <= 1; ++them)
     {
       Vec* acc = (Vec*) accumulator.colors[pos.sideToMove ^ them];
-      Vec* weights = (Vec*) &Content.OutputWeights[outputBucket][them * HiddenWidth / 2];
+      Vec* weights = (Vec*) &nWeights.OutputWeights[outputBucket][them * HiddenWidth / 2];
       for (int i = 0; i < (HiddenWidth / WeightsPerVec) / 2; ++i)
       {
         Vec c0 = minEpi16(maxEpi16(acc[i], vecZero), vecQA);
@@ -201,7 +199,7 @@ namespace NNUE {
       }
     }
 
-    int unsquared = vecHaddEpi32(sum) / NetworkQA + Content.OutputBias[outputBucket];
+    int unsquared = vecHaddEpi32(sum) / NetworkQA + nWeights.OutputBias[outputBucket];
 
     return (unsquared * NetworkScale) / NetworkQAB;
   }

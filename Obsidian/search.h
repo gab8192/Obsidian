@@ -60,13 +60,15 @@ namespace Search {
     volatile uint64_t nodesSearched;
     volatile uint64_t tbHits;
 
-    Thread();
+    Thread(NNUE::NNWeights& _nWeights);
 
     void resetHistories();
 
     void idleLoop();
 
   private:
+
+    NNUE::NNWeights& nWeights;
 
     int64_t optimumTime, maxTime;
     uint32_t maxTimeCounter;
