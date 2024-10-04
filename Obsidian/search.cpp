@@ -19,7 +19,7 @@ namespace Search {
   DEFINE_PARAM_S(QsFpMargin, 136, 15);
 
   DEFINE_PARAM_S(LmrBase, 48, 10);
-  DEFINE_PARAM_S(LmrDiv, 192, 10);
+  DEFINE_PARAM_S(LmrDiv, 250, 10);
 
   DEFINE_PARAM_S(CorrHistWeight, 53, 6);
 
@@ -1025,7 +1025,7 @@ namespace Search {
 
       if (depth >= 2 && seenMoves > 1 + 2 * IsRoot) {
 
-        int R = lmrTable[depth][seenMoves] / (1 + !isQuiet);
+        int R = lmrTable[depth][seenMoves];
 
         // Reduce or extend depending on history of this move
         R -= history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv);
