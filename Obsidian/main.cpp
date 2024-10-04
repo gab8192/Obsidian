@@ -15,6 +15,11 @@ int main(int argc, char** argv)
 {
   std::cout << "Obsidian " << engineVersion << " by Gabriele Lombardo" << std::endl;
 
+  std::cout << numa_available() << std::endl;
+  cpu_set_t de;
+
+  if (1) return 0;
+
   Zobrist::init();
 
   Bitboards::init();

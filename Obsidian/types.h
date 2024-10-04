@@ -8,6 +8,8 @@
 #include <nmmintrin.h>
 #include <thread>
 
+#include <numa.h>
+
 const std::string engineVersion = "dev-13.25";
 
 using Key = uint64_t;

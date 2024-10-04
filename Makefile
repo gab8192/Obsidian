@@ -49,7 +49,7 @@ else ifeq ($(findstring pext, $(build)), pext)
 	FLAGS += -DUSE_PEXT -mbmi2
 endif
 
-COMMAND = g++ $(OPTIMIZE) $(FLAGS) $(FILES) -o $(EXE)
+COMMAND = g++ $(OPTIMIZE) $(FLAGS) $(FILES) -o $(EXE) -lnuma
 
 make: $(FILES)
 	$(COMMAND) -fprofile-generate="obs_pgo"
