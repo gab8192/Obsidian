@@ -962,8 +962,10 @@ namespace Search {
         if (!pos.seeGe(move, seeMargin))
           continue;
 
-        if (isQuiet && history < HistPrDepthMul * depth)
+        if (quietCount > 0 && history < HistPrDepthMul * depth) {
             skipQuiets = true;
+            continue;
+        }
 
         // Late move pruning. At low depths, only visit a few quiet moves
         if (seenMoves >= (depth * depth + LmpBase) / (2 - improving))
