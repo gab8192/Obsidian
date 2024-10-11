@@ -1126,7 +1126,7 @@ namespace Search {
     }
 
     // Update histories
-    if (bestScore >= beta)
+    if (bestMove)
     {
       int bonus = stat_bonus(depth + (bestScore > beta + StatBonusBoostAt));
 
