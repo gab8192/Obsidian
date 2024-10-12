@@ -353,9 +353,9 @@ namespace Search {
     if ((ss - 2)->playedMove)
       addToHistory((ss - 2)->contHistory[chIndex], bonus);
     if ((ss - 4)->playedMove)
-      addToHistory((ss - 4)->contHistory[chIndex], bonus);
+      addToHistory((ss - 4)->contHistory[chIndex], bonus/2);
     if ((ss - 6)->playedMove)
-      addToHistory((ss - 6)->contHistory[chIndex], bonus);
+      addToHistory((ss - 6)->contHistory[chIndex], bonus/4);
   }
 
   void Thread::updateHistories(Position& pos, int bonus, Move bestMove,
