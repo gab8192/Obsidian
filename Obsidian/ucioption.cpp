@@ -13,6 +13,8 @@ UCI::OptionsMap Options;
 
 namespace UCI {
 
+int contemptValue = 0;
+
 void clearHashClicked(const Option&)   {
    TT::clear();
 }
@@ -34,6 +36,45 @@ void syzygyPathChanged(const Option& o) {
     std::cout << "info string Syzygy tablebases failed to load" << std::endl;
 }
 
+void refreshContemptImpl() {
+  contemptValue = Options["Contempt"];
+
+  std::string uciOppString = Options["UCI_Opponent"];
+  std::string overrides = Options["ContemptOverrides"];
+
+  if (uciOppString.empty() || overrides.empty())
+    return;
+
+  std::string opponent = "";
+  {
+    std::string token;
+    std::istringstream iss(uciOppString);
+    iss >> token; // title|none
+    iss >> token; // elo|none
+    iss >> token; // computer|human
+    while (iss >> token)
+      opponent += (opponent.empty() ? "" : " ") + token;
+  }
+
+  std::stringstream ss(overrides);
+  std::string pair; // engine=value
+
+  while (std::getline(ss, pair, ',')) {
+    std::string key = pair.substr(0, pair.find('='));
+    std::string value = pair.substr(pair.find('=') + 1);
+    if (key == opponent) {
+      contemptValue = std::stoi(value);
+      break;
+    }
+  }
+}
+
+void refreshContempt(const Option&) {
+  int oldContempt = contemptValue;
+  refreshContemptImpl();
+  if (contemptValue != oldContempt)
+    std::cout << "Contempt updated to " << contemptValue << std::endl;
+}
 
 bool CaseInsensitiveLess::operator() (const string& s1, const string& s2) const {
 
@@ -46,6 +87,8 @@ void init(OptionsMap& o) {
 
   constexpr int MaxHashMB = 33554432;
 
+  o["Contempt"]          << Option(0, 0, 128, refreshContempt);
+  o["ContemptOverrides"] << Option("", refreshContempt);
   o["Hash"]              << Option(64, 1, MaxHashMB, hashChanged);
   o["Clear Hash"]        << Option(clearHashClicked);
   o["Threads"]           << Option(1, 1, 1024, threadsChanged);
@@ -53,6 +96,7 @@ void init(OptionsMap& o) {
   o["SyzygyPath"]        << Option("", syzygyPathChanged);
   o["Minimal"]           << Option("false");
   o["MultiPV"]           << Option(1, 1, MAX_MOVES);
+  o["UCI_Opponent"]      << Option("", refreshContempt);
 }
 
 

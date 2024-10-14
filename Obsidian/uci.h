@@ -9,6 +9,8 @@
 
 namespace UCI {
 
+  extern int contemptValue;
+
   class Option;
 
   /// Define a custom comparator, because the UCI options should be case-insensitive
