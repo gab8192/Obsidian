@@ -13,7 +13,7 @@ namespace TimeMan {
   {
     double optScale;
 
-    int overhead = Options["Move Overhead"];
+    int overhead = UCI::Options["Move Overhead"];
 
     int mtg = settings.movestogo ? std::min(settings.movestogo, 50) : 50;
 

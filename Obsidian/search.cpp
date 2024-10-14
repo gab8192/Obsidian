@@ -1233,7 +1233,7 @@ namespace Search {
       maxTime = std::min(maxTime, stdMaxTime);
     }
     if (settings.movetime)
-      maxTime = std::min(maxTime, settings.movetime - int64_t(Options["Move Overhead"]));
+      maxTime = std::min(maxTime, settings.movetime - int64_t(UCI::Options["Move Overhead"]));
 
     ply = 0;
     maxTimeCounter = 0;
@@ -1298,7 +1298,7 @@ namespace Search {
     for (int i = 0; i < rootMoves.size(); i++)
       rootMoves[i].nodes = 0;
 
-    const int multiPV = std::min(int(Options["MultiPV"]), rootMoves.size());
+    const int multiPV = std::min(int(UCI::Options["MultiPV"]), rootMoves.size());
 
     for (rootDepth = 1; rootDepth <= settings.depth; rootDepth++) {
 
@@ -1370,7 +1370,7 @@ namespace Search {
 
       const int64_t elapsed = elapsedTime();
 
-      if (std::string(Options["Minimal"]) != "true")
+      if (std::string(UCI::Options["Minimal"]) != "true")
         for (int i = 0; i < multiPV; i++)
           printInfo(completeDepth, i+1, rootMoves[i].score, getPvString(rootMoves[i]));
 
@@ -1457,7 +1457,7 @@ namespace Search {
       }
     }
 
-    if (!naturalExit || bestThread != this || std::string(Options["Minimal"]) == "true")
+    if (!naturalExit || bestThread != this || std::string(UCI::Options["Minimal"]) == "true")
         for (int i = 0; i < multiPV; i++)
           printInfo(bestThread->completeDepth, i+1, bestThread->rootMoves[i].score, getPvString(bestThread->rootMoves[i]));
 

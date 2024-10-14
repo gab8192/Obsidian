@@ -9,9 +9,9 @@
 
 using std::string;
 
-UCI::OptionsMap Options;
-
 namespace UCI {
+
+OptionsMap Options;
 
 int contemptValue = 0;
 
@@ -83,20 +83,20 @@ bool CaseInsensitiveLess::operator() (const string& s1, const string& s2) const 
 }
 
 
-void init(OptionsMap& o) {
+void init() {
 
   constexpr int MaxHashMB = 33554432;
 
-  o["Contempt"]          << Option(0, 0, 128, refreshContempt);
-  o["ContemptOverrides"] << Option("", refreshContempt);
-  o["Hash"]              << Option(64, 1, MaxHashMB, hashChanged);
-  o["Clear Hash"]        << Option(clearHashClicked);
-  o["Threads"]           << Option(1, 1, 1024, threadsChanged);
-  o["Move Overhead"]     << Option(10, 0, 1000);
-  o["SyzygyPath"]        << Option("", syzygyPathChanged);
-  o["Minimal"]           << Option("false");
-  o["MultiPV"]           << Option(1, 1, MAX_MOVES);
-  o["UCI_Opponent"]      << Option("", refreshContempt);
+  Options["Contempt"]          << Option(0, 0, 128, refreshContempt);
+  Options["ContemptOverrides"] << Option("", refreshContempt);
+  Options["Hash"]              << Option(64, 1, MaxHashMB, hashChanged);
+  Options["Clear Hash"]        << Option(clearHashClicked);
+  Options["Threads"]           << Option(1, 1, 1024, threadsChanged);
+  Options["Move Overhead"]     << Option(10, 0, 1000);
+  Options["SyzygyPath"]        << Option("", syzygyPathChanged);
+  Options["Minimal"]           << Option("false");
+  Options["MultiPV"]           << Option(1, 1, MAX_MOVES);
+  Options["UCI_Opponent"]      << Option("", refreshContempt);
 }
 
 

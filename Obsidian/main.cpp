@@ -25,10 +25,10 @@ int main(int argc, char** argv)
 
   Search::init();
 
-  UCI::init(Options);
+  UCI::init();
 
-  Threads::setThreadCount(Options["Threads"]);
-  TT::resize(Options["Hash"]);
+  Threads::setThreadCount(UCI::Options["Threads"]);
+  TT::resize(UCI::Options["Hash"]);
 
   NNUE::init();
 

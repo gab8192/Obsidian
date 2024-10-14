@@ -9,8 +9,6 @@
 
 namespace UCI {
 
-  extern int contemptValue;
-
   class Option;
 
   /// Define a custom comparator, because the UCI options should be case-insensitive
@@ -56,7 +54,7 @@ namespace UCI {
     OnChange on_change;
   };
 
-  void init(OptionsMap&);
+  void init();
 
   void loop(int argc, char* argv[]);
 
@@ -70,6 +68,8 @@ namespace UCI {
 
   Move stringToMove(const Position& pos, std::string& str);
 
-} // namespace UCI
+  extern OptionsMap Options;
 
-extern UCI::OptionsMap Options;
+  extern int contemptValue;
+
+} // namespace UCI

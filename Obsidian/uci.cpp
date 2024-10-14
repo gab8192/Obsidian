@@ -84,8 +84,8 @@ namespace {
     uint64_t totalNodes = 0;
     int64_t elapsed = 0;
 
-    std::string oldMinimal = Options["Minimal"];
-    Options["Minimal"] = std::string("true");
+    std::string oldMinimal = UCI::Options["Minimal"];
+    UCI::Options["Minimal"] = std::string("true");
 
     newGame();
 
@@ -111,7 +111,7 @@ namespace {
 
     std::cout << totalNodes << " nodes " << (totalNodes * 1000 / elapsed) << " nps" << std::endl;
 
-    Options["Minimal"] = oldMinimal;
+    UCI::Options["Minimal"] = oldMinimal;
   }
 
   void benccch(std::istringstream& is) {
@@ -129,8 +129,8 @@ namespace {
     uint64_t totalNodes = 0;
     int64_t elapsed = 0;
 
-    std::string oldMinimal = Options["Minimal"];
-    Options["Minimal"] = std::string("true");
+    std::string oldMinimal = UCI::Options["Minimal"];
+    UCI::Options["Minimal"] = std::string("true");
 
     newGame();
 
@@ -156,7 +156,7 @@ namespace {
 
     std::cout << totalNodes << " nodes " << (totalNodes * 1000 / elapsed) << " nps" << std::endl;
 
-    Options["Minimal"] = oldMinimal;
+    UCI::Options["Minimal"] = oldMinimal;
   }
 
   void setoption(std::istringstream& is) {
@@ -179,8 +179,8 @@ namespace {
       }
     }
 
-    if (Options.count(name))
-      Options[name] = value;
+    if (UCI::Options.count(name))
+      UCI::Options[name] = value;
     else
       std::cout << "No such option: " << name << std::endl;
   }
