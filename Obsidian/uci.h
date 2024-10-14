@@ -35,9 +35,7 @@ namespace UCI {
 
     Option(const char* v, const char* cur, OnChange = nullptr);
 
-    Option& operator=(const std::string&);
-
-    void operator<<(const Option&);
+    void set(const std::string&);
 
     operator int() const;
 

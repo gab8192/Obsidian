@@ -87,16 +87,16 @@ void init() {
 
   constexpr int MaxHashMB = 33554432;
 
-  Options["Contempt"]          << Option(0, 0, 128, refreshContempt);
-  Options["ContemptOverrides"] << Option("", refreshContempt);
-  Options["Hash"]              << Option(64, 1, MaxHashMB, hashChanged);
-  Options["Clear Hash"]        << Option(clearHashClicked);
-  Options["Threads"]           << Option(1, 1, 1024, threadsChanged);
-  Options["Move Overhead"]     << Option(10, 0, 1000);
-  Options["SyzygyPath"]        << Option("", syzygyPathChanged);
-  Options["Minimal"]           << Option("false");
-  Options["MultiPV"]           << Option(1, 1, MAX_MOVES);
-  Options["UCI_Opponent"]      << Option("", refreshContempt);
+  Options["Contempt"]          = Option(0, 0, 128, refreshContempt);
+  Options["ContemptOverrides"] = Option("", refreshContempt);
+  Options["Hash"]              = Option(64, 1, MaxHashMB, hashChanged);
+  Options["Clear Hash"]        = Option(clearHashClicked);
+  Options["Threads"]           = Option(1, 1, 1024, threadsChanged);
+  Options["Move Overhead"]     = Option(10, 0, 1000);
+  Options["SyzygyPath"]        = Option("", syzygyPathChanged);
+  Options["Minimal"]           = Option("false");
+  Options["MultiPV"]           = Option(1, 1, MAX_MOVES);
+  Options["UCI_Opponent"]      = Option("", refreshContempt);
 }
 
 
@@ -149,18 +149,14 @@ bool Option::operator==(const char* s) const {
         && !CaseInsensitiveLess()(s, currentValue);
 }
 
-void Option::operator<<(const Option& o) {
-  *this = o;
-}
-
-Option& Option::operator=(const string& v) {
+void Option::set(const string& v) {
 
   assert(!type.empty());
 
   if (   (type != "button" && type != "string" && v.empty())
       || (type == "check" && v != "true" && v != "false")
       || (type == "spin" && (stof(v) < min || stof(v) > max)))
-      return *this;
+      return;
 
   if (type == "combo")
   {
@@ -168,9 +164,9 @@ Option& Option::operator=(const string& v) {
       string token;
       std::istringstream ss(defaultValue);
       while (ss >> token)
-          comboMap[token] << Option();
+          comboMap[token] = Option();
       if (!comboMap.count(v) || v == "var")
-          return *this;
+          return;
   }
 
   if (type != "button")
@@ -178,8 +174,6 @@ Option& Option::operator=(const string& v) {
 
   if (on_change)
       on_change(*this);
-
-  return *this;
 }
 
 }
