@@ -102,23 +102,17 @@ void init() {
 
 std::ostream& operator<<(std::ostream& os, const OptionsMap& om) {
 
-  for (size_t idx = 0; idx < om.size(); ++idx)
-      for (const auto& it : om)
-          if (it.second.idx == idx)
-          {
-              const Option& o = it.second;
-              os << "\noption name " << it.first << " type " << o.type;
+  for (const auto& [name, opt] : om) {
+    os << "\noption name " << name << " type " << opt.type;
 
-              if (o.type == "string" || o.type == "check" || o.type == "combo")
-                  os << " default " << o.defaultValue;
+    if (opt.type == "string" || opt.type == "check" || opt.type == "combo")
+      os << " default " << opt.defaultValue;
 
-              if (o.type == "spin")
-                  os << " default " << int(stof(o.defaultValue))
-                     << " min "     << o.min
-                     << " max "     << o.max;
-
-              break;
-          }
+    if (opt.type == "spin")
+      os << " default " << int(stof(opt.defaultValue))
+         << " min "     << opt.min
+         << " max "     << opt.max;
+  }
 
   return os;
 }
@@ -156,11 +150,7 @@ bool Option::operator==(const char* s) const {
 }
 
 void Option::operator<<(const Option& o) {
-
-  static size_t insert_order = 0;
-
   *this = o;
-  idx = insert_order++;
 }
 
 Option& Option::operator=(const string& v) {
