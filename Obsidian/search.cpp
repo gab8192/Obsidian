@@ -338,9 +338,12 @@ namespace Search {
             + (ss - 4)->contHistory[chIndex];
   }
 
-  Score Thread::correctStaticEval(Position &position, Score staticEval){
-    int rawPawnCorrection = pawnCorrhist[position.sideToMove][getCorrHistIndex(position.pawnKey)];
+  Score Thread::adjustEval(Position &pos, Score staticEval) {
+    // 50 move rule scaling
+    staticEval = (staticEval * (200 - pos.halfMoveClock)) / 200;
 
+    // Pawn correction history
+    int rawPawnCorrection = pawnCorrhist[pos.sideToMove][getCorrHistIndex(pos.pawnKey)];
     staticEval += CorrHistWeight * rawPawnCorrection / 512;
 
     return std::clamp(staticEval, SCORE_TB_LOSS_IN_MAX_PLY + 1, SCORE_TB_WIN_IN_MAX_PLY - 1);
@@ -457,10 +460,6 @@ namespace Search {
     return false;
   }
 
-  Score scaleOnHMC(Position& pos, Score eval) {
-    return (eval * (200 - pos.halfMoveClock)) / 200;
-  }
-
   template<bool IsPV>
   Score Thread::qsearch(Position& pos, Score alpha, Score beta, int depth, SearchInfo* ss) {
 
@@ -477,7 +476,7 @@ namespace Search {
 
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY-4)
-      return pos.checkers ? SCORE_DRAW : scaleOnHMC(pos, doEvaluation(pos));
+      return pos.checkers ? SCORE_DRAW : adjustEval(pos, doEvaluation(pos));
 
     // Probe TT
     bool ttHit;
@@ -520,7 +519,7 @@ namespace Search {
       else
         rawStaticEval = doEvaluation(pos);
 
-      bestScore = ss->staticEval = correctStaticEval(pos, scaleOnHMC(pos, rawStaticEval));
+      bestScore = ss->staticEval = adjustEval(pos, rawStaticEval);
 
       futility = bestScore + QsFpMargin;
 
@@ -674,7 +673,7 @@ namespace Search {
 
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY - 4)
-      return pos.checkers ? SCORE_DRAW : scaleOnHMC(pos, doEvaluation(pos));
+      return pos.checkers ? SCORE_DRAW : adjustEval(pos, doEvaluation(pos));
 
     // Mate distance pruning
     alpha = std::max(alpha, ply - SCORE_MATE);
@@ -787,7 +786,7 @@ namespace Search {
       else
         rawStaticEval = doEvaluation(pos);
 
-      eval = ss->staticEval = correctStaticEval(pos, scaleOnHMC(pos, rawStaticEval));
+      eval = ss->staticEval = adjustEval(pos, rawStaticEval);
 
       if (!ttHit) {
         // This (probably new) position has just been evaluated.

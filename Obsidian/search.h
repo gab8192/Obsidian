@@ -118,7 +118,8 @@ namespace Search {
 
     int getCapHistory(Position& pos, Move move);
 
-    int correctStaticEval(Position &pos, Score staticEval);
+    // Perform adjustments such as 50MR, correction history, contempt, ...
+    int adjustEval(Position &pos, Score staticEval);
 
     void updateHistories(Position& pos, int bonus, Move bestMove,
       Move* quietMoves, int quietCount, int depth, SearchInfo* ss);
