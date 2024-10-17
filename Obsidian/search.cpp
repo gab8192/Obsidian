@@ -130,6 +130,8 @@ namespace Search {
     memset(counterMoveHistory, 0, sizeof(counterMoveHistory));
     memset(contHistory, 0, sizeof(contHistory));
     memset(pawnCorrhist, 0, sizeof(pawnCorrhist));
+    memset(wNonPawnCorrhist, 0, sizeof(wNonPawnCorrhist));
+    memset(bNonPawnCorrhist, 0, sizeof(bNonPawnCorrhist));
 
     searchPrevScore = SCORE_NONE;
   }
@@ -351,8 +353,9 @@ namespace Search {
     staticEval = (staticEval * (200 - pos.halfMoveClock)) / 200;
 
     // Pawn correction history
-    int rawPawnCorrection = pawnCorrhist[pos.sideToMove][getCorrHistIndex(pos.pawnKey)];
-    staticEval += CorrHistWeight * rawPawnCorrection / 512;
+    staticEval += CorrHistWeight * pawnCorrhist[pos.sideToMove][getCorrHistIndex(pos.pawnKey)] / 512;
+    staticEval += CorrHistWeight * wNonPawnCorrhist[pos.sideToMove][getCorrHistIndex(pos.nonPawnKey[WHITE])] / 512;
+    staticEval += CorrHistWeight * bNonPawnCorrhist[pos.sideToMove][getCorrHistIndex(pos.nonPawnKey[BLACK])] / 512;
 
     return std::clamp(staticEval, SCORE_TB_LOSS_IN_MAX_PLY + 1, SCORE_TB_WIN_IN_MAX_PLY - 1);
   }
@@ -1172,8 +1175,10 @@ namespace Search {
     {
       int bonus = std::clamp((bestScore - ss->staticEval) * depth / 8,
                              -CORRHIST_LIMIT / 4, CORRHIST_LIMIT /4);
-
+                  
       addToCorrhist(pawnCorrhist[pos.sideToMove][getCorrHistIndex(pos.pawnKey)], bonus);
+      addToCorrhist(wNonPawnCorrhist[pos.sideToMove][getCorrHistIndex(pos.nonPawnKey[WHITE])], bonus);
+      addToCorrhist(bNonPawnCorrhist[pos.sideToMove][getCorrHistIndex(pos.nonPawnKey[BLACK])], bonus);
     }
 
     // Store to TT
