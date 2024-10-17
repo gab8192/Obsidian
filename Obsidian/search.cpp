@@ -28,6 +28,10 @@ namespace Search {
   DEFINE_PARAM_S(StatBonusMax, 1160, 50);
   DEFINE_PARAM_S(StatBonusBoostAt, 113, 10);
 
+  DEFINE_PARAM_S(StatMalusBias, -17, 15);
+  DEFINE_PARAM_S(StatMalusLinear, 148, 10);
+  DEFINE_PARAM_S(StatMalusMax, 1160, 50);
+
   DEFINE_PARAM_S(RazoringDepthMul, 405, 30);
 
   DEFINE_PARAM_S(RfpMaxDepth, 9, 1);
@@ -198,8 +202,12 @@ namespace Search {
     std::cout << "bestmove " << UCI::moveToString(move) << std::endl;
   }
 
-  int stat_bonus(int d) {
+  int statBonus(int d) {
     return std::min(StatBonusLinear * d + StatBonusBias, (int)StatBonusMax);
+  }
+
+  int statMalus(int d) {
+    return std::min(StatMalusLinear * d + StatMalusBias, (int)StatMalusMax);
   }
 
   void Thread::sortRootMoves(int offset) {
@@ -361,7 +369,7 @@ namespace Search {
       addToHistory((ss - 6)->contHistory[chIndex], bonus);
   }
 
-  void Thread::updateHistories(Position& pos, int bonus, Move bestMove,
+  void Thread::updateHistories(Position& pos, int bonus, int malus, Move bestMove,
                        Move* quiets, int quietCount, int depth, SearchInfo* ss) {
 
     // Counter move
@@ -387,8 +395,8 @@ namespace Search {
     // Decrease score of other quiet moves
     for (int i = 0; i < quietCount; i++) {
       Move otherMove = quiets[i];
-      addToContHistory(pos, -bonus, otherMove, ss);
-      addToHistory(mainHistory[pos.sideToMove][move_from_to(otherMove)], -bonus);
+      addToContHistory(pos, -malus, otherMove, ss);
+      addToHistory(mainHistory[pos.sideToMove][move_from_to(otherMove)], -malus);
     }
   }
 
@@ -1056,7 +1064,7 @@ namespace Search {
           if (reducedDepth < newDepth)
             score = -negamax<false>(newPos, -alpha - 1, -alpha, newDepth, !cutNode, ss + 1);
 
-          int bonus = score <= alpha ? -stat_bonus(newDepth) : score >= beta ? stat_bonus(newDepth) : 0;
+          int bonus = score <= alpha ? -statMalus(newDepth) : score >= beta ? statBonus(newDepth) : 0;
           addToContHistory(pos, bonus, move, ss);
         }
       }
@@ -1127,11 +1135,12 @@ namespace Search {
     // Update histories
     if (bestScore >= beta)
     {
-      int bonus = stat_bonus(depth + (bestScore > beta + StatBonusBoostAt));
+      int bonus = statBonus(depth + (bestScore > beta + StatBonusBoostAt));
+      int malus = statMalus(depth + (bestScore > beta + StatBonusBoostAt));
 
       if (pos.isQuiet(bestMove))
       {
-        updateHistories(pos, bonus, bestMove, quiets, quietCount, depth, ss);
+        updateHistories(pos, bonus, malus, bestMove, quiets, quietCount, depth, ss);
       }
       else {
         PieceType captured = piece_type(pos.board[move_to(bestMove)]);
@@ -1141,7 +1150,7 @@ namespace Search {
       for (int i = 0; i < captureCount; i++) {
         Move otherMove = captures[i];
         PieceType captured = piece_type(pos.board[move_to(otherMove)]);
-        addToHistory(captureHistory[pieceTo(pos, otherMove)][captured], -bonus);
+        addToHistory(captureHistory[pieceTo(pos, otherMove)][captured], -malus);
       }
     }
 
