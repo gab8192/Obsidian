@@ -81,30 +81,31 @@ void Position::updatePins(Color us) {
 }
 
 void Position::updateKeys() {
-  uint64_t newKey = 0;
-  uint64_t newPawnKey = 0;
+  key = 0;
+  pawnKey = 0;
+  nonPawnKey[WHITE] = 0;
+  nonPawnKey[BLACK] = 0;
 
   Bitboard allPieces = pieces();
   while (allPieces) {
     Square sq = popLsb(allPieces);
     Piece pc = board[sq];
 
-    newKey ^= ZOBRIST_PSQ[pc][sq];
+    key ^= ZOBRIST_PSQ[pc][sq];
 
     if(piece_type(pc) == PAWN)
-      newPawnKey ^= ZOBRIST_PSQ[pc][sq];
-
+      pawnKey ^= ZOBRIST_PSQ[pc][sq];
+    else
+      nonPawnKey[piece_color(pc)] ^= ZOBRIST_PSQ[pc][sq];
   }
 
-  newKey ^= ZOBRIST_CASTLING[castlingRights];
+  key ^= ZOBRIST_CASTLING[castlingRights];
 
   if (epSquare != SQ_NONE)
-    newKey ^= ZOBRIST_EP[fileOf(epSquare)];
+    key ^= ZOBRIST_EP[fileOf(epSquare)];
 
   if (sideToMove == WHITE)
-    newKey ^= ZOBRIST_TEMPO;
-
-  key = newKey;
+    key ^= ZOBRIST_TEMPO;
 }
 
 bool Position::isPseudoLegal(Move move) const {

@@ -31,6 +31,7 @@ struct alignas(32) Position {
 
   Key key;
   Key pawnKey;
+  Key nonPawnKey[COLOR_NB];
 
   Bitboard blockersForKing[COLOR_NB];
   Bitboard pinners[COLOR_NB];
@@ -106,6 +107,8 @@ struct alignas(32) Position {
 
     if(piece_type(pc) == PAWN)
       pawnKey ^= ZOBRIST_PSQ[pc][sq];
+    else
+      nonPawnKey[piece_color(pc)] ^= ZOBRIST_PSQ[pc][sq];
 
     board[sq] = NO_PIECE;
     byColorBB[piece_color(pc)] ^= sq;
@@ -122,6 +125,8 @@ struct alignas(32) Position {
 
     if(piece_type(pc) == PAWN)
       pawnKey ^= ZOBRIST_PSQ[pc][sq];
+    else
+      nonPawnKey[piece_color(pc)] ^= ZOBRIST_PSQ[pc][sq];
 
     board[sq] = pc;
     byColorBB[piece_color(pc)] ^= sq;
@@ -136,8 +141,10 @@ struct alignas(32) Position {
 
     key ^= ZOBRIST_PSQ[pc][from] ^ ZOBRIST_PSQ[pc][to];
 
-  if(piece_type(pc) == PAWN)
+    if(piece_type(pc) == PAWN)
       pawnKey ^= ZOBRIST_PSQ[pc][from] ^ ZOBRIST_PSQ[pc][to];
+    else
+      nonPawnKey[piece_color(pc)] ^= ZOBRIST_PSQ[pc][from] ^ ZOBRIST_PSQ[pc][to];
 
     board[from] = NO_PIECE;
     board[to] = pc;
