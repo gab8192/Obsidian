@@ -34,7 +34,7 @@ namespace Search {
 
   DEFINE_PARAM_S(RazoringDepthMul, 405, 30);
 
-  DEFINE_PARAM_S(RfpMaxDepth, 9, 1);
+  DEFINE_PARAM_S(RfpMaxDepth, 11, 1);
   DEFINE_PARAM_S(RfpDepthMul, 111, 12);
 
   DEFINE_PARAM_S(NmpBase, 4, 1);
@@ -55,7 +55,7 @@ namespace Search {
   DEFINE_PARAM_S(EarlyLmrHistoryDiv, 5421, 400);
 
   DEFINE_PARAM_S(FpBase, 171, 15);
-  DEFINE_PARAM_S(FpMaxDepth, 8, 1);
+  DEFINE_PARAM_S(FpMaxDepth, 10, 1);
   DEFINE_PARAM_S(FpDepthMul, 102, 10);
 
   DEFINE_PARAM_S(TripleExtMargin, 129, 10);
