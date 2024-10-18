@@ -83,6 +83,7 @@ void Position::updatePins(Color us) {
 void Position::updateKeys() {
   key = 0;
   pawnKey = 0;
+  minorKey = 0;
   nonPawnKey[WHITE] = 0;
   nonPawnKey[BLACK] = 0;
 
@@ -90,13 +91,16 @@ void Position::updateKeys() {
   while (allPieces) {
     Square sq = popLsb(allPieces);
     Piece pc = board[sq];
-
-    key ^= ZOBRIST_PSQ[pc][sq];
+    const Key keyDelta = ZOBRIST_PSQ[pc][sq];
+    key ^= keyDelta;
 
     if(piece_type(pc) == PAWN)
-      pawnKey ^= ZOBRIST_PSQ[pc][sq];
-    else
-      nonPawnKey[piece_color(pc)] ^= ZOBRIST_PSQ[pc][sq];
+      pawnKey ^= keyDelta;
+    else {
+      nonPawnKey[piece_color(pc)] ^= keyDelta;
+      if (IsPtForMinorCH[piece_type(pc)])
+        minorKey ^= keyDelta;
+    }
   }
 
   key ^= ZOBRIST_CASTLING[castlingRights];

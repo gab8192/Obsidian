@@ -90,9 +90,10 @@ namespace Search {
     CaptureHistory captureHistory;
     ContinuationHistory contHistory;
     CounterMoveHistory counterMoveHistory;
-    PawnCorrHist pawnCorrhist;
-    NonPawnCorrHist wNonPawnCorrhist;
-    NonPawnCorrHist bNonPawnCorrhist;
+    CorrHist pawnCorrhist;
+    CorrHist minorCorrhist;
+    CorrHist wNonPawnCorrhist;
+    CorrHist bNonPawnCorrhist;
 
     NNUE::FinnyTable finny;
 

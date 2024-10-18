@@ -138,6 +138,8 @@ enum PieceType : int {
   PIECE_TYPE_NB = 8
 };
 
+constexpr bool IsPtForMinorCH[] = {false, false, true, true, false, false, true};
+
 constexpr Square makeSquare(File x, Rank y) {
   return Square(x | (y << 3));
 }

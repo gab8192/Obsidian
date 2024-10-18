@@ -31,6 +31,7 @@ struct alignas(32) Position {
 
   Key key;
   Key pawnKey;
+  Key minorKey;
   Key nonPawnKey[COLOR_NB];
 
   Bitboard blockersForKing[COLOR_NB];
@@ -103,12 +104,16 @@ struct alignas(32) Position {
   /// Call this if you already know what piece was there
   /// </summary>
   inline void removePiece(Square sq, Piece pc) {
-    key ^= ZOBRIST_PSQ[pc][sq];
+    const Key keyDelta = ZOBRIST_PSQ[pc][sq];
+    key ^= keyDelta;
 
     if(piece_type(pc) == PAWN)
-      pawnKey ^= ZOBRIST_PSQ[pc][sq];
-    else
-      nonPawnKey[piece_color(pc)] ^= ZOBRIST_PSQ[pc][sq];
+      pawnKey ^= keyDelta;
+    else {
+      nonPawnKey[piece_color(pc)] ^= keyDelta;
+      if (IsPtForMinorCH[piece_type(pc)])
+        minorKey ^= keyDelta;
+    }
 
     board[sq] = NO_PIECE;
     byColorBB[piece_color(pc)] ^= sq;
@@ -121,12 +126,16 @@ struct alignas(32) Position {
   /// Assmue there is not any piece in the given square
   /// </summary>
   inline void putPiece(Square sq, Piece pc) {
-    key ^= ZOBRIST_PSQ[pc][sq];
+    const Key keyDelta = ZOBRIST_PSQ[pc][sq];
+    key ^= keyDelta;
 
     if(piece_type(pc) == PAWN)
-      pawnKey ^= ZOBRIST_PSQ[pc][sq];
-    else
-      nonPawnKey[piece_color(pc)] ^= ZOBRIST_PSQ[pc][sq];
+      pawnKey ^= keyDelta;
+    else {
+      nonPawnKey[piece_color(pc)] ^= keyDelta;
+      if (IsPtForMinorCH[piece_type(pc)])
+        minorKey ^= keyDelta;
+    }
 
     board[sq] = pc;
     byColorBB[piece_color(pc)] ^= sq;
@@ -138,13 +147,16 @@ struct alignas(32) Position {
   /// Call this if you already know what piece was there
   /// </summary>
   inline void movePiece(Square from, Square to, Piece pc) {
-
-    key ^= ZOBRIST_PSQ[pc][from] ^ ZOBRIST_PSQ[pc][to];
+    const Key keyDelta = ZOBRIST_PSQ[pc][from] ^ ZOBRIST_PSQ[pc][to];
+    key ^= keyDelta;
 
     if(piece_type(pc) == PAWN)
-      pawnKey ^= ZOBRIST_PSQ[pc][from] ^ ZOBRIST_PSQ[pc][to];
-    else
-      nonPawnKey[piece_color(pc)] ^= ZOBRIST_PSQ[pc][from] ^ ZOBRIST_PSQ[pc][to];
+      pawnKey ^= keyDelta;
+    else {
+      nonPawnKey[piece_color(pc)] ^= keyDelta;
+      if (IsPtForMinorCH[piece_type(pc)])
+        minorKey ^= keyDelta;
+    }
 
     board[from] = NO_PIECE;
     board[to] = pc;

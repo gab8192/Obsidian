@@ -130,6 +130,7 @@ namespace Search {
     memset(counterMoveHistory, 0, sizeof(counterMoveHistory));
     memset(contHistory, 0, sizeof(contHistory));
     memset(pawnCorrhist, 0, sizeof(pawnCorrhist));
+    memset(minorCorrhist, 0, sizeof(minorCorrhist));
     memset(wNonPawnCorrhist, 0, sizeof(wNonPawnCorrhist));
     memset(bNonPawnCorrhist, 0, sizeof(bNonPawnCorrhist));
 
@@ -354,6 +355,7 @@ namespace Search {
 
     // Pawn correction history
     staticEval += CorrHistWeight * pawnCorrhist[pos.sideToMove][getCorrHistIndex(pos.pawnKey)] / 512;
+    staticEval += CorrHistWeight * minorCorrhist[pos.sideToMove][getCorrHistIndex(pos.minorKey)] / 512;
     staticEval += CorrHistWeight * wNonPawnCorrhist[pos.sideToMove][getCorrHistIndex(pos.nonPawnKey[WHITE])] / 512;
     staticEval += CorrHistWeight * bNonPawnCorrhist[pos.sideToMove][getCorrHistIndex(pos.nonPawnKey[BLACK])] / 512;
 
@@ -1177,6 +1179,7 @@ namespace Search {
                              -CORRHIST_LIMIT / 4, CORRHIST_LIMIT /4);
                   
       addToCorrhist(pawnCorrhist[pos.sideToMove][getCorrHistIndex(pos.pawnKey)], bonus);
+      addToCorrhist(minorCorrhist[pos.sideToMove][getCorrHistIndex(pos.minorKey)], bonus);
       addToCorrhist(wNonPawnCorrhist[pos.sideToMove][getCorrHistIndex(pos.nonPawnKey[WHITE])], bonus);
       addToCorrhist(bNonPawnCorrhist[pos.sideToMove][getCorrHistIndex(pos.nonPawnKey[BLACK])], bonus);
     }
