@@ -1,6 +1,7 @@
 #include "tt.h"
+#include "uci.h"
 
-#include <iostream>
+#include <vector>
 
 #if defined(__linux__)
 #include <sys/mman.h>
@@ -16,8 +17,27 @@ namespace TT {
   uint64_t bucketCount;
 
   void clear() {
-    memset(buckets, 0, sizeof(Bucket) * bucketCount);
     tableAge = 0;
+
+    const int threadCount = UCI::Options["Threads"];
+    const uint64_t chunkSize = bucketCount / threadCount;
+
+    std::vector<std::thread> threads;
+    threads.reserve(threadCount);
+    for (int i = 0; i < threadCount; ++i)
+    {
+      threads.emplace_back([chunkSize, i]
+      {
+        memset(&buckets[chunkSize * i], 0, chunkSize * sizeof(Bucket));
+      });
+    }
+
+    const uint64_t cleared = threadCount * chunkSize;
+    if (cleared < bucketCount)
+      memset(&buckets[cleared], 0, (bucketCount - cleared) * sizeof(Bucket));
+
+    for (auto &thread : threads)
+      thread.join();
   }
 
   void nextSearch() {
@@ -37,8 +57,6 @@ namespace TT {
 #else
     buckets = (Bucket*) malloc(sizeof(Bucket) * bucketCount);
 #endif
-
-    clear();
   }
 
   Bucket* getBucket(Key key) {
