@@ -57,6 +57,8 @@ namespace TT {
 #else
     buckets = (Bucket*) malloc(sizeof(Bucket) * bucketCount);
 #endif
+
+    clear();
   }
 
   Bucket* getBucket(Key key) {
