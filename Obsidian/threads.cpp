@@ -40,6 +40,13 @@ namespace Threads {
     }
   }
 
+  void startSearchSingle(Search::Thread* st) {
+    st->mutex.lock();
+    st->searching = true;
+    st->mutex.unlock();
+    st->cv.notify_all();
+  }
+
   void startSearch(Search::Settings& settings) {
     searchSettings = settings;
     searchStopped = false;
@@ -49,11 +56,8 @@ namespace Threads {
       st->tbHits = 0;
       st->completeDepth = 0;
     }
-    for (int i = 0; i < searchThreads.size(); i++) {
-      Search::Thread* st = searchThreads[i];
-      st->searching = true;
-      st->cv.notify_all();
-    }
+    for (int i = 0; i < searchThreads.size(); i++)
+      startSearchSingle(searchThreads[i]);
   }
 
   Search::Settings& getSearchSettings() {
@@ -77,8 +81,7 @@ namespace Threads {
 
     for (int i = 0; i < searchThreads.size(); i++) {
       searchThreads[i]->exitThread = true;
-      searchThreads[i]->searching = true; // <-- the predicate
-      searchThreads[i]->cv.notify_all();
+      startSearchSingle(searchThreads[i]);
       stdThreads[i]->join();
       delete searchThreads[i];
       delete stdThreads[i];
