@@ -45,6 +45,8 @@ ifeq ($(build), native)
 			endif
 		endif
 	endif
+else ifeq ($(findstring avx512, $(build)), avx512)
+	FLAGS += -DUSE_PEXT -mbmi2
 else ifeq ($(findstring pext, $(build)), pext)
 	FLAGS += -DUSE_PEXT -mbmi2
 endif
