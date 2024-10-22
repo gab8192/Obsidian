@@ -18,53 +18,53 @@ namespace Search {
 
   DEFINE_PARAM_S(QsFpMargin, 136, 15);
 
-  DEFINE_PARAM_S(LmrBase, 48, 10);
+  DEFINE_PARAM_S(LmrBase, 49, 10);
   DEFINE_PARAM_S(LmrDiv, 192, 10);
 
-  DEFINE_PARAM_S(CorrHistWeight, 53, 6);
+  DEFINE_PARAM_S(CorrHistWeight, 49, 6);
 
-  DEFINE_PARAM_S(StatBonusBias, -17, 15);
-  DEFINE_PARAM_S(StatBonusLinear, 148, 10);
-  DEFINE_PARAM_S(StatBonusMax, 1160, 50);
-  DEFINE_PARAM_S(StatBonusBoostAt, 113, 10);
+  DEFINE_PARAM_S(StatBonusBias, -19, 15);
+  DEFINE_PARAM_S(StatBonusLinear, 146, 10);
+  DEFINE_PARAM_S(StatBonusMax, 1157, 50);
+  DEFINE_PARAM_S(StatBonusBoostAt, 105, 10);
 
-  DEFINE_PARAM_S(StatMalusBias, -17, 15);
-  DEFINE_PARAM_S(StatMalusLinear, 148, 10);
-  DEFINE_PARAM_S(StatMalusMax, 1160, 50);
+  DEFINE_PARAM_S(StatMalusBias, -7, 15);
+  DEFINE_PARAM_S(StatMalusLinear, 153, 10);
+  DEFINE_PARAM_S(StatMalusMax, 1155, 50);
 
-  DEFINE_PARAM_S(RazoringDepthMul, 405, 30);
+  DEFINE_PARAM_S(RazoringDepthMul, 392, 30);
 
   DEFINE_PARAM_S(RfpMaxDepth, 11, 1);
-  DEFINE_PARAM_S(RfpDepthMul, 111, 12);
+  DEFINE_PARAM_S(RfpDepthMul, 100, 12);
 
   DEFINE_PARAM_S(NmpBase, 4, 1);
   DEFINE_PARAM_B(NmpDepthDiv, 3, 1, 21);
-  DEFINE_PARAM_S(NmpEvalDiv, 141, 20);
+  DEFINE_PARAM_S(NmpEvalDiv, 139, 20);
   DEFINE_PARAM_S(NmpEvalDivMin, 4, 1);
 
-  DEFINE_PARAM_S(ProbcutBetaMargin, 191, 20);
+  DEFINE_PARAM_S(ProbcutBetaMargin, 178, 20);
 
-  DEFINE_PARAM_S(HistPrDepthMul, -4173, 400);
+  DEFINE_PARAM_S(HistPrDepthMul, -4221, 400);
 
   DEFINE_PARAM_S(LmpBase,    3, 1);
 
   DEFINE_PARAM_S(QsSeeMargin, -32, 15);
   DEFINE_PARAM_S(PvsQuietSeeMargin, -102, 10);
-  DEFINE_PARAM_S(PvsCapSeeMargin, -104, 10);
+  DEFINE_PARAM_S(PvsCapSeeMargin, -98, 10);
 
-  DEFINE_PARAM_S(EarlyLmrHistoryDiv, 5421, 400);
+  DEFINE_PARAM_S(EarlyLmrHistoryDiv, 5428, 400);
 
-  DEFINE_PARAM_S(FpBase, 171, 15);
+  DEFINE_PARAM_S(FpBase, 166, 15);
   DEFINE_PARAM_S(FpMaxDepth, 10, 1);
-  DEFINE_PARAM_S(FpDepthMul, 102, 10);
+  DEFINE_PARAM_S(FpDepthMul, 97, 10);
 
-  DEFINE_PARAM_S(TripleExtMargin, 129, 10);
+  DEFINE_PARAM_S(TripleExtMargin, 123, 10);
   DEFINE_PARAM_S(DoubleExtMargin, 15, 2);
   DEFINE_PARAM_S(DoubleExtMax, 7, 1);
 
-  DEFINE_PARAM_S(LmrQuietHistoryDiv, 10099, 800);
-  DEFINE_PARAM_S(LmrCapHistoryDiv, 8192, 800);
-  DEFINE_PARAM_S(ZwsDeeperMargin, 75, 10);
+  DEFINE_PARAM_S(LmrQuietHistoryDiv, 9773, 800);
+  DEFINE_PARAM_S(LmrCapHistoryDiv, 8508, 800);
+  DEFINE_PARAM_S(ZwsDeeperMargin, 72, 10);
 
   DEFINE_PARAM_B(AspWindowStartDepth, 4, 4, 34);
   DEFINE_PARAM_B(AspWindowStartDelta, 11, 5, 45);
