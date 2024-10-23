@@ -78,7 +78,6 @@ namespace TT {
     for (int i = 0; i < EntriesPerBucket; i++) {
       if (entries[i].matches(key) || entries[i].isEmpty()) {
         hit = ! entries[i].isEmpty();
-        entries[i].updateAge();
         return & entries[i];
       }
     }
