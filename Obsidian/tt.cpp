@@ -117,8 +117,11 @@ namespace TT {
         _score -= ply;
     }
 
+    int ageDistance = (MAX_AGE + tableAge - getAge()) % MAX_AGE;
+
     if ( _bound == FLAG_EXACT
       || !matches(_key)
+      || ageDistance
       || _depth + 4 + 2*isPV > this->depth) {
 
         this->key16 = (uint16_t) _key;
