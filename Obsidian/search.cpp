@@ -842,6 +842,7 @@ namespace Search {
       && !excludedMove
       && (ss - 1)->playedMove != MOVE_NONE
       && eval >= beta
+	  && ss->staticEval + 30 * depth - 200 >= beta
       && pos.hasNonPawns(pos.sideToMove)
       && beta > SCORE_TB_LOSS_IN_MAX_PLY) {
 
