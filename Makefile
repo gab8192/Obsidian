@@ -10,11 +10,14 @@ MSSSE3  = $(MSSE2) -mssse3
 MAVX2   = $(MSSSE3) -msse4.1 -mbmi -mfma -mavx2
 MAVX512 = $(MAVX2) -mavx512f -mavx512bw
 
-FILES = src/*.cpp src/fathom/src/tbprobe.c
+FILES = $(wildcard src/*.cpp) src/fathom/src/tbprobe.c
+
+OBJS = $(FILES:.cpp=.o)
+OBJS := $(OBJS:.c=.o)
 
 OPTIMIZE = -O3 -fno-stack-protector -fno-math-errno -funroll-loops -fno-exceptions -flto -flto-partition=one
 
-FLAGS = -s -pthread -std=c++17 -DNDEBUG
+FLAGS = -s -pthread -std=c++17 -DNDEBUG $(OPTIMIZE)
 
 ifeq ($(build),)
 	build = native
@@ -51,21 +54,28 @@ else ifeq ($(findstring pext, $(build)), pext)
 	FLAGS += -DUSE_PEXT -mbmi2
 endif
 
-COMMAND = g++ $(OPTIMIZE) $(FLAGS) $(FILES) -o $(EXE)
+%.o: %.cpp
+	g++ $(FLAGS) -c $< -o $@
+
+%.o: %.c
+	gcc $(FLAGS) -c $< -o $@
 
 make: $(FILES)
-	$(COMMAND) -fprofile-generate="obs_pgo"
+	g++ $(FLAGS) $(FILES) -o $(EXE) -fprofile-generate="obs_pgo"
 ifeq ($(OS),Windows_NT)
 	$(EXE) bench
 else
 	./$(EXE) bench
 endif
-	$(COMMAND) -fprofile-use="obs_pgo"
+	g++ $(FLAGS) $(FILES) -o $(EXE) -fprofile-use="obs_pgo"
 ifeq ($(OS),Windows_NT)
 	powershell.exe -Command "Remove-Item -Recurse -Force obs_pgo"
 else
 	rm -rf obs_pgo
 endif
 
-nopgo: $(FILES)
-	$(COMMAND)
+nopgo: $(OBJS)
+	g++ $(FLAGS) $(OBJS) -o $(EXE)
+
+clean:
+	rm -f $(OBJS)
