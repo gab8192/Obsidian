@@ -1,7 +1,7 @@
 ifeq ($(OS),Windows_NT)
 	EXE := Obsidian.exe
 else
-	EXE := Obsidian.elf
+	EXE := Obsidian
 endif
 
 M64     = -m64 -mpopcnt
@@ -10,7 +10,7 @@ MSSSE3  = $(MSSE2) -mssse3
 MAVX2   = $(MSSSE3) -msse4.1 -mbmi -mfma -mavx2
 MAVX512 = $(MAVX2) -mavx512f -mavx512bw
 
-FILES = Obsidian/*.cpp Obsidian/fathom/src/tbprobe.c
+FILES = src/*.cpp src/fathom/src/tbprobe.c
 
 OPTIMIZE = -O3 -fno-stack-protector -fno-math-errno -funroll-loops -fno-exceptions -flto -flto-partition=one
 
