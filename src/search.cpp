@@ -539,8 +539,9 @@ namespace Search {
         bestScore = ttScore;
 
       if (bestScore >= beta) {
+        bestScore = (bestScore + beta) / 2;
         if (! ttHit)
-          ttEntry->store(pos.key, TT::FLAG_LOWER, 0, MOVE_NONE, bestScore, rawStaticEval, false, ply);
+          ttEntry->store(pos.key, TT::NO_FLAG, 0, MOVE_NONE, SCORE_NONE, rawStaticEval, false, ply);
         return bestScore;
       }
       if (bestScore > alpha)
