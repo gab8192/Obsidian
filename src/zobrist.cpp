@@ -5,6 +5,7 @@ uint64_t ZOBRIST_TEMPO;
 uint64_t ZOBRIST_PSQ[PIECE_NB][SQUARE_NB];
 uint64_t ZOBRIST_EP[FILE_NB];
 uint64_t ZOBRIST_CASTLING[16];
+uint64_t ZOBRIST_50MR[120];
 
 namespace Zobrist {
 
@@ -40,6 +41,14 @@ namespace Zobrist {
       if (i & BLACK_OOO) delta ^= ZOBRIST_CASTLING[BLACK_OOO];
 
       ZOBRIST_CASTLING[i] = delta;
+    }
+
+    // and now the 50mr stuff
+    memset(ZOBRIST_50MR, 0, sizeof(ZOBRIST_50MR));
+    for (int i = 14; i <= 100; i += 8) {
+      uint64_t key = dis(gen);
+      for (int j = 0; j < 8; j++)
+        ZOBRIST_50MR[i+j] = key;
     }
   }
 

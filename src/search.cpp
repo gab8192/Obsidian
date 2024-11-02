@@ -490,8 +490,9 @@ namespace Search {
       return pos.checkers ? SCORE_DRAW : adjustEval(pos, doEvaluation(pos));
 
     // Probe TT
+    const Key posTtKey = pos.key ^ ZOBRIST_50MR[pos.halfMoveClock];
     bool ttHit;
-    TT::Entry* ttEntry = TT::probe(pos.key, ttHit);
+    TT::Entry* ttEntry = TT::probe(posTtKey, ttHit);
     TT::Flag ttBound = TT::NO_FLAG;
     Score ttScore = SCORE_NONE;
     Move ttMove = MOVE_NONE;
@@ -540,7 +541,7 @@ namespace Search {
 
       if (bestScore >= beta) {
         if (! ttHit)
-          ttEntry->store(pos.key, TT::NO_FLAG, 0, MOVE_NONE, SCORE_NONE, rawStaticEval, false, ply);
+          ttEntry->store(posTtKey, TT::NO_FLAG, 0, MOVE_NONE, SCORE_NONE, rawStaticEval, false, ply);
         return (bestScore + beta) / 2;
       }
       if (bestScore > alpha)
@@ -615,7 +616,7 @@ namespace Search {
     if (bestScore >= beta && abs(bestScore) < SCORE_TB_WIN_IN_MAX_PLY)
       bestScore = (bestScore + beta) / 2;
 
-    ttEntry->store(pos.key,
+    ttEntry->store(posTtKey,
       bestScore >= beta ? TT::FLAG_LOWER : TT::FLAG_UPPER,
       0, bestMove, bestScore, rawStaticEval, ttPV, ply);
 
@@ -693,8 +694,9 @@ namespace Search {
       return alpha;
 
     // Probe TT
+    const Key posTtKey = pos.key ^ ZOBRIST_50MR[pos.halfMoveClock];
     bool ttHit;
-    TT::Entry* ttEntry = TT::probe(pos.key, ttHit);
+    TT::Entry* ttEntry = TT::probe(posTtKey, ttHit);
 
     TT::Flag ttBound = TT::NO_FLAG;
     Score ttScore   = SCORE_NONE;
@@ -757,7 +759,7 @@ namespace Search {
       }
 
       if ((tbBound == TT::FLAG_EXACT) || (tbBound == TT::FLAG_LOWER ? tbScore >= beta : tbScore <= alpha)) {
-        ttEntry->store(pos.key, tbBound, depth, MOVE_NONE, tbScore, SCORE_NONE, ttPV, ply);
+        ttEntry->store(posTtKey, tbBound, depth, MOVE_NONE, tbScore, SCORE_NONE, ttPV, ply);
         return tbScore;
       }
 
@@ -804,7 +806,7 @@ namespace Search {
         // Immediately save the evaluation in TT, so other threads who reach this position
         // won't need to evaluate again
         // This is also helpful when we cutoff early and no other store will be performed
-        ttEntry->store(pos.key, TT::NO_FLAG, 0, MOVE_NONE, SCORE_NONE, rawStaticEval, ttPV, ply);
+        ttEntry->store(posTtKey, TT::NO_FLAG, 0, MOVE_NONE, SCORE_NONE, rawStaticEval, ttPV, ply);
       }
 
       // When tt bound allows it, use ttScore as a better evaluation
@@ -902,7 +904,7 @@ namespace Search {
           return SCORE_DRAW;
 
         if (score >= probcutBeta) {
-          ttEntry->store(pos.key, TT::FLAG_LOWER, depth - 3, move, score, rawStaticEval, ttPV, ply);
+          ttEntry->store(posTtKey, TT::FLAG_LOWER, depth - 3, move, score, rawStaticEval, ttPV, ply);
           return score;
         }
       }
@@ -1184,7 +1186,7 @@ namespace Search {
 
     // Store to TT
     if (!excludedMove && !(IsRoot && pvIdx > 0))
-      ttEntry->store(pos.key, resultBound, depth, bestMove, bestScore, rawStaticEval, ttPV, ply);
+      ttEntry->store(posTtKey, resultBound, depth, bestMove, bestScore, rawStaticEval, ttPV, ply);
 
     return bestScore;
   }

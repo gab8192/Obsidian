@@ -407,6 +407,8 @@ Key Position::keyAfter(Move move) const {
 
   newKey ^= ZOBRIST_TEMPO;
 
+  newKey ^= ZOBRIST_50MR[capturedPc ? 0 : halfMoveClock+1];
+
   return newKey;
 }
 
