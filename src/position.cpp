@@ -407,6 +407,10 @@ Key Position::keyAfter(Move move) const {
 
   newKey ^= ZOBRIST_TEMPO;
 
+  const int newHMC = (capturedPc || piece_type(movedPc) == PAWN) 
+                        ? 0 : halfMoveClock + 1;
+  newKey ^= ZOBRIST_50MR[newHMC];
+
   return newKey;
 }
 
