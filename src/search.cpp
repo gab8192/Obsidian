@@ -969,26 +969,30 @@ namespace Search {
         int lmrRed = lmrTable[depth][seenMoves] + !improving - history / EarlyLmrHistoryDiv;
         int lmrDepth = std::max(0, depth - lmrRed);
 
-        // SEE (Static Exchange Evalution) pruning
-        int seeMargin = isQuiet ? lmrDepth * PvsQuietSeeMargin :
-                                  depth    * PvsCapSeeMargin;
-        if (!pos.seeGe(move, seeMargin))
-          continue;
-
-        if (isQuiet && history < HistPrDepthMul * depth)
-            skipQuiets = true;
-
         // Late move pruning. At low depths, only visit a few quiet moves
         if (seenMoves >= (depth * depth + LmpBase) / (2 - improving))
           skipQuiets = true;
+
+        if (isQuiet && quietCount > 0 && history < HistPrDepthMul * depth) {
+          skipQuiets = true;
+          continue;
+        }
 
         // Futility pruning. If our evaluation is far below alpha,
         // only visit a few quiet moves
         if (   isQuiet
             && lmrDepth <= FpMaxDepth
             && !pos.checkers
-            && ss->staticEval + FpBase + FpDepthMul * lmrDepth <= alpha)
+            && ss->staticEval + FpBase + FpDepthMul * lmrDepth <= alpha) {
           skipQuiets = true;
+          continue;
+        }
+
+        // SEE (Static Exchange Evalution) pruning
+        int seeMargin = isQuiet ? lmrDepth * PvsQuietSeeMargin :
+                                  depth    * PvsCapSeeMargin;
+        if (!pos.seeGe(move, seeMargin))
+          continue;
       }
 
       int extension = 0;
