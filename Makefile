@@ -60,21 +60,7 @@ endif
 %.o: %.c
 	gcc $(FLAGS) -c $< -o $@
 
-make: $(FILES)
-	g++ $(FLAGS) $(FILES) -o $(EXE) -fprofile-generate="obs_pgo"
-ifeq ($(OS),Windows_NT)
-	$(EXE) bench
-else
-	./$(EXE) bench
-endif
-	g++ $(FLAGS) $(FILES) -o $(EXE) -fprofile-use="obs_pgo"
-ifeq ($(OS),Windows_NT)
-	powershell.exe -Command "Remove-Item -Recurse -Force obs_pgo"
-else
-	rm -rf obs_pgo
-endif
-
-nopgo: $(OBJS)
+make: $(OBJS)
 	g++ $(FLAGS) $(OBJS) -o $(EXE)
 
 clean:

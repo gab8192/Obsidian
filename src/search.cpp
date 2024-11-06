@@ -946,6 +946,8 @@ namespace Search {
       if (move == excludedMove)
         continue;
 
+        sizeof(Thread);
+
       TT::prefetch(pos.keyAfter(move));
 
       if (!pos.isLegal(move))
