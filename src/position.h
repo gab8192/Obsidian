@@ -21,13 +21,11 @@ struct alignas(32) Position {
   Color sideToMove;
   Square epSquare;
   CastlingRights castlingRights;
+  int halfMoveClock;
 
   Bitboard byColorBB[COLOR_NB];
   Bitboard byPieceBB[PIECE_TYPE_NB];
   Piece board[SQUARE_NB];
-
-  int halfMoveClock;
-  int gamePly;
 
   Key key;
   Key pawnKey;

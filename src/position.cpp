@@ -220,8 +220,6 @@ void Position::doNullMove() {
     epSquare = SQ_NONE;
   }
 
-  gamePly++;
-
   halfMoveClock++;
 
   sideToMove = them;
@@ -238,8 +236,6 @@ void Position::doMove(Move move, DirtyPieces& dp) {
     key ^= ZOBRIST_EP[fileOf(epSquare)];
     epSquare = SQ_NONE;
   }
-
-  gamePly++;
 
   halfMoveClock++;
 
@@ -504,9 +500,8 @@ void Position::setToFen(const std::string& fen) {
   if (fen.size() > idx) {
     halfMoveClock = readNumberTillSpace(fen, idx);
     idx++;
-    gamePly = readNumberTillSpace(fen, idx);
+    readNumberTillSpace(fen, idx); // game ply, ignored
   }
-  gamePly = std::max(2 * (gamePly - 1), 0) + (sideToMove == BLACK);
 
   updateAttacks();
   updateKeys();
@@ -557,7 +552,7 @@ std::string Position::toFenString() const {
 
   ss << halfMoveClock << ' ';
 
-  ss << (1 + (gamePly - (sideToMove == BLACK)) / 2);
+  ss << '1';
 
   return ss.str();
 }

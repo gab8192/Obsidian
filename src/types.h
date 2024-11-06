@@ -134,8 +134,8 @@ enum Color : int {
 };
 
 enum PieceType : int {
-  NO_PIECE_TYPE, PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING, ALL_PIECES,
-  PIECE_TYPE_NB = 8
+  NO_PIECE_TYPE, PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING,
+  PIECE_TYPE_NB = 7
 };
 
 constexpr Square makeSquare(File x, Rank y) {
