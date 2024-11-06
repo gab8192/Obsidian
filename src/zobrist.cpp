@@ -15,8 +15,8 @@ namespace Zobrist {
 
     ZOBRIST_TEMPO = dis(gen);
 
-    for (Piece pc : {W_PAWN, W_KNIGHT, W_BISHOP, W_ROOK, W_QUEEN, W_KING, NO_PIECE, NO_PIECE, B_PAWN, B_KNIGHT, B_BISHOP, B_ROOK, B_QUEEN, B_KING, NO_PIECE})
-     for (Square sq = SQ_A1; sq < SQUARE_NB; ++sq)
+    for (int pc = W_PAWN; pc < PIECE_NB; ++pc)
+      for (Square sq = SQ_A1; sq < SQUARE_NB; ++sq)
         ZOBRIST_PSQ[pc][sq] = dis(gen);
 
     for (File f = FILE_A; f < FILE_NB; ++f)
