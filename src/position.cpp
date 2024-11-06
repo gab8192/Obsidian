@@ -589,11 +589,11 @@ bool Position::seeGe(Move m, int threshold) const {
 
   Square from = move_from(m), to = move_to(m);
 
-  int swap = PIECE_VALUE[board[to]] - threshold;
+  int swap = PIECE_VALUE[piece_type(board[to])] - threshold;
   if (swap < 0)
     return false;
 
-  swap = PIECE_VALUE[board[from]] - swap;
+  swap = PIECE_VALUE[piece_type(board[from])] - swap;
   if (swap <= 0)
     return true;
 

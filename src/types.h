@@ -157,15 +157,15 @@ constexpr Square relative_square(Color color, Square s) {
 enum Piece : char;
 
 constexpr Piece makePiece(Color color, PieceType pt) {
-  return Piece((color << 3) + pt);
+  return Piece((pt << 1) | color);
 }
 
 constexpr PieceType piece_type(Piece piece) {
-  return PieceType(piece & 7);
+  return PieceType(piece >> 1);
 }
 
 constexpr Color piece_color(Piece piece) {
-  return Color(piece >> 3);
+  return Color(piece & 1);
 }
 
 enum Piece : char {
@@ -185,7 +185,7 @@ enum Piece : char {
   B_QUEEN = makePiece(BLACK, QUEEN),
   B_KING = makePiece(BLACK, KING),
 
-  PIECE_NB = 16
+  PIECE_NB = 14
 };
 
 // These defines are copied from stockfish types.h
@@ -224,8 +224,7 @@ ENABLE_LOGIC_OPERATORS_ON(CastlingRights)
 
 constexpr Color operator~(Color d1) { return Color(int(d1) ^ 1); }
 
-constexpr int PIECE_VALUE[PIECE_NB] = { 0, 100, 370, 390, 610, 1210, 0, 0,
-                                       0, 100, 370, 390, 610, 1210, 0, 0 };
+constexpr int PIECE_VALUE[PIECE_TYPE_NB] = { 0,  100, 370, 390, 610, 1210, 0};
 
 inline std::ostream& operator<<(std::ostream& stream, Color color) {
   stream << (color == WHITE ? "white" : "black");
