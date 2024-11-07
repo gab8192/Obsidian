@@ -2,6 +2,7 @@
 #include "bitboard.h"
 #include "incbin.h"
 #include "position.h"
+#include "util.h"
 
 #include <iostream>
 #include <fstream>
@@ -12,12 +13,14 @@ namespace NNUE {
 
   constexpr int WeightsPerVec = sizeof(Vec) / sizeof(weight_t);
 
-  struct {
+  struct Net {
     alignas(Alignment) weight_t FeatureWeights[KingBuckets][2][6][64][HiddenWidth];
     alignas(Alignment) weight_t FeatureBiases[HiddenWidth];
     alignas(Alignment) weight_t OutputWeights[OutputBuckets][HiddenWidth];
                        weight_t OutputBias[OutputBuckets];
-  } Content;
+  };
+
+  Net* Content;
 
   bool needRefresh(Color side, Square oldKing, Square newKing) {
     // Crossed half?
@@ -32,7 +35,7 @@ namespace NNUE {
     if (kingSq & 0b100)
       sq = Square(sq ^ 7);
 
-    return (Vec*) Content.FeatureWeights
+    return (Vec*) Content->FeatureWeights
             [KingBucketsScheme[relative_square(side, kingSq)]]
             [side != piece_color(pc)]
             [piece_type(pc)-1]
@@ -108,7 +111,7 @@ namespace NNUE {
   }
 
   void Accumulator::reset(Color side) {
-    memcpy(colors[side], Content.FeatureBiases, sizeof(Content.FeatureBiases));
+    memcpy(colors[side], Content->FeatureBiases, sizeof(Content->FeatureBiases));
   }
 
   void Accumulator::refresh(Position& pos, Color side) {
@@ -130,9 +133,8 @@ namespace NNUE {
   }
 
   void init() {
-
-    memcpy(&Content, gEmbeddedNNUEData, sizeof(Content));
-
+    Content = (Net*) Util::allocAlign(sizeof(Net));
+    memcpy(Content, gEmbeddedNNUEData, sizeof(Net));
   }
 
   Score evaluate(Position& pos, Accumulator& accumulator) {
@@ -148,7 +150,7 @@ namespace NNUE {
     for (int them = 0; them <= 1; ++them)
     {
       Vec* acc = (Vec*) accumulator.colors[pos.sideToMove ^ them];
-      Vec* weights = (Vec*) &Content.OutputWeights[outputBucket][them * HiddenWidth / 2];
+      Vec* weights = (Vec*) &Content->OutputWeights[outputBucket][them * HiddenWidth / 2];
       for (int i = 0; i < (HiddenWidth / WeightsPerVec) / 2; ++i)
       {
         Vec c0 = minEpi16(maxEpi16(acc[i], vecZero), vecQA);
@@ -158,7 +160,7 @@ namespace NNUE {
       }
     }
 
-    int unsquared = vecHaddEpi32(sum) / NetworkQA + Content.OutputBias[outputBucket];
+    int unsquared = vecHaddEpi32(sum) / NetworkQA + Content->OutputBias[outputBucket];
 
     return (unsquared * NetworkScale) / NetworkQAB;
   }

@@ -1,11 +1,8 @@
 #include "tt.h"
 #include "uci.h"
+#include "util.h"
 
 #include <vector>
-
-#if defined(__linux__)
-#include <sys/mman.h>
-#endif
 
 namespace TT {
 
@@ -46,18 +43,13 @@ namespace TT {
 
   void resize(size_t megaBytes) {
     if (buckets)
-      free(buckets);
+      Util::freeAlign(buckets);
 
     size_t bytes = megaBytes * MEGA;
     bucketCount = bytes / sizeof(Bucket);
 
-#if defined(__linux__)
-    buckets = (Bucket*) aligned_alloc(2 * MEGA, bytes);
-    madvise(buckets, bytes, MADV_HUGEPAGE);
-#else
-    buckets = (Bucket*) malloc(sizeof(Bucket) * bucketCount);
-#endif
-
+    buckets = (Bucket*) Util::allocAlign(bytes);
+    
     clear();
   }
 
