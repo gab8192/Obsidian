@@ -1,12 +1,18 @@
 #include "evaluate.h"
+#include "uci.h"
 
 #include <iostream>
 
 namespace Eval {
 
-  Score evaluate(Position& pos, NNUE::Accumulator& accumulator) {
+  Score evaluate(Position& pos, bool isRootStm, NNUE::Accumulator& accumulator) {
 
     Score score = NNUE::evaluate(pos, accumulator);
+
+    if (isRootStm)
+      score += UCI::contemptValue;
+    else
+      score -= UCI::contemptValue;
 
     int phase =  3 * BitCount(pos.pieces(KNIGHT))
                + 3 * BitCount(pos.pieces(BISHOP))

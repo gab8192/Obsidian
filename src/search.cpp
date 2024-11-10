@@ -306,7 +306,7 @@ namespace Search {
   Score Thread::doEvaluation(Position& pos) {
     NNUE::Accumulator& acc = accumStack[accumStackHead];
     updateAccumulator(pos, acc);
-    return Eval::evaluate(pos, acc);
+    return Eval::evaluate(pos, !(ply % 2), acc);
   }
 
   void Thread::playMove(Position& pos, Move move, SearchInfo* ss) {
