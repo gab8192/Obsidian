@@ -87,7 +87,7 @@ void init() {
 
   constexpr int MaxHashMB = 33554432;
 
-  Options["Contempt"]          = Option(0, 0, 128, refreshContempt);
+  Options["Contempt"]          = Option(0, 0, 512, refreshContempt);
   Options["ContemptOverrides"] = Option("", refreshContempt);
   Options["Hash"]              = Option(64, 1, MaxHashMB, hashChanged);
   Options["Clear Hash"]        = Option(clearHashClicked);
