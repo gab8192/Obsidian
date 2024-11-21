@@ -24,6 +24,10 @@ using PawnCorrHist = int16_t[2][CORRHIST_SIZE];
 // [stm][pawn hash]
 using NonPawnCorrHist = int16_t[2][CORRHIST_SIZE];
 
+// [piece to][piece to]
+// might be changed to [piece to][piecetype to] since the color must be opposite
+using ContCorrHist = int16_t[PIECE_NB * SQUARE_NB][PIECE_NB * SQUARE_NB];
+
 inline int getCorrHistIndex(Key pawnKey){
   return pawnKey % CORRHIST_SIZE;
 }

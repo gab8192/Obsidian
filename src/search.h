@@ -40,6 +40,9 @@ namespace Search {
 
     // [piece to]
     int16_t* contHistory;
+
+    // [piece to]
+    int16_t* contCorrHist;
   };
 
   // A sort of header of the search stack, so that plies behind 0 are accessible and
@@ -93,6 +96,7 @@ namespace Search {
     PawnCorrHist pawnCorrhist;
     NonPawnCorrHist wNonPawnCorrhist;
     NonPawnCorrHist bNonPawnCorrhist;
+    ContCorrHist contCorrHist;
 
     NNUE::FinnyTable finny;
 
@@ -121,7 +125,7 @@ namespace Search {
     int getCapHistory(Position& pos, Move move);
 
     // Perform adjustments such as 50MR, correction history, contempt, ...
-    int adjustEval(Position &pos, Score staticEval);
+    int adjustEval(Position &pos, Score staticEval, SearchInfo* ss);
 
     void updateHistories(Position& pos, int bonus, int malus, Move bestMove,
       Move* quietMoves, int quietCount, int depth, SearchInfo* ss);
