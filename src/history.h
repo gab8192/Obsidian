@@ -2,7 +2,7 @@
 
 #include "types.h"
 
-constexpr int CORRHIST_SIZE = 16384;
+constexpr int CORRHIST_SIZE = 32768;
 
 constexpr int CORRHIST_LIMIT = 1024;
 
