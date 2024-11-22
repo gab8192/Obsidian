@@ -235,6 +235,7 @@ namespace Search {
   }
 
   void Thread::playNullMove(Position& pos, SearchInfo* ss) {
+    ss->contCorrHist = contCorrHist[0];
     ss->contHistory = contHistory[false][0];
     ss->playedMove = MOVE_NONE;
     keyStack[keyStackHead++] = pos.key;
@@ -315,6 +316,7 @@ namespace Search {
     nodesSearched++;
 
     const bool isCap = pos.board[move_to(move)] != NO_PIECE;
+    ss->contCorrHist = contCorrHist[pieceTo(pos, move)];
     ss->contHistory = contHistory[isCap][pieceTo(pos, move)];
     ss->playedMove = move;
     keyStack[keyStackHead++] = pos.key;
