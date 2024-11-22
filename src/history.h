@@ -29,7 +29,6 @@ using PawnCorrHist = int16_t[CORRHIST_SIZE][2];
 using NonPawnCorrHist = int16_t[CORRHIST_SIZE][2];
 
 // [piece to][piece to]
-// might be changed to [piece to][piecetype to] since the color must be opposite
 using ContCorrHist = int16_t[PIECE_NB * SQUARE_NB][PIECE_NB * SQUARE_NB];
 
 inline int PhIndex(Key pawnKey) {
@@ -39,7 +38,6 @@ inline int PhIndex(Key pawnKey) {
 inline int ChIndex(Key pawnKey){
   return pawnKey % CORRHIST_SIZE;
 }
-
 
 inline void addToCorrhist(int16_t& history, int value){
   history += value - int(history) * abs(value) / CORRHIST_LIMIT;
