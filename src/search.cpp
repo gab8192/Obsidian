@@ -56,7 +56,7 @@ namespace Search {
 
   DEFINE_PARAM_S(FpBase, 166, 15);
   DEFINE_PARAM_S(FpMaxDepth, 10, 1);
-  DEFINE_PARAM_S(FpDepthMul, 97, 10);
+  DEFINE_PARAM_S(FpDepthMul, 129, 10);
 
   DEFINE_PARAM_S(TripleExtMargin, 123, 10);
   DEFINE_PARAM_S(DoubleExtMargin, 15, 2);
@@ -987,8 +987,10 @@ namespace Search {
         if (   isQuiet
             && lmrDepth <= FpMaxDepth
             && !pos.checkers
-            && ss->staticEval + FpBase + FpDepthMul * lmrDepth <= alpha)
+            && ss->staticEval + FpBase + FpDepthMul * lmrDepth <= alpha) {
           skipQuiets = true;
+          continue;
+		}
       }
 
       int extension = 0;
