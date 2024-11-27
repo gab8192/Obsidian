@@ -44,7 +44,7 @@ namespace Search {
 
   DEFINE_PARAM_S(ProbcutBetaMargin, 178, 20);
 
-  DEFINE_PARAM_S(HistPrDepthMul, -4221, 400);
+  DEFINE_PARAM_S(HistPrDepthMul, -5628, 400);
 
   DEFINE_PARAM_S(LmpBase,    3, 1);
 
@@ -975,8 +975,10 @@ namespace Search {
         if (!pos.seeGe(move, seeMargin))
           continue;
 
-        if (isQuiet && history < HistPrDepthMul * depth)
+        if (isQuiet && history < HistPrDepthMul * depth) {
             skipQuiets = true;
+            continue;
+        }
 
         // Late move pruning. At low depths, only visit a few quiet moves
         if (seenMoves >= (depth * depth + LmpBase) / (2 - improving))
