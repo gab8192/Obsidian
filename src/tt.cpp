@@ -63,6 +63,10 @@ namespace TT {
     __builtin_prefetch(getBucket(key));
   }
 
+  int qualityOf(Entry* e) {
+    return e->getDepth() - 8 * e->getAgeDistance();
+  }
+
   Entry* probe(Key key, bool& hit) {
 
     Entry* entries = getBucket(key)->entries;
@@ -78,7 +82,7 @@ namespace TT {
     Entry* worstEntry = & entries[0];
 
     for (int i = 1; i < EntriesPerBucket; i++) {
-      if (entries[i].getQuality() < worstEntry->getQuality())
+      if (qualityOf(& entries[i]) < qualityOf(worstEntry))
         worstEntry = & entries[i];
     }
 
@@ -126,8 +130,7 @@ namespace TT {
     agePvBound = (agePvBound & (FLAG_EXACT | FLAG_PV)) | (tableAge << 3);
   }
 
-  int Entry::getQuality() {
-    int ageDistance = (MAX_AGE + tableAge - getAge()) % MAX_AGE;
-    return depth - 8 * ageDistance;
+  int Entry::getAgeDistance() {
+    return (MAX_AGE + tableAge - getAge()) % MAX_AGE;
   }
 }

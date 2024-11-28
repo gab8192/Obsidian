@@ -22,7 +22,7 @@ namespace TT {
 
     void updateAge();
 
-    int getQuality();
+    int getAgeDistance();
 
     inline bool matches(Key key) const {
       return this->key16 == (uint16_t) key;
