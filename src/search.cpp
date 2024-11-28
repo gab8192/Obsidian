@@ -977,7 +977,8 @@ namespace Search {
 
         if (isQuiet && history < HistPrDepthMul * depth) {
             skipQuiets = true;
-            continue;
+            if (quietCount)
+              continue;
         }
 
         // Late move pruning. At low depths, only visit a few quiet moves
