@@ -74,7 +74,6 @@ namespace TT {
     for (int i = 0; i < EntriesPerBucket; i++) {
       if (entries[i].matches(key) || entries[i].isEmpty()) {
         hit = ! entries[i].isEmpty();
-        entries[i].updateAge();
         return & entries[i];
       }
     }
@@ -102,6 +101,10 @@ namespace TT {
     return entryCount / EntriesPerBucket;
   }
 
+  int Entry::getAgeDistance() {
+    return (MAX_AGE + tableAge - getAge()) % MAX_AGE;
+  }
+
   void Entry::store(Key _key, Flag _bound, int _depth, Move _move, Score _score, Score _eval, bool isPV, int ply) {
 
      if (!matches(_key) || _move)
@@ -116,6 +119,7 @@ namespace TT {
 
     if ( _bound == FLAG_EXACT
       || !matches(_key)
+      || getAgeDistance()
       || _depth + 4 + 2*isPV > this->depth) {
 
         this->key16 = (uint16_t) _key;
@@ -124,13 +128,5 @@ namespace TT {
         this->staticEval = _eval;
         this->agePvBound = _bound | (isPV << 2) | (tableAge << 3);
       }
-  }
-
-  void Entry::updateAge() {
-    agePvBound = (agePvBound & (FLAG_EXACT | FLAG_PV)) | (tableAge << 3);
-  }
-
-  int Entry::getAgeDistance() {
-    return (MAX_AGE + tableAge - getAge()) % MAX_AGE;
   }
 }
