@@ -1143,8 +1143,8 @@ namespace Search {
     // Update histories
     if (bestScore >= beta)
     {
-      int bonus = statBonus(depth + (bestScore > beta + StatBonusBoostAt));
-      int malus = statMalus(depth + (bestScore > beta + StatBonusBoostAt));
+      int bonus = statBonus(depth);
+      int malus = statMalus(depth);
 
       if (pos.isQuiet(bestMove))
       {
