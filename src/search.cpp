@@ -732,7 +732,7 @@ namespace Search {
     if ( !IsPV
       && !excludedMove
       && ttScore != SCORE_NONE
-      && ttDepth >= depth
+      && ttDepth - ttEntry->getAgeDistance() >= depth
       && canUseScore(ttBound, ttScore, beta)
       && pos.halfMoveClock < 90) // The TT entry might trick us into thinking this is not a draw
         return ttScore;
