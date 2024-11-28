@@ -44,7 +44,7 @@ namespace Search {
 
   DEFINE_PARAM_S(ProbcutBetaMargin, 178, 20);
 
-  DEFINE_PARAM_S(HistPrDepthMul, -4221, 400);
+  DEFINE_PARAM_S(HistPrDepthMul, -6331, 400);
 
   DEFINE_PARAM_S(LmpBase,    3, 1);
 
