@@ -21,7 +21,8 @@ namespace Search {
   DEFINE_PARAM_S(LmrBase, 49, 10);
   DEFINE_PARAM_S(LmrDiv, 192, 10);
 
-  DEFINE_PARAM_S(CorrHistWeight, 49, 6);
+  DEFINE_PARAM_S(PawnChWeight, 49, 5);
+  DEFINE_PARAM_S(NonPawnChWeight, 49, 5);
 
   DEFINE_PARAM_S(StatBonusBias, -19, 15);
   DEFINE_PARAM_S(StatBonusLinear, 146, 10);
@@ -348,16 +349,16 @@ namespace Search {
             + (ss - 4)->contHistory[chIndex];
   }
 
-  Score Thread::adjustEval(Position &pos, Score staticEval) {
+  Score Thread::adjustEval(Position &pos, Score eval) {
     // 50 move rule scaling
-    staticEval = (staticEval * (200 - pos.halfMoveClock)) / 200;
+    eval = (eval * (200 - pos.halfMoveClock)) / 200;
 
     // Pawn correction history
-    staticEval += CorrHistWeight * pawnCorrhist[pos.sideToMove][getCorrHistIndex(pos.pawnKey)] / 512;
-    staticEval += CorrHistWeight * wNonPawnCorrhist[pos.sideToMove][getCorrHistIndex(pos.nonPawnKey[WHITE])] / 512;
-    staticEval += CorrHistWeight * bNonPawnCorrhist[pos.sideToMove][getCorrHistIndex(pos.nonPawnKey[BLACK])] / 512;
+    eval += PawnChWeight * pawnCorrhist[pos.sideToMove][getCorrHistIndex(pos.pawnKey)] / 512;
+    eval += NonPawnChWeight * wNonPawnCorrhist[pos.sideToMove][getCorrHistIndex(pos.nonPawnKey[WHITE])] / 512;
+    eval += NonPawnChWeight * bNonPawnCorrhist[pos.sideToMove][getCorrHistIndex(pos.nonPawnKey[BLACK])] / 512;
 
-    return std::clamp(staticEval, SCORE_TB_LOSS_IN_MAX_PLY + 1, SCORE_TB_WIN_IN_MAX_PLY - 1);
+    return std::clamp(eval, SCORE_TB_LOSS_IN_MAX_PLY + 1, SCORE_TB_WIN_IN_MAX_PLY - 1);
   }
 
   void addToContHistory(Position& pos, int bonus, Move move, SearchInfo* ss) {
