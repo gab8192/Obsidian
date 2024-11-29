@@ -53,7 +53,7 @@ namespace Search {
   DEFINE_PARAM_S(PvsQuietSeeMargin, -102, 10);
   DEFINE_PARAM_S(PvsCapSeeMargin, -98, 10);
 
-  DEFINE_PARAM_S(EarlyLmrHistoryDiv, 5428, 400);
+  DEFINE_PARAM_S(EarlyLmrHistoryDiv, 4071, 400);
 
   DEFINE_PARAM_S(FpBase, 166, 15);
   DEFINE_PARAM_S(FpMaxDepth, 10, 1);
@@ -63,8 +63,8 @@ namespace Search {
   DEFINE_PARAM_S(DoubleExtMargin, 15, 2);
   DEFINE_PARAM_S(DoubleExtMax, 7, 1);
 
-  DEFINE_PARAM_S(LmrQuietHistoryDiv, 9773, 800);
-  DEFINE_PARAM_S(LmrCapHistoryDiv, 8508, 800);
+  DEFINE_PARAM_S(LmrQuietHistoryDiv, 7330, 800);
+  DEFINE_PARAM_S(LmrCapHistoryDiv, 6381, 800);
   DEFINE_PARAM_S(ZwsDeeperMargin, 72, 10);
 
   DEFINE_PARAM_B(AspWindowStartDepth, 4, 4, 34);
