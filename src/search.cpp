@@ -16,31 +16,31 @@
 
 namespace Search {
 
-  DEFINE_PARAM_S(QsFpMargin, 136, 15);
+  DEFINE_PARAM_S(QsFpMargin, 136, 14);
 
   DEFINE_PARAM_S(LmrBase, 100, 10);
-  DEFINE_PARAM_S(LmrDiv, 290, 10);
+  DEFINE_PARAM_S(LmrDiv, 290, 29);
 
   DEFINE_PARAM_S(PawnChWeight, 49, 5);
   DEFINE_PARAM_S(NonPawnChWeight, 49, 5);
 
   DEFINE_PARAM_S(StatBonusBias, -19, 15);
-  DEFINE_PARAM_S(StatBonusLinear, 146, 10);
-  DEFINE_PARAM_S(StatBonusMax, 1157, 50);
+  DEFINE_PARAM_S(StatBonusLinear, 146, 15);
+  DEFINE_PARAM_S(StatBonusMax, 1157, 100);
   DEFINE_PARAM_S(StatBonusBoostAt, 105, 10);
 
   DEFINE_PARAM_S(StatMalusBias, -7, 15);
-  DEFINE_PARAM_S(StatMalusLinear, 153, 10);
-  DEFINE_PARAM_S(StatMalusMax, 1155, 50);
+  DEFINE_PARAM_S(StatMalusLinear, 153, 15);
+  DEFINE_PARAM_S(StatMalusMax, 1155, 100);
 
-  DEFINE_PARAM_S(RazoringDepthMul, 392, 30);
+  DEFINE_PARAM_S(RazoringDepthMul, 392, 40);
 
   DEFINE_PARAM_S(RfpMaxDepth, 11, 1);
-  DEFINE_PARAM_S(RfpDepthMul, 100, 12);
+  DEFINE_PARAM_S(RfpDepthMul, 100, 10);
 
   DEFINE_PARAM_S(NmpBase, 4, 1);
   DEFINE_PARAM_B(NmpDepthDiv, 3, 1, 21);
-  DEFINE_PARAM_S(NmpEvalDiv, 139, 20);
+  DEFINE_PARAM_S(NmpEvalDiv, 139, 15);
   DEFINE_PARAM_S(NmpEvalDivMin, 4, 1);
 
   DEFINE_PARAM_S(ProbcutBetaMargin, 178, 20);
@@ -55,20 +55,21 @@ namespace Search {
 
   DEFINE_PARAM_S(EarlyLmrHistoryDiv, 4071, 400);
 
-  DEFINE_PARAM_S(FpBase, 166, 15);
+  DEFINE_PARAM_S(FpBase, 166, 17);
   DEFINE_PARAM_S(FpMaxDepth, 10, 1);
-  DEFINE_PARAM_S(FpDepthMul, 129, 10);
+  DEFINE_PARAM_S(FpDepthMul, 129, 13);
 
-  DEFINE_PARAM_S(TripleExtMargin, 123, 10);
-  DEFINE_PARAM_S(DoubleExtMargin, 15, 2);
+  DEFINE_PARAM_S(SBetaMargin, 64, 6);
+  DEFINE_PARAM_S(TripleExtMargin, 123, 12);
+  DEFINE_PARAM_S(DoubleExtMargin, 15, 1);
   DEFINE_PARAM_S(DoubleExtMax, 7, 1);
 
-  DEFINE_PARAM_S(LmrQuietHistoryDiv, 7330, 800);
-  DEFINE_PARAM_S(LmrCapHistoryDiv, 6381, 800);
+  DEFINE_PARAM_S(LmrQuietHistoryDiv, 7330, 700);
+  DEFINE_PARAM_S(LmrCapHistoryDiv, 6381, 600);
   DEFINE_PARAM_S(ZwsDeeperMargin, 72, 10);
 
   DEFINE_PARAM_B(AspWindowStartDepth, 4, 4, 34);
-  DEFINE_PARAM_B(AspWindowStartDelta, 11, 5, 45);
+  DEFINE_PARAM_B(AspWindowStartDelta, 11, 5, 25);
 
   int lmrTable[MAX_PLY][MAX_MOVES];
 
@@ -1006,7 +1007,7 @@ namespace Search {
         && ttBound & TT::FLAG_LOWER
         && ttDepth >= depth - 3)
       {
-        Score singularBeta = ttScore - depth;
+        Score singularBeta = ttScore - (depth * SBetaMargin) / 64;
 
         Score seScore = negamax<false>(pos, singularBeta - 1, singularBeta, (depth - 1) / 2, cutNode, ss, move);
 
