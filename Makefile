@@ -4,6 +4,13 @@ else
 	EXE := Obsidian
 endif
 
+DEFAULT_NET = net53.bin
+
+ifndef EVALFILE
+	EVALFILE = $(DEFAULT_NET)
+	DOWNLOAD_NET = true
+endif
+
 M64     = -m64 -mpopcnt
 MSSE2   = $(M64) -msse -msse2
 MSSSE3  = $(MSSE2) -mssse3
@@ -17,7 +24,7 @@ OBJS := $(OBJS:.c=.o)
 
 OPTIMIZE = -O3 -fno-stack-protector -fno-math-errno -funroll-loops -fno-exceptions -flto -flto-partition=one
 
-FLAGS = -s -pthread -std=c++17 -DNDEBUG $(OPTIMIZE)
+FLAGS = -s -pthread -std=c++17 -DNDEBUG -DEvalFile=\"$(EVALFILE)\" $(OPTIMIZE)
 
 ifeq ($(build),)
 	build = native
@@ -60,7 +67,7 @@ endif
 %.o: %.c
 	gcc $(FLAGS) -c $< -o $@
 
-make: $(FILES)
+make: download-net $(FILES)
 	g++ $(FLAGS) $(FILES) -o $(EXE) -fprofile-generate="obs_pgo"
 ifeq ($(OS),Windows_NT)
 	$(EXE) bench
@@ -74,8 +81,18 @@ else
 	rm -rf obs_pgo
 endif
 
-nopgo: $(OBJS)
+nopgo: download-net $(OBJS)
 	g++ $(FLAGS) $(OBJS) -o $(EXE)
 
 clean:
 	rm -f $(OBJS)
+	
+download-net:
+ifdef DOWNLOAD_NET
+	@if test -f "$(EVALFILE)"; then \
+		echo "File $(EVALFILE) already exists, skipping download."; \
+	else \
+		echo Downloading net; \
+		curl -sOL https://github.com/gab8192/Obsidian-nets/releases/download/nets/$(EVALFILE); \
+	fi
+endif

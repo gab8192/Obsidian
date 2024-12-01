@@ -3,8 +3,6 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "net53.bin"
-
 using namespace SIMD;
 
 struct Position;
