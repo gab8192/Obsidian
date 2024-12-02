@@ -16,36 +16,36 @@
 
 namespace Search {
 
-  DEFINE_PARAM_S(QsFpMargin, 136, 15);
+  DEFINE_PARAM_S(QsFpMargin, 138, 14);
 
-  DEFINE_PARAM_S(LmrBase, 49, 10);
-  DEFINE_PARAM_S(LmrDiv, 192, 10);
+  DEFINE_PARAM_S(LmrBase, 95, 10);
+  DEFINE_PARAM_S(LmrDiv, 293, 29);
 
-  DEFINE_PARAM_S(PawnChWeight, 49, 5);
-  DEFINE_PARAM_S(NonPawnChWeight, 49, 5);
+  DEFINE_PARAM_S(PawnChWeight, 42, 5);
+  DEFINE_PARAM_S(NonPawnChWeight, 47, 5);
 
-  DEFINE_PARAM_S(StatBonusBias, -19, 15);
-  DEFINE_PARAM_S(StatBonusLinear, 146, 10);
-  DEFINE_PARAM_S(StatBonusMax, 1157, 50);
-  DEFINE_PARAM_S(StatBonusBoostAt, 105, 10);
+  DEFINE_PARAM_S(StatBonusBias, -10, 15);
+  DEFINE_PARAM_S(StatBonusLinear, 167, 15);
+  DEFINE_PARAM_S(StatBonusMax, 1115, 100);
+  DEFINE_PARAM_S(StatBonusBoostAt, 108, 10);
 
-  DEFINE_PARAM_S(StatMalusBias, -7, 15);
-  DEFINE_PARAM_S(StatMalusLinear, 153, 10);
-  DEFINE_PARAM_S(StatMalusMax, 1155, 50);
+  DEFINE_PARAM_S(StatMalusBias, 12, 15);
+  DEFINE_PARAM_S(StatMalusLinear, 183, 15);
+  DEFINE_PARAM_S(StatMalusMax, 1198, 100);
 
-  DEFINE_PARAM_S(RazoringDepthMul, 392, 30);
+  DEFINE_PARAM_S(RazoringDepthMul, 383, 40);
 
   DEFINE_PARAM_S(RfpMaxDepth, 11, 1);
-  DEFINE_PARAM_S(RfpDepthMul, 100, 12);
+  DEFINE_PARAM_S(RfpDepthMul, 84, 10);
 
   DEFINE_PARAM_S(NmpBase, 4, 1);
   DEFINE_PARAM_B(NmpDepthDiv, 3, 1, 21);
-  DEFINE_PARAM_S(NmpEvalDiv, 139, 20);
+  DEFINE_PARAM_S(NmpEvalDiv, 148, 15);
   DEFINE_PARAM_S(NmpEvalDivMin, 4, 1);
 
-  DEFINE_PARAM_S(ProbcutBetaMargin, 178, 20);
+  DEFINE_PARAM_S(ProbcutBetaMargin, 184, 20);
 
-  DEFINE_PARAM_S(HistPrDepthMul, -4221, 400);
+  DEFINE_PARAM_S(HistPrDepthMul, -4645, 400);
 
   DEFINE_PARAM_S(LmpBase,    3, 1);
 
@@ -53,22 +53,23 @@ namespace Search {
   DEFINE_PARAM_S(PvsQuietSeeMargin, -102, 10);
   DEFINE_PARAM_S(PvsCapSeeMargin, -98, 10);
 
-  DEFINE_PARAM_S(EarlyLmrHistoryDiv, 5428, 400);
+  DEFINE_PARAM_S(EarlyLmrHistoryDiv, 3661, 400);
 
-  DEFINE_PARAM_S(FpBase, 166, 15);
+  DEFINE_PARAM_S(FpBase, 170, 17);
   DEFINE_PARAM_S(FpMaxDepth, 10, 1);
-  DEFINE_PARAM_S(FpDepthMul, 129, 10);
+  DEFINE_PARAM_S(FpDepthMul, 132, 13);
 
-  DEFINE_PARAM_S(TripleExtMargin, 123, 10);
-  DEFINE_PARAM_S(DoubleExtMargin, 15, 2);
+  DEFINE_PARAM_S(SBetaMargin, 61, 6);
+  DEFINE_PARAM_S(TripleExtMargin, 131, 12);
+  DEFINE_PARAM_S(DoubleExtMargin, 14, 1);
   DEFINE_PARAM_S(DoubleExtMax, 7, 1);
 
-  DEFINE_PARAM_S(LmrQuietHistoryDiv, 9773, 800);
-  DEFINE_PARAM_S(LmrCapHistoryDiv, 8508, 800);
-  DEFINE_PARAM_S(ZwsDeeperMargin, 72, 10);
+  DEFINE_PARAM_S(LmrQuietHistoryDiv, 8601, 700);
+  DEFINE_PARAM_S(LmrCapHistoryDiv, 6642, 600);
+  DEFINE_PARAM_S(ZwsDeeperMargin, 75, 10);
 
   DEFINE_PARAM_B(AspWindowStartDepth, 4, 4, 34);
-  DEFINE_PARAM_B(AspWindowStartDelta, 11, 5, 45);
+  DEFINE_PARAM_B(AspWindowStartDelta, 11, 5, 25);
 
   int lmrTable[MAX_PLY][MAX_MOVES];
 
@@ -1006,7 +1007,7 @@ namespace Search {
         && ttBound & TT::FLAG_LOWER
         && ttDepth >= depth - 3)
       {
-        Score singularBeta = ttScore - depth;
+        Score singularBeta = ttScore - (depth * SBetaMargin) / 64;
 
         Score seScore = negamax<false>(pos, singularBeta - 1, singularBeta, (depth - 1) / 2, cutNode, ss, move);
 
@@ -1041,7 +1042,7 @@ namespace Search {
 
       if (depth >= 2 && seenMoves > 1 + 2 * IsRoot) {
 
-        int R = lmrTable[depth][seenMoves] / (1 + !isQuiet);
+        int R = lmrTable[depth][seenMoves];
 
         // Reduce or extend depending on history of this move
         R -= history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv);
@@ -1211,18 +1212,18 @@ namespace Search {
     return output.str();
   }
 
-  DEFINE_PARAM_B(tm0, 190, 50, 200);
-  DEFINE_PARAM_B(tm1, 68,  20, 100);
+  DEFINE_PARAM_B(tm0, 192, 50, 200);
+  DEFINE_PARAM_B(tm1, 61,  20, 100);
 
-  DEFINE_PARAM_B(tm2, 155, 50, 200);
+  DEFINE_PARAM_B(tm2, 169, 50, 200);
   DEFINE_PARAM_B(tm3, 7,   0, 30);
 
-  DEFINE_PARAM_B(tm4, 88,   0, 150);
+  DEFINE_PARAM_B(tm4, 84,   0, 150);
   DEFINE_PARAM_B(tm5, 10,   0, 20);
-  DEFINE_PARAM_B(tm6, 24,   0, 50);
+  DEFINE_PARAM_B(tm6, 26,   0, 50);
 
   DEFINE_PARAM_B(lol0, 81, 0, 150);
-  DEFINE_PARAM_B(lol1, 149,   75,  225);
+  DEFINE_PARAM_B(lol1, 146,   75,  225);
 
   void Thread::startSearch() {
 
