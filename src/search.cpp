@@ -62,7 +62,6 @@ namespace Search {
   DEFINE_PARAM_S(SBetaMargin, 61, 6);
   DEFINE_PARAM_S(TripleExtMargin, 131, 12);
   DEFINE_PARAM_S(DoubleExtMargin, 14, 1);
-  DEFINE_PARAM_S(DoubleExtMax, 7, 1);
 
   DEFINE_PARAM_S(LmrQuietHistoryDiv, 8601, 700);
   DEFINE_PARAM_S(LmrCapHistoryDiv, 6642, 600);
@@ -776,7 +775,6 @@ namespace Search {
     }
 
     (ss + 1)->killerMove = MOVE_NONE;
-    ss->doubleExt = (ss - 1)->doubleExt;
 
     bool improving = false;
 
@@ -1014,11 +1012,9 @@ namespace Search {
         if (seScore < singularBeta) {
           // Extend even more if s. value is smaller than s. beta by some margin
           if (   !IsPV
-              && ss->doubleExt <= DoubleExtMax
               && seScore < singularBeta - DoubleExtMargin)
           {
             extension = 2 + (isQuiet && seScore < singularBeta - TripleExtMargin);
-            ss->doubleExt = (ss - 1)->doubleExt + 1;
           } else {
             extension = 1;
           }
@@ -1271,8 +1267,6 @@ namespace Search {
       searchStack[i].playedMove   = MOVE_NONE;
 
       searchStack[i].contHistory = contHistory[false][0];
-
-      searchStack[i].doubleExt = 0;
     }
 
     bool naturalExit = true;
