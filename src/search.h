@@ -36,8 +36,6 @@ namespace Search {
     Move pv[MAX_PLY];
     int pvLength;
 
-    int doubleExt;
-
     // [piece to]
     int16_t* contHistory;
   };
