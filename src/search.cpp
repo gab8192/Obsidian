@@ -1040,22 +1040,18 @@ namespace Search {
 
         int R = lmrTable[depth][seenMoves];
 
-        // Reduce or extend depending on history of this move
         R -= history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv);
 
-        // Extend moves that give check
         R -= (newPos.checkers != 0ULL);
 
-        // Extend if this position *was* in a PV node. Even further if it *is*
+        R -= (ttDepth >= depth);
+
         R -= ttPV + IsPV;
 
-        // Reduce more if the expected best move is a capture
         R += ttMoveNoisy;
 
-        // Reduce if evaluation is trending down
         R += !improving;
 
-        // Reduce if we expect to fail high
         R += 2 * cutNode;
 
         // Clamp to avoid a qsearch or an extension in the child search
@@ -1138,6 +1134,10 @@ namespace Search {
       return pos.checkers ? ply - SCORE_MATE : SCORE_DRAW;
     }
 
+    // Only in pv nodes we could probe TB and not cut off immediately
+    if (IsPV)
+      bestScore = std::min(bestScore, maxScore);
+
     // Update histories
     if (bestScore >= beta)
     {
@@ -1159,10 +1159,6 @@ namespace Search {
         addToHistory(captureHistory[pieceTo(pos, otherMove)][captured], -malus);
       }
     }
-
-    // Only in pv nodes we could probe tt and not cut off immediately
-    if (IsPV)
-      bestScore = std::min(bestScore, maxScore);
 
     TT::Flag resultBound;
     if (bestScore >= beta)
