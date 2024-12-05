@@ -1046,6 +1046,8 @@ namespace Search {
         // Extend moves that give check
         R -= (newPos.checkers != 0ULL);
 
+        R -= (ttDepth >= depth);
+
         // Extend if this position *was* in a PV node. Even further if it *is*
         R -= ttPV + IsPV;
 
