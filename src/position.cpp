@@ -389,6 +389,17 @@ void Position::calcThreats(Threats& threats) {
   }
 }
 
+void Position::calcCheckSquares(Bitboard* checkSquares) const {
+  const Square theirKing = kingSquare(~sideToMove);
+  const Bitboard occupied = pieces();
+  checkSquares[PAWN]   = getPawnAttacks(theirKing, ~sideToMove)       & ~occupied;
+  checkSquares[KNIGHT] = getKnightAttacks(theirKing)           & ~occupied;
+  checkSquares[BISHOP] = getBishopAttacks(theirKing, occupied) & ~occupied;
+  checkSquares[ROOK]   = getRookAttacks(theirKing, occupied)   & ~occupied;
+  checkSquares[QUEEN]  = checkSquares[BISHOP] | checkSquares[ROOK];
+  checkSquares[KING]   = 0ull;
+}
+
 /// Only works for MT_NORMAL moves
 Key Position::keyAfter(Move move) const {
 

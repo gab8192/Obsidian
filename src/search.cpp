@@ -1043,9 +1043,6 @@ namespace Search {
         // Reduce or extend depending on history of this move
         R -= history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv);
 
-        // Extend moves that give check
-        R -= (newPos.checkers != 0ULL);
-
         // Extend if this position *was* in a PV node. Even further if it *is*
         R -= ttPV + IsPV;
 

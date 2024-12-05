@@ -58,8 +58,11 @@ Move_Score nextMove0(MoveList& moveList, const int visitedCount) {
 }
 
 void MovePicker::scoreQuiets() {
+  const Color us = pos.sideToMove;
   Threats threats;
   pos.calcThreats(threats);
+  Bitboard checkSquares[PIECE_TYPE_NB];
+  pos.calcCheckSquares(checkSquares);
 
   int i = 0;
   while (i < quiets.size()) {
@@ -86,6 +89,15 @@ void MovePicker::scoreQuiets() {
       if (threats.byPawn & from) threatScore += 16384;
       if (threats.byPawn & to) threatScore -= 16384;
     }
+
+    if (pos.blockersForKing[~us] & from) {
+      Bitboard line = LINE_BB[from][pos.kingSquare(~us)];
+      if (!(line & to))
+        threatScore += 16384;
+    }
+
+    if (checkSquares[pt] & to) 
+      threatScore += 16384;
 
     quiets[i++].score =
         threatScore
