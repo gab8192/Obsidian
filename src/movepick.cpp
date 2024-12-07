@@ -93,11 +93,11 @@ void MovePicker::scoreQuiets() {
     if (pos.blockersForKing[~us] & from) {
       Bitboard line = LINE_BB[from][pos.kingSquare(~us)];
       if (!(line & to))
-        threatScore += 16384;
+        threatScore += 8192;
     }
 
     if (checkSquares[pt] & to) 
-      threatScore += 16384;
+      threatScore += 8192;
 
     quiets[i++].score =
         threatScore
