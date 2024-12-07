@@ -774,6 +774,11 @@ namespace Search {
       }
     }
 
+    if ( depth <= 14 && ply >= 8 && alpha > 0 && pos.checkers
+     && (ss - 2)->staticEval == SCORE_NONE && (ss - 4)->staticEval == SCORE_NONE
+     && (ss - 6)->staticEval == SCORE_NONE && (ss - 8)->staticEval == SCORE_NONE)
+      return 0;
+
     (ss + 1)->killerMove = MOVE_NONE;
 
     bool improving = false;
