@@ -182,11 +182,7 @@ void getQuietChecks(const Position& pos, MoveList* moveList) {
   const Bitboard pinned = ourPieces & pos.blockersForKing[us];
 
   Bitboard checkSquares[PIECE_TYPE_NB];
-  checkSquares[PAWN]   = getPawnAttacks(theirKing, them)       & ~occupied;
-  checkSquares[KNIGHT] = getKnightAttacks(theirKing)           & ~occupied;
-  checkSquares[BISHOP] = getBishopAttacks(theirKing, occupied) & ~occupied;
-  checkSquares[ROOK]   = getRookAttacks(theirKing, occupied)   & ~occupied;
-  checkSquares[QUEEN]  = checkSquares[BISHOP] | checkSquares[ROOK];
+  pos.calcCheckSquares(checkSquares);
 
   if (us == WHITE) {
     Bitboard pawns = (checkSquares[PAWN] >> 8) & ourPieces & pos.pieces(PAWN);
