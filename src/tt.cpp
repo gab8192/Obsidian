@@ -72,7 +72,7 @@ namespace TT {
     Entry* entries = getBucket(key)->entries;
 
     for (int i = 0; i < EntriesPerBucket; i++) {
-      if (entries[i].matches(key) || entries[i].isEmpty()) {
+      if (entries[i].matches(key)) {
         hit = ! entries[i].isEmpty();
         return & entries[i];
       }

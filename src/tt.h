@@ -63,7 +63,7 @@ namespace TT {
     }
 
     inline bool isEmpty() const {
-      return score == 0 && (agePvBound & (FLAG_EXACT | FLAG_PV)) == 0;
+      return score == 0 && agePvBound == 0;
     }
 
   private:
