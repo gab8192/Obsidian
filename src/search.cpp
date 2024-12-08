@@ -1046,8 +1046,6 @@ namespace Search {
 
         R -= ttPV + IsPV;
 
-        R -= (pos.checkers && depth <= 10);
-
         R += ttMoveNoisy;
 
         R += !improving;
