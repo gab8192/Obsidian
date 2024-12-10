@@ -1042,7 +1042,7 @@ namespace Search {
 
         R -= history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv);
 
-        R -= (newPos.checkers != 0ULL);
+        R -= (depth <= 10 && newPos.checkers != 0ULL);
 
         R -= (ttDepth >= depth);
 
