@@ -111,8 +111,8 @@ void MovePicker::scoreCaptures() {
     PieceType captured = piece_type(pos.board[move_to(move)]);
 
     captures[i++].score =
-        PIECE_VALUE[mt == MT_EN_PASSANT ? PAWN : captured] * 32
-      + (mt == MT_PROMOTION) * 32768
+        PIECE_VALUE[mt == MT_EN_PASSANT ? PAWN : captured] * 16
+      + (mt == MT_PROMOTION) * 16384
       + capHist[pieceTo(pos, move)][captured];
   }
 }
@@ -153,7 +153,7 @@ Move MovePicker::nextMove(bool skipQuiets) {
   {
     while (capIndex < captures.size()) {
       Move_Score move = nextMove0(captures, capIndex++);
-      int realMargin = searchType == PVS ? (- move.score / 64) : seeMargin;
+      int realMargin = searchType == PVS ? (- move.score / 32) : seeMargin;
       if (pos.seeGe(move.move, realMargin) && !isUnderPromo(move.move)) // good capture
         return move.move;
 
