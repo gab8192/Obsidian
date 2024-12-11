@@ -64,6 +64,11 @@ namespace Search {
 
     void idleLoop();
 
+    // TEMPORARY
+
+    NonPawnHist wNonPawnHist;
+    NonPawnHist bNonPawnHist;
+
   private:
 
     int64_t optimumTime, maxTime;
@@ -88,6 +93,8 @@ namespace Search {
     CaptureHistory captureHistory;
     ContinuationHistory contHistory;
     CounterMoveHistory counterMoveHistory;
+    
+
     PawnCorrHist pawnCorrhist;
     NonPawnCorrHist wNonPawnCorrhist;
     NonPawnCorrHist bNonPawnCorrhist;

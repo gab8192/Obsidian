@@ -18,6 +18,8 @@ using CounterMoveHistory = Move[PIECE_NB * SQUARE_NB];
 // [isCap][piece to][piece to]
 using ContinuationHistory = int16_t[2][PIECE_NB * SQUARE_NB][PIECE_NB * SQUARE_NB];
 
+using NonPawnHist = int16_t[1024][PIECE_NB * SQUARE_NB];
+
 // [stm][pawn hash]
 using PawnCorrHist = int16_t[2][CORRHIST_SIZE];
 

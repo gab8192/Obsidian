@@ -133,6 +133,8 @@ namespace Search {
     memset(pawnCorrhist, 0, sizeof(pawnCorrhist));
     memset(wNonPawnCorrhist, 0, sizeof(wNonPawnCorrhist));
     memset(bNonPawnCorrhist, 0, sizeof(bNonPawnCorrhist));
+    memset(wNonPawnHist, 0, sizeof(wNonPawnHist));
+    memset(bNonPawnHist, 0, sizeof(bNonPawnHist));
 
     searchPrevScore = SCORE_NONE;
   }
@@ -390,17 +392,26 @@ namespace Search {
     if (depth <= 3 && !quietCount)
       return;
 
+    int16_t* wnpHistory = wNonPawnHist[pos.nonPawnKey[WHITE] % 1024];
+    int16_t* bnpHistory = bNonPawnHist[pos.nonPawnKey[BLACK] % 1024];
+
     // Butterfly history
     addToHistory(mainHistory[pos.sideToMove][move_from_to(bestMove)], bonus);
 
     // Continuation history
     addToContHistory(pos, bonus, bestMove, ss);
 
+    addToHistory(wnpHistory[pieceTo(pos, bestMove)], bonus);
+    addToHistory(bnpHistory[pieceTo(pos, bestMove)], bonus);
+
     // Decrease score of other quiet moves
     for (int i = 0; i < quietCount; i++) {
       Move otherMove = quiets[i];
       addToContHistory(pos, -malus, otherMove, ss);
       addToHistory(mainHistory[pos.sideToMove][move_from_to(otherMove)], -malus);
+
+      addToHistory(wnpHistory[pieceTo(pos, otherMove)], -malus);
+      addToHistory(bnpHistory[pieceTo(pos, otherMove)], -malus);
     }
   }
 
@@ -554,7 +565,7 @@ namespace Search {
       ttMove, MOVE_NONE, MOVE_NONE,
       mainHistory, captureHistory,
       0,
-      ss);
+      ss, this);
 
     movePicker.genQuietChecks = (depth == 0);
 
@@ -878,7 +889,7 @@ namespace Search {
         visitTTMove ? ttMove : MOVE_NONE, MOVE_NONE, MOVE_NONE,
         mainHistory, captureHistory,
         pcSeeMargin,
-        ss);
+        ss, this);
 
       Move move;
 
@@ -936,7 +947,7 @@ namespace Search {
       ttMove, ss->killerMove, counterMove,
       mainHistory, captureHistory,
       0,
-      ss);
+      ss, this);
 
     // Visit moves
 

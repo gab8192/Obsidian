@@ -40,7 +40,7 @@ public:
     Move _ttMove, Move _killerMove, Move _counterMove,
     MainHistory& _mainHist, CaptureHistory& _capHist,
     int _seeMargin,
-    Search::SearchInfo* _ss);
+    Search::SearchInfo* _ss, Search::Thread* _thread);
 
   Move nextMove(bool skipQuiets);
 
@@ -60,6 +60,7 @@ private:
   int seeMargin;
 
   Search::SearchInfo* ss;
+  Search::Thread* thread;
 
   Stage stage;
 

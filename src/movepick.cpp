@@ -7,12 +7,12 @@ MovePicker::MovePicker(
   Move _ttMove, Move _killerMove, Move _counterMove,
   MainHistory& _mainHist, CaptureHistory& _capHist,
   int _seeMargin,
-  Search::SearchInfo* _ss) :
+  Search::SearchInfo* _ss, Search::Thread* _thread) :
   searchType(_searchType), pos(_pos),
   ttMove(_ttMove),
   mainHist(_mainHist), capHist(_capHist),
   seeMargin(_seeMargin),
-  ss(_ss)
+  ss(_ss), thread(_thread)
 {
   if (pos.checkers)
     this->stage = IN_CHECK_PLAY_TT;
@@ -61,6 +61,9 @@ void MovePicker::scoreQuiets() {
   Threats threats;
   pos.calcThreats(threats);
 
+  int16_t* wnpHistory = thread->wNonPawnHist[pos.nonPawnKey[WHITE] % 1024];
+  int16_t* bnpHistory = thread->bNonPawnHist[pos.nonPawnKey[BLACK] % 1024];
+
   int i = 0;
   while (i < quiets.size()) {
     Move move = quiets[i].move;
@@ -90,6 +93,8 @@ void MovePicker::scoreQuiets() {
     quiets[i++].score =
         threatScore
       + mainHist[pos.sideToMove][move_from_to(move)]
+      + wnpHistory[chIndex]
+      + bnpHistory[chIndex]
       + (ss - 1)->contHistory[chIndex]
       + (ss - 2)->contHistory[chIndex]
       + (ss - 4)->contHistory[chIndex]/2
