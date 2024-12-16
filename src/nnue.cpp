@@ -133,8 +133,9 @@ namespace NNUE {
   }
 
   void init() {
-    Content = (Net*) Util::allocAlign(sizeof(Net));
-    memcpy(Content, gEmbeddedNNUEData, sizeof(Net));
+    Content = (Net*) gEmbeddedNNUEData;
+    //Content = (Net*) Util::allocAlign(sizeof(Net));
+    //memcpy(Content, gEmbeddedNNUEData, sizeof(Net));
   }
 
   Score evaluate(Position& pos, Accumulator& accumulator) {
