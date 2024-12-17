@@ -160,6 +160,8 @@ struct alignas(32) Position {
            || (mt == MT_CASTLING);
   }
 
+  bool is50mrDraw() const;
+
   bool isPseudoLegal(Move move) const;
 
   bool isLegal(Move move) const;

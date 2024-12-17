@@ -483,7 +483,7 @@ namespace Search {
     }
 
     // Detect draw
-    if (isRepetition(pos, ply) || pos.halfMoveClock >= 100)
+    if (isRepetition(pos, ply) || pos.is50mrDraw())
       return SCORE_DRAW;
 
     // Quit if we are close to reaching max ply
@@ -681,7 +681,7 @@ namespace Search {
     }
 
     // Detect draw
-    if (!IsRoot && (isRepetition(pos, ply) || pos.halfMoveClock >= 100))
+    if (!IsRoot && (isRepetition(pos, ply) || pos.is50mrDraw()))
       return SCORE_DRAW;
 
     // Quit if we are close to reaching max ply

@@ -1,5 +1,6 @@
 #include "position.h"
 #include "move.h"
+#include "movegen.h"
 #include "uci.h"
 
 #include <sstream>
@@ -107,6 +108,21 @@ void Position::updateKeys() {
   if (sideToMove == WHITE)
     key ^= ZOBRIST_TEMPO;
 }
+
+bool Position::is50mrDraw() const {
+  if (halfMoveClock < 100)
+    return false;
+  if (! checkers)
+    return true;
+  MoveList evasions;
+  getStageMoves(*this, ADD_ALL_MOVES, &evasions);
+  for (int i = 0; i < evasions.size(); i++) {
+    if (isLegal(evasions[i].move))
+      return true;
+  }
+  return false;
+}
+
 
 bool Position::isPseudoLegal(Move move) const {
   if (move == MOVE_NONE)
