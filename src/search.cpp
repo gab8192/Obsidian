@@ -1061,7 +1061,7 @@ namespace Search {
 
         if (score > alpha && reducedDepth < newDepth) {
           newDepth += (score > bestScore + ZwsDeeperMargin && !IsRoot);
-          newDepth -= (score < bestScore + newDepth        && !IsRoot);
+          newDepth -= (score < bestScore + newDepth);
 
           if (reducedDepth < newDepth)
             score = -negamax<false>(newPos, -alpha - 1, -alpha, newDepth, !cutNode, ss + 1);
