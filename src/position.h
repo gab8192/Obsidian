@@ -172,6 +172,8 @@ struct alignas(32) Position {
 
   void calcThreats(Threats& threats);
 
+  void calcCheckSquares(Bitboard* checkSquares) const;
+
   /// Only works for MT_NORMAL moves
   Key keyAfter(Move move) const;
 
