@@ -1036,7 +1036,7 @@ namespace Search {
 
       // Late move reductions
 
-      if (depth >= 2 && seenMoves > 1 + 2 * IsRoot) {
+      if (depth >= 2 && seenMoves > 1 + IsRoot) {
 
         int R = lmrTable[depth][seenMoves];
 
