@@ -50,7 +50,7 @@ namespace Search {
   DEFINE_PARAM_S(LmpBase,    3, 1);
 
   DEFINE_PARAM_S(QsSeeMargin, -32, 15);
-  DEFINE_PARAM_S(PvsQuietSeeMargin, -102, 10);
+  DEFINE_PARAM_S(PvsQuietSeeMargin, -35, 10);
   DEFINE_PARAM_S(PvsCapSeeMargin, -98, 10);
 
   DEFINE_PARAM_S(EarlyLmrHistoryDiv, 3661, 400);
@@ -970,8 +970,8 @@ namespace Search {
         int lmrDepth = std::max(0, depth - lmrRed);
 
         // SEE (Static Exchange Evalution) pruning
-        int seeMargin = isQuiet ? lmrDepth * PvsQuietSeeMargin :
-                                  depth    * PvsCapSeeMargin;
+        int seeMargin = isQuiet ? PvsQuietSeeMargin * lmrDepth * lmrDepth :
+                                  PvsCapSeeMargin * depth;
         if (!pos.seeGe(move, seeMargin))
           continue;
 
