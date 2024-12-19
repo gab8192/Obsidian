@@ -1,5 +1,6 @@
 #include "uci.h"
 #include "fathom/src/tbprobe.h"
+#include "nnue.h"
 #include "threads.h"
 #include "tt.h"
 
@@ -24,7 +25,9 @@ void hashChanged(const Option& o) {
 }
 
 void threadsChanged(const Option& o) {
-  Threads::setThreadCount(int(o));
+  int count = int(o);
+  Threads::setThreadCount(count);
+  NNUE::loadWeights(count > 32); // CCC and TCEC
 }
 
 void syzygyPathChanged(const Option& o) {

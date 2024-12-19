@@ -20,7 +20,8 @@ namespace NNUE {
                        weight_t OutputBias[OutputBuckets];
   };
 
-  Net* Content;
+  bool usingBigAlign = false;
+  Net* Weights = nullptr;
 
   bool needRefresh(Color side, Square oldKing, Square newKing) {
     // Crossed half?
@@ -35,7 +36,7 @@ namespace NNUE {
     if (kingSq & 0b100)
       sq = Square(sq ^ 7);
 
-    return (Vec*) Content->FeatureWeights
+    return (Vec*) Weights->FeatureWeights
             [KingBucketsScheme[relative_square(side, kingSq)]]
             [side != piece_color(pc)]
             [piece_type(pc)-1]
@@ -111,7 +112,7 @@ namespace NNUE {
   }
 
   void Accumulator::reset(Color side) {
-    memcpy(colors[side], Content->FeatureBiases, sizeof(Content->FeatureBiases));
+    memcpy(colors[side], Weights->FeatureBiases, sizeof(Weights->FeatureBiases));
   }
 
   void Accumulator::refresh(Position& pos, Color side) {
@@ -132,8 +133,22 @@ namespace NNUE {
     acc.reset(BLACK);
   }
 
-  void init() {
-    Content = (Net*) gEmbeddedNNUEData;
+  void loadWeights(bool bigAlign) {
+    if (Weights && bigAlign == usingBigAlign)
+      return;
+
+    if (Weights && usingBigAlign)
+      Util::freeAlign(Weights);
+
+    if (bigAlign) {
+      Weights = (Net*) Util::allocAlign(sizeof(Net));
+      memcpy(Weights, gEmbeddedNNUEData, sizeof(Net));
+    }
+    else {
+      Weights = (Net*) gEmbeddedNNUEData;
+    }
+
+    usingBigAlign = bigAlign;
   }
 
   Score evaluate(Position& pos, Accumulator& accumulator) {
@@ -149,7 +164,7 @@ namespace NNUE {
     for (int them = 0; them <= 1; ++them)
     {
       Vec* acc = (Vec*) accumulator.colors[pos.sideToMove ^ them];
-      Vec* weights = (Vec*) &Content->OutputWeights[outputBucket][them * HiddenWidth / 2];
+      Vec* weights = (Vec*) &Weights->OutputWeights[outputBucket][them * HiddenWidth / 2];
       for (int i = 0; i < (HiddenWidth / WeightsPerVec) / 2; ++i)
       {
         Vec c0 = minEpi16(maxEpi16(acc[i], vecZero), vecQA);
@@ -159,7 +174,7 @@ namespace NNUE {
       }
     }
 
-    int unsquared = vecHaddEpi32(sum) / NetworkQA + Content->OutputBias[outputBucket];
+    int unsquared = vecHaddEpi32(sum) / NetworkQA + Weights->OutputBias[outputBucket];
 
     return (unsquared * NetworkScale) / NetworkQAB;
   }

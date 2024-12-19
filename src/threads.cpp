@@ -1,4 +1,5 @@
 #include "threads.h"
+#include "nnue.h"
 #include <atomic>
 
 namespace Threads {
