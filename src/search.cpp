@@ -237,6 +237,7 @@ namespace Search {
   void Thread::playNullMove(Position& pos, SearchInfo* ss) {
     ss->contHistory = contHistory[false][0];
     ss->playedMove = MOVE_NONE;
+    ss->playedCap = false;
     keyStack[keyStackHead++] = pos.key;
 
     ply++;
@@ -317,6 +318,7 @@ namespace Search {
     const bool isCap = pos.board[move_to(move)] != NO_PIECE;
     ss->contHistory = contHistory[isCap][pieceTo(pos, move)];
     ss->playedMove = move;
+    ss->playedCap = ! pos.isQuiet(move);
     keyStack[keyStackHead++] = pos.key;
 
     NNUE::Accumulator& newAcc = accumStack[++accumStackHead];
@@ -814,6 +816,12 @@ namespace Search {
         eval = ttScore;
     }
 
+    if (!(ss-1)->playedCap && (ss-1)->staticEval != SCORE_NONE) {
+      int theirLoss = (ss-1)->staticEval + ss->staticEval - 60;
+      int bonus = std::clamp(-7 * theirLoss, -200, 200);
+      addToHistory(mainHistory[~pos.sideToMove][move_from_to((ss-1)->playedMove)], bonus);
+    }
+
     // Calculate whether the evaluation here is worse or better than it was 2 plies ago
     if ((ss - 2)->staticEval != SCORE_NONE)
       improving = ss->staticEval > (ss - 2)->staticEval;
@@ -1259,8 +1267,9 @@ namespace Search {
 
       searchStack[i].pvLength = 0;
 
-      searchStack[i].killerMove   = MOVE_NONE;
-      searchStack[i].playedMove   = MOVE_NONE;
+      searchStack[i].killerMove = MOVE_NONE;
+      searchStack[i].playedMove = MOVE_NONE;
+      searchStack[i].playedCap = false;
 
       searchStack[i].contHistory = contHistory[false][0];
     }
