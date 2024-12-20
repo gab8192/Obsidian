@@ -315,10 +315,10 @@ namespace Search {
 
     nodesSearched++;
 
-    const bool isCap = pos.board[move_to(move)] != NO_PIECE;
-    ss->contHistory = contHistory[isCap][pieceTo(pos, move)];
-    ss->playedMove = move;
     ss->playedCap = ! pos.isQuiet(move);
+    ss->contHistory = contHistory[ss->playedCap][pieceTo(pos, move)];
+    ss->playedMove = move;
+    
     keyStack[keyStackHead++] = pos.key;
 
     NNUE::Accumulator& newAcc = accumStack[++accumStackHead];
