@@ -1112,7 +1112,7 @@ namespace Search {
 
           alpha = bestScore;
 
-          if (depth >= 3 && depth <= 11 && score > -SCORE_TB_LOSS_IN_MAX_PLY)
+          if (depth >= 3 && depth <= 11 && score > SCORE_TB_LOSS_IN_MAX_PLY)
             depth--;
         }
       }
