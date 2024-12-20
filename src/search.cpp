@@ -987,7 +987,7 @@ namespace Search {
         if (   isQuiet
             && lmrDepth <= FpMaxDepth
             && !pos.checkers
-            && ss->staticEval + FpBase + FpDepthMul * lmrDepth <= alpha) {
+            && ss->staticEval + FpBase + FpDepthMul * lmrDepth + history / 28 <= alpha) {
           skipQuiets = true;
           continue;
         }
