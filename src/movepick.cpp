@@ -90,7 +90,7 @@ void MovePicker::scoreQuiets() {
     quiets[i++].score =
         threatScore
       + mainHist[pos.sideToMove][move_from_to(move)]
-      + (ss - 1)->contHistory[chIndex]
+      + (ss - 1)->contHistory[chIndex]*2
       + (ss - 2)->contHistory[chIndex]
       + (ss - 4)->contHistory[chIndex]/2
       + (ss - 6)->contHistory[chIndex]/2;
