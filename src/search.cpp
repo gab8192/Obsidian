@@ -1065,6 +1065,9 @@ namespace Search {
         // Clamp to avoid a qsearch or an extension in the child search
         int reducedDepth = std::clamp(newDepth - R, 1, newDepth + 1);
 
+        if (newDepth - R <= -2)
+          reducedDepth = 0;
+
         score = -negamax<false>(newPos, -alpha - 1, -alpha, reducedDepth, true, ss + 1);
 
         if (score > alpha && reducedDepth < newDepth) {
