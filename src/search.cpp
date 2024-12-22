@@ -24,28 +24,34 @@ namespace Search {
   DEFINE_PARAM_S(PawnChWeight, 42, 5);
   DEFINE_PARAM_S(NonPawnChWeight, 47, 5);
 
-  DEFINE_PARAM_S(StatBonusBias, -10, 15);
+  DEFINE_PARAM_S(StatBonusBias, -10, 50);
   DEFINE_PARAM_S(StatBonusLinear, 167, 15);
   DEFINE_PARAM_S(StatBonusMax, 1115, 100);
   DEFINE_PARAM_S(StatBonusBoostAt, 108, 10);
 
-  DEFINE_PARAM_S(StatMalusBias, 12, 15);
+  DEFINE_PARAM_S(StatMalusBias, 12, 50);
   DEFINE_PARAM_S(StatMalusLinear, 183, 15);
   DEFINE_PARAM_S(StatMalusMax, 1198, 100);
 
-  DEFINE_PARAM_S(RazoringDepthMul, 383, 40);
+  DEFINE_PARAM_S(EvalHistA, 60, 6);
+  DEFINE_PARAM_S(EvalHistB, -448, 45);
+  DEFINE_PARAM_S(EvalHistC, 500, 50);
+
+  DEFINE_PARAM_S(RazoringDepthMul, 383, 38);
 
   DEFINE_PARAM_S(RfpMaxDepth, 11, 1);
-  DEFINE_PARAM_S(RfpDepthMul, 84, 10);
+  DEFINE_PARAM_S(RfpDepthMul, 84, 8);
 
   DEFINE_PARAM_S(NmpBase, 4, 1);
   DEFINE_PARAM_B(NmpDepthDiv, 3, 1, 21);
   DEFINE_PARAM_S(NmpEvalDiv, 148, 15);
   DEFINE_PARAM_S(NmpEvalDivMin, 4, 1);
+  DEFINE_PARAM_S(NmpA, 30, 3);
+  DEFINE_PARAM_S(NmpB, 200, 20);
 
-  DEFINE_PARAM_S(ProbcutBetaMargin, 184, 20);
+  DEFINE_PARAM_S(ProbcutBetaMargin, 184, 18);
 
-  DEFINE_PARAM_S(HistPrDepthMul, -4645, 400);
+  DEFINE_PARAM_S(HistPrDepthMul, -4645, 460);
 
   DEFINE_PARAM_S(LmpBase,    3, 1);
 
@@ -53,19 +59,19 @@ namespace Search {
   DEFINE_PARAM_S(PvsQuietSeeMargin, -35, 10);
   DEFINE_PARAM_S(PvsCapSeeMargin, -98, 10);
 
-  DEFINE_PARAM_S(EarlyLmrHistoryDiv, 3661, 400);
+  DEFINE_PARAM_S(EarlyLmrHistoryDiv, 3661, 360);
 
   DEFINE_PARAM_S(FpBase, 170, 17);
   DEFINE_PARAM_S(FpMaxDepth, 10, 1);
   DEFINE_PARAM_S(FpDepthMul, 132, 13);
 
   DEFINE_PARAM_S(SBetaMargin, 61, 6);
-  DEFINE_PARAM_S(TripleExtMargin, 131, 12);
+  DEFINE_PARAM_S(TripleExtMargin, 131, 13);
   DEFINE_PARAM_S(DoubleExtMargin, 14, 1);
 
-  DEFINE_PARAM_S(LmrQuietHistoryDiv, 8601, 700);
-  DEFINE_PARAM_S(LmrCapHistoryDiv, 6642, 600);
-  DEFINE_PARAM_S(ZwsDeeperMargin, 75, 10);
+  DEFINE_PARAM_S(LmrQuietHistoryDiv, 8601, 860);
+  DEFINE_PARAM_S(LmrCapHistoryDiv, 6642, 660);
+  DEFINE_PARAM_S(ZwsDeeperMargin, 75, 8);
 
   DEFINE_PARAM_B(AspWindowStartDepth, 4, 4, 34);
   DEFINE_PARAM_B(AspWindowStartDelta, 11, 5, 25);
@@ -817,8 +823,8 @@ namespace Search {
     }
 
     if (!(ss-1)->playedCap && (ss-1)->staticEval != SCORE_NONE) {
-      int theirLoss = (ss-1)->staticEval + ss->staticEval - 60;
-      int bonus = std::clamp(-7 * theirLoss, -500, 500);
+      int theirLoss = (ss-1)->staticEval + ss->staticEval - EvalHistA;
+      int bonus = std::clamp(EvalHistB * theirLoss / 64, -EvalHistC, EvalHistC);
       addToHistory(mainHistory[~pos.sideToMove][move_from_to((ss-1)->playedMove)], bonus);
     }
 
@@ -852,7 +858,7 @@ namespace Search {
       && !excludedMove
       && (ss - 1)->playedMove != MOVE_NONE
       && eval >= beta
-      && ss->staticEval + 30 * depth - 200 >= beta
+      && ss->staticEval + NmpA * depth - NmpB >= beta
       && pos.hasNonPawns(pos.sideToMove)
       && beta > SCORE_TB_LOSS_IN_MAX_PLY) {
 
