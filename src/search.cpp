@@ -818,7 +818,7 @@ namespace Search {
 
     if (!(ss-1)->playedCap && (ss-1)->staticEval != SCORE_NONE) {
       int theirLoss = (ss-1)->staticEval + ss->staticEval - 60;
-      int bonus = std::clamp(-7 * theirLoss, -500, 500);
+      int bonus = std::clamp(-7 * theirLoss, -900, 900);
       addToHistory(mainHistory[~pos.sideToMove][move_from_to((ss-1)->playedMove)], bonus);
     }
 
