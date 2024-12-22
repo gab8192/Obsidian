@@ -56,7 +56,7 @@ namespace Search {
   DEFINE_PARAM_S(LmpBase,    3, 1);
 
   DEFINE_PARAM_S(QsSeeMargin, -32, 15);
-  DEFINE_PARAM_S(PvsQuietSeeMargin, -35, 10);
+  DEFINE_PARAM_S(PvsQuietSeeMargin, -35, 4);
   DEFINE_PARAM_S(PvsCapSeeMargin, -98, 10);
 
   DEFINE_PARAM_S(EarlyLmrHistoryDiv, 3661, 360);
@@ -824,7 +824,7 @@ namespace Search {
 
     if (!(ss-1)->playedCap && (ss-1)->staticEval != SCORE_NONE) {
       int theirLoss = (ss-1)->staticEval + ss->staticEval - EvalHistA;
-      int bonus = std::clamp(EvalHistB * theirLoss / 64, -EvalHistC, EvalHistC);
+      int bonus = std::clamp(EvalHistB * theirLoss / 64, -EvalHistC, (int)EvalHistC);
       addToHistory(mainHistory[~pos.sideToMove][move_from_to((ss-1)->playedMove)], bonus);
     }
 
