@@ -390,9 +390,6 @@ namespace Search {
       counterMoveHistory[pos.board[prevSq] * SQUARE_NB + prevSq] = bestMove;
     }
 
-    // Killer move
-    ss->killerMove = bestMove;
-
     // Credits to Ethereal
     // Don't prop up the best move if it was a quick low depth cutoff
     if (depth <= 3 && !quietCount)
@@ -559,7 +556,7 @@ namespace Search {
 
     MovePicker movePicker(
       MovePicker::QSEARCH, pos,
-      ttMove, MOVE_NONE, MOVE_NONE,
+      ttMove, MOVE_NONE,
       mainHistory, captureHistory,
       0,
       ss);
@@ -782,8 +779,6 @@ namespace Search {
       }
     }
 
-    (ss + 1)->killerMove = MOVE_NONE;
-
     bool improving = false;
 
     // Do the static evaluation
@@ -889,7 +884,7 @@ namespace Search {
 
       MovePicker pcMovePicker(
         MovePicker::PROBCUT, pos,
-        visitTTMove ? ttMove : MOVE_NONE, MOVE_NONE, MOVE_NONE,
+        visitTTMove ? ttMove : MOVE_NONE, MOVE_NONE,
         mainHistory, captureHistory,
         pcSeeMargin,
         ss);
@@ -942,15 +937,10 @@ namespace Search {
       counterMove = counterMoveHistory[pos.board[prevSq] * SQUARE_NB + prevSq];
     }
 
-    if (IsRoot)
-      ss->killerMove = MOVE_NONE;
-
     MovePicker movePicker(
       MovePicker::PVS, pos,
-      ttMove, ss->killerMove, counterMove,
-      mainHistory, captureHistory,
-      0,
-      ss);
+      ttMove, counterMove,
+      mainHistory, captureHistory, 0, ss);
 
     // Visit moves
 
@@ -1273,7 +1263,6 @@ namespace Search {
 
       searchStack[i].pvLength = 0;
 
-      searchStack[i].killerMove = MOVE_NONE;
       searchStack[i].playedMove = MOVE_NONE;
       searchStack[i].playedCap = false;
 
