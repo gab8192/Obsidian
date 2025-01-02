@@ -35,7 +35,7 @@ namespace Search {
 
   DEFINE_PARAM_S(EvalHistA, 58, 6);
   DEFINE_PARAM_S(EvalHistB, -494, 45);
-  DEFINE_PARAM_S(EvalHistC, 509, 50);
+  DEFINE_PARAM_S(EvalHistC, 200, 50);
 
   DEFINE_PARAM_S(RazoringDepthMul, 355, 38);
 
