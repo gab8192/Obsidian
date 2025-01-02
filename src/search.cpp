@@ -983,6 +983,12 @@ namespace Search {
         int lmrRed = lmrTable[depth][seenMoves] + !improving - history / EarlyLmrHistoryDiv;
         int lmrDepth = std::max(0, depth - lmrRed);
 
+        if (!isQuiet && !pos.checkers && lmrDepth <= 7 && move_type(move) == MT_NORMAL) {
+          Piece captured = pos.board[move_to(move)];
+          if (ss->staticEval + 280 + 240 * lmrDepth + PIECE_VALUE[captured] * 16 / 10 <= alpha)
+            continue;
+        }
+
         // SEE (Static Exchange Evalution) pruning
         int seeMargin = isQuiet ? PvsQuietSeeMargin * lmrDepth * lmrDepth :
                                   PvsCapSeeMargin * depth;
