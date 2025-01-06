@@ -4,7 +4,7 @@ else
 	EXE := Obsidian
 endif
 
-DEFAULT_NET = net53.bin
+DEFAULT_NET = jantest1.bin
 
 ifndef EVALFILE
 	EVALFILE = $(DEFAULT_NET)
