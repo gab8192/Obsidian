@@ -18,13 +18,13 @@ namespace NNUE {
     alignas(Alignment) weight_t FeatureWeights[KingBuckets][2][6][64][L1];
     alignas(Alignment) weight_t FeatureBiases[L1];
 
-    alignas(Alignment) weight_t L1Weights[L1][OutputBuckets][L2];
+    alignas(Alignment) weight_t L1Weights[OutputBuckets][L1][L2];
     alignas(Alignment) weight_t L1Biases[OutputBuckets][L2];
 
-    alignas(Alignment) weight_t L2Weights[L2][OutputBuckets][L3];
+    alignas(Alignment) weight_t L2Weights[OutputBuckets][L2][L3];
     alignas(Alignment) weight_t L2Biases[OutputBuckets][L3];
 
-    alignas(Alignment) weight_t L3Weights[L3][OutputBuckets];
+    alignas(Alignment) weight_t L3Weights[OutputBuckets][L3];
     alignas(Alignment) weight_t L3Biases[OutputBuckets];
   } Content;
 
@@ -226,7 +226,7 @@ namespace NNUE {
       for (int i = 0; i < L1; ++i) {
         Vec vecFtOut = _mm256_set1_ps(ftOut[i]);
         for (int j = 0; j < L2; j += WeightsPerVec) {
-          Vec vecWeight = AsVec(Content.L1Weights[i][bucket][j]);
+          Vec vecWeight = AsVec(Content.L1Weights[bucket][i][j]);
           AsVec(sums[j]) = _mm256_add_ps(AsVec(sums[j]), _mm256_mul_ps(vecFtOut, vecWeight));
         }
       }
@@ -242,7 +242,7 @@ namespace NNUE {
 
       for (int i = 0; i < L2; ++i) {
         for (int j = 0; j < L3; ++j)
-          sums[j] += l1Out[i] * Content.L2Weights[i][bucket][j];
+          sums[j] += l1Out[i] * Content.L2Weights[bucket][i][j];
       }
 
       for (int i = 0; i < L3; ++i)
@@ -252,7 +252,7 @@ namespace NNUE {
     { // propagate l3
       float sums = Content.L3Biases[bucket];
       for (int i = 0; i < L3; ++i)
-        sums += l2Out[i] * Content.L3Weights[i][bucket];
+        sums += l2Out[i] * Content.L3Weights[bucket][i];
 
       l3Out = sums;
     }
