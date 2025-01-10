@@ -236,7 +236,7 @@ namespace NNUE {
     }
 
     { // propagate l2
-      float sums[L3] = {};
+      float sums[L3];
       for (int i = 0; i < L3; i++)
         sums[i] = Content.L2Biases[bucket][i];
 
@@ -250,11 +250,11 @@ namespace NNUE {
     }
 
     { // propagate l3
-      float sums = 0.0f;
+      float sums = Content.L3Biases[bucket];
       for (int i = 0; i < L3; ++i)
         sums += l2Out[i] * Content.L3Weights[i][bucket];
 
-      l3Out = sums + Content.L3Biases[bucket];
+      l3Out = sums;
     }
 
 
