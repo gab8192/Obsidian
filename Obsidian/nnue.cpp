@@ -8,6 +8,8 @@
 
 INCBIN(EmbeddedNNUE, EvalFile);
 
+#define AsVec(x) *(Vec*)(&x)
+
 namespace NNUE {
 
   constexpr int WeightsPerVec = sizeof(Vec) / sizeof(weight_t);
@@ -194,20 +196,24 @@ namespace NNUE {
     constexpr int divisor = (32 + OutputBuckets - 1) / OutputBuckets;
     int bucket = (BitCount(pos.pieces()) - 2) / divisor;
 
-    float ftOut[L1];
-    float l1Out[L2];
-    float l2Out[L3];
+    Vec vecZero = _mm256_setzero_ps();
+    Vec vecOne = _mm256_set1_ps(1.0f);
+
+    alignas(Alignment) float ftOut[L1];
+    alignas(Alignment) float l1Out[L2];
+    alignas(Alignment) float l2Out[L3];
     float l3Out;
 
     { // activate FT
       for (int them = 0; them <= 1; ++them) 
         {
           float* acc = accumulator.colors[pos.sideToMove ^ them];
-          for (int i = 0; i < L1 / 2; ++i) 
+          for (int i = 0; i < L1 / 2; i += WeightsPerVec) 
           {
-            float c0 = std::clamp(acc[i], 0.0f, 1.0f);
-            float c1 = std::clamp(acc[i + L1 / 2], 0.0f, 1.0f);
-            ftOut[them * L1 / 2 + i] = c0 * c1;
+            Vec c0 = _mm256_min_ps(_mm256_max_ps(AsVec(acc[i]), vecZero), vecOne);
+            Vec c1 = _mm256_min_ps(_mm256_max_ps(AsVec(acc[i + L1/2]), vecZero), vecOne);
+
+            AsVec(ftOut[them * L1 / 2 + i]) = _mm256_mul_ps(c0, c1);
           }
         }
     }
@@ -217,13 +223,16 @@ namespace NNUE {
       for (int i = 0; i < L2; i++)
         sums[i] = Content.L1Biases[bucket][i];
 
-      for (int i = 0; i < L2; ++i) {
-        for (int j = 0; j < L1; ++j)
-          sums[i] += ftOut[j] * Content.L1Weights[j][bucket][i];
+      for (int i = 0; i < L1; ++i) {
+        Vec vecFtOut = _mm256_set1_ps(ftOut[i]);
+        for (int j = 0; j < L2; j += WeightsPerVec) {
+          Vec vecWeight = AsVec(Content.L1Weights[i][bucket][j]);
+          AsVec(sums[j]) = _mm256_add_ps(AsVec(sums[j]), _mm256_mul_ps(vecFtOut, vecWeight));
+        }
       }
 
-      for (int i = 0; i < L2; ++i)
-        l1Out[i] = std::clamp(sums[i], 0.0f, 1.0f);
+      for (int i = 0; i < L2; i += WeightsPerVec)
+        AsVec(l1Out[i]) = _mm256_min_ps(_mm256_max_ps(AsVec(sums[i]), vecZero), vecOne);
     }
 
     { // propagate l2
@@ -231,9 +240,9 @@ namespace NNUE {
       for (int i = 0; i < L3; i++)
         sums[i] = Content.L2Biases[bucket][i];
 
-      for (int i = 0; i < L3; ++i) {
-        for (int j = 0; j < L2; ++j)
-          sums[i] += l1Out[j] * Content.L2Weights[j][bucket][i];
+      for (int i = 0; i < L2; ++i) {
+        for (int j = 0; j < L3; ++j)
+          sums[j] += l1Out[i] * Content.L2Weights[i][bucket][j];
       }
 
       for (int i = 0; i < L3; ++i)
