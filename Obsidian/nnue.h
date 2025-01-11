@@ -45,7 +45,7 @@ namespace NNUE {
 
   constexpr int NetworkScale = 400;
   constexpr int NetworkQA = 255;
-  constexpr int NetworkQB = 64;
+  constexpr int NetworkQB = 128;
 
   struct Accumulator {
     
