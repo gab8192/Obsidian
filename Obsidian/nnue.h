@@ -43,7 +43,7 @@ namespace NNUE {
 
   constexpr int OutputBuckets = 8;
 
-  constexpr int NetworkScale = 400;
+  constexpr int NetworkScale = 600;
   constexpr int NetworkQA = 255;
   constexpr int NetworkQB = 128;
 
