@@ -6,6 +6,8 @@ endif
 
 DEFAULT_NET = net53.bin
 
+EVALFILE = quantised.bin
+
 ifndef EVALFILE
 	EVALFILE = $(DEFAULT_NET)
 	DOWNLOAD_NET = true

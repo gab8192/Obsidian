@@ -3,6 +3,8 @@
 #include "simd.h"
 #include "types.h"
 
+#define EvalFile "quantised.bin"
+
 using namespace SIMD;
 
 struct Position;
@@ -22,20 +24,20 @@ struct DirtyPieces {
 
 namespace NNUE {
 
-  using weight_t = int16_t;
-
   constexpr int FeaturesWidth = 768;
-  constexpr int HiddenWidth = 1536;
+  constexpr int L1 = 512;
+  constexpr int L2 = 16;
+  constexpr int L3 = 32;
 
   constexpr int KingBucketsScheme[] = {
     0,  1,  2,  3,  3,  2,  1,  0,
     4,  5,  6,  7,  7,  6,  5,  4,
     8,  8,  9,  9,  9,  9,  8,  8,
     10, 10, 10, 10, 10, 10, 10, 10,
-    11, 11, 11, 11, 11, 11, 11, 11,
-    11, 11, 11, 11, 11, 11, 11, 11,
-    12, 12, 12, 12, 12, 12, 12, 12,
-    12, 12, 12, 12, 12, 12, 12, 12,
+    11, 11, 11, 11, 11, 11, 11, 11, 
+    11, 11, 11, 11, 11, 11, 11, 11, 
+    12, 12, 12, 12, 12, 12, 12, 12, 
+    12, 12, 12, 12, 12, 12, 12, 12, 
   };
   constexpr int KingBuckets = 13;
 
@@ -43,12 +45,11 @@ namespace NNUE {
 
   constexpr int NetworkScale = 400;
   constexpr int NetworkQA = 255;
-  constexpr int NetworkQB = 64;
-  constexpr int NetworkQAB = NetworkQA * NetworkQB;
+  constexpr int NetworkQB = 128;
 
   struct Accumulator {
-
-    alignas(Alignment) weight_t colors[COLOR_NB][HiddenWidth];
+    
+    alignas(Alignment) int16_t colors[COLOR_NB][L1];
 
     bool updated[COLOR_NB];
     Square kings[COLOR_NB];
@@ -65,6 +66,11 @@ namespace NNUE {
     void refresh(Position& pos, Color side);
   };
 
+  struct NNZEntry {
+    uint16_t indexes[8];
+    int count; // skip popcount during evaluation
+  };
+
   struct FinnyEntry {
     Bitboard byColorBB[COLOR_NB][COLOR_NB];
     Bitboard byPieceBB[COLOR_NB][PIECE_TYPE_NB];
@@ -77,7 +83,7 @@ namespace NNUE {
 
   bool needRefresh(Color side, Square oldKing, Square newKing);
 
-  void loadWeights(bool bigAlign);
+  void init();
 
   Score evaluate(Position& pos, Accumulator& accumulator);
 }
