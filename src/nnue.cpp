@@ -303,8 +303,10 @@ namespace NNUE {
           AsVecF(sums[j]) = mulAddPs(AsVecF(Content.L2Weights[bucket][i][j]), vecL1Out, AsVecF(sums[j]));
       }
 
-      for (int i = 0; i < L3; i += FloatInVec)
-        AsVecF(l2Out[i]) = minPs(maxPs(AsVecF(sums[i]), vecfZero), vecfOne);
+      for (int i = 0; i < L3; i += FloatInVec) {
+        VecF clipped = minPs(maxPs(AsVecF(sums[i]), vecfZero), vecfOne);
+        AsVecF(l2Out[i]) = mulPs(clipped, clipped);
+      }
     }
 
     { // propagate l3

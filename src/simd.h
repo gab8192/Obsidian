@@ -51,6 +51,8 @@ namespace SIMD {
   
   inline VecF maxPs(VecF x, VecF y) { return _mm512_max_ps(x, y); }
 
+  inline VecF mulPs(VecF x, VecF y) { return _mm512_mul_ps(x, y); }
+
   inline VecF mulAddPs(VecF x, VecF y, VecF z) { return _mm512_fmadd_ps(x, y, z); }
 
   inline VecF castEpi32ToPs(VecI x) { return _mm512_cvtepi32_ps(x); }
@@ -107,6 +109,7 @@ namespace SIMD {
   
   inline VecF maxPs(VecF x, VecF y) { return _mm256_max_ps(x, y); }
 
+  inline VecF mulPs(VecF x, VecF y) { return _mm256_mul_ps(x, y); }
 
   inline VecF mulAddPs(VecF x, VecF y, VecF z) { return _mm256_fmadd_ps(x, y, z); }
 
