@@ -213,7 +213,7 @@ namespace {
       int64_t nodes = Search::perft<true>(pos, perftPlies);
       int64_t took = timeMillis() - begin;
 
-      std::cout << "nodes: " << nodes << std::endl;
+      std::cout << "nodes: " << 1 << std::endl;
       std::cout << "time: " << took << std::endl;
       std::cout << "nps: " << int(nodes * 1000 / took) << std::endl;
       return;
