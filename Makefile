@@ -14,7 +14,7 @@ FILES = Obsidian/*.cpp Obsidian/fathom/src/tbprobe.c
 
 OPTIMIZE = -O3 -fno-stack-protector -fno-math-errno -funroll-loops -fno-exceptions -flto -flto-partition=one
 
-FLAGS = -s -pthread -std=c++17 -DNDEBUG
+FLAGS = -static -s -pthread -std=c++17 -DNDEBUG
 
 ifeq ($(build),)
 	build = native

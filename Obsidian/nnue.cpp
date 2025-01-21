@@ -246,12 +246,10 @@ struct NNZStats {
   }
 
   void init() {
+	  
     NetFormat* rawContent = new NetFormat();
-
     memcpy(rawContent, gEmbeddedNNUEData, sizeof(NetFormat));
-
     memcpy(&Content, rawContent, sizeof(NetFormat));
-
     for (int bucket = 0; bucket < OutputBuckets; bucket++)
       for (int i = 0; i < L1; i += 4)
         for (int j = 0; j < L2; ++j)
@@ -259,7 +257,6 @@ struct NNZStats {
             Content.L1WeightsAlt[bucket][i * L2
             + j * 4
             + k] = rawContent->L1Weights[bucket][i + k][j];
-
     delete rawContent;
     
     // Transpose weights so that we don't need to permute after packus, because
@@ -375,7 +372,8 @@ struct NNZStats {
       for (int i = 0; i < L2; i += FloatInVec) {
         VecF vecBias = AsVecF(Content.L1Biases[bucket][i]);
         VecF casted = mulAddPs(castEpi32ToPs(AsVecI(sums[i])), L1MulVec, vecBias);
-        AsVecF(l1Out[i]) = minPs(maxPs(casted, vecfZero), vecfOne);
+        VecF clipped = minPs(maxPs(casted, vecfZero), vecfOne);
+        AsVecF(l1Out[i]) = mulPs(clipped, clipped);
       }
     }
 
