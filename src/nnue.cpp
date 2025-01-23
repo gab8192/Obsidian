@@ -2,6 +2,7 @@
 #include "bitboard.h"
 #include "incbin.h"
 #include "position.h"
+#include "util.h"
 
 #include <iostream>
 #include <fstream>
@@ -19,7 +20,7 @@ namespace NNUE {
 
   constexpr int FtShift = 9;
 
-  struct NetFormat {
+  struct Net {
     alignas(Alignment) int16_t FeatureWeights[KingBuckets][2][6][64][L1];
     alignas(Alignment) int16_t FeatureBiases[L1];
 
@@ -36,17 +37,16 @@ namespace NNUE {
     alignas(Alignment) float L3Biases[OutputBuckets];
   };
 
-  NetFormat Content;
+  Net* Weights;
 
   // For every possible uint16 number, store the count of active bits,
   // and the index of each active bit
   NNZEntry nnzTable[256];
 
-  bool needRefresh(Color side, Square oldKing, Square newKing) {
-    const bool oldMirrored = fileOf(oldKing) >= FILE_E;
-    const bool newMirrored = fileOf(newKing) >= FILE_E;
 
-    if (oldMirrored != newMirrored)
+  bool needRefresh(Color side, Square oldKing, Square newKing) {
+    // Crossed half?
+    if ((oldKing & 0b100) != (newKing & 0b100))
       return true;
 
     return   KingBucketsScheme[relative_square(side, oldKing)]
@@ -54,10 +54,10 @@ namespace NNUE {
   }
 
   inline VecI* featureAddress(Square kingSq, Color side, Piece pc, Square sq) {
-    if (fileOf(kingSq) >= FILE_E)
+    if (kingSq & 0b100)
       sq = Square(sq ^ 7);
 
-    return (VecI*) Content.FeatureWeights
+    return (VecI*) Weights->FeatureWeights
             [KingBucketsScheme[relative_square(side, kingSq)]]
             [side != piece_color(pc)]
             [piece_type(pc)-1]
@@ -66,42 +66,36 @@ namespace NNUE {
 
   template <int InputSize>
   inline void multiAdd(VecI* output, VecI* input, VecI* add0){
-
     for (int i = 0; i < InputSize / I16InVec; ++i)
       output[i] = addEpi16(input[i], add0[i]);
   }
 
   template <int InputSize>
   inline void multiSub(VecI* output, VecI* input, VecI* sub0){
-
     for (int i = 0; i < InputSize / I16InVec; ++i)
       output[i] = subEpi16(input[i], sub0[i]);
   }
 
   template <int InputSize>
   inline void multiAddAdd(VecI* output, VecI* input, VecI* add0, VecI* add1){
-
     for (int i = 0; i < InputSize / I16InVec; ++i)
       output[i] = addEpi16(input[i], addEpi16(add0[i], add1[i]));
   }
 
   template <int InputSize>
   inline void multiSubAdd(VecI* output, VecI* input, VecI* sub0, VecI* add0) {
-
     for (int i = 0; i < InputSize / I16InVec; ++i)
       output[i] = subEpi16(addEpi16(input[i], add0[i]), sub0[i]);
   }
 
   template <int InputSize>
   inline void multiSubAddSub(VecI* output, VecI* input, VecI* sub0, VecI* add0, VecI* sub1) {
-
     for (int i = 0; i < InputSize / I16InVec; ++i)
       output[i] = subEpi16(subEpi16(addEpi16(input[i], add0[i]), sub0[i]), sub1[i]);
   }
 
   template <int InputSize>
   inline void multiSubAddSubAdd(VecI* output, VecI* input, VecI* sub0, VecI* add0, VecI* sub1, VecI* add1) {
-
     for (int i = 0; i < InputSize / I16InVec; ++i)
       output[i] = addEpi16(subEpi16(subEpi16(addEpi16(input[i], add0[i]), sub0[i]), sub1[i]), add1[i]);
   }
@@ -139,7 +133,7 @@ namespace NNUE {
   }
 
   void Accumulator::reset(Color side) {
-    memcpy(colors[side], Content.FeatureBiases, sizeof(Content.FeatureBiases));
+    memcpy(colors[side], Weights->FeatureBiases, sizeof(Weights->FeatureBiases));
   }
 
   void Accumulator::refresh(Position& pos, Color side) {
@@ -160,15 +154,9 @@ namespace NNUE {
     acc.reset(BLACK);
   }
 
-  void init() {
-    NetFormat* rawContent = new NetFormat();
-
-    memcpy(rawContent, gEmbeddedNNUEData, sizeof(NetFormat));
-
-    memcpy(&Content, rawContent, sizeof(NetFormat));
-
-    delete rawContent;
-
+  void loadWeights() {
+    Weights = (Net*) Util::allocAlign(sizeof(Net));
+    memcpy(Weights, gEmbeddedNNUEData, sizeof(Net));
 
     // Init NNZ table
     for (int i = 0; i < 256; i++) {
@@ -190,23 +178,23 @@ namespace NNUE {
     constexpr int NumRegs = sizeof(VecI) / 8;
     __m128i regs[NumRegs];
 
-    __m128i* weights = (__m128i*) Content.FeatureWeights;
-    __m128i* biases = (__m128i*) Content.FeatureBiases;
+    __m128i* ftWeights = (__m128i*) Weights->FeatureWeights;
+    __m128i* ftBiases = (__m128i*) Weights->FeatureBiases;
 
     for (int i = 0; i < KingBuckets * 768 * L1 / weightsPerBlock; i += NumRegs) {
       for (int j = 0; j < NumRegs; j++)
-            regs[j] = weights[i + j];
+            regs[j] = ftWeights[i + j];
 
         for (int j = 0; j < NumRegs; j++)
-            weights[i + j] = regs[PackusOrder[j]];
+            ftWeights[i + j] = regs[PackusOrder[j]];
     }
 
     for (int i = 0; i < L1 / weightsPerBlock; i += NumRegs) {
       for (int j = 0; j < NumRegs; j++)
-            regs[j] = biases[i + j];
+            regs[j] = ftBiases[i + j];
 
         for (int j = 0; j < NumRegs; j++)
-            biases[i + j] = regs[PackusOrder[j]];
+            ftBiases[i + j] = regs[PackusOrder[j]];
     }
   }
 
@@ -276,13 +264,13 @@ namespace NNUE {
         int l1in = nnzIndexes[i]*4;
         VecI vecFtOut = set1Epi32( *(uint32_t*)(ftOut + l1in) );
         for (int j = 0; j < L2; j += FloatInVec) {
-          VecI vecWeight = AsVecI(Content.L1Weights[bucket][l1in + j/4]);
+          VecI vecWeight = AsVecI(Weights->L1Weights[bucket][l1in + j/4]);
           AsVecI(sums[j]) = dpbusdEpi32(AsVecI(sums[j]), vecFtOut, vecWeight);
         }
       }
 
       for (int i = 0; i < L2; i += FloatInVec) {
-        VecF vecBias = AsVecF(Content.L1Biases[bucket][i]);
+        VecF vecBias = AsVecF(Weights->L1Biases[bucket][i]);
         VecF casted = mulAddPs(castEpi32ToPs(AsVecI(sums[i])), L1MulVec, vecBias);
         VecF clipped = minPs(maxPs(casted, vecfZero), vecfOne);
         AsVecF(l1Out[i]) = mulPs(clipped, clipped);
@@ -291,12 +279,12 @@ namespace NNUE {
 
     { // propagate l2
       alignas(Alignment) float sums[L3];
-      memcpy(sums, Content.L2Biases[bucket], sizeof(sums));
+      memcpy(sums, Weights->L2Biases[bucket], sizeof(sums));
 
       for (int i = 0; i < L2; ++i) {
         VecF vecL1Out = set1Ps(l1Out[i]);
         for (int j = 0; j < L3; j += FloatInVec)
-          AsVecF(sums[j]) = mulAddPs(AsVecF(Content.L2Weights[bucket][i][j]), vecL1Out, AsVecF(sums[j]));
+          AsVecF(sums[j]) = mulAddPs(AsVecF(Weights->L2Weights[bucket][i][j]), vecL1Out, AsVecF(sums[j]));
       }
 
       for (int i = 0; i < L3; i += FloatInVec)
@@ -306,9 +294,9 @@ namespace NNUE {
     { // propagate l3
       VecF sums = setzeroPs();
       for (int i = 0; i < L3; i += FloatInVec)
-        sums = mulAddPs(AsVecF(l2Out[i]), AsVecF( Content.L3Weights[bucket][i]), sums);
+        sums = mulAddPs(AsVecF(l2Out[i]), AsVecF( Weights->L3Weights[bucket][i]), sums);
 
-      l3Out = reduceAddPs(sums) + Content.L3Biases[bucket];
+      l3Out = reduceAddPs(sums) + Weights->L3Biases[bucket];
     }
 
     return l3Out * NetworkScale;

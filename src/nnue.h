@@ -81,7 +81,7 @@ namespace NNUE {
 
   bool needRefresh(Color side, Square oldKing, Square newKing);
 
-  void init();
+  void loadWeights();
 
   Score evaluate(Position& pos, Accumulator& accumulator);
 }
