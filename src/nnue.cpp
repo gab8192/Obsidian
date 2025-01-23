@@ -167,14 +167,6 @@ namespace NNUE {
 
     memcpy(&Content, rawContent, sizeof(NetFormat));
 
-    for (int bucket = 0; bucket < OutputBuckets; bucket++)
-      for (int i = 0; i < L1; i += 4)
-        for (int j = 0; j < L2; ++j)
-          for (int k = 0; k < 4; k ++)
-            Content.L1WeightsAlt[bucket][i * L2
-            + j * 4
-            + k] = rawContent->L1Weights[bucket][i + k][j];
-
     delete rawContent;
 
 
@@ -186,6 +178,9 @@ namespace NNUE {
       while (bits)
         nnzTable[i].indexes[j++] = popLsb(bits);
     }
+
+    // dpbusd preprocessing:
+    // done at quantisation time
     
     // Transpose weights so that we don't need to permute after packus, because
     // it interleaves each 128 block from a and each 128 block from b, alternately.
