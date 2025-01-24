@@ -27,7 +27,7 @@ void hashChanged(const Option& o) {
 void threadsChanged(const Option& o) {
   int count = int(o);
   Threads::setThreadCount(count);
-  NNUE::loadWeights(count > 32); // CCC and TCEC
+  //NNUE::loadWeights(count > 32); // CCC and TCEC
 }
 
 void syzygyPathChanged(const Option& o) {
