@@ -2,16 +2,16 @@
 A top tier UCI chess engine written in c++, that I started developing in april 2023.
 
 As of 18 July 2024, Obsidian is the 3rd strongest engine at 10+1s, after Stockfish and Torch.
-(Ipmanchess rating 3554)
+January 2025: It is 3rd in SPCC too.
 
 
 ## Building
 ```
 git clone https://github.com/gab8192/Obsidian
 cd Obsidian
-make nopgo build=ARCH
+make -j nopgo build=ARCH
 ```
-ARCH choice: native, sse2, ssse3, avx2, avx512. You can also do sse2-pext, ssse3-pext, avx2-pext. `native` is recommended however.
+ARCH choice: native, sse2, ssse3, avx2, avx2-pext, avx512. `native` is recommended however.
 You can remove the `nopgo` flag to enable profile guided optimization.
 
 
