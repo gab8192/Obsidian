@@ -20,21 +20,22 @@ namespace NNUE {
 
   constexpr int FtShift = 9;
 
-  struct Net {
-    alignas(Alignment) int16_t FeatureWeights[KingBuckets][2][6][64][L1];
-    alignas(Alignment) int16_t FeatureBiases[L1];
+  struct AfterFT {
+     alignas(64) int8_t L1Weights[L1][L2];
+     alignas(64) float L1Biases[L2];
 
-  union {
-    alignas(Alignment) int8_t L1WeightsAlt[OutputBuckets][L1 *L2];
-    alignas(Alignment) int8_t L1Weights[OutputBuckets][L1][L2];
+     alignas(64) float L2Weights[L2][L3];
+     alignas(64) float L2Biases[L3];
+
+     alignas(64) float L3Weights[L3];
+     alignas(64) float L3Biases;
   };
-    alignas(Alignment) float L1Biases[OutputBuckets][L2];
 
-    alignas(Alignment) float L2Weights[OutputBuckets][L2][L3];
-    alignas(Alignment) float L2Biases[OutputBuckets][L3];
+  struct Net {
+    alignas(64) int16_t FeatureWeights[KingBuckets][2][6][64][L1];
+    alignas(64) int16_t FeatureBiases[L1];
 
-    alignas(Alignment) float L3Weights[OutputBuckets][L3];
-    alignas(Alignment) float L3Biases[OutputBuckets];
+    alignas(64) AfterFT LayerStacks[OutputBuckets];
   };
 
   Net* Weights;
@@ -201,7 +202,8 @@ namespace NNUE {
   Score evaluate(Position& pos, Accumulator& accumulator) {
 
     constexpr int divisor = (32 + OutputBuckets - 1) / OutputBuckets;
-    int bucket = (BitCount(pos.pieces()) - 2) / divisor;
+    int bucketID = (BitCount(pos.pieces()) - 2) / divisor;
+    const AfterFT& bucket = Weights->LayerStacks[bucketID];
 
     __m128i base = _mm_setzero_si128();
     __m128i lookupInc = _mm_set1_epi16(8);
@@ -264,13 +266,13 @@ namespace NNUE {
         int l1in = nnzIndexes[i]*4;
         VecI vecFtOut = set1Epi32( *(uint32_t*)(ftOut + l1in) );
         for (int j = 0; j < L2; j += FloatInVec) {
-          VecI vecWeight = AsVecI(Weights->L1Weights[bucket][l1in + j/4]);
+          VecI vecWeight = AsVecI(bucket.L1Weights[l1in + j/4]);
           AsVecI(sums[j]) = dpbusdEpi32(AsVecI(sums[j]), vecFtOut, vecWeight);
         }
       }
 
       for (int i = 0; i < L2; i += FloatInVec) {
-        VecF vecBias = AsVecF(Weights->L1Biases[bucket][i]);
+        VecF vecBias = AsVecF(bucket.L1Biases[i]);
         VecF casted = mulAddPs(castEpi32ToPs(AsVecI(sums[i])), L1MulVec, vecBias);
         VecF clipped = minPs(maxPs(casted, vecfZero), vecfOne);
         AsVecF(l1Out[i]) = mulPs(clipped, clipped);
@@ -279,12 +281,12 @@ namespace NNUE {
 
     { // propagate l2
       alignas(Alignment) float sums[L3];
-      memcpy(sums, Weights->L2Biases[bucket], sizeof(sums));
+      memcpy(sums, bucket.L2Biases, sizeof(sums));
 
       for (int i = 0; i < L2; ++i) {
         VecF vecL1Out = set1Ps(l1Out[i]);
         for (int j = 0; j < L3; j += FloatInVec)
-          AsVecF(sums[j]) = mulAddPs(AsVecF(Weights->L2Weights[bucket][i][j]), vecL1Out, AsVecF(sums[j]));
+          AsVecF(sums[j]) = mulAddPs(AsVecF(bucket.L2Weights[i][j]), vecL1Out, AsVecF(sums[j]));
       }
 
       for (int i = 0; i < L3; i += FloatInVec)
@@ -294,9 +296,9 @@ namespace NNUE {
     { // propagate l3
       VecF sums = setzeroPs();
       for (int i = 0; i < L3; i += FloatInVec)
-        sums = mulAddPs(AsVecF(l2Out[i]), AsVecF( Weights->L3Weights[bucket][i]), sums);
+        sums = mulAddPs(AsVecF(l2Out[i]), AsVecF(bucket.L3Weights[i]), sums);
 
-      l3Out = reduceAddPs(sums) + Weights->L3Biases[bucket];
+      l3Out = reduceAddPs(sums) + bucket.L3Biases;
     }
 
     return l3Out * NetworkScale;
