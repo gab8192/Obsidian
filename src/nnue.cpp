@@ -160,7 +160,7 @@ namespace NNUE {
 
     // Init NNZ table
     for (int i = 0; i < 256; i++) {
-      nnzTable[i].count = BitCount(i);
+      //nnzTable[i].count = BitCount(i);
       int j = 0;
       Bitboard bits = i;
       while (bits)
@@ -249,7 +249,7 @@ namespace NNUE {
           uint8_t slice = (nnzMask >> lookup) & 0xFF;
           __m128i indexes = _mm_loadu_si128((__m128i*)nnzTable[slice].indexes);
           _mm_storeu_si128((__m128i*)(nnzIndexes + nnzCount), _mm_add_epi16(base, indexes));
-          nnzCount += nnzTable[slice].count;
+          nnzCount += BitCount(slice);
           base = _mm_add_epi16(base, lookupInc);
         }
       }
