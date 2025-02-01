@@ -66,7 +66,6 @@ namespace NNUE {
 
   struct NNZEntry {
     uint16_t indexes[8];
-    int count; // skip popcount during evaluation
   };
 
   struct FinnyEntry {

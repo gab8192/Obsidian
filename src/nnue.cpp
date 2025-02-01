@@ -24,10 +24,7 @@ namespace NNUE {
     alignas(Alignment) int16_t FeatureWeights[KingBuckets][2][6][64][L1];
     alignas(Alignment) int16_t FeatureBiases[L1];
 
-  union {
-    alignas(Alignment) int8_t L1WeightsAlt[OutputBuckets][L1 *L2];
     alignas(Alignment) int8_t L1Weights[OutputBuckets][L1][L2];
-  };
     alignas(Alignment) float L1Biases[OutputBuckets][L2];
 
     alignas(Alignment) float L2Weights[OutputBuckets][L2][L3];
@@ -41,7 +38,7 @@ namespace NNUE {
 
   // For every possible uint16 number, store the count of active bits,
   // and the index of each active bit
-  NNZEntry nnzTable[256];
+  alignas(Alignment) uint16_t nnzTable[256][8];
 
 
   bool needRefresh(Color side, Square oldKing, Square newKing) {
@@ -159,12 +156,12 @@ namespace NNUE {
     memcpy(Weights, gEmbeddedNNUEData, sizeof(Net));
 
     // Init NNZ table
+    memset(nnzTable, 0, sizeof(nnzTable));
     for (int i = 0; i < 256; i++) {
-      nnzTable[i].count = BitCount(i);
       int j = 0;
       Bitboard bits = i;
       while (bits)
-        nnzTable[i].indexes[j++] = popLsb(bits);
+        nnzTable[i][j++] = popLsb(bits);
     }
 
     // dpbusd preprocessing:
@@ -247,9 +244,9 @@ namespace NNUE {
         // Usually (in AVX2) only one lookup is needed, as there are 8 ints in a vec.
         for (int lookup = 0; lookup < FloatInVec; lookup += 8) {
           uint8_t slice = (nnzMask >> lookup) & 0xFF;
-          __m128i indexes = _mm_loadu_si128((__m128i*)nnzTable[slice].indexes);
+          __m128i indexes = _mm_loadu_si128((__m128i*)nnzTable[slice]);
           _mm_storeu_si128((__m128i*)(nnzIndexes + nnzCount), _mm_add_epi16(base, indexes));
-          nnzCount += nnzTable[slice].count;
+          nnzCount += BitCount(slice);
           base = _mm_add_epi16(base, lookupInc);
         }
       }
