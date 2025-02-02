@@ -88,13 +88,13 @@ namespace NNUE {
   template <int InputSize>
   inline void multiSubAddSub(VecI* output, VecI* input, VecI* sub0, VecI* add0, VecI* sub1) {
     for (int i = 0; i < InputSize / I16InVec; ++i)
-      output[i] = subEpi16(subEpi16(addEpi16(input[i], add0[i]), sub0[i]), sub1[i]);
+      output[i] = subEpi16(addEpi16(input[i], add0[i]), addEpi16(sub0[i], sub1[i]));
   }
 
   template <int InputSize>
   inline void multiSubAddSubAdd(VecI* output, VecI* input, VecI* sub0, VecI* add0, VecI* sub1, VecI* add1) {
     for (int i = 0; i < InputSize / I16InVec; ++i)
-      output[i] = addEpi16(subEpi16(subEpi16(addEpi16(input[i], add0[i]), sub0[i]), sub1[i]), add1[i]);
+      output[i] = addEpi16(input[i], subEpi16(addEpi16(add0[i], add1[i]), addEpi16(sub0[i], sub1[i])));
   }
 
   void Accumulator::addPiece(Square kingSq, Color side, Piece pc, Square sq) {
