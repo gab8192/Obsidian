@@ -1033,8 +1033,8 @@ namespace Search {
             extension = 1;
           }
         }
-        else if (singularBeta >= beta) // Multicut
-          return singularBeta;
+        else if (seScore >= beta && std::abs(seScore) < SCORE_TB_WIN_IN_MAX_PLY)// Multicut
+          return seScore;
         else if (ttScore >= beta) // Negative extensions
           extension = -2 + IsPV;
         else if (cutNode)
