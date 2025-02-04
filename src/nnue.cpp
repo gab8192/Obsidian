@@ -129,6 +129,29 @@ namespace NNUE {
     updated[side] = true;
   }
 
+  void Accumulator::doUpdatesBoom(Square kingSq, Color side, Accumulator& input, MoveDelta* boom) {
+    DirtyPieces dp = this->dirtyPieces;
+    if (dp.type == DirtyPieces::CASTLING) 
+    {
+      multiSubAddSubAdd<L1>((VecI*) colors[side], (VecI*) input.colors[side], 
+        featureAddress(kingSq, side, dp.sub0.pc, dp.sub0.sq),
+        featureAddress(kingSq, side, dp.add0.pc, dp.add0.sq),
+        featureAddress(kingSq, side, dp.sub1.pc, dp.sub1.sq),
+        featureAddress(kingSq, side, dp.add1.pc, dp.add1.sq));
+    } else if (dp.type == DirtyPieces::CAPTURE) 
+    { 
+      multiSubAddSub<L1>((VecI*) colors[side], (VecI*) input.colors[side], 
+        featureAddress(kingSq, side, dp.sub0.pc, dp.sub0.sq),
+        featureAddress(kingSq, side, dp.add0.pc, dp.add0.sq),
+        featureAddress(kingSq, side, dp.sub1.pc, dp.sub1.sq));
+    } else
+    {
+      Color c1 = piece_color(dp.sub0.pc);
+      multiAdd<L1>((VecI*) colors[side], (VecI*) input.colors[side], (VecI*) boom->delta[c1 != side]);
+    }
+    updated[side] = true;
+  }
+
   void Accumulator::reset(Color side) {
     memcpy(colors[side], Weights->FeatureBiases, sizeof(Weights->FeatureBiases));
   }
@@ -142,6 +165,18 @@ namespace NNUE {
       addPiece(kingSq, side, pos.board[sq], sq);
     }
     updated[side] = true;
+  }
+
+  void MoveDelta::setMove(PieceType pt, Square from, Square to) {
+    memset(delta, 0, sizeof(delta));
+
+    multiSubAdd<L1>((VecI*) delta[WHITE], (VecI*) delta[WHITE],
+      featureAddress(kingSq[WHITE], WHITE, makePiece(WHITE, pt), from),
+      featureAddress(kingSq[WHITE], WHITE, makePiece(WHITE, pt), to));
+
+    multiSubAdd<L1>((VecI*) delta[BLACK], (VecI*) delta[BLACK],
+      featureAddress(kingSq[BLACK], BLACK, makePiece(WHITE, pt), from),
+      featureAddress(kingSq[BLACK], BLACK, makePiece(WHITE, pt), to));
   }
 
   void FinnyEntry::reset() {

@@ -45,6 +45,13 @@ namespace NNUE {
   constexpr int NetworkQA = 255;
   constexpr int NetworkQB = 128;
 
+  struct MoveDelta {
+    alignas(Alignment) int16_t delta[COLOR_NB][L1];
+    Square kingSq[COLOR_NB];
+
+    void setMove(PieceType pt, Square from, Square to);
+  };
+
   struct Accumulator {
     
     alignas(Alignment) int16_t colors[COLOR_NB][L1];
@@ -52,12 +59,22 @@ namespace NNUE {
     bool updated[COLOR_NB];
     Square kings[COLOR_NB];
     DirtyPieces dirtyPieces;
+    int boomIndex;
+
+    inline uint64_t hash(Color side) const {
+      uint64_t result = 0;
+      for (int i = 0; i < L1; i++)
+        result = result*31 + colors[side][i];
+      return result;
+    }
 
     void addPiece(Square kingSq, Color side, Piece pc, Square sq);
 
     void removePiece(Square kingSq, Color side, Piece pc, Square sq);
 
     void doUpdates(Square kingSq, Color side, Accumulator& input);
+
+    void doUpdatesBoom(Square kingSq, Color side, Accumulator& input, MoveDelta* boom);
 
     void reset(Color side);
 

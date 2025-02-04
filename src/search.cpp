@@ -302,7 +302,19 @@ namespace Search {
         if (iter->updated[side]) {
           NNUE::Accumulator* lastUpdated = iter;
           while (lastUpdated != &head) {
-            (lastUpdated+1)->doUpdates(king, side, *lastUpdated);
+            NNUE::Accumulator* next = lastUpdated+1;
+            if (next->boomIndex == -1) {
+              next->doUpdates(king, side, *lastUpdated);
+            }
+            else {
+              NNUE::MoveDelta* entry = & boomDeltas[next->boomIndex];
+              if (entry->kingSq[side != piece_color(next->dirtyPieces.sub0.pc)] == king) {
+                next->doUpdatesBoom(king, side, *lastUpdated, entry);
+              }
+              else {
+                next->doUpdates(king, side, *lastUpdated);
+              }
+            }
             lastUpdated++;
           }
           break;
@@ -317,9 +329,23 @@ namespace Search {
     return Eval::evaluate(pos, !(ply % 2), acc);
   }
 
+  void printB(Piece pc, Square from, Square to) {
+    std::cout << piecesChar[pc] << " " << UCI::moveToString(createMove(from, to, MT_NORMAL)) << std::endl;
+  }
+
   void Thread::playMove(Position& pos, Move move, SearchInfo* ss) {
 
     nodesSearched++;
+
+    int boomIndex = -1;
+    {
+      PieceType pt = piece_type(pos.board[move_from(move)]);
+      Square from = relative_square(pos.sideToMove, move_from(move));
+      Square to = relative_square(pos.sideToMove, move_to(move));
+      if (pt != KING && move_type(move) == MT_NORMAL) {
+        boomIndex = boomTable[pt][from][to];
+      }
+    }
 
     const bool isCap = pos.board[move_to(move)] != NO_PIECE;
     ss->contHistory = contHistory[isCap][pieceTo(pos, move)];
@@ -336,6 +362,7 @@ namespace Search {
       newAcc.updated[side] = false;
       newAcc.kings[side] = pos.kingSquare(side);
     }
+    newAcc.boomIndex = boomIndex;
   }
 
   void Thread::cancelMove() {
@@ -1218,6 +1245,54 @@ namespace Search {
     return output.str();
   }
 
+  void Thread::buildBoom() {
+    for (int a = 0; a < 6; a++)
+      for (int b = 0; b < 64; b++)
+        for (int c = 0; c < 64; c++)
+          boomTable[a][b][c] = -1;
+    
+    Position pos = Threads::getSearchSettings().position;
+    int16_t boomIndex = 0;
+
+    for (int i = 0; i < 1; i++) {
+      MoveList moves;
+      getStageMoves(pos, ADD_ALL_MOVES, &moves);
+
+      for (int j = 0; j < moves.size(); j++) {
+        Move m = moves[j].move;
+        PieceType pt = piece_type(pos.board[move_from(m)]);
+        Square from = relative_square(pos.sideToMove, move_from(m));
+        Square to = relative_square(pos.sideToMove, move_to(m));
+
+        if (move_type(m) != MT_NORMAL || pt == KING)
+          continue;
+        if (boomTable[pt][from][to] != -1)
+          continue;
+
+        std::cout << "storing ";
+        printB(pos.board[move_from(m)], move_from(m), move_to(m));
+
+        boomTable[pt][from][to] = boomIndex;
+        boomDeltas[boomIndex].kingSq[WHITE] = pos.kingSquare(WHITE);
+        boomDeltas[boomIndex].kingSq[BLACK] = pos.kingSquare(BLACK);
+        boomDeltas[boomIndex].setMove(pt, from, to);
+
+        boomIndex++;
+        if (boomIndex >= BoomSize)
+          goto quit;
+      }
+
+    /*  Move next = rootMoves[0].pv[i];
+      if (!next)
+        break;
+      DirtyPieces tempDp;
+      pos.doMove(next, tempDp);*/
+    }
+
+    quit:
+    std::cout << "boomindex: " << boomIndex << std::endl;
+  }
+
   DEFINE_PARAM_B(tm0, 192, 50, 200);
   DEFINE_PARAM_B(tm1, 61,  20, 100);
 
@@ -1244,8 +1319,13 @@ namespace Search {
     }
 
     for (int i = 0; i < 2; i++)
-        for (int j = 0; j < NNUE::KingBuckets; j++)
-          finny[i][j].reset();
+      for (int j = 0; j < NNUE::KingBuckets; j++)
+        finny[i][j].reset();
+
+    for (int a = 0; a < 6; a++)
+      for (int b = 0; b < 64; b++)
+        for (int c = 0; c < 64; c++)
+          boomTable[a][b][c] = -1;
 
     keyStackHead = 0;
     for (int i = 0; i < settings.prevPositions.size(); i++)
@@ -1331,6 +1411,9 @@ namespace Search {
       if (rootDepth > 10 && rootMoves.size() == 1)
         break;
 
+      if (rootDepth == 1)
+        buildBoom();
+
       for (pvIdx = 0; pvIdx < multiPV; pvIdx++) {
         int window = AspWindowStartDelta;
         Score alpha = -SCORE_INFINITE;
@@ -1388,7 +1471,7 @@ namespace Search {
       if (settings.nodes && Threads::totalNodes() >= settings.nodes) {
         naturalExit = false;
         goto bestMoveDecided;
-      }
+      }      
 
       if (this != Threads::mainThread())
         continue;

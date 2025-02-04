@@ -41,6 +41,8 @@ namespace Search {
     int16_t* contHistory;
   };
 
+  constexpr int BoomSize = 256;
+
   // A sort of header of the search stack, so that plies behind 0 are accessible and
   // it's easier to determine conthist score, improving, ...
   constexpr int SsOffset = 6;
@@ -93,9 +95,14 @@ namespace Search {
     NonPawnCorrHist wNonPawnCorrhist;
     NonPawnCorrHist bNonPawnCorrhist;
 
+    NNUE::MoveDelta boomDeltas[BoomSize];
+    int16_t boomTable[6][64][64];
+
     NNUE::FinnyTable finny;
 
     Score searchPrevScore;
+
+    void buildBoom();
 
     void refreshAccumulator(Position& pos, NNUE::Accumulator& acc, Color side);
 
