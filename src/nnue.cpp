@@ -139,11 +139,11 @@ namespace NNUE {
         featureAddress(kingSq, side, dp.sub1.pc, dp.sub1.sq),
         featureAddress(kingSq, side, dp.add1.pc, dp.add1.sq));
     } else if (dp.type == DirtyPieces::CAPTURE) 
-    { 
-      multiSubAddSub<L1>((VecI*) colors[side], (VecI*) input.colors[side], 
-        featureAddress(kingSq, side, dp.sub0.pc, dp.sub0.sq),
-        featureAddress(kingSq, side, dp.add0.pc, dp.add0.sq),
-        featureAddress(kingSq, side, dp.sub1.pc, dp.sub1.sq));
+    {
+      Color c1 = piece_color(dp.sub0.pc);
+      multiSubAdd<L1>((VecI*) colors[side], (VecI*) input.colors[side],
+        featureAddress(kingSq, side, dp.sub1.pc, dp.sub1.sq),
+         (VecI*) boom->delta[c1 != side]);
     } else
     {
       Color c1 = piece_color(dp.sub0.pc);
