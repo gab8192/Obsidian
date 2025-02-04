@@ -139,15 +139,26 @@ namespace NNUE {
         featureAddress(kingSq, side, dp.sub1.pc, dp.sub1.sq),
         featureAddress(kingSq, side, dp.add1.pc, dp.add1.sq));
     } else if (dp.type == DirtyPieces::CAPTURE) 
-    {
-      Color c1 = piece_color(dp.sub0.pc);
-      multiSubAdd<L1>((VecI*) colors[side], (VecI*) input.colors[side],
-        featureAddress(kingSq, side, dp.sub1.pc, dp.sub1.sq),
-         (VecI*) boom->delta[c1 != side]);
+    { 
+      multiSubAddSub<L1>((VecI*) colors[side], (VecI*) input.colors[side], 
+        featureAddress(kingSq, side, dp.sub0.pc, dp.sub0.sq),
+        featureAddress(kingSq, side, dp.add0.pc, dp.add0.sq),
+        featureAddress(kingSq, side, dp.sub1.pc, dp.sub1.sq));
     } else
     {
+      
       Color c1 = piece_color(dp.sub0.pc);
-      multiAdd<L1>((VecI*) colors[side], (VecI*) input.colors[side], (VecI*) boom->delta[c1 != side]);
+     multiAdd<L1>((VecI*) colors[side], (VecI*) input.colors[side], (VecI*) boom->delta[c1 != side]);
+
+/*
+      int fuck0 = hash(side);
+      multiSubAdd<L1>((VecI*) colors[side], (VecI*) input.colors[side], 
+        featureAddress(kingSq, side, dp.sub0.pc, dp.sub0.sq),
+        featureAddress(kingSq, side, dp.add0.pc, dp.add0.sq));
+      int fuck1 = hash(side);
+
+      if (fuck0 != fuck1)
+        std::cout << "fuck! " << side << std::endl;;*/
     }
     updated[side] = true;
   }

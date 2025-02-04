@@ -309,6 +309,7 @@ namespace Search {
             else {
               NNUE::MoveDelta* entry = & boomDeltas[next->boomIndex];
               if (entry->kingSq[side != piece_color(next->dirtyPieces.sub0.pc)] == king) {
+             //   std::cout << "ok\n";
                 next->doUpdatesBoom(king, side, *lastUpdated, entry);
               }
               else {
@@ -1254,7 +1255,7 @@ namespace Search {
     Position pos = Threads::getSearchSettings().position;
     int16_t boomIndex = 0;
 
-    for (int i = 0; i < 1; i++) {
+    for (int i = 0; i < rootMoves[0].pvLength; i++) {
       MoveList moves;
       getStageMoves(pos, ADD_ALL_MOVES, &moves);
 
@@ -1269,9 +1270,6 @@ namespace Search {
         if (boomTable[pt][from][to] != -1)
           continue;
 
-        std::cout << "storing ";
-        printB(pos.board[move_from(m)], move_from(m), move_to(m));
-
         boomTable[pt][from][to] = boomIndex;
         boomDeltas[boomIndex].kingSq[WHITE] = pos.kingSquare(WHITE);
         boomDeltas[boomIndex].kingSq[BLACK] = pos.kingSquare(BLACK);
@@ -1279,18 +1277,15 @@ namespace Search {
 
         boomIndex++;
         if (boomIndex >= BoomSize)
-          goto quit;
+          return;
       }
 
-    /*  Move next = rootMoves[0].pv[i];
+      Move next = rootMoves[0].pv[i];
       if (!next)
         break;
       DirtyPieces tempDp;
-      pos.doMove(next, tempDp);*/
+      pos.doMove(next, tempDp);
     }
-
-    quit:
-    std::cout << "boomindex: " << boomIndex << std::endl;
   }
 
   DEFINE_PARAM_B(tm0, 192, 50, 200);
@@ -1411,7 +1406,7 @@ namespace Search {
       if (rootDepth > 10 && rootMoves.size() == 1)
         break;
 
-      if (rootDepth == 1)
+      if (rootDepth >= 7)
         buildBoom();
 
       for (pvIdx = 0; pvIdx < multiPV; pvIdx++) {
