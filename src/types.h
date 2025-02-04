@@ -231,3 +231,7 @@ inline std::ostream& operator<<(std::ostream& stream, Color color) {
   stream << (color == WHITE ? "white" : "black");
   return stream;
 }
+inline std::ostream& operator<<(std::ostream& stream, Square sq) {
+  stream << char('a' + fileOf(sq)) << char('1' + rankOf(sq));
+  return stream;
+}

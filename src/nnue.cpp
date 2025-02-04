@@ -3,6 +3,7 @@
 #include "incbin.h"
 #include "position.h"
 #include "util.h"
+#include "uci.h"
 
 #include <iostream>
 #include <fstream>
@@ -139,26 +140,15 @@ namespace NNUE {
         featureAddress(kingSq, side, dp.sub1.pc, dp.sub1.sq),
         featureAddress(kingSq, side, dp.add1.pc, dp.add1.sq));
     } else if (dp.type == DirtyPieces::CAPTURE) 
-    { 
-      multiSubAddSub<L1>((VecI*) colors[side], (VecI*) input.colors[side], 
-        featureAddress(kingSq, side, dp.sub0.pc, dp.sub0.sq),
-        featureAddress(kingSq, side, dp.add0.pc, dp.add0.sq),
-        featureAddress(kingSq, side, dp.sub1.pc, dp.sub1.sq));
+    {
+      Color c1 = piece_color(dp.sub0.pc);
+      multiSubAdd<L1>((VecI*) colors[side], (VecI*) input.colors[side],
+        featureAddress(kingSq, side, dp.sub1.pc, dp.sub1.sq),
+         (VecI*) boom->delta[c1 != side]);
     } else
     {
-      
       Color c1 = piece_color(dp.sub0.pc);
-     multiAdd<L1>((VecI*) colors[side], (VecI*) input.colors[side], (VecI*) boom->delta[c1 != side]);
-
-/*
-      int fuck0 = hash(side);
-      multiSubAdd<L1>((VecI*) colors[side], (VecI*) input.colors[side], 
-        featureAddress(kingSq, side, dp.sub0.pc, dp.sub0.sq),
-        featureAddress(kingSq, side, dp.add0.pc, dp.add0.sq));
-      int fuck1 = hash(side);
-
-      if (fuck0 != fuck1)
-        std::cout << "fuck! " << side << std::endl;;*/
+      multiAdd<L1>((VecI*) colors[side], (VecI*) input.colors[side], (VecI*) boom->delta[c1 != side]);
     }
     updated[side] = true;
   }
@@ -181,13 +171,11 @@ namespace NNUE {
   void MoveDelta::setMove(PieceType pt, Square from, Square to) {
     memset(delta, 0, sizeof(delta));
 
-    multiSubAdd<L1>((VecI*) delta[WHITE], (VecI*) delta[WHITE],
-      featureAddress(kingSq[WHITE], WHITE, makePiece(WHITE, pt), from),
-      featureAddress(kingSq[WHITE], WHITE, makePiece(WHITE, pt), to));
-
-    multiSubAdd<L1>((VecI*) delta[BLACK], (VecI*) delta[BLACK],
-      featureAddress(kingSq[BLACK], BLACK, makePiece(WHITE, pt), from),
-      featureAddress(kingSq[BLACK], BLACK, makePiece(WHITE, pt), to));
+    for (Color c : {WHITE, BLACK}) {
+      multiSubAdd<L1>((VecI*) delta[c], (VecI*) delta[c],
+        featureAddress(relative_square(c, relKings[c]), c, makePiece(WHITE, pt), from),
+        featureAddress(relative_square(c, relKings[c]), c, makePiece(WHITE, pt), to));
+    }
   }
 
   void FinnyEntry::reset() {

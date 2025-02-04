@@ -146,6 +146,10 @@ namespace Search {
   Thread::Thread()
   {
     resetHistories();
+    for (int a = 0; a < 6; a++)
+      for (int b = 0; b < 64; b++)
+        for (int c = 0; c < 64; c++)
+          boomTable[a][b][c] = -1;
   }
 
   template<bool root>
@@ -290,6 +294,7 @@ namespace Search {
         continue;
 
       const Square king = head.kings[side];
+      const Square relking = relative_square(side, head.kings[side]);
       NNUE::Accumulator* iter = &head;
       while (true) {
         iter--;
@@ -308,8 +313,7 @@ namespace Search {
             }
             else {
               NNUE::MoveDelta* entry = & boomDeltas[next->boomIndex];
-              if (entry->kingSq[side != piece_color(next->dirtyPieces.sub0.pc)] == king) {
-             //   std::cout << "ok\n";
+             if (entry->relKings[side != piece_color(next->dirtyPieces.sub0.pc)] == relking) {
                 next->doUpdatesBoom(king, side, *lastUpdated, entry);
               }
               else {
@@ -330,12 +334,7 @@ namespace Search {
     return Eval::evaluate(pos, !(ply % 2), acc);
   }
 
-  void printB(Piece pc, Square from, Square to) {
-    std::cout << piecesChar[pc] << " " << UCI::moveToString(createMove(from, to, MT_NORMAL)) << std::endl;
-  }
-
   void Thread::playMove(Position& pos, Move move, SearchInfo* ss) {
-
     nodesSearched++;
 
     int boomIndex = -1;
@@ -343,7 +342,7 @@ namespace Search {
       PieceType pt = piece_type(pos.board[move_from(move)]);
       Square from = relative_square(pos.sideToMove, move_from(move));
       Square to = relative_square(pos.sideToMove, move_to(move));
-      if (pt != KING && move_type(move) == MT_NORMAL) {
+      if (pt != KING && move_type(move) != MT_PROMOTION) {
         boomIndex = boomTable[pt][from][to];
       }
     }
@@ -353,10 +352,9 @@ namespace Search {
     ss->playedMove = move;
     ss->playedCap = ! pos.isQuiet(move);
     keyStack[keyStackHead++] = pos.key;
+    ply++;
 
     NNUE::Accumulator& newAcc = accumStack[++accumStackHead];
-
-    ply++;
     pos.doMove(move, newAcc.dirtyPieces);
 
     for (Color side = WHITE; side <= BLACK; ++side) {
@@ -1265,14 +1263,14 @@ namespace Search {
         Square from = relative_square(pos.sideToMove, move_from(m));
         Square to = relative_square(pos.sideToMove, move_to(m));
 
-        if (move_type(m) != MT_NORMAL || pt == KING)
+        if (move_type(m) == MT_PROMOTION || pt == KING)
           continue;
         if (boomTable[pt][from][to] != -1)
           continue;
 
         boomTable[pt][from][to] = boomIndex;
-        boomDeltas[boomIndex].kingSq[WHITE] = pos.kingSquare(WHITE);
-        boomDeltas[boomIndex].kingSq[BLACK] = pos.kingSquare(BLACK);
+        boomDeltas[boomIndex].relKings[WHITE] = pos.kingSquare(WHITE);
+        boomDeltas[boomIndex].relKings[BLACK] = relative_square(BLACK, pos.kingSquare(BLACK));
         boomDeltas[boomIndex].setMove(pt, from, to);
 
         boomIndex++;
@@ -1281,7 +1279,7 @@ namespace Search {
       }
 
       Move next = rootMoves[0].pv[i];
-      if (!next)
+      if (!next || !pos.isLegal(next))
         break;
       DirtyPieces tempDp;
       pos.doMove(next, tempDp);
@@ -1316,11 +1314,6 @@ namespace Search {
     for (int i = 0; i < 2; i++)
       for (int j = 0; j < NNUE::KingBuckets; j++)
         finny[i][j].reset();
-
-    for (int a = 0; a < 6; a++)
-      for (int b = 0; b < 64; b++)
-        for (int c = 0; c < 64; c++)
-          boomTable[a][b][c] = -1;
 
     keyStackHead = 0;
     for (int i = 0; i < settings.prevPositions.size(); i++)

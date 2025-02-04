@@ -47,7 +47,7 @@ namespace NNUE {
 
   struct MoveDelta {
     alignas(Alignment) int16_t delta[COLOR_NB][L1];
-    Square kingSq[COLOR_NB];
+    Square relKings[COLOR_NB];
 
     void setMove(PieceType pt, Square from, Square to);
   };
@@ -60,13 +60,6 @@ namespace NNUE {
     Square kings[COLOR_NB];
     DirtyPieces dirtyPieces;
     int boomIndex;
-
-    inline uint64_t hash(Color side) const {
-      uint64_t result = 0;
-      for (int i = 0; i < L1; i++)
-        result = result*31 + colors[side][i];
-      return result;
-    }
 
     void addPiece(Square kingSq, Color side, Piece pc, Square sq);
 
