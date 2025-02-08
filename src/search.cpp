@@ -1069,8 +1069,6 @@ namespace Search {
         if (cutNode)
           R += 2 - ttPV;
 
-        R += 2 * cutNode;
-
         // Clamp to avoid a qsearch or an extension in the child search
         int reducedDepth = std::clamp(newDepth - R, 1, newDepth + 1);
 
