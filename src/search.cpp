@@ -1066,6 +1066,9 @@ namespace Search {
 
         R += !improving;
 
+        if (cutNode)
+          R += 2 - ttPV;
+
         R += 2 * cutNode;
 
         // Clamp to avoid a qsearch or an extension in the child search
