@@ -4,6 +4,7 @@ else
 	EXE := Obsidian
 endif
 
+EVALFILE = permuted.bin
 DEFAULT_NET = net70.bin
 
 ifndef EVALFILE
