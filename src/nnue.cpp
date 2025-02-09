@@ -24,7 +24,10 @@ namespace NNUE {
     alignas(Alignment) int16_t FeatureWeights[KingBuckets][2][6][64][L1];
     alignas(Alignment) int16_t FeatureBiases[L1];
 
-    alignas(Alignment) int8_t L1Weights[OutputBuckets][L1][L2];
+    union {
+      alignas(Alignment) int8_t L1Weights[OutputBuckets][L1][L2];
+      alignas(Alignment) int8_t L1WeightsAlt[OutputBuckets][L1 * L2];
+    }; 
     alignas(Alignment) float L1Biases[OutputBuckets][L2];
 
     alignas(Alignment) float L2Weights[OutputBuckets][L2][L3];
@@ -152,8 +155,20 @@ namespace NNUE {
   }
 
   void loadWeights() {
+    
     Weights = (Net*) Util::allocAlign(sizeof(Net));
-    memcpy(Weights, gEmbeddedNNUEData, sizeof(Net));
+    
+    Net* rawContent = new Net();
+    memcpy(rawContent, gEmbeddedNNUEData, sizeof(Net));
+    memcpy(Weights, rawContent, sizeof(Net));
+    for (int bucket = 0; bucket < OutputBuckets; bucket++)
+      for (int i = 0; i < L1; i += 4)
+        for (int j = 0; j < L2; ++j)
+          for (int k = 0; k < 4; k ++)
+            Weights->L1WeightsAlt[bucket][i * L2
+            + j * 4
+            + k] = rawContent->L1Weights[bucket][i + k][j];
+    delete rawContent;
 
     // Init NNZ table
     memset(nnzTable, 0, sizeof(nnzTable));
