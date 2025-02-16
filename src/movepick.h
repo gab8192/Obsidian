@@ -15,7 +15,6 @@ public:
     PLAY_TT,
     GEN_CAPTURES,
     PLAY_GOOD_CAPTURES,
-    PLAY_KILLER,
     PLAY_COUNTER,
     GEN_QUIETS,
     PLAY_QUIETS,
@@ -37,7 +36,7 @@ public:
   // Constructor for pvs and probcut
   MovePicker(
     SearchType _searchType, Position& _pos,
-    Move _ttMove, Move _killerMove, Move _counterMove,
+    Move _ttMove, Move _counterMove,
     MainHistory& _mainHist, CaptureHistory& _capHist,
     int _seeMargin,
     Search::SearchInfo* _ss);
@@ -51,7 +50,6 @@ private:
   Position& pos;
 
   Move ttMove = MOVE_NONE;
-  Move killerMove = MOVE_NONE;
   Move counterMove = MOVE_NONE;
 
   MainHistory& mainHist;

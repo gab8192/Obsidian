@@ -32,8 +32,6 @@ namespace Search {
     Move playedMove;
     bool playedCap;
 
-    Move killerMove;
-
     Move pv[MAX_PLY];
     int pvLength;
 
