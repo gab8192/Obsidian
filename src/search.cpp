@@ -989,7 +989,7 @@ namespace Search {
         if (!pos.seeGe(move, seeMargin))
           continue;
 
-        if (isQuiet && history < HistPrDepthMul * depth) {
+        if (isQuiet && quietCount >= 1 && history < HistPrDepthMul * depth) {
           skipQuiets = true;
           continue;
         }
