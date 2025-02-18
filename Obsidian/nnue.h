@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "net53.bin"
+#define EvalFile "net73perm.bin"
 
 using namespace SIMD;
 
@@ -27,7 +27,9 @@ namespace NNUE {
   using weight_t = int16_t;
 
   constexpr int FeaturesWidth = 768;
-  constexpr int HiddenWidth = 1536;
+  constexpr int L1 = 1536;
+  constexpr int L2 = 16;
+  constexpr int L3 = 32;
 
   constexpr int KingBucketsScheme[] = {
     0,  1,  2,  3,  3,  2,  1,  0,
@@ -45,21 +47,31 @@ namespace NNUE {
 
   constexpr int NetworkScale = 400;
   constexpr int NetworkQA = 255;
-  constexpr int NetworkQB = 64;
+  constexpr int NetworkQB = 128;
   constexpr int NetworkQAB = NetworkQA * NetworkQB;
 
   struct NNWeights {
-    alignas(Alignment) weight_t FeatureWeights[KingBuckets][2][6][64][HiddenWidth];
-    alignas(Alignment) weight_t FeatureBiases[HiddenWidth];
-    alignas(Alignment) weight_t OutputWeights[OutputBuckets][HiddenWidth];
-                       weight_t OutputBias[OutputBuckets];
+    alignas(Alignment) int16_t FeatureWeights[KingBuckets][2][6][64][L1];
+    alignas(Alignment) int16_t FeatureBiases[L1];
+
+    union {
+      alignas(Alignment) int8_t L1Weights[OutputBuckets][L1][L2];
+      alignas(Alignment) int8_t L1WeightsAlt[OutputBuckets][L1 * L2];
+    }; 
+    alignas(Alignment) float L1Biases[OutputBuckets][L2];
+
+    alignas(Alignment) float L2Weights[OutputBuckets][L2][L3];
+    alignas(Alignment) float L2Biases[OutputBuckets][L3];
+
+    alignas(Alignment) float L3Weights[OutputBuckets][L3];
+    alignas(Alignment) float L3Biases[OutputBuckets];
   };
 
-  extern NNWeights** weightsPool;
+  extern NNWeights* weightsPool[12];
 
   struct Accumulator {
 
-    alignas(Alignment) weight_t colors[COLOR_NB][HiddenWidth];
+    alignas(Alignment) weight_t colors[COLOR_NB][L1];
 
     NNWeights* nWeights;
 
