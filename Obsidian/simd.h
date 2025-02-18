@@ -63,7 +63,7 @@ namespace SIMD {
   }
 
 #elif defined(__AVX2__)
-using Vec = __m256i;
+  using Vec = __m256i;
   using VecI = __m256i;
   using VecF = __m256;
 
