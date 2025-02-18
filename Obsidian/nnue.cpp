@@ -20,7 +20,7 @@ namespace NNUE {
 
   constexpr int FtShift = 9;
 
-  NNWeights* weightsPool[12];
+  NNWeights* weightsPool;
 
   bool needRefresh(Color side, Square oldKing, Square newKing) {
     // Crossed half?
@@ -229,11 +229,8 @@ namespace NNUE {
         nnzTable[i][j++] = popLsb(bits);
     }
 
-    for (int node = 0; node < numaNodeCount(); node++) {
-      NNWeights* thisWeights = (NNWeights*) aligned_numa_alloc(SIMD::Alignment, sizeof(NNWeights), node);
-      prepareWeights(thisWeights);
-      weightsPool[node] = thisWeights;
-    }
+    weightsPool = new NNWeights();
+    prepareWeights(weightsPool);
   }
 
   Score evaluate(Position& pos, Accumulator& accumulator, NNWeights& Weights) {
