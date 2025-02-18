@@ -65,13 +65,6 @@ namespace Threads {
     searchStopped = true;
   }
 
-
-  
-  bool bindDone;
-  std::mutex mtx;
-  std::condition_variable cv;
-
-
   std::vector<cpu_set_t> makeNodeMappings() {
 
     std::vector<cpu_set_t> mappings;
@@ -100,13 +93,7 @@ namespace Threads {
   std::atomic<int> startedThreadsCount;
 
   void threadEntry(int index) {
-    {
-      std::unique_lock<std::mutex> lock(mtx);
-      cv.wait(lock, [] { return bindDone; });
-    }
     // Before doing anything else, bind this thread
-    int node = index % numaNodeCount();
-    searchThreads[index] = new Search::Thread(* NNUE::weightsPool);
     startedThreadsCount++;
     searchThreads[index]->idleLoop();
   }
@@ -135,6 +122,7 @@ namespace Threads {
     bindDone = false;
 
      for (int i = 0; i < threadCount; i++) {
+      searchThreads[i] = new Search::Thread(* NNUE::weightsPool);
       stdThreads[i] = new std::thread(threadEntry, i);
 
       int node = i % numaNodeCount();
