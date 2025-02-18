@@ -123,10 +123,6 @@ namespace Threads {
      for (int i = 0; i < threadCount; i++) {
       searchThreads[i] = new Search::Thread(* NNUE::weightsPool);
       stdThreads[i] = new std::thread(threadEntry, i);
-
-      int node = i % numaNodeCount();
-      pthread_setaffinity_np(stdThreads[i]->native_handle(),
-            sizeof(cpu_set_t), & nodeMappings[node]);
     }
 
     while (startedThreadsCount < threadCount) {
