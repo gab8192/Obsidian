@@ -119,7 +119,6 @@ namespace Threads {
     stdThreads.resize(threadCount);
 
     startedThreadsCount = 0;
-    bindDone = false;
 
      for (int i = 0; i < threadCount; i++) {
       searchThreads[i] = new Search::Thread(* NNUE::weightsPool);
@@ -129,12 +128,6 @@ namespace Threads {
       pthread_setaffinity_np(stdThreads[i]->native_handle(),
             sizeof(cpu_set_t), & nodeMappings[node]);
     }
-
-    {
-      std::lock_guard<std::mutex> lock(mtx);
-      bindDone = true;
-    }
-    cv.notify_all();
 
     while (startedThreadsCount < threadCount) {
       // This is necessary because some Search::Thread(s) may not be ready yet.
