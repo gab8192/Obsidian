@@ -3,7 +3,7 @@
 #include "simd.h"
 #include "types.h"
 
-#define EvalFile "net73perm.bin"
+#define EvalFile "supermassive.bin"
 
 using namespace SIMD;
 
@@ -27,7 +27,7 @@ namespace NNUE {
   using weight_t = int16_t;
 
   constexpr int FeaturesWidth = 768;
-  constexpr int L1 = 1536;
+  constexpr int L1 = 4096;
   constexpr int L2 = 16;
   constexpr int L3 = 32;
 
