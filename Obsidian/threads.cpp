@@ -106,7 +106,7 @@ namespace Threads {
     }
     // Before doing anything else, bind this thread
     int node = index % numaNodeCount();
-    searchThreads[index] = new Search::Thread(*(NNUE::weightsPool[node]));
+    searchThreads[index] = new Search::Thread(* NNUE::weightsPool);
     startedThreadsCount++;
     searchThreads[index]->idleLoop();
   }

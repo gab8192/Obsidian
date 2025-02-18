@@ -67,7 +67,7 @@ namespace NNUE {
     alignas(Alignment) float L3Biases[OutputBuckets];
   };
 
-  extern NNWeights* weightsPool[12];
+  extern NNWeights* weightsPool;
 
   struct Accumulator {
 
