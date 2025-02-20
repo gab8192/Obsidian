@@ -182,9 +182,7 @@ namespace SIMD {
   constexpr int Alignment = std::max<int>(8, sizeof(VecI));
 
   inline VecI dpbusdEpi32(VecI sum, VecI x, VecI y) {
-    VecI prod16 = maddubsEpi16(x, y);
-    VecI prod32 = maddEpi16(prod16, set1Epi16(1));
-    return addEpi32(sum, prod32);
+    return _mm512_dpbusd_epi32(sum, x, y);
   }
 
 }
