@@ -191,7 +191,7 @@ bool Position::isPseudoLegal(Move move) const {
   }
 
   if ((blockersForKing[us] & from))
-    if (! (LINE_BB[kingSquare(us)][from] & to))
+    if (! (LINE_BB[from][to] & pieces(us, KING)))
       return false;
 
   return getPieceAttacks(piece_type(pc), from, pieces()) & to;
@@ -212,7 +212,7 @@ bool Position::isLegal(Move move) const {
     return !attackersTo(to, ~sideToMove, pieces() ^ from);
 
   if (!checkers) {
-    if (LINE_BB[from][to] & kingSquare(sideToMove))
+    if (LINE_BB[from][to] & pieces(sideToMove, KING))
       return true;
   }
 
