@@ -23,7 +23,7 @@ struct DirtyPieces {
 namespace NNUE {
 
   constexpr int FeaturesWidth = 768;
-  constexpr int L1 = 1536;
+  constexpr int L1 = 512;
   constexpr int L2 = 16;
   constexpr int L3 = 32;
 
