@@ -854,7 +854,7 @@ namespace Search {
 
     // Null move pruning. When our evaluation is above beta, we give the opponent
     // a free move, and if we are still better, cut off
-    if ( !IsPV
+    if ( cutNode
       && !excludedMove
       && (ss - 1)->playedMove != MOVE_NONE
       && eval >= beta
@@ -868,7 +868,7 @@ namespace Search {
 
       Position newPos = pos;
       playNullMove(newPos, ss);
-      Score score = -negamax<false>(newPos, -beta, -beta + 1, depth - R, !cutNode, ss + 1);
+      Score score = -negamax<false>(newPos, -beta, -beta + 1, depth - R, false, ss + 1);
       cancelNullMove();
 
       if (score >= beta)
