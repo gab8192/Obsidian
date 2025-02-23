@@ -99,7 +99,12 @@ namespace Search {
 
     void refreshAccumulator(Position& pos, NNUE::Accumulator& acc, Color side);
 
-    void updateAccumulator(Position& pos, NNUE::Accumulator& acc);
+    void updateAccumulator(Position& pos, NNUE::Accumulator& acc, Color side);
+
+    inline void updateAccumulators(Position& pos, NNUE::Accumulator& acc) {
+      updateAccumulator(pos, acc, WHITE);
+      updateAccumulator(pos, acc, BLACK);
+    }
 
     Score doEvaluation(Position& position);
 

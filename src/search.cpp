@@ -283,37 +283,34 @@ namespace Search {
     memcpy(entry.byPieceBB[side], pos.byPieceBB, sizeof(entry.byPieceBB[0]));
   }
 
-  void Thread::updateAccumulator(Position& pos, NNUE::Accumulator& head) {
+  void Thread::updateAccumulator(Position& pos, NNUE::Accumulator& head, Color side) {
+    if (head.updated[side])
+      return;
 
-    for (Color side = WHITE; side <= BLACK; ++side) {
-      if (head.updated[side])
-        continue;
+    const Square king = head.kings[side];
+    NNUE::Accumulator* iter = &head;
+    while (true) {
+      iter--;
 
-      const Square king = head.kings[side];
-      NNUE::Accumulator* iter = &head;
-      while (true) {
-        iter--;
+      if (NNUE::needRefresh(side, iter->kings[side], king)) {
+        refreshAccumulator(pos, head, side);
+        break;
+      }
 
-        if (NNUE::needRefresh(side, iter->kings[side], king)) {
-          refreshAccumulator(pos, head, side);
-          break;
+      if (iter->updated[side]) {
+        NNUE::Accumulator* lastUpdated = iter;
+        while (lastUpdated != &head) {
+          (lastUpdated+1)->doUpdates(king, side, *lastUpdated);
+          lastUpdated++;
         }
-
-        if (iter->updated[side]) {
-          NNUE::Accumulator* lastUpdated = iter;
-          while (lastUpdated != &head) {
-            (lastUpdated+1)->doUpdates(king, side, *lastUpdated);
-            lastUpdated++;
-          }
-          break;
-        }
+        break;
       }
     }
   }
 
   Score Thread::doEvaluation(Position& pos) {
     NNUE::Accumulator& acc = accumStack[accumStackHead];
-    updateAccumulator(pos, acc);
+    updateAccumulators(pos, acc);
     return Eval::evaluate(pos, !(ply % 2), acc);
   }
 
@@ -795,14 +792,14 @@ namespace Search {
     }
     else if (excludedMove) {
       // We have already evaluated the position in the node which invoked this singular search
-      updateAccumulator(pos, accumStack[accumStackHead]);
+      updateAccumulators(pos, accumStack[accumStackHead]);
       rawStaticEval = eval = ss->staticEval;
     }
     else {
       if (ttStaticEval != SCORE_NONE) {
         rawStaticEval = ttStaticEval;
         if (IsPV)
-          updateAccumulator(pos, accumStack[accumStackHead]);
+          updateAccumulators(pos, accumStack[accumStackHead]);
       }
       else
         rawStaticEval = doEvaluation(pos);
