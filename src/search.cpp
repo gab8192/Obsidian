@@ -1061,8 +1061,11 @@ namespace Search {
         R -= (newPos.checkers != 0ULL);
 
         R -= (ttDepth >= depth);
-
-        R -= ttPV + IsPV;
+		
+		R -= ttPV;
+		
+		if (IsPV)
+		  R -= 1 + (depth < 10);
 
         R += ttMoveNoisy;
 
