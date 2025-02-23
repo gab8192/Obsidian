@@ -995,7 +995,7 @@ namespace Search {
         }
 
         // Late move pruning. At low depths, only visit a few quiet moves
-        if (seenMoves >= (depth * depth + LmpBase) / (2 - improving))
+        if (!pos.checkers && seenMoves >= (depth * depth + LmpBase) / (2 - improving))
           skipQuiets = true;
 
         // Futility pruning. If our evaluation is far below alpha,
@@ -1057,8 +1057,6 @@ namespace Search {
         int R = lmrTable[depth][seenMoves];
 
         R -= history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv);
-
-        R -= (newPos.checkers != 0ULL);
 
         R -= (ttDepth >= depth);
 
