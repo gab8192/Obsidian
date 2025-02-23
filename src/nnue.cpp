@@ -43,8 +43,8 @@ namespace NNUE {
   // and the index of each active bit
   alignas(Alignment) uint16_t nnzTable[256][8];
 
-
-  bool needRefresh(Color side, Square oldKing, Square newKing) {
+  template<Color side>
+  bool needRefresh(Square oldKing, Square newKing) {
     // Crossed half?
     if ((oldKing & 0b100) != (newKing & 0b100))
       return true;
@@ -108,7 +108,8 @@ namespace NNUE {
     multiSub<L1>((VecI*) colors[side], (VecI*) colors[side], featureAddress(kingSq, side, pc, sq));
   }
 
-  void Accumulator::doUpdates(Square kingSq, Color side, Accumulator& input) {
+  template<Color side>
+  void Accumulator::doUpdates(Square kingSq, Accumulator& input) {
     DirtyPieces dp = this->dirtyPieces;
     if (dp.type == DirtyPieces::CASTLING) 
     {
@@ -314,4 +315,8 @@ namespace NNUE {
     return l3Out * NetworkScale;
   }
 
+  template bool needRefresh<WHITE>(Square oldKing, Square newKing);
+  template bool needRefresh<BLACK>(Square oldKing, Square newKing);
+  template void Accumulator::doUpdates<WHITE>(Square kingSq, Accumulator& input);
+  template void Accumulator::doUpdates<BLACK>(Square kingSq, Accumulator& input);
 }

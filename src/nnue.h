@@ -57,7 +57,8 @@ namespace NNUE {
 
     void removePiece(Square kingSq, Color side, Piece pc, Square sq);
 
-    void doUpdates(Square kingSq, Color side, Accumulator& input);
+    template<Color side>
+    void doUpdates(Square kingSq, Accumulator& input);
 
     void reset(Color side);
 
@@ -78,7 +79,8 @@ namespace NNUE {
 
   using FinnyTable = FinnyEntry[2][KingBuckets];
 
-  bool needRefresh(Color side, Square oldKing, Square newKing);
+  template<Color side>
+  bool needRefresh(Square oldKing, Square newKing);
 
   void loadWeights();
 

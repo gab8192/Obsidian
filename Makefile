@@ -24,7 +24,7 @@ OBJS := $(OBJS:.c=.o)
 
 OPTIMIZE = -O3 -fno-stack-protector -fno-math-errno -funroll-loops -fno-exceptions -flto -flto-partition=one
 
-FLAGS = -s -pthread -std=c++17 -DNDEBUG -DEvalFile=\"$(EVALFILE)\" $(OPTIMIZE)
+FLAGS = -pthread -std=c++17 -DNDEBUG -DEvalFile=\"$(EVALFILE)\" $(OPTIMIZE)
 
 ifeq ($(OS),Windows_NT)
 	FLAGS += -static

@@ -97,14 +97,13 @@ namespace Search {
 
     Score searchPrevScore;
 
-    void refreshAccumulator(Position& pos, NNUE::Accumulator& acc, Color side);
+    template<Color side>
+    void refreshAccumulator(Position& pos, NNUE::Accumulator& acc);
 
-    void updateAccumulator(Position& pos, NNUE::Accumulator& acc, Color side);
+    template<Color side>
+    void updateAccumulator(Position& pos, NNUE::Accumulator& acc);
 
-    inline void updateAccumulators(Position& pos, NNUE::Accumulator& acc) {
-      updateAccumulator(pos, acc, WHITE);
-      updateAccumulator(pos, acc, BLACK);
-    }
+    void updateAccumulators(Position& pos, NNUE::Accumulator& acc);
 
     Score doEvaluation(Position& position);
 

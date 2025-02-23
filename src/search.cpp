@@ -255,7 +255,8 @@ namespace Search {
     keyStackHead--;
   }
 
-  void Thread::refreshAccumulator(Position& pos, NNUE::Accumulator& acc, Color side) {
+  template<Color side>
+  void Thread::refreshAccumulator(Position& pos, NNUE::Accumulator& acc) {
     const Square king = pos.kingSquare(side);
     const int bucket = NNUE::KingBucketsScheme[relative_square(side, king)];
     NNUE::FinnyEntry& entry = finny[fileOf(king) >= FILE_E][bucket];
@@ -283,7 +284,8 @@ namespace Search {
     memcpy(entry.byPieceBB[side], pos.byPieceBB, sizeof(entry.byPieceBB[0]));
   }
 
-  void Thread::updateAccumulator(Position& pos, NNUE::Accumulator& head, Color side) {
+  template<Color side>
+  void Thread::updateAccumulator(Position& pos, NNUE::Accumulator& head) {
     if (head.updated[side])
       return;
 
@@ -292,20 +294,25 @@ namespace Search {
     while (true) {
       iter--;
 
-      if (NNUE::needRefresh(side, iter->kings[side], king)) {
-        refreshAccumulator(pos, head, side);
+      if (NNUE::needRefresh<side>(iter->kings[side], king)) {
+        refreshAccumulator<side>(pos, head);
         break;
       }
 
       if (iter->updated[side]) {
         NNUE::Accumulator* lastUpdated = iter;
         while (lastUpdated != &head) {
-          (lastUpdated+1)->doUpdates(king, side, *lastUpdated);
+          (lastUpdated+1)->doUpdates<side>(king, *lastUpdated);
           lastUpdated++;
         }
         break;
       }
     }
+  }
+
+  void Thread::updateAccumulators(Position& pos, NNUE::Accumulator& acc) {
+    updateAccumulator<WHITE>(pos, acc);
+    updateAccumulator<BLACK>(pos, acc);
   }
 
   Score Thread::doEvaluation(Position& pos) {
