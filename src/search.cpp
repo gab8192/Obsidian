@@ -627,7 +627,7 @@ namespace Search {
 
     ttEntry->store(posTtKey,
       bestScore >= beta ? TT::FLAG_LOWER : TT::FLAG_UPPER,
-      0, bestMove, bestScore, rawStaticEval, ttPV, ply);
+      pos.checkers ? 1 : 0, bestMove, bestScore, rawStaticEval, ttPV, ply);
 
     return bestScore;
   }
