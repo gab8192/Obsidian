@@ -4,6 +4,7 @@ else
 	EXE := Obsidian
 endif
 
+EVALFILE = quantised.bin
 DEFAULT_NET = net73perm.bin
 
 ifndef EVALFILE
