@@ -275,8 +275,13 @@ namespace Search {
           Square sq = popLsb(toAdd);
           entry.acc.addPiece(king, side, makePiece(c, pt), sq);
         }
+        
       }
     }
+    
+    NNUE::applyBiasDiff(entry.acc.pcCount[side], BitCount(pos.pieces()), (SIMD::VecI*)entry.acc.colors[side]);
+    entry.acc.pcCount[side] = BitCount(pos.pieces());
+
     acc.updated[side] = true;
     memcpy(acc.colors[side], entry.acc.colors[side], sizeof(acc.colors[0]));
     memcpy(entry.byColorBB[side], pos.byColorBB, sizeof(entry.byColorBB[0]));
@@ -336,6 +341,7 @@ namespace Search {
       newAcc.updated[side] = false;
       newAcc.kings[side] = pos.kingSquare(side);
     }
+    newAcc.pcCount[0] = BitCount(pos.pieces());
   }
 
   void Thread::cancelMove() {

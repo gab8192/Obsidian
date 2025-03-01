@@ -22,7 +22,7 @@ namespace NNUE {
 
   struct Net {
     alignas(Alignment) int16_t FeatureWeights[KingBuckets][2][6][64][L1];
-    alignas(Alignment) int16_t FeatureBiases[L1];
+    alignas(Alignment) int16_t FeatureBiases[OutputBuckets][L1];
 
     union {
       alignas(Alignment) int8_t L1Weights[OutputBuckets][L1][L2];
@@ -123,6 +123,8 @@ namespace NNUE {
         featureAddress(kingSq, side, dp.sub0.pc, dp.sub0.sq),
         featureAddress(kingSq, side, dp.add0.pc, dp.add0.sq),
         featureAddress(kingSq, side, dp.sub1.pc, dp.sub1.sq));
+      
+      applyBiasDiff(pcCount[0] + 1, pcCount[0], (VecI*) colors[side]);
     } else
     {
       multiSubAdd<L1>((VecI*) colors[side], (VecI*) input.colors[side], 
@@ -132,11 +134,14 @@ namespace NNUE {
     updated[side] = true;
   }
 
-  void Accumulator::reset(Color side) {
-    memcpy(colors[side], Weights->FeatureBiases, sizeof(Weights->FeatureBiases));
+  void Accumulator::reset( Color side) {
+    constexpr int divisor = (32 + OutputBuckets - 1) / OutputBuckets;
+    int bucket = (pcCount[0] - 2) / divisor;
+    memcpy(colors[side], Weights->FeatureBiases[bucket], sizeof(colors[0]));
   }
 
   void Accumulator::refresh(Position& pos, Color side) {
+    pcCount[0] = BitCount(pos.pieces());
     reset(side);
     const Square kingSq = pos.kingSquare(side);
     Bitboard occupied = pos.pieces();
@@ -150,6 +155,7 @@ namespace NNUE {
   void FinnyEntry::reset() {
     memset(byColorBB, 0, sizeof(byColorBB));
     memset(byPieceBB, 0, sizeof(byPieceBB));
+    acc.pcCount[WHITE] = acc.pcCount[BLACK] = 2;
     acc.reset(WHITE);
     acc.reset(BLACK);
   }
@@ -191,7 +197,6 @@ namespace NNUE {
     __m128i regs[NumRegs];
 
     __m128i* ftWeights = (__m128i*) Weights->FeatureWeights;
-    __m128i* ftBiases = (__m128i*) Weights->FeatureBiases;
 
     for (int i = 0; i < KingBuckets * 768 * L1 / weightsPerBlock; i += NumRegs) {
       for (int j = 0; j < NumRegs; j++)
@@ -201,12 +206,25 @@ namespace NNUE {
             ftWeights[i + j] = regs[PackusOrder[j]];
     }
 
-    for (int i = 0; i < L1 / weightsPerBlock; i += NumRegs) {
-      for (int j = 0; j < NumRegs; j++)
-            regs[j] = ftBiases[i + j];
+    for (int ob = 0; ob < OutputBuckets; ob++) {
+      __m128i* ftBiases = (__m128i*) Weights->FeatureBiases[ob];
 
+      for (int i = 0; i < L1 / weightsPerBlock; i += NumRegs) {
         for (int j = 0; j < NumRegs; j++)
-            ftBiases[i + j] = regs[PackusOrder[j]];
+              regs[j] = ftBiases[i + j];
+
+          for (int j = 0; j < NumRegs; j++)
+              ftBiases[i + j] = regs[PackusOrder[j]];
+      }
+    }
+  }
+
+  void applyBiasDiff(int prevPcCount, int newPcCount, VecI* acc) {
+    constexpr int divisor = (32 + OutputBuckets - 1) / OutputBuckets;
+    int prevBucket = (prevPcCount - 2) / divisor;
+    int newBucket =  (newPcCount - 2)  / divisor;
+    if (prevBucket != newBucket) {
+      multiSubAdd<L1>(acc, acc, (VecI*)Weights->FeatureBiases[prevBucket], (VecI*)Weights->FeatureBiases[newBucket]);
     }
   }
 

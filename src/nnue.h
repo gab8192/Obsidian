@@ -48,7 +48,7 @@ namespace NNUE {
   struct Accumulator {
     
     alignas(Alignment) int16_t colors[COLOR_NB][L1];
-
+    int pcCount[COLOR_NB];
     bool updated[COLOR_NB];
     Square kings[COLOR_NB];
     DirtyPieces dirtyPieces;
@@ -81,6 +81,8 @@ namespace NNUE {
   bool needRefresh(Color side, Square oldKing, Square newKing);
 
   void loadWeights();
+
+  void applyBiasDiff(int prevPcCount, int newPcCount, VecI* acc);
 
   Score evaluate(Position& pos, Accumulator& accumulator);
 }
