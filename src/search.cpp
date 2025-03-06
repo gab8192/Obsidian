@@ -443,7 +443,7 @@ namespace Search {
         continue;
 
       // Repetition after root
-      if (ply > i)
+      if (ply >= i)
         return true;
 
       Piece pc = pos.board[ pos.board[from] ? from : to ];
