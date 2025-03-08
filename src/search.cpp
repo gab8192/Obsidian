@@ -295,11 +295,13 @@ namespace Search {
         iter--;
 
         if (NNUE::needRefresh(side, iter->kings[side], king)) {
-          refreshAccumulator(pos, head, side);
-          break;
+          iter++;
+          refreshAccumulator(*(iter->bruh), *iter, side);
+          goto boom;
         }
 
         if (iter->updated[side]) {
+          boom:
           NNUE::Accumulator* lastUpdated = iter;
           while (lastUpdated != &head) {
             (lastUpdated+1)->doUpdates(king, side, *lastUpdated);
@@ -328,7 +330,7 @@ namespace Search {
     keyStack[keyStackHead++] = pos.key;
 
     NNUE::Accumulator& newAcc = accumStack[++accumStackHead];
-
+    
     ply++;
     pos.doMove(move, newAcc.dirtyPieces);
 
@@ -336,6 +338,7 @@ namespace Search {
       newAcc.updated[side] = false;
       newAcc.kings[side] = pos.kingSquare(side);
     }
+    newAcc.bruh = &pos;
   }
 
   void Thread::cancelMove() {
@@ -795,14 +798,14 @@ namespace Search {
     }
     else if (excludedMove) {
       // We have already evaluated the position in the node which invoked this singular search
-      updateAccumulator(pos, accumStack[accumStackHead]);
+      //updateAccumulator(pos, accumStack[accumStackHead]);
       rawStaticEval = eval = ss->staticEval;
     }
     else {
       if (ttStaticEval != SCORE_NONE) {
         rawStaticEval = ttStaticEval;
-        if (IsPV)
-          updateAccumulator(pos, accumStack[accumStackHead]);
+        //if (IsPV)
+         // updateAccumulator(pos, accumStack[accumStackHead]);
       }
       else
         rawStaticEval = doEvaluation(pos);
@@ -922,6 +925,8 @@ namespace Search {
           return score;
         }
       }
+
+      //updateAccumulator(pos, accumStack[accumStackHead]);
     }
 
   moves_loop:
@@ -1245,6 +1250,7 @@ namespace Search {
       accumStack[0].refresh(rootPos, side);
       accumStack[0].kings[side] = rootPos.kingSquare(side);
     }
+    accumStack[0].bruh = &rootPos;
 
     for (int i = 0; i < 2; i++)
         for (int j = 0; j < NNUE::KingBuckets; j++)

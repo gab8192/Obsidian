@@ -52,6 +52,7 @@ namespace NNUE {
     bool updated[COLOR_NB];
     Square kings[COLOR_NB];
     DirtyPieces dirtyPieces;
+    Position* bruh;
 
     void addPiece(Square kingSq, Color side, Piece pc, Square sq);
 
