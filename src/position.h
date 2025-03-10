@@ -2,7 +2,6 @@
 
 #include "bitboard.h"
 #include "move.h"
-#include "nnue.h"
 #include "types.h"
 #include "zobrist.h"
 
@@ -168,7 +167,7 @@ struct alignas(32) Position {
 
   void doNullMove();
 
-  void doMove(Move move, DirtyPieces& dp);
+  void doMove(Move move);
 
   void calcThreats(Threats& threats);
 

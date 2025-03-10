@@ -1,7 +1,6 @@
 #pragma once
 
 #include "history.h"
-#include "nnue.h"
 #include "position.h"
 #include "types.h"
 
@@ -77,9 +76,6 @@ namespace Search {
     int keyStackHead;
     Key keyStack[100 + MAX_PLY];
 
-    int accumStackHead;
-    NNUE::Accumulator accumStack[MAX_PLY];
-
     SearchInfo searchStack[MAX_PLY + SsOffset];
 
     RootMoveList rootMoves;
@@ -93,15 +89,7 @@ namespace Search {
     NonPawnCorrHist wNonPawnCorrhist;
     NonPawnCorrHist bNonPawnCorrhist;
 
-    NNUE::FinnyTable finny;
-
     Score searchPrevScore;
-
-    void refreshAccumulator(Position& pos, NNUE::Accumulator& acc, Color side);
-
-    void updateAccumulator(Position& pos, NNUE::Accumulator& acc);
-
-    Score doEvaluation(Position& position);
 
     void sortRootMoves(int offset);
 

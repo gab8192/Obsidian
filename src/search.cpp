@@ -168,10 +168,8 @@ namespace Search {
       if (!pos.isLegal(move))
         continue;
 
-      DirtyPieces dirtyPieces;
-
       Position newPos = pos;
-      newPos.doMove(move, dirtyPieces);
+      newPos.doMove(move);
 
       int64_t thisNodes = perft<false>(newPos, depth - 1);
       if constexpr (root)
@@ -255,68 +253,6 @@ namespace Search {
     keyStackHead--;
   }
 
-  void Thread::refreshAccumulator(Position& pos, NNUE::Accumulator& acc, Color side) {
-    const Square king = pos.kingSquare(side);
-    const int bucket = NNUE::KingBucketsScheme[relative_square(side, king)];
-    NNUE::FinnyEntry& entry = finny[fileOf(king) >= FILE_E][bucket];
-
-    for (Color c = WHITE; c <= BLACK; ++c) {
-      for (PieceType pt = PAWN; pt <= KING; ++pt) {
-        const Bitboard oldBB = entry.byColorBB[side][c] & entry.byPieceBB[side][pt];
-        const Bitboard newBB = pos.pieces(c, pt);
-        Bitboard toRemove = oldBB & ~newBB;
-        Bitboard toAdd = newBB & ~oldBB;
-
-        while (toRemove) {
-          Square sq = popLsb(toRemove);
-          entry.acc.removePiece(king, side, makePiece(c, pt), sq);
-        }
-        while (toAdd) {
-          Square sq = popLsb(toAdd);
-          entry.acc.addPiece(king, side, makePiece(c, pt), sq);
-        }
-      }
-    }
-    acc.updated[side] = true;
-    memcpy(acc.colors[side], entry.acc.colors[side], sizeof(acc.colors[0]));
-    memcpy(entry.byColorBB[side], pos.byColorBB, sizeof(entry.byColorBB[0]));
-    memcpy(entry.byPieceBB[side], pos.byPieceBB, sizeof(entry.byPieceBB[0]));
-  }
-
-  void Thread::updateAccumulator(Position& pos, NNUE::Accumulator& head) {
-
-    for (Color side = WHITE; side <= BLACK; ++side) {
-      if (head.updated[side])
-        continue;
-
-      const Square king = head.kings[side];
-      NNUE::Accumulator* iter = &head;
-      while (true) {
-        iter--;
-
-        if (NNUE::needRefresh(side, iter->kings[side], king)) {
-          refreshAccumulator(pos, head, side);
-          break;
-        }
-
-        if (iter->updated[side]) {
-          NNUE::Accumulator* lastUpdated = iter;
-          while (lastUpdated != &head) {
-            (lastUpdated+1)->doUpdates(king, side, *lastUpdated);
-            lastUpdated++;
-          }
-          break;
-        }
-      }
-    }
-  }
-
-  Score Thread::doEvaluation(Position& pos) {
-    NNUE::Accumulator& acc = accumStack[accumStackHead];
-    updateAccumulator(pos, acc);
-    return Eval::evaluate(pos, !(ply % 2), acc);
-  }
-
   void Thread::playMove(Position& pos, Move move, SearchInfo* ss) {
 
     nodesSearched++;
@@ -327,21 +263,13 @@ namespace Search {
     ss->playedCap = ! pos.isQuiet(move);
     keyStack[keyStackHead++] = pos.key;
 
-    NNUE::Accumulator& newAcc = accumStack[++accumStackHead];
-
     ply++;
-    pos.doMove(move, newAcc.dirtyPieces);
-
-    for (Color side = WHITE; side <= BLACK; ++side) {
-      newAcc.updated[side] = false;
-      newAcc.kings[side] = pos.kingSquare(side);
-    }
+    pos.doMove(move);
   }
 
   void Thread::cancelMove() {
     ply--;
     keyStackHead--;
-    accumStackHead--;
   }
 
   int Thread::getCapHistory(Position& pos, Move move) {
@@ -496,7 +424,7 @@ namespace Search {
 
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY-4)
-      return pos.checkers ? SCORE_DRAW : adjustEval(pos, doEvaluation(pos));
+      return pos.checkers ? SCORE_DRAW : adjustEval(pos, Stockfish::Eval::evaluate(pos));
 
     // Probe TT
     const Key posTtKey = pos.key ^ ZOBRIST_50MR[pos.halfMoveClock];
@@ -538,7 +466,7 @@ namespace Search {
       if (ttStaticEval != SCORE_NONE)
         rawStaticEval = ttStaticEval;
       else
-        rawStaticEval = doEvaluation(pos);
+        rawStaticEval = Stockfish::Eval::evaluate(pos);
 
       bestScore = ss->staticEval = adjustEval(pos, rawStaticEval);
 
@@ -694,7 +622,7 @@ namespace Search {
 
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY - 4)
-      return pos.checkers ? SCORE_DRAW : adjustEval(pos, doEvaluation(pos));
+      return pos.checkers ? SCORE_DRAW : adjustEval(pos, Stockfish::Eval::evaluate(pos));
 
     // Mate distance pruning
     alpha = std::max(alpha, ply - SCORE_MATE);
@@ -795,17 +723,14 @@ namespace Search {
     }
     else if (excludedMove) {
       // We have already evaluated the position in the node which invoked this singular search
-      updateAccumulator(pos, accumStack[accumStackHead]);
       rawStaticEval = eval = ss->staticEval;
     }
     else {
       if (ttStaticEval != SCORE_NONE) {
         rawStaticEval = ttStaticEval;
-        if (IsPV)
-          updateAccumulator(pos, accumStack[accumStackHead]);
       }
       else
-        rawStaticEval = doEvaluation(pos);
+        rawStaticEval = Stockfish::Eval::evaluate(pos);
 
       eval = ss->staticEval = adjustEval(pos, rawStaticEval);
 
@@ -1239,16 +1164,6 @@ namespace Search {
     const Settings& settings = Threads::getSearchSettings();
 
     Position rootPos = settings.position;
-
-    accumStackHead = 0;
-    for (Color side = WHITE; side <= BLACK; ++side) {
-      accumStack[0].refresh(rootPos, side);
-      accumStack[0].kings[side] = rootPos.kingSquare(side);
-    }
-
-    for (int i = 0; i < 2; i++)
-        for (int j = 0; j < NNUE::KingBuckets; j++)
-          finny[i][j].reset();
 
     keyStackHead = 0;
     for (int i = 0; i < settings.prevPositions.size(); i++)

@@ -4,7 +4,7 @@ else
 	EXE := Obsidian
 endif
 
-DEFAULT_NET = net73perm.bin
+DEFAULT_NET = sf-a3d1bfca1672.nnue
 
 ifndef EVALFILE
 	EVALFILE = $(DEFAULT_NET)
@@ -17,12 +17,12 @@ MSSSE3  = $(MSSE2) -mssse3
 MAVX2   = $(MSSSE3) -msse4.1 -mbmi -mfma -mavx2
 MAVX512 = $(MAVX2) -mavx512f -mavx512bw
 
-FILES = $(wildcard src/*.cpp) src/fathom/src/tbprobe.c
+FILES = $(wildcard src/*.cpp) $(wildcard src/nnue/*.cpp) $(wildcard src/nnue/features/*.cpp) src/fathom/src/tbprobe.c
 
 OBJS = $(FILES:.cpp=.o)
 OBJS := $(OBJS:.c=.o)
 
-OPTIMIZE = -O3 -fno-stack-protector -fno-math-errno -funroll-loops -fno-exceptions -flto -flto-partition=one
+OPTIMIZE = -O3 -fno-stack-protector -fno-math-errno -funroll-loops -fno-exceptions -flto -flto-partition=one -DUSE_SSE -DUSE_SSE2 -DUSE_SSE3 -DUSE_SSSE3 -DUSE_SSE41 -DUSE_SSE42 -DUSE_AVX2
 
 FLAGS = -s -pthread -std=c++17 -DNDEBUG -DEvalFile=\"$(EVALFILE)\" $(OPTIMIZE)
 
