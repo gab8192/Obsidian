@@ -21,22 +21,22 @@ namespace NNUE {
 
   struct NetFormat {
   union {
-    alignas(Alignment) int16_t FeatureWeightsAlt[KingBuckets * 768][L1];
-    alignas(Alignment) int16_t FeatureWeights[KingBuckets][2][6][64][L1];
+    alignas(64) int16_t FeatureWeightsAlt[KingBuckets * 768][L1];
+    alignas(64) int16_t FeatureWeights[KingBuckets][2][6][64][L1];
   };
-    alignas(Alignment) int16_t FeatureBiases[L1];
+    alignas(64) int16_t FeatureBiases[L1];
 
   union {
-    alignas(Alignment) int8_t L1WeightsAlt[OutputBuckets][L1 *L2];
-    alignas(Alignment) int8_t L1Weights[OutputBuckets][L1][L2];
+    alignas(64) int8_t L1WeightsAlt[OutputBuckets][L1 *L2];
+    alignas(64) int8_t L1Weights[OutputBuckets][L1][L2];
   };
-    alignas(Alignment) float L1Biases[OutputBuckets][L2];
+    alignas(64) float L1Biases[OutputBuckets][L2];
 
-    alignas(Alignment) float L2Weights[OutputBuckets][L2][L3];
-    alignas(Alignment) float L2Biases[OutputBuckets][L3];
+    alignas(64) float L2Weights[OutputBuckets][L2 * 2][L3];
+    alignas(64) float L2Biases[OutputBuckets][L3];
 
-    alignas(Alignment) float L3Weights[OutputBuckets][L3];
-    alignas(Alignment) float L3Biases[OutputBuckets];
+    alignas(64) float L3Weights[OutputBuckets][L3];
+    alignas(64) float L3Biases[OutputBuckets];
   };
 
   NetFormat Content;
@@ -316,7 +316,7 @@ struct NNZStats {
     int nnzCount = 0;
 
     alignas(Alignment) uint8_t ftOut[L1];
-    alignas(Alignment) float l1Out[L2];
+    alignas(Alignment) float l1Out[L2 * 2];
     alignas(Alignment) float l2Out[L3];
     float l3Out;
 
@@ -371,9 +371,11 @@ struct NNZStats {
 
       for (int i = 0; i < L2; i += FloatInVec) {
         VecF vecBias = AsVecF(Content.L1Biases[bucket][i]);
-        VecF casted = mulAddPs(castEpi32ToPs(AsVecI(sums[i])), L1MulVec, vecBias);
-        VecF clipped = minPs(maxPs(casted, vecfZero), vecfOne);
-        AsVecF(l1Out[i]) = mulPs(clipped, clipped);
+        VecF prod = mulAddPs(castEpi32ToPs(AsVecI(sums[i])), L1MulVec, vecBias);
+        VecF squared = mulPs(prod, prod);
+
+        AsVecF(l1Out[i]) = minPs(maxPs(prod, vecfZero), vecfOne);
+        AsVecF(l1Out[i + L2]) = minPs(maxPs(squared, vecfZero), vecfOne);
       }
     }
 
@@ -381,7 +383,7 @@ struct NNZStats {
       alignas(Alignment) float sums[L3];
       memcpy(sums, Content.L2Biases[bucket], sizeof(sums));
 
-      for (int i = 0; i < L2; ++i) {
+      for (int i = 0; i < L2 * 2; ++i) {
         VecF vecL1Out = set1Ps(l1Out[i]);
         for (int j = 0; j < L3; j += FloatInVec)
           AsVecF(sums[j]) = mulAddPs(AsVecF(Content.L2Weights[bucket][i][j]), vecL1Out, AsVecF(sums[j]));
