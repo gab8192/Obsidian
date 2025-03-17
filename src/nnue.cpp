@@ -21,20 +21,20 @@ namespace NNUE {
   constexpr int FtShift = 9;
 
   struct Net {
-    alignas(Alignment) int16_t FeatureWeights[KingBuckets][2][6][64][L1];
-    alignas(Alignment) int16_t FeatureBiases[L1];
+    alignas(64) int16_t FeatureWeights[KingBuckets][2][6][64][L1];
+    alignas(64) int16_t FeatureBiases[L1];
 
     union {
-      alignas(Alignment) int8_t L1Weights[OutputBuckets][L1][L2];
-      alignas(Alignment) int8_t L1WeightsAlt[OutputBuckets][L1 * L2];
+      alignas(64) int8_t L1Weights[OutputBuckets][L1][L2];
+      alignas(64) int8_t L1WeightsAlt[OutputBuckets][L1 * L2];
     }; 
-    alignas(Alignment) float L1Biases[OutputBuckets][L2];
+    alignas(64) float L1Biases[OutputBuckets][L2];
 
-    alignas(Alignment) float L2Weights[OutputBuckets][L2][L3];
-    alignas(Alignment) float L2Biases[OutputBuckets][L3];
+    alignas(64) float L2Weights[OutputBuckets][L2 * 2][L3];
+    alignas(64) float L2Biases[OutputBuckets][L3];
 
-    alignas(Alignment) float L3Weights[OutputBuckets][L3];
-    alignas(Alignment) float L3Biases[OutputBuckets];
+    alignas(64) float L3Weights[OutputBuckets][L3];
+    alignas(64) float L3Biases[OutputBuckets];
   };
 
   Net* Weights;
@@ -158,6 +158,7 @@ namespace NNUE {
     
     Weights = (Net*) Util::allocAlign(sizeof(Net));
     
+    // dpbusd preprocessing:
     Net* rawContent = new Net();
     memcpy(rawContent, gEmbeddedNNUEData, sizeof(Net));
     memcpy(Weights, rawContent, sizeof(Net));
@@ -178,9 +179,6 @@ namespace NNUE {
       while (bits)
         nnzTable[i][j++] = popLsb(bits);
     }
-
-    // dpbusd preprocessing:
-    // done at quantisation time
     
     // Transpose weights so that we don't need to permute after packus, because
     // it interleaves each 128 block from a and each 128 block from b, alternately.
@@ -228,7 +226,7 @@ namespace NNUE {
     int nnzCount = 0;
 
     alignas(Alignment) uint8_t ftOut[L1];
-    alignas(Alignment) float l1Out[L2];
+    alignas(Alignment) float l1Out[L2 * 2];
     alignas(Alignment) float l2Out[L3];
     float l3Out;
 
@@ -283,9 +281,11 @@ namespace NNUE {
 
       for (int i = 0; i < L2; i += FloatInVec) {
         VecF vecBias = AsVecF(Weights->L1Biases[bucket][i]);
-        VecF casted = mulAddPs(castEpi32ToPs(AsVecI(sums[i])), L1MulVec, vecBias);
-        VecF clipped = minPs(maxPs(casted, vecfZero), vecfOne);
-        AsVecF(l1Out[i]) = mulPs(clipped, clipped);
+        VecF prod = mulAddPs(castEpi32ToPs(AsVecI(sums[i])), L1MulVec, vecBias);
+        VecF squared = mulPs(prod, prod);
+
+        AsVecF(l1Out[i]) = minPs(maxPs(prod, vecfZero), vecfOne);
+        AsVecF(l1Out[i + L2]) = minPs(squared, vecfOne);
       }
     }
 
@@ -293,7 +293,7 @@ namespace NNUE {
       alignas(Alignment) float sums[L3];
       memcpy(sums, Weights->L2Biases[bucket], sizeof(sums));
 
-      for (int i = 0; i < L2; ++i) {
+      for (int i = 0; i < L2 * 2; ++i) {
         VecF vecL1Out = set1Ps(l1Out[i]);
         for (int j = 0; j < L3; j += FloatInVec)
           AsVecF(sums[j]) = mulAddPs(AsVecF(Weights->L2Weights[bucket][i][j]), vecL1Out, AsVecF(sums[j]));
