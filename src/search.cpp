@@ -134,6 +134,7 @@ namespace Search {
 
   void Thread::resetHistories() {
     memset(mainHistory, 0, sizeof(mainHistory));
+    memset(pawnHistory, 0, sizeof(pawnHistory));
     memset(captureHistory, 0, sizeof(captureHistory));
     memset(counterMoveHistory, 0, sizeof(counterMoveHistory));
     memset(contHistory, 0, sizeof(contHistory));
@@ -410,11 +411,14 @@ namespace Search {
     // Continuation history
     addToContHistory(pos, bonus, bestMove, ss);
 
+    addToHistory(pawnHistory[PhIndex(pos.pawnKey)][pieceTo(pos, bestMove)], bonus);
+
     // Decrease score of other quiet moves
     for (int i = 0; i < quietCount; i++) {
       Move otherMove = quiets[i];
       addToContHistory(pos, -malus, otherMove, ss);
       addToHistory(mainHistory[pos.sideToMove][move_from_to(otherMove)], -malus);
+      addToHistory(pawnHistory[PhIndex(pos.pawnKey)][pieceTo(pos, otherMove)], -malus);
     }
   }
 
@@ -566,9 +570,8 @@ namespace Search {
     MovePicker movePicker(
       MovePicker::QSEARCH, pos,
       ttMove, MOVE_NONE, MOVE_NONE,
-      mainHistory, captureHistory,
-      0,
-      ss);
+      mainHistory, pawnHistory, captureHistory,
+      0, ss);
 
     movePicker.genQuietChecks = (depth == 0);
 
@@ -896,9 +899,8 @@ namespace Search {
       MovePicker pcMovePicker(
         MovePicker::PROBCUT, pos,
         visitTTMove ? ttMove : MOVE_NONE, MOVE_NONE, MOVE_NONE,
-        mainHistory, captureHistory,
-        pcSeeMargin,
-        ss);
+        mainHistory, pawnHistory, captureHistory,
+        pcSeeMargin, ss);
 
       Move move;
 
@@ -954,9 +956,8 @@ namespace Search {
     MovePicker movePicker(
       MovePicker::PVS, pos,
       ttMove, ss->killerMove, counterMove,
-      mainHistory, captureHistory,
-      0,
-      ss);
+      mainHistory, pawnHistory, captureHistory,
+      0, ss);
 
     // Visit moves
 
