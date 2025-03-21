@@ -5,12 +5,12 @@
 MovePicker::MovePicker(
   SearchType _searchType, Position& _pos,
   Move _ttMove, Move _killerMove, Move _counterMove,
-  MainHistory& _mainHist, CaptureHistory& _capHist,
+  MainHistory& _mainHist, PawnHistory& _pawnHist, CaptureHistory& _capHist,
   int _seeMargin,
   Search::SearchInfo* _ss) :
   searchType(_searchType), pos(_pos),
   ttMove(_ttMove),
-  mainHist(_mainHist), capHist(_capHist),
+  mainHist(_mainHist), pawnHist(_pawnHist), capHist(_capHist),
   seeMargin(_seeMargin),
   ss(_ss)
 {
@@ -90,6 +90,7 @@ void MovePicker::scoreQuiets() {
     quiets[i++].score =
         threatScore
       + mainHist[pos.sideToMove][move_from_to(move)]
+      + pawnHist[PhIndex(pos.pawnKey)][pieceTo(pos, move)]
       + (ss - 1)->contHistory[chIndex]
       + (ss - 2)->contHistory[chIndex]
       + (ss - 4)->contHistory[chIndex]

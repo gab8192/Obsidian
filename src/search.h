@@ -86,6 +86,7 @@ namespace Search {
     int pvIdx;
 
     MainHistory mainHistory;
+    PawnHistory pawnHistory;
     CaptureHistory captureHistory;
     ContinuationHistory contHistory;
     CounterMoveHistory counterMoveHistory;
