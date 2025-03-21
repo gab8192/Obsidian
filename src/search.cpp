@@ -133,6 +133,7 @@ namespace Search {
 
   void Thread::resetHistories() {
     memset(mainHistory, 0, sizeof(mainHistory));
+    memset(pawnHistory, 0, sizeof(pawnHistory));
     memset(captureHistory, 0, sizeof(captureHistory));
     memset(counterMoveHistory, 0, sizeof(counterMoveHistory));
     memset(contHistory, 0, sizeof(contHistory));
@@ -362,9 +363,9 @@ namespace Search {
     eval = (eval * (200 - pos.halfMoveClock)) / 200;
 
     // Pawn correction history
-    eval += PawnChWeight * pawnCorrhist[pos.sideToMove][getCorrHistIndex(pos.pawnKey)] / 512;
-    eval += NonPawnChWeight * wNonPawnCorrhist[pos.sideToMove][getCorrHistIndex(pos.nonPawnKey[WHITE])] / 512;
-    eval += NonPawnChWeight * bNonPawnCorrhist[pos.sideToMove][getCorrHistIndex(pos.nonPawnKey[BLACK])] / 512;
+    eval += PawnChWeight * pawnCorrhist[pos.sideToMove][ChIndex(pos.pawnKey)] / 512;
+    eval += NonPawnChWeight * wNonPawnCorrhist[pos.sideToMove][ChIndex(pos.nonPawnKey[WHITE])] / 512;
+    eval += NonPawnChWeight * bNonPawnCorrhist[pos.sideToMove][ChIndex(pos.nonPawnKey[BLACK])] / 512;
 
     return std::clamp(eval, SCORE_TB_LOSS_IN_MAX_PLY + 1, SCORE_TB_WIN_IN_MAX_PLY - 1);
   }
@@ -404,11 +405,14 @@ namespace Search {
     // Continuation history
     addToContHistory(pos, bonus, bestMove, ss);
 
+    addToHistory(pawnHistory[PhIndex(pos.pawnKey)][pieceTo(pos, bestMove)], bonus);
+
     // Decrease score of other quiet moves
     for (int i = 0; i < quietCount; i++) {
       Move otherMove = quiets[i];
       addToContHistory(pos, -malus, otherMove, ss);
       addToHistory(mainHistory[pos.sideToMove][move_from_to(otherMove)], -malus);
+      addToHistory(pawnHistory[PhIndex(pos.pawnKey)][pieceTo(pos, otherMove)], -malus);
     }
   }
 
@@ -560,9 +564,8 @@ namespace Search {
     MovePicker movePicker(
       MovePicker::QSEARCH, pos,
       ttMove, MOVE_NONE, MOVE_NONE,
-      mainHistory, captureHistory,
-      0,
-      ss);
+      mainHistory, pawnHistory, captureHistory,
+      0, ss);
 
     movePicker.genQuietChecks = (depth == 0);
 
@@ -890,9 +893,8 @@ namespace Search {
       MovePicker pcMovePicker(
         MovePicker::PROBCUT, pos,
         visitTTMove ? ttMove : MOVE_NONE, MOVE_NONE, MOVE_NONE,
-        mainHistory, captureHistory,
-        pcSeeMargin,
-        ss);
+        mainHistory, pawnHistory, captureHistory,
+        pcSeeMargin, ss);
 
       Move move;
 
@@ -948,9 +950,8 @@ namespace Search {
     MovePicker movePicker(
       MovePicker::PVS, pos,
       ttMove, ss->killerMove, counterMove,
-      mainHistory, captureHistory,
-      0,
-      ss);
+      mainHistory, pawnHistory, captureHistory,
+      0, ss);
 
     // Visit moves
 
@@ -1192,9 +1193,9 @@ namespace Search {
       int bonus = std::clamp((bestScore - ss->staticEval) * depth / 8,
                              -CORRHIST_LIMIT / 4, CORRHIST_LIMIT / 4);
                   
-      addToCorrhist(pawnCorrhist[pos.sideToMove][getCorrHistIndex(pos.pawnKey)], bonus);
-      addToCorrhist(wNonPawnCorrhist[pos.sideToMove][getCorrHistIndex(pos.nonPawnKey[WHITE])], bonus);
-      addToCorrhist(bNonPawnCorrhist[pos.sideToMove][getCorrHistIndex(pos.nonPawnKey[BLACK])], bonus);
+      addToCorrhist(pawnCorrhist[pos.sideToMove][ChIndex(pos.pawnKey)], bonus);
+      addToCorrhist(wNonPawnCorrhist[pos.sideToMove][ChIndex(pos.nonPawnKey[WHITE])], bonus);
+      addToCorrhist(bNonPawnCorrhist[pos.sideToMove][ChIndex(pos.nonPawnKey[BLACK])], bonus);
     }
 
     // Store to TT
