@@ -228,9 +228,7 @@ bool Position::isLegal(Move move) const {
 }
 
 void Position::doNullMove() {
-
-  const Color us = sideToMove, them = ~us;
-
+  
   if (epSquare != SQ_NONE) {
     key ^= ZOBRIST_EP[fileOf(epSquare)];
     epSquare = SQ_NONE;
@@ -240,7 +238,7 @@ void Position::doNullMove() {
 
   halfMoveClock++;
 
-  sideToMove = them;
+  sideToMove = ~sideToMove;
   key ^= ZOBRIST_TEMPO;
 }
 

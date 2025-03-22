@@ -67,18 +67,6 @@ enum Square : int {
   SQUARE_NB = 64
 };
 
-enum Direction : int {
-  NORTH = 8,
-  EAST = 1,
-  SOUTH = -NORTH,
-  WEST = -EAST,
-
-  NORTH_EAST = NORTH + EAST,
-  SOUTH_EAST = SOUTH + EAST,
-  SOUTH_WEST = SOUTH + WEST,
-  NORTH_WEST = NORTH + WEST
-};
-
 enum Rank : int {
   RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8,
   RANK_NB = 8

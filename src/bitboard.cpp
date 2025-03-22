@@ -134,24 +134,24 @@ Bitboard gen_king_attacks(Square sqr) {
   return attacks;
 }
 
-struct KnightMove {
+struct Direction {
   int offX, offY;
 };
 
-const KnightMove KnightMoves[] = {
+const Direction KnightDirs[] = {
     {2, 1}, {2, -1}, {-2, 1}, {-2, -1},
     {1, 2}, {1, -2}, {-1, 2}, {-1, -2} };
 
-constexpr Direction RookDirs[] = { NORTH, EAST, SOUTH, WEST };
-constexpr Direction BishopDirs[] = { NORTH_EAST, SOUTH_EAST, SOUTH_WEST, NORTH_WEST };
+constexpr Direction RookDirs[]   = { {0, 1}, {0, -1}, {1, 0}, {-1, 0} };
+constexpr Direction BishopDirs[] = { {1, 1}, {1, -1}, {-1, 1}, {-1, -1} };
 
 Bitboard gen_knight_attacks(Square sqr) {
   Bitboard attacks = 0;
   File x = fileOf(sqr);
   Rank y = rankOf(sqr);
   for (int i = 0; i < 8; i++) {
-    File destX = x + KnightMoves[i].offX;
-    Rank destY = y + KnightMoves[i].offY;
+    File destX = x + KnightDirs[i].offX;
+    Rank destY = y + KnightDirs[i].offY;
     if (destX >= 0 && destX < 8 && destY >= 0 && destY < 8) {
       attacks |= makeSquare(destX, destY);
     }
@@ -178,32 +178,6 @@ Bitboard gen_pawn_attacks(Color pawnColor, Square sqr) {
   return attacks;
 }
 
-int calcIncX(int direction) {
-  switch (direction) {
-  case EAST:
-  case NORTH_EAST:
-  case SOUTH_EAST: return 1;
-  case WEST:
-  case NORTH_WEST:
-  case SOUTH_WEST: return -1;
-
-  default: return 0;
-  }
-}
-
-int calcIncY(int direction) {
-  switch (direction) {
-  case NORTH:
-  case NORTH_EAST:
-  case NORTH_WEST: return 1;
-  case SOUTH:
-  case SOUTH_EAST:
-  case SOUTH_WEST: return -1;
-
-  default: return 0;
-  }
-}
-
 Bitboard sliding_attack(const Direction* dirs, Square s1, Bitboard occupied)
 {
   Bitboard attack = 0;
@@ -213,13 +187,10 @@ Bitboard sliding_attack(const Direction* dirs, Square s1, Bitboard occupied)
     File destX = fileOf(s1);
     Rank destY = rankOf(s1);
 
-    int incX = calcIncX(dirs[i]);
-    int incY = calcIncY(dirs[i]);
-
     while (true)
     {
-      destX += incX;
-      destY += incY;
+      destX += dirs[i].offX;
+      destY += dirs[i].offY;
 
       if (destX < 0 || destX > 7 || destY < 0 || destY > 7)
         break;
@@ -312,7 +283,7 @@ Bitboard getPieceAttacks(PieceType pt, Square s, Bitboard occupied) {
 #if defined(USE_PEXT)
 
 void init_pext_attacks(Bitboard table[], Bitboard* attacks[], Bitboard masks[],
-  const Direction deltas[], AttackIndexFunc index)
+  const Direction* deltas, AttackIndexFunc index)
 {
 
   for (Square sq = SQ_A1; sq < SQUARE_NB; ++sq) {
