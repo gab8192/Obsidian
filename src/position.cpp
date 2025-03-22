@@ -242,8 +242,6 @@ void Position::doNullMove() {
 
   sideToMove = them;
   key ^= ZOBRIST_TEMPO;
-
-  checkers = attackersTo(kingSquare(sideToMove), ~sideToMove);
 }
 
 void Position::doMove(Move move, DirtyPieces& dp) {
