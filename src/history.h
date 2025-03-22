@@ -19,12 +19,12 @@ using CounterMoveHistory = Move[PIECE_NB * SQUARE_NB];
 using ContinuationHistory = int16_t[2][PIECE_NB * SQUARE_NB][PIECE_NB * SQUARE_NB];
 
 // [stm][pawn hash]
-using PawnCorrHist = int16_t[2][CORRHIST_SIZE];
+using PawnCorrHist = int16_t[CORRHIST_SIZE][2];
 
 // [stm][pawn hash]
-using NonPawnCorrHist = int16_t[2][CORRHIST_SIZE];
+using NonPawnCorrHist = int16_t[CORRHIST_SIZE][2];
 
-inline int getCorrHistIndex(Key pawnKey){
+inline int ChIndex(Key pawnKey){
   return pawnKey % CORRHIST_SIZE;
 }
 

@@ -113,8 +113,6 @@ struct alignas(32) Position {
     board[sq] = NO_PIECE;
     byColorBB[piece_color(pc)] ^= sq;
     byPieceBB[piece_type(pc)] ^= sq;
-
-
   }
 
   /// <summary>
