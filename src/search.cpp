@@ -267,6 +267,11 @@ namespace Search {
         Bitboard toRemove = oldBB & ~newBB;
         Bitboard toAdd = newBB & ~oldBB;
 
+        while (toAdd && toRemove) {
+          Square sq0 = popLsb(toRemove);
+          Square sq1 = popLsb(toAdd);
+          entry.acc.movePiece(king, side, makePiece(c, pt), sq0, sq1);
+        }
         while (toRemove) {
           Square sq = popLsb(toRemove);
           entry.acc.removePiece(king, side, makePiece(c, pt), sq);

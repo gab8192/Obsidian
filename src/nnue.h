@@ -55,6 +55,8 @@ namespace NNUE {
 
     void addPiece(Square kingSq, Color side, Piece pc, Square sq);
 
+    void movePiece(Square kingSq, Color side, Piece pc, Square from, Square to);
+
     void removePiece(Square kingSq, Color side, Piece pc, Square sq);
 
     void doUpdates(Square kingSq, Color side, Accumulator& input);

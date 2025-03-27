@@ -104,6 +104,11 @@ namespace NNUE {
     multiAdd<L1>((VecI*) colors[side], (VecI*) colors[side], featureAddress(kingSq, side, pc, sq));
   }
 
+  void Accumulator::movePiece(Square kingSq, Color side, Piece pc, Square from, Square to) {
+    multiSubAdd<L1>((VecI*) colors[side], (VecI*) colors[side],
+     featureAddress(kingSq, side, pc, from), featureAddress(kingSq, side, pc, to));
+  }
+
   void Accumulator::removePiece(Square kingSq, Color side, Piece pc, Square sq) {
     multiSub<L1>((VecI*) colors[side], (VecI*) colors[side], featureAddress(kingSq, side, pc, sq));
   }
