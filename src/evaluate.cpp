@@ -5,9 +5,25 @@
 
 namespace Eval {
 
+  int cnt = 0;
+
   Score evaluate(Position& pos, bool isRootStm, NNUE::Accumulator& accumulator) {
 
-    Score score = NNUE::evaluate(pos, accumulator);
+    Score score = 0;
+
+    for (int pt = PAWN; pt <= QUEEN; pt++) {
+      int numDiff =  BitCount(pos.pieces(pos.sideToMove, PieceType(pt)))
+                   - BitCount(pos.pieces(~pos.sideToMove, PieceType(pt)));
+      score += numDiff * PIECE_VALUE[pt] * 22 / 10;
+    }
+
+    // random component
+    score += cnt - 5;
+
+    cnt = (cnt + 1) % 11;
+
+   // small contempt
+   score += isRootStm ? 50 : -50;
 
     if (isRootStm)
       score += UCI::contemptValue;

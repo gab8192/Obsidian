@@ -318,7 +318,7 @@ namespace Search {
 
   Score Thread::doEvaluation(Position& pos) {
     NNUE::Accumulator& acc = accumStack[accumStackHead];
-    updateAccumulator(pos, acc);
+    //updateAccumulator(pos, acc);
     return Eval::evaluate(pos, !(ply % 2), acc);
   }
 
@@ -800,14 +800,14 @@ namespace Search {
     }
     else if (excludedMove) {
       // We have already evaluated the position in the node which invoked this singular search
-      updateAccumulator(pos, accumStack[accumStackHead]);
+    //  updateAccumulator(pos, accumStack[accumStackHead]);
       rawStaticEval = eval = ss->staticEval;
     }
     else {
       if (ttStaticEval != SCORE_NONE) {
         rawStaticEval = ttStaticEval;
-        if (IsPV)
-          updateAccumulator(pos, accumStack[accumStackHead]);
+        //if (IsPV)
+         // updateAccumulator(pos, accumStack[accumStackHead]);
       }
       else
         rawStaticEval = doEvaluation(pos);
