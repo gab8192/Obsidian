@@ -27,5 +27,4 @@ namespace Eval {
     return score;
   }
 
-#undef pos
 }
