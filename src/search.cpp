@@ -998,6 +998,7 @@ namespace Search {
           skipQuiets = true;
           continue;
         }
+        constexpr int j = INT_MIN == -INT_MIN;
 
         // Late move pruning. At low depths, only visit a few quiet moves
         if (seenMoves >= (depth * depth + LmpBase) / (2 - improving))
