@@ -731,6 +731,9 @@ namespace Search {
     if (IsRoot)
       ttMove = rootMoves[pvIdx].move;
 
+    if (excludedMove)
+      ttPV = ss->excludedTTPV;
+
     const bool ttMoveNoisy = ttMove && !pos.isQuiet(ttMove);
 
     const Score probcutBeta = beta + ProbcutBetaMargin;
@@ -1028,6 +1031,7 @@ namespace Search {
       {
         Score singularBeta = ttScore - (depth * SBetaMargin) / 64;
 
+        ss->excludedTTPV = ttPV;
         Score seScore = negamax<false>(pos, singularBeta - 1, singularBeta, (depth - 1) / 2, cutNode, ss, move);
 
         if (seScore < singularBeta) {
