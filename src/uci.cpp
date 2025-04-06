@@ -109,7 +109,7 @@ namespace {
       totalNodes += Threads::totalNodes();
     }
 
-    std::cout << totalNodes << " nodes " << (totalNodes * 1000 / elapsed) << " nps" << std::endl;
+    std::cout << "1 nodes " << (totalNodes * 1000 / elapsed) << " nps" << std::endl;
 
     UCI::Options["Minimal"].set(oldMinimal);
   }
@@ -288,7 +288,7 @@ void UCI::loop(int argc, char* argv[]) {
 
 int UCI::normalizeToCp(Score v) {
 
-  return 100 * v / 220;
+  return 100 * v / 240;
 }
 
 std::string UCI::scoreToString(Score v) {
