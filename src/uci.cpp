@@ -288,7 +288,7 @@ void UCI::loop(int argc, char* argv[]) {
 
 int UCI::normalizeToCp(Score v) {
 
-  return 100 * v / 220;
+  return 100 * v / 240;
 }
 
 std::string UCI::scoreToString(Score v) {

@@ -381,9 +381,9 @@ namespace Search {
     if ((ss - 2)->playedMove)
       addToHistory((ss - 2)->contHistory[chIndex], bonus);
     if ((ss - 4)->playedMove)
-      addToHistory((ss - 4)->contHistory[chIndex], bonus);
+      addToHistory((ss - 4)->contHistory[chIndex], bonus/2);
     if ((ss - 6)->playedMove)
-      addToHistory((ss - 6)->contHistory[chIndex], bonus);
+      addToHistory((ss - 6)->contHistory[chIndex], bonus/2);
   }
 
   void Thread::updateHistories(Position& pos, int bonus, int malus, Move bestMove,
@@ -1419,7 +1419,7 @@ namespace Search {
         searchStability = 0;
 
       if (settings.standardTimeLimit() && rootDepth >= 4) {
-        int bmNodes = rootMoves[rootMoves.indexOf(bestMove)].nodes;
+        int bmNodes = rootMoves[0].nodes;
         double notBestNodes = 1.0 - (bmNodes / double(nodesSearched));
         double nodesFactor     = (tm1/100.0) + notBestNodes * (tm0/100.0);
 
