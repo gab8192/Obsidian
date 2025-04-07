@@ -1067,7 +1067,10 @@ namespace Search {
 
         R -= (ttDepth >= depth);
 
-        R -= ttPV + IsPV;
+        R -= ttPV;
+
+        if (IsPV)
+          R -= 1 + (depth <= 3);
 
         R += ttMoveNoisy;
 
