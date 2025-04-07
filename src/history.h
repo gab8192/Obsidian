@@ -12,9 +12,6 @@ using MainHistory  = int16_t[COLOR_NB][SQUARE_NB * SQUARE_NB];
 // [piece to][piece_type]
 using CaptureHistory = int16_t[PIECE_NB * SQUARE_NB][PIECE_TYPE_NB];
 
-// [piece to]
-using CounterMoveHistory = Move[PIECE_NB * SQUARE_NB];
-
 // [isCap][piece to][piece to]
 using ContinuationHistory = int16_t[2][PIECE_NB * SQUARE_NB][PIECE_NB * SQUARE_NB];
 

@@ -88,7 +88,6 @@ namespace Search {
     MainHistory mainHistory;
     CaptureHistory captureHistory;
     ContinuationHistory contHistory;
-    CounterMoveHistory counterMoveHistory;
     PawnCorrHist pawnCorrhist;
     NonPawnCorrHist wNonPawnCorrhist;
     NonPawnCorrHist bNonPawnCorrhist;

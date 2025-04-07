@@ -134,7 +134,6 @@ namespace Search {
   void Thread::resetHistories() {
     memset(mainHistory, 0, sizeof(mainHistory));
     memset(captureHistory, 0, sizeof(captureHistory));
-    memset(counterMoveHistory, 0, sizeof(counterMoveHistory));
     memset(contHistory, 0, sizeof(contHistory));
     memset(pawnCorrhist, 0, sizeof(pawnCorrhist));
     memset(wNonPawnCorrhist, 0, sizeof(wNonPawnCorrhist));
@@ -389,12 +388,6 @@ namespace Search {
   void Thread::updateHistories(Position& pos, int bonus, int malus, Move bestMove,
                        Move* quiets, int quietCount, int depth, SearchInfo* ss) {
 
-    // Counter move
-    if ((ss - 1)->playedMove) {
-      Square prevSq = move_to((ss - 1)->playedMove);
-      counterMoveHistory[pos.board[prevSq] * SQUARE_NB + prevSq] = bestMove;
-    }
-
     // Killer move
     ss->killerMove = bestMove;
 
@@ -564,7 +557,7 @@ namespace Search {
 
     MovePicker movePicker(
       MovePicker::QSEARCH, pos,
-      ttMove, MOVE_NONE, MOVE_NONE,
+      ttMove, MOVE_NONE,
       mainHistory, captureHistory,
       0,
       ss);
@@ -894,7 +887,7 @@ namespace Search {
 
       MovePicker pcMovePicker(
         MovePicker::PROBCUT, pos,
-        visitTTMove ? ttMove : MOVE_NONE, MOVE_NONE, MOVE_NONE,
+        visitTTMove ? ttMove : MOVE_NONE, MOVE_NONE,
         mainHistory, captureHistory,
         pcSeeMargin,
         ss);
@@ -941,18 +934,12 @@ namespace Search {
     Move captures[64];
     int captureCount = 0;
 
-    Move counterMove = MOVE_NONE;
-    if ((ss - 1)->playedMove) {
-      Square prevSq = move_to((ss - 1)->playedMove);
-      counterMove = counterMoveHistory[pos.board[prevSq] * SQUARE_NB + prevSq];
-    }
-
     if (IsRoot)
       ss->killerMove = MOVE_NONE;
 
     MovePicker movePicker(
       MovePicker::PVS, pos,
-      ttMove, ss->killerMove, counterMove,
+      ttMove, ss->killerMove,
       mainHistory, captureHistory,
       0,
       ss);
