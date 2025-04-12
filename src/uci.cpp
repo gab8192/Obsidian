@@ -109,6 +109,8 @@ namespace {
       totalNodes += Threads::totalNodes();
     }
 
+    NNUE::benchFinish();
+
     std::cout << totalNodes << " nodes " << (totalNodes * 1000 / elapsed) << " nps" << std::endl;
 
     UCI::Options["Minimal"].set(oldMinimal);

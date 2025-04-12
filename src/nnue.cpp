@@ -21,7 +21,10 @@ namespace NNUE {
   constexpr int FtShift = 9;
 
   struct Net {
+    union {
     alignas(64) int16_t FeatureWeights[KingBuckets][2][6][64][L1];
+    alignas(64) int16_t FeatureWeightsAlt[KingBuckets * 768][L1];
+    };
     alignas(64) int16_t FeatureBiases[L1];
 
     union {
@@ -42,6 +45,132 @@ namespace NNUE {
   // For every possible uint16 number, store the count of active bits,
   // and the index of each active bit
   alignas(Alignment) uint16_t nnzTable[256][8];
+
+
+
+
+
+
+
+  struct NNZStats {
+    uint64_t matrix[L1 / 2][L1 / 2];
+    uint64_t data[L1 / 2];
+    int indexOrder[L1 / 2];
+
+    inline void init() {
+        // First init the index order to default
+        for (int i = 0; i < L1 / 2; ++i) indexOrder[i] = i;
+        memset(data, 0, sizeof(data));
+        memset(matrix, 0, sizeof(matrix));
+    };
+
+    inline void update(uint8_t *outputs) {
+        for (int i = 0; i < L1 / 2; ++i) {
+           data[i] += bool(outputs[i]);
+
+          if (outputs[i])
+            for (int j = 0; j < L1 / 2; j++)
+              matrix[i][j] += bool(outputs[j]);
+        }
+    };
+
+    uint64_t score() {
+      uint64_t total = 0;
+      for (int i = 0; i < L1 / 2; i += 4) {
+        for (int j = 0; j < 4; j++) {
+          for (int k = 0; k < 4; k++) {
+            if (j == k) 
+              continue;
+            total += matrix[indexOrder[i+j]][indexOrder[i+k]];
+          }
+        }
+      }
+      return total;
+    }
+
+    inline void permute() {
+
+    memcpy(Weights, gEmbeddedNNUEData, sizeof(Net));
+
+    uint64_t score0 = score();
+
+      std::stable_sort(indexOrder, indexOrder + L1 / 2, [&](const int &a, const int &b) { return data[a] < data[b]; });
+
+      uint64_t score1 = score();
+
+      for (int a = 0; a < L1 / 2; a++) {
+        for (int b = 0; b < L1 / 2; b++) {
+          if (a == b)
+            continue;
+          uint64_t before = score();
+          std::swap(indexOrder[a], indexOrder[b]);
+          uint64_t after = score();
+          if (after < before)
+            std::swap(indexOrder[a], indexOrder[b]);
+          else if (after > before)
+          std::cout << "new record = " << after << std::endl;
+        }
+      }
+
+      uint64_t score2 = score();
+
+      std::cout << score0 << "  _->  " << score1 << "  _->  " << score2 << std::endl;
+
+      std::memcpy(FTWeightsCopy, Weights->FeatureWeights, sizeof(Weights->FeatureWeights));
+      std::memcpy(FTBiasesCopy , Weights->FeatureBiases , sizeof(Weights->FeatureBiases ));
+      std::memcpy(L1WeightsCopy, Weights->L1Weights, sizeof(Weights->L1Weights));
+
+      for (int i = 0; i < L1 / 2; ++i) {
+          int oldIndex1 = indexOrder[i];
+          int newIndex1 = i;
+          int oldIndex2 = oldIndex1 + L1 / 2;
+          int newIndex2 = newIndex1 + L1 / 2;
+
+          // Permute FT weights
+          for (int j = 0; j < KingBuckets * 768; ++j) {
+              Weights->FeatureWeightsAlt[j][newIndex1] = FTWeightsCopy[j][oldIndex1];
+              Weights->FeatureWeightsAlt[j][newIndex2] = FTWeightsCopy[j][oldIndex2];
+          }
+
+          // Permute FT Biases
+          Weights->FeatureBiases[newIndex1] = FTBiasesCopy[oldIndex1];
+          Weights->FeatureBiases[newIndex2] = FTBiasesCopy[oldIndex2];
+
+          // Permute L1 weights
+          for (int j = 0; j < OutputBuckets; ++j) {
+              for (int k = 0; k < L2; ++k) {
+                  Weights->L1Weights[j][newIndex1][k] = L1WeightsCopy[j][oldIndex1][k];
+                  Weights->L1Weights[j][newIndex2][k] = L1WeightsCopy[j][oldIndex2][k];
+              }
+          }
+      }
+    }
+
+    private:
+    int16_t FTWeightsCopy[KingBuckets * 768][L1];
+    int16_t FTBiasesCopy [L1];
+    int8_t  L1WeightsCopy[OutputBuckets][L1][L2];
+  };
+
+  NNZStats nnzStats;
+
+  void benchFinish() {
+    nnzStats.permute();
+
+    std::ofstream kek("permuted.bin", std::ios_base::binary);
+
+    kek.write((const char*)Weights, sizeof(Net));
+
+    kek.close();
+  }
+
+
+
+
+
+
+
+
 
 
   bool needRefresh(Color side, Square oldKing, Square newKing) {
@@ -211,6 +340,8 @@ namespace NNUE {
         for (int j = 0; j < NumRegs; j++)
             ftBiases[i + j] = regs[PackusOrder[j]];
     }
+
+    nnzStats.init();
   }
 
   Score evaluate(Position& pos, Accumulator& accumulator) {
@@ -315,6 +446,8 @@ namespace NNUE {
 
       l3Out = reduceAddPs(sums) + Weights->L3Biases[bucket];
     }
+
+    nnzStats.update(ftOut);
 
     return l3Out * NetworkScale;
   }
