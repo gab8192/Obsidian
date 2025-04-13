@@ -3,7 +3,6 @@
 #include "evaluate.h"
 #include "move.h"
 #include "movegen.h"
-#include "nnue.h"
 #include "search.h"
 #include "threads.h"
 #include "tt.h"
@@ -47,8 +46,7 @@ namespace {
     // Parse the move list, if any
     while (is >> token && (m = UCI::stringToMove(pos, token)) != MOVE_NONE)
     {
-      DirtyPieces dirtyPieces;
-      pos.doMove(m, dirtyPieces);
+      pos.doMove(m);
 
       // If this move reset the half move clock, we can ignore and forget all the previous position
       if (pos.halfMoveClock == 0)
@@ -271,10 +269,7 @@ void UCI::loop(int argc, char* argv[]) {
     else if (token == "d")          std::cout << pos << std::endl;
     else if (token == "tune")       std::cout << paramsToSpsaInput();
     else if (token == "eval") {
-      NNUE::Accumulator tempAcc;
-      tempAcc.refresh(pos, WHITE);
-      tempAcc.refresh(pos, BLACK);
-      Score eval = NNUE::evaluate(pos, tempAcc);
+      Score eval = Eval::evaluate(pos, true);
       if (pos.sideToMove == BLACK)
         eval = -eval;
       std::cout << "Evaluation: " << UCI::normalizeToCp(eval)

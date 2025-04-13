@@ -5,14 +5,30 @@
 
 namespace Eval {
 
-  Score evaluate(Position& pos, bool isRootStm, NNUE::Accumulator& accumulator) {
+  int cnt = 0;
 
-    Score score = NNUE::evaluate(pos, accumulator);
+  Score evaluate(Position& pos, bool isRootStm) {
+
+    Score score = 0;
+
+    for (int pt = PAWN; pt <= QUEEN; pt++) {
+      int numDiff =  BitCount(pos.pieces(WHITE, PieceType(pt)))
+                   - BitCount(pos.pieces(BLACK, PieceType(pt)));
+      score += numDiff * PIECE_VALUE[pt] * 24 / 10;
+    }
+
+    if (pos.sideToMove == BLACK)
+      score = -score;
 
     if (isRootStm)
-      score += UCI::contemptValue;
+      score += 50;
     else
-      score -= UCI::contemptValue;
+      score -= 50;
+
+      // random component
+    score += cnt - 5;
+
+    cnt = (cnt + 1) % 11;
 
     int phase =  2 * BitCount(pos.pieces(PAWN))
                + 3 * BitCount(pos.pieces(KNIGHT))

@@ -30,8 +30,6 @@ int main(int argc, char** argv)
   Threads::setThreadCount(UCI::Options["Threads"]);
   TT::resize(UCI::Options["Hash"]);
 
-  NNUE::loadWeights();
-
   UCI::loop(argc, argv);
 
   Threads::setThreadCount(0);
