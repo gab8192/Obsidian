@@ -98,18 +98,24 @@ namespace NNUE {
 
       uint64_t score1 = score();
 
-      for (int a = 0; a < L1 / 2; a++) {
-        for (int b = 0; b < L1 / 2; b++) {
-          if (a == b)
-            continue;
-          uint64_t before = score();
-          std::swap(indexOrder[a], indexOrder[b]);
-          uint64_t after = score();
-          if (after < before)
+      while (true) {
+        uint64_t beginIter = score();
+        for (int a = 0; a < L1 / 2; a++) {
+          for (int b = 0; b < L1 / 2; b++) {
+            if (a == b)
+              continue;
+            uint64_t before = score();
             std::swap(indexOrder[a], indexOrder[b]);
-          else if (after > before)
-          std::cout << "new record = " << after << std::endl;
+            uint64_t after = score();
+            if (after < before)
+              std::swap(indexOrder[a], indexOrder[b]);
+            else if (after > before)
+            std::cout << "new record = " << after << std::endl;
+          }
         }
+        uint64_t endIter = score();
+        if (endIter <= beginIter)
+          break;
       }
 
       uint64_t score2 = score();
