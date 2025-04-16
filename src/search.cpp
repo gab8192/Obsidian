@@ -741,11 +741,13 @@ namespace Search {
     Score bestScore = -SCORE_INFINITE;
     Score maxScore  =  SCORE_INFINITE;
 
+    bool towardsZero = ttScore > 0 ? (ttScore <= alpha) : (ttScore >= beta);
+
     // In non PV nodes, if tt depth and bound allow it, return ttScore
     if ( !IsPV
       && !excludedMove
       && ttScore != SCORE_NONE
-      && ttDepth >= depth
+      && ttDepth > depth - towardsZero
       && canUseScore(ttBound, ttScore, beta)
       && pos.halfMoveClock < 90) // The TT entry might trick us into thinking this is not a draw
         return ttScore;
