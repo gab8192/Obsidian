@@ -367,9 +367,11 @@ namespace Search {
     eval = (eval * (200 - pos.halfMoveClock)) / 200;
 
     // Pawn correction history
-    eval += PawnChWeight * pawnCorrhist[ChIndex(pos.pawnKey)][pos.sideToMove] / 512;
-    eval += NonPawnChWeight * wNonPawnCorrhist[ChIndex(pos.nonPawnKey[WHITE])][pos.sideToMove] / 512;
-    eval += NonPawnChWeight * bNonPawnCorrhist[ChIndex(pos.nonPawnKey[BLACK])][pos.sideToMove] / 512;
+    if (pos.halfMoveClock < 14) {
+      eval += PawnChWeight * pawnCorrhist[ChIndex(pos.pawnKey)][pos.sideToMove] / 512;
+      eval += NonPawnChWeight * wNonPawnCorrhist[ChIndex(pos.nonPawnKey[WHITE])][pos.sideToMove] / 512;
+      eval += NonPawnChWeight * bNonPawnCorrhist[ChIndex(pos.nonPawnKey[BLACK])][pos.sideToMove] / 512;
+    }
 
     return std::clamp(eval, SCORE_TB_LOSS_IN_MAX_PLY + 1, SCORE_TB_WIN_IN_MAX_PLY - 1);
   }
@@ -1190,7 +1192,7 @@ namespace Search {
 
     // update corrhist
     const bool bestMoveCap = pos.board[move_to(bestMove)] != NO_PIECE;
-    if (   !pos.checkers
+    if (   !pos.checkers && pos.halfMoveClock < 14
         && !(bestMove && bestMoveCap)
         && canUseScore(resultBound, bestScore, ss->staticEval))
     {
