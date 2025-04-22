@@ -4,7 +4,7 @@
 
 constexpr int CORRHIST_SIZE = 32768;
 
-constexpr int CORRHIST_LIMIT = 1024;
+constexpr int CORRHIST_LIMIT = 768;
 
 // [color][from to]
 using MainHistory  = int16_t[COLOR_NB][SQUARE_NB * SQUARE_NB];
