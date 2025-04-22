@@ -71,7 +71,7 @@ namespace Search {
 
   DEFINE_PARAM_S(LmrQuietHistoryDiv, 8794, 860);
   DEFINE_PARAM_S(LmrCapHistoryDiv, 6319, 660);
-  DEFINE_PARAM_S(ZwsDeeperMargin, 30, 8);
+  DEFINE_PARAM_S(ZwsDeeperMargin, 50, 8);
 
   DEFINE_PARAM_B(AspWindowStartDepth, 4, 4, 34);
   DEFINE_PARAM_B(AspWindowStartDelta, 11, 5, 25);
