@@ -386,6 +386,17 @@ namespace Search {
       addToHistory((ss - 6)->contHistory[chIndex], bonus/2);
   }
 
+  void addToContHistory(int chIndex, int bonus, SearchInfo* ss) {
+    if ((ss - 1)->playedMove)
+      addToHistory((ss - 1)->contHistory[chIndex], bonus);
+    if ((ss - 2)->playedMove)
+      addToHistory((ss - 2)->contHistory[chIndex], bonus);
+    if ((ss - 4)->playedMove)
+      addToHistory((ss - 4)->contHistory[chIndex], bonus/2);
+    if ((ss - 6)->playedMove)
+      addToHistory((ss - 6)->contHistory[chIndex], bonus/2);
+  }
+
   void Thread::updateHistories(Position& pos, int bonus, int malus, Move bestMove,
                        Move* quiets, int quietCount, int depth, SearchInfo* ss) {
 
@@ -668,6 +679,8 @@ namespace Search {
 
     const bool IsRoot = IsPV && ply == 0;
 
+    ss->seenMoves = 0;
+
     // Check time
     ++maxTimeCounter;
     if ( this == Threads::mainThread()
@@ -741,6 +754,8 @@ namespace Search {
     Score bestScore = -SCORE_INFINITE;
     Score maxScore  =  SCORE_INFINITE;
 
+    Square prevSq = (ss - 1)->playedMove ? move_to((ss - 1)->playedMove) : SQ_NONE;
+
     // In non PV nodes, if tt depth and bound allow it, return ttScore
     if ( !IsPV
       && !excludedMove
@@ -748,7 +763,15 @@ namespace Search {
       && ttDepth >= depth
       && canUseScore(ttBound, ttScore, beta)
       && pos.halfMoveClock < 90) // The TT entry might trick us into thinking this is not a draw
+    {
+        if (ttMove && ttScore >= beta) {
+          if (prevSq != SQ_NONE && !(ss-1)->playedCap && (ss-1)->seenMoves <= 3) {
+            int chIndex = pos.board[prevSq] * SQUARE_NB + prevSq;
+            addToContHistory(chIndex, -statMalus(depth), ss-1);
+          }
+        }
         return ttScore;
+    }
 
     // Probe tablebases
     const TbResult tbResult = (IsRoot || excludedMove) ? TB_RESULT_FAILED : probeTB(pos);
@@ -974,6 +997,8 @@ namespace Search {
         continue;
 
       seenMoves++;
+
+      ss->seenMoves = seenMoves;
 
       bool isQuiet = pos.isQuiet(move);
 
@@ -1284,7 +1309,7 @@ namespace Search {
       searchStack[i].killerMove = MOVE_NONE;
       searchStack[i].playedMove = MOVE_NONE;
       searchStack[i].playedCap = false;
-
+      searchStack[i].seenMoves = 0;
       searchStack[i].contHistory = contHistory[false][0];
     }
 
