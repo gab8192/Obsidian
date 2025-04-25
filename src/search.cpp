@@ -426,7 +426,14 @@ namespace Search {
     const Bitboard occ = pos.pieces();
     const int maxDist = std::min(pos.halfMoveClock, keyStackHead);
 
+    Key other = pos.key ^ keyStack[keyStackHead-1] ^ ZOBRIST_TEMPO;
+
     for (int i = 3; i <= maxDist; i += 2) {
+
+      other ^= keyStack[keyStackHead + 1 - i] ^ keyStack[keyStackHead - i] ^ ZOBRIST_TEMPO;
+
+      if (other)
+        continue;
 
       Key moveKey = pos.key ^ keyStack[keyStackHead - i];
 
@@ -448,13 +455,8 @@ namespace Search {
         continue;
 
       // Repetition after root
-      if (ply > i)
+      if (ply >= i)
         return true;
-
-      Piece pc = pos.board[ pos.board[from] ? from : to ];
-
-      if (piece_color(pc) != pos.sideToMove)
-        continue;
 
       // We want one more repetition before root
       for (int j = i+4; j <= maxDist; j += 2) {
