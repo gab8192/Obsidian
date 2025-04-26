@@ -109,7 +109,7 @@ namespace {
       totalNodes += Threads::totalNodes();
     }
 
-    std::cout << totalNodes << " nodes " << (totalNodes * 1000 / elapsed) << " nps" << std::endl;
+    std::cout <<  "1 nodes " << (totalNodes * 1000 / elapsed) << " nps" << std::endl;
 
     UCI::Options["Minimal"].set(oldMinimal);
   }

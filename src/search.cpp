@@ -29,7 +29,7 @@ namespace Search {
   DEFINE_PARAM_S(StatBonusMax, 1277, 100);
   DEFINE_PARAM_S(StatBonusBoostAt, 111, 10);
 
-  DEFINE_PARAM_S(StatMalusBias, 17, 50);
+  DEFINE_PARAM_S(StatMalusBias, -50, 50);
   DEFINE_PARAM_S(StatMalusLinear, 186, 15);
   DEFINE_PARAM_S(StatMalusMax, 1127, 100);
 
@@ -377,6 +377,17 @@ namespace Search {
     return std::clamp(eval, SCORE_TB_LOSS_IN_MAX_PLY + 1, SCORE_TB_WIN_IN_MAX_PLY - 1);
   }
 
+  void addToContHistory(int chIndex, int bonus, SearchInfo* ss) {
+    if ((ss - 1)->playedMove)
+      addToHistory((ss - 1)->contHistory[chIndex], bonus);
+    if ((ss - 2)->playedMove)
+      addToHistory((ss - 2)->contHistory[chIndex], bonus);
+    if ((ss - 4)->playedMove)
+      addToHistory((ss - 4)->contHistory[chIndex], bonus/2);
+    if ((ss - 6)->playedMove)
+      addToHistory((ss - 6)->contHistory[chIndex], bonus/2);
+  }
+
   void addToContHistory(Position& pos, int bonus, Move move, SearchInfo* ss) {
     int chIndex = pieceTo(pos, move);
     if ((ss - 1)->playedMove)
@@ -687,6 +698,8 @@ namespace Search {
     if (IsPV)
       ss->pvLength = ply;
 
+    ss->seenMoves = 0;
+
     // Enter qsearch when depth is 0
     if (depth <= 0)
       return qsearch<IsPV>(pos, alpha, beta, 0, ss);
@@ -752,8 +765,20 @@ namespace Search {
       && ttScore != SCORE_NONE
       && ttDepth >= depth
       && canUseScore(ttBound, ttScore, beta)
-      && pos.halfMoveClock < 90) // The TT entry might trick us into thinking this is not a draw
-        return ttScore;
+      && pos.halfMoveClock < 90)  // The TT entry might trick us into thinking this is not a draw
+    {
+      Square prevSq = (ss - 1)->playedMove ? move_to((ss - 1)->playedMove) : SQ_NONE; 
+      if ( ttMove 
+        && ttScore >= beta
+        && prevSq != SQ_NONE
+        && !(ss-1)->playedCap 
+        && (ss-1)->seenMoves <= 3) 
+      {
+        int chIndex = pos.board[prevSq] * SQUARE_NB + prevSq;
+        addToContHistory(chIndex, -statMalus(depth), ss-1);
+      }
+      return ttScore;
+    }
 
     // Probe tablebases
     const TbResult tbResult = (IsRoot || excludedMove) ? TB_RESULT_FAILED : probeTB(pos);
@@ -977,6 +1002,7 @@ namespace Search {
         continue;
 
       seenMoves++;
+      ss->seenMoves = seenMoves;
 
       bool isQuiet = pos.isQuiet(move);
 
@@ -1281,14 +1307,12 @@ namespace Search {
 
     for (int i = 0; i < MAX_PLY + SsOffset; i++) {
       searchStack[i].staticEval = SCORE_NONE;
-
       searchStack[i].pvLength = 0;
-
       searchStack[i].killerMove = MOVE_NONE;
       searchStack[i].playedMove = MOVE_NONE;
       searchStack[i].playedCap = false;
-
       searchStack[i].contHistory = contHistory[false][0];
+      searchStack[i].seenMoves = 0;
     }
 
     bool naturalExit = true;
