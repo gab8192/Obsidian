@@ -614,6 +614,10 @@ bool Position::seeGe(Move m, int threshold) const {
   if (swap <= 0)
     return true;
 
+  Bitboard movable[COLOR_NB];
+  movable[WHITE] = LINE_BB[to][kingSquare(WHITE)] | ~blockersForKing[WHITE];
+  movable[BLACK] = LINE_BB[to][kingSquare(BLACK)] | ~blockersForKing[BLACK];
+
   Bitboard occupied = pieces() ^ from ^ to;
   Color stm = sideToMove;
   Bitboard attackers = attackersTo(to, occupied);
@@ -629,7 +633,7 @@ bool Position::seeGe(Move m, int threshold) const {
       break;
 
     if (pinners[~stm] & occupied) {
-      stmAttackers &= ~blockersForKing[stm];
+      stmAttackers &= movable[stm];
 
       if (!stmAttackers)
         break;
