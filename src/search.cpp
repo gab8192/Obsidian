@@ -359,6 +359,7 @@ namespace Search {
   int Thread::getQuietHistory(Position& pos, Move move, SearchInfo* ss) {
     int chIndex = pieceTo(pos, move);
     return    mainHistory[pos.sideToMove][move_from_to(move)]
+            + pawnHistory[PhIndex(pos.pawnKey)][pieceTo(pos, move)]
             + (ss - 1)->contHistory[chIndex]
             + (ss - 2)->contHistory[chIndex]
             + (ss - 4)->contHistory[chIndex];
