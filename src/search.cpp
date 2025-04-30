@@ -382,7 +382,7 @@ namespace Search {
     if ((ss - 1)->playedMove)
       addToHistory((ss - 1)->contHistory[chIndex], bonus);
     if ((ss - 2)->playedMove)
-      addToHistory((ss - 2)->contHistory[chIndex], bonus);
+      addToHistory((ss - 2)->contHistory[chIndex], bonus/2);
     if ((ss - 4)->playedMove)
       addToHistory((ss - 4)->contHistory[chIndex], bonus/2);
     if ((ss - 6)->playedMove)
