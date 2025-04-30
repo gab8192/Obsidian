@@ -71,7 +71,7 @@ namespace Search {
 
   DEFINE_PARAM_S(LmrQuietHistoryDiv, 8794, 860);
   DEFINE_PARAM_S(LmrCapHistoryDiv, 6319, 660);
-  DEFINE_PARAM_S(ZwsDeeperMargin, 78, 10);
+  DEFINE_PARAM_S(ZwsDeeperMargin, 35, 10);
   DEFINE_PARAM_S(ZwsShallowerMargin, 6, 10);
 
   DEFINE_PARAM_B(AspWindowStartDepth, 4, 4, 34);
@@ -1085,7 +1085,7 @@ namespace Search {
         score = -negamax<false>(newPos, -alpha - 1, -alpha, reducedDepth, true, ss + 1);
 
         if (score > alpha && reducedDepth < newDepth) {
-          newDepth += (score > bestScore + ZwsDeeperMargin);
+          newDepth += (score > bestScore + ZwsDeeperMargin + 2 * newDepth);
           newDepth -= (score < bestScore + ZwsShallowerMargin);
 
           if (reducedDepth < newDepth)
