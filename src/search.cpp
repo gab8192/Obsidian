@@ -768,11 +768,8 @@ namespace Search {
       && pos.halfMoveClock < 90)  // The TT entry might trick us into thinking this is not a draw
     {
       Square prevSq = (ss - 1)->playedMove ? move_to((ss - 1)->playedMove) : SQ_NONE; 
-      if ( ttMove 
-        && ttScore >= beta
-        && prevSq != SQ_NONE
-        && !(ss-1)->playedCap 
-        && (ss-1)->seenMoves <= 3) 
+      if ( ttMove && ttScore >= beta && ttDepth > depth
+        && prevSq != SQ_NONE && !(ss-1)->playedCap && (ss-1)->seenMoves <= 3) 
       {
         int chIndex = pos.board[prevSq] * SQUARE_NB + prevSq;
         addToContHistory(chIndex, -statMalus(depth), ss-1);
