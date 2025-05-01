@@ -4,7 +4,7 @@
 
 MovePicker::MovePicker(
   SearchType _searchType, Position& _pos,
-  Move _ttMove, Move _killerMove, Move _counterMove,
+  Move _ttMove, Move _counterMove,
   MainHistory& _mainHist, PawnHistory& _pawnHist, CaptureHistory& _capHist,
   int _seeMargin,
   Search::SearchInfo* _ss) :
@@ -24,10 +24,8 @@ MovePicker::MovePicker(
   }
 
   if (stage == PLAY_TT) {
-    if (_killerMove != _ttMove)
-      this->killerMove = _killerMove;
 
-    if (_counterMove != _ttMove && _counterMove != _killerMove)
+    if (_counterMove != _ttMove)
       this->counterMove = _counterMove;
   }
 
@@ -65,7 +63,7 @@ void MovePicker::scoreQuiets() {
   while (i < quiets.size()) {
     Move move = quiets[i].move;
 
-    if (move == ttMove || move == killerMove || move == counterMove) {
+    if (move == ttMove || move == counterMove) {
       quiets.remove(i);
       continue;
     }
@@ -165,13 +163,6 @@ Move MovePicker::nextMove(bool skipQuiets) {
       return MOVE_NONE;
 
     ++stage;
-    goto select;
-  }
-  case PLAY_KILLER:
-  {
-    ++stage;
-    if (pos.isQuiet(killerMove) && pos.isPseudoLegal(killerMove))
-      return killerMove;
     goto select;
   }
   case PLAY_COUNTER:
