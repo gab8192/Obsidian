@@ -102,6 +102,8 @@ struct alignas(32) Position {
 
   void updateKeys();
 
+  bool givesCheck(Move move) const;
+
   /// <summary>
   /// Assmue there is a piece in the given square.
   /// Call this if you already know what piece was there

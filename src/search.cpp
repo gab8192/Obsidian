@@ -978,7 +978,7 @@ namespace Search {
 
       seenMoves++;
 
-      bool isQuiet = pos.isQuiet(move);
+      bool isQuiet = pos.isQuiet(move), isCap = !isQuiet;
 
       int history = isQuiet ? getQuietHistory(pos, move, ss) : getCapHistory(pos, move);
 
@@ -992,8 +992,9 @@ namespace Search {
         int lmrDepth = std::max(0, depth - lmrRed);
 
         // SEE (Static Exchange Evalution) pruning
-        int seeMargin = isQuiet ? PvsQuietSeeMargin * lmrDepth * lmrDepth :
-                                  PvsCapSeeMargin * depth;
+        int seeMargin = (isCap || pos.givesCheck(move)) 
+                              ? PvsCapSeeMargin * depth 
+                              : PvsQuietSeeMargin * lmrDepth * lmrDepth;
         if (!pos.seeGe(move, seeMargin))
           continue;
 
@@ -1065,6 +1066,8 @@ namespace Search {
         int R = lmrTable[depth][seenMoves];
 
         R -= history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv);
+
+        R -= (newPos.checkers != 0ULL);
 
         R -= (ttDepth >= depth);
 

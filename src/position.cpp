@@ -132,6 +132,18 @@ bool Position::is50mrDraw() const {
   return false;
 }
 
+bool Position::givesCheck(Move move) const {
+  const Color them = ~sideToMove;
+  const Square from = move_from(move), to = move_to(move);
+  const PieceType pt = piece_type(board[from]);
+  
+  if (checkSquares[pt] & move_to(move))
+      return true;
+  if (blockersForKing[them] & from)
+    if (!(LINE_BB[from][kingSquare(them)] & to))
+      return true;
+  return false;
+}
 
 bool Position::isPseudoLegal(Move move) const {
   if (move == MOVE_NONE)
