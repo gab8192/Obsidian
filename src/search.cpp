@@ -366,13 +366,13 @@ namespace Search {
   }
 
   Score Thread::adjustEval(Position &pos, Score eval) {
-    // 50 move rule scaling
-    eval = (eval * (200 - pos.halfMoveClock)) / 200;
-
     // Pawn correction history
     eval += PawnChWeight * pawnCorrhist[ChIndex(pos.pawnKey)][pos.sideToMove] / 512;
     eval += NonPawnChWeight * wNonPawnCorrhist[ChIndex(pos.nonPawnKey[WHITE])][pos.sideToMove] / 512;
     eval += NonPawnChWeight * bNonPawnCorrhist[ChIndex(pos.nonPawnKey[BLACK])][pos.sideToMove] / 512;
+
+    // 50 move rule scaling
+    eval -= eval * pos.halfMoveClock / 200;
 
     return std::clamp(eval, SCORE_TB_LOSS_IN_MAX_PLY + 1, SCORE_TB_WIN_IN_MAX_PLY - 1);
   }
