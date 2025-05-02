@@ -372,7 +372,7 @@ namespace Search {
     eval += NonPawnChWeight * bNonPawnCorrhist[ChIndex(pos.nonPawnKey[BLACK])][pos.sideToMove] / 512;
 
     // 50 move rule scaling
-    eval -= eval * pos.halfMoveClock / 200;
+    eval = (eval * (220 - pos.halfMoveClock)) / 220;
 
     return std::clamp(eval, SCORE_TB_LOSS_IN_MAX_PLY + 1, SCORE_TB_WIN_IN_MAX_PLY - 1);
   }
