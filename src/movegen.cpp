@@ -180,22 +180,16 @@ void getQuietChecks(const Position& pos, MoveList* moveList) {
   const Bitboard theirPieces = pos.pieces(them);
   const Bitboard occupied = ourPieces | theirPieces;
   const Bitboard pinned = ourPieces & pos.blockersForKing[us];
-
-  Bitboard checkSquares[PIECE_TYPE_NB];
-  checkSquares[PAWN]   = getPawnAttacks(theirKing, them)       & ~occupied;
-  checkSquares[KNIGHT] = getKnightAttacks(theirKing)           & ~occupied;
-  checkSquares[BISHOP] = getBishopAttacks(theirKing, occupied) & ~occupied;
-  checkSquares[ROOK]   = getRookAttacks(theirKing, occupied)   & ~occupied;
-  checkSquares[QUEEN]  = checkSquares[BISHOP] | checkSquares[ROOK];
+  const Bitboard allowed = ~occupied;
 
   if (us == WHITE) {
-    Bitboard pawns = (checkSquares[PAWN] >> 8) & ourPieces & pos.pieces(PAWN);
+    Bitboard pawns = ((pos.checkSquares[PAWN] & allowed) >> 8) & ourPieces & pos.pieces(PAWN);
     while (pawns) {
       Square from = popLsb(pawns);
       moveList->add(createMove(from, from + 8, MT_NORMAL));
     }
   } else {
-    Bitboard pawns = (checkSquares[PAWN] << 8) & ourPieces & pos.pieces(PAWN);
+    Bitboard pawns = ((pos.checkSquares[PAWN] & allowed) << 8) & ourPieces & pos.pieces(PAWN);
     while (pawns) {
       Square from = popLsb(pawns);
       moveList->add(createMove(from, from - 8, MT_NORMAL));
@@ -205,13 +199,13 @@ void getQuietChecks(const Position& pos, MoveList* moveList) {
   Bitboard knights = ourPieces & pos.pieces(KNIGHT) & ~pinned;
   while (knights) {
     Square from = popLsb(knights);
-    addNormalMovesToList(from, getKnightAttacks(from) & checkSquares[KNIGHT], moveList);
+    addNormalMovesToList(from, getKnightAttacks(from) & pos.checkSquares[KNIGHT] & allowed, moveList);
   }
 
   Bitboard bishops = ourPieces & pos.pieces(BISHOP);
   while (bishops) {
     Square from = popLsb(bishops);
-    Bitboard attacks = getBishopAttacks(from, occupied) & checkSquares[BISHOP];
+    Bitboard attacks = getBishopAttacks(from, occupied) & pos.checkSquares[BISHOP] & allowed;
     if (pinned & from)
       attacks &= LINE_BB[ourKing][from];
     addNormalMovesToList(from, attacks, moveList);
@@ -220,7 +214,7 @@ void getQuietChecks(const Position& pos, MoveList* moveList) {
   Bitboard rooks = ourPieces & pos.pieces(ROOK);
   while (rooks) {
     Square from = popLsb(rooks);
-    Bitboard attacks = getRookAttacks(from, occupied) & checkSquares[ROOK];
+    Bitboard attacks = getRookAttacks(from, occupied) & pos.checkSquares[ROOK] & allowed;
     if (pinned & from)
       attacks &= LINE_BB[ourKing][from];
     addNormalMovesToList(from, attacks, moveList);
@@ -229,7 +223,7 @@ void getQuietChecks(const Position& pos, MoveList* moveList) {
   Bitboard queens = ourPieces & pos.pieces(QUEEN);
   while (queens) {
     Square from = popLsb(queens);
-    Bitboard attacks = getQueenAttacks(from, occupied) & checkSquares[QUEEN];
+    Bitboard attacks = getQueenAttacks(from, occupied) & pos.checkSquares[QUEEN] & allowed;
     if (pinned & from)
       attacks &= LINE_BB[ourKing][from];
     addNormalMovesToList(from, attacks, moveList);

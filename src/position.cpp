@@ -81,6 +81,15 @@ void Position::updatePins(Color us) {
   }
 }
 
+void Position::updateCheckSquares() {
+  const Square theirKing = kingSquare(~sideToMove);
+  checkSquares[PAWN]   = getPawnAttacks(theirKing, ~sideToMove);
+  checkSquares[KNIGHT] = getKnightAttacks(theirKing);
+  checkSquares[BISHOP] = getBishopAttacks(theirKing, pieces());
+  checkSquares[ROOK]   = getRookAttacks(theirKing, pieces());
+  checkSquares[QUEEN]  = checkSquares[BISHOP] | checkSquares[ROOK];
+}
+
 void Position::updateKeys() {
   key = 0;
   pawnKey = 0;
@@ -240,6 +249,8 @@ void Position::doNullMove() {
 
   sideToMove = ~sideToMove;
   key ^= ZOBRIST_TEMPO;
+
+  updateCheckSquares();
 }
 
 void Position::doMove(Move move, DirtyPieces& dp) {

@@ -58,6 +58,7 @@ Move_Score nextMove0(MoveList& moveList, const int visitedCount) {
 }
 
 void MovePicker::scoreQuiets() {
+  Color us = pos.sideToMove, them = ~us;
   Threats threats;
   pos.calcThreats(threats);
 
@@ -75,6 +76,12 @@ void MovePicker::scoreQuiets() {
     int chIndex = pieceTo(pos, move);
 
     int threatScore = 0;
+
+    if (pos.checkSquares[pt] & move_to(move))
+      threatScore += 4096;
+    if (pos.blockersForKing[them] & from)
+      if (!(LINE_BB[from][pos.kingSquare(them)] & to))
+        threatScore += 4096;
 
     if (pt == QUEEN) {
       if (threats.byRook & from) threatScore += 32768;
@@ -99,6 +106,7 @@ void MovePicker::scoreQuiets() {
 }
 
 void MovePicker::scoreCaptures() {
+  Color us = pos.sideToMove, them = ~us;
   int i = 0;
   while (i < captures.size()) {
     Move move = captures[i].move;
@@ -108,11 +116,22 @@ void MovePicker::scoreCaptures() {
       continue;
     }
 
+    Square from = move_from(move), to = move_to(move);
+    PieceType pt = piece_type(pos.board[from]);
     MoveType mt = move_type(move);
     PieceType captured = piece_type(pos.board[move_to(move)]);
 
+    int threatScore = 0;
+
+    if (pos.checkSquares[pt] & move_to(move))
+      threatScore += 4096;
+    if (pos.blockersForKing[them] & from)
+      if (!(LINE_BB[from][pos.kingSquare(them)] & to))
+        threatScore += 4096;
+
     captures[i++].score =
         PIECE_VALUE[mt == MT_EN_PASSANT ? PAWN : captured] * 16
+      + threatScore
       + (mt == MT_PROMOTION) * 16384
       + capHist[pieceTo(pos, move)][captured];
   }

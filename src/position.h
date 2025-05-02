@@ -39,6 +39,8 @@ struct alignas(32) Position {
   // What pieces of the opponent are attacking the king of the side to move
   Bitboard checkers;
 
+  Bitboard checkSquares[PIECE_TYPE_NB];
+
   inline Bitboard pieces(PieceType pt) const {
     return byPieceBB[pt];
   }
@@ -85,6 +87,8 @@ struct alignas(32) Position {
 
   void updatePins(Color color);
 
+  void updateCheckSquares();
+
   /// <summary>
   /// Invoke AFTER the side to move has been updated.
   /// Refreshes blockersForKing, pinners, checkers, threats
@@ -92,7 +96,7 @@ struct alignas(32) Position {
   inline void updateAttacks() {
     updatePins(WHITE);
     updatePins(BLACK);
-
+    updateCheckSquares();
     checkers = attackersTo(kingSquare(sideToMove), ~sideToMove);
   }
 
