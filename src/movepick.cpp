@@ -81,7 +81,7 @@ void MovePicker::scoreQuiets() {
       threatScore += 4096;
     if (pos.blockersForKing[them] & from)
       if (!(LINE_BB[from][pos.kingSquare(them)] & to))
-        threatScore += 4096;
+        threatScore += 8192;
 
     if (pt == QUEEN) {
       if (threats.byRook & from) threatScore += 32768;
@@ -124,10 +124,10 @@ void MovePicker::scoreCaptures() {
     int threatScore = 0;
 
     if (pos.checkSquares[pt] & move_to(move))
-      threatScore += 4096;
+      threatScore += 512;
     if (pos.blockersForKing[them] & from)
       if (!(LINE_BB[from][pos.kingSquare(them)] & to))
-        threatScore += 4096;
+        threatScore += 1024;
 
     captures[i++].score =
         PIECE_VALUE[mt == MT_EN_PASSANT ? PAWN : captured] * 16

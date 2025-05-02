@@ -18,7 +18,7 @@ namespace Search {
 
   DEFINE_PARAM_S(QsFpMargin, 143, 14);
 
-  DEFINE_PARAM_S(LmrBase, 100, 10);
+  DEFINE_PARAM_S(LmrBase, 90, 10);
   DEFINE_PARAM_S(LmrDiv, 287, 29);
 
   DEFINE_PARAM_S(PawnChWeight, 40, 5);
