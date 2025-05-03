@@ -29,8 +29,8 @@ namespace Search {
   DEFINE_PARAM_S(StatBonusMax, 1277, 100);
   DEFINE_PARAM_S(StatBonusBoostAt, 111, 10);
 
-  DEFINE_PARAM_S(StatMalusBias, -50, 50);
-  DEFINE_PARAM_S(StatMalusLinear, 186, 15);
+  DEFINE_PARAM_S(StatMalusBias, -3, 50);
+  DEFINE_PARAM_S(StatMalusLinear, 176, 15);
   DEFINE_PARAM_S(StatMalusMax, 1127, 100);
 
   DEFINE_PARAM_S(EvalHistA, 58, 6);
