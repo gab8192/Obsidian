@@ -27,7 +27,6 @@ namespace Search {
   DEFINE_PARAM_S(StatBonusBias, -23, 50);
   DEFINE_PARAM_S(StatBonusLinear, 160, 15);
   DEFINE_PARAM_S(StatBonusMax, 1277, 100);
-  DEFINE_PARAM_S(StatBonusBoostAt, 111, 10);
 
   DEFINE_PARAM_S(StatMalusBias, 17, 50);
   DEFINE_PARAM_S(StatMalusLinear, 186, 15);
@@ -1166,8 +1165,8 @@ namespace Search {
     // Update histories
     if (bestScore >= beta)
     {
-      int bonus = statBonus(depth + (bestScore > beta + StatBonusBoostAt));
-      int malus = statMalus(depth + (bestScore > beta + StatBonusBoostAt));
+      int bonus = statBonus(depth);
+      int malus = statMalus(depth);
 
       if (pos.isQuiet(bestMove))
       {
