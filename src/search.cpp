@@ -24,12 +24,12 @@ namespace Search {
   DEFINE_PARAM_S(PawnChWeight, 40, 5);
   DEFINE_PARAM_S(NonPawnChWeight, 50, 5);
 
-  DEFINE_PARAM_S(StatBonusBias, -23, 50);
+  DEFINE_PARAM_S(StatBonusBias, -23, 30);
   DEFINE_PARAM_S(StatBonusLinear, 160, 15);
   DEFINE_PARAM_S(StatBonusMax, 1277, 100);
   DEFINE_PARAM_S(StatBonusBoostAt, 111, 10);
 
-  DEFINE_PARAM_S(StatMalusBias, 17, 50);
+  DEFINE_PARAM_S(StatMalusBias, 17, 30);
   DEFINE_PARAM_S(StatMalusLinear, 186, 15);
   DEFINE_PARAM_S(StatMalusMax, 1127, 100);
 
@@ -37,21 +37,22 @@ namespace Search {
   DEFINE_PARAM_S(EvalHistB, -494, 45);
   DEFINE_PARAM_S(EvalHistC, 509, 50);
 
-  DEFINE_PARAM_S(RazoringDepthMul, 355, 38);
+  DEFINE_PARAM_S(RazoringDepthMul, 355, 40);
 
   DEFINE_PARAM_S(RfpMaxDepth, 11, 1);
   DEFINE_PARAM_S(RfpDepthMul, 85, 8);
+  DEFINE_PARAM_S(RfpMin, 20, 4);
 
   DEFINE_PARAM_S(NmpBase, 4, 1);
   DEFINE_PARAM_B(NmpDepthDiv, 3, 1, 21);
-  DEFINE_PARAM_S(NmpEvalDiv, 151, 15);
+  DEFINE_PARAM_S(NmpEvalDiv, 151, 20);
   DEFINE_PARAM_S(NmpEvalDivMin, 4, 1);
-  DEFINE_PARAM_S(NmpA, 27, 3);
-  DEFINE_PARAM_S(NmpB, 205, 20);
+  DEFINE_PARAM_S(NmpA, 27, 5);
+  DEFINE_PARAM_S(NmpB, 205, 30);
 
-  DEFINE_PARAM_S(ProbcutBetaMargin, 176, 18);
+  DEFINE_PARAM_S(ProbcutBetaMargin, 176, 20);
 
-  DEFINE_PARAM_S(HistPrDepthMul, -7000, 460);
+  DEFINE_PARAM_S(HistPrDepthMul, -7000, 700);
 
   DEFINE_PARAM_S(LmpBase,    3, 1);
 
@@ -61,18 +62,18 @@ namespace Search {
 
   DEFINE_PARAM_S(EarlyLmrHistoryDiv, 3489, 360);
 
-  DEFINE_PARAM_S(FpBase, 160, 17);
+  DEFINE_PARAM_S(FpBase, 160, 26);
   DEFINE_PARAM_S(FpMaxDepth, 10, 1);
   DEFINE_PARAM_S(FpDepthMul, 134, 13);
 
   DEFINE_PARAM_S(SBetaMargin, 64, 6);
-  DEFINE_PARAM_S(TripleExtMargin, 121, 13);
+  DEFINE_PARAM_S(TripleExtMargin, 121, 20);
   DEFINE_PARAM_S(DoubleExtMargin, 13, 1);
 
   DEFINE_PARAM_S(LmrQuietHistoryDiv, 8794, 860);
   DEFINE_PARAM_S(LmrCapHistoryDiv, 6319, 660);
-  DEFINE_PARAM_S(ZwsDeeperMargin, 35, 10);
-  DEFINE_PARAM_S(ZwsShallowerMargin, 6, 10);
+  DEFINE_PARAM_S(ZwsDeeperMargin, 35, 4);
+  DEFINE_PARAM_S(ZwsShallowerMargin, 6, 4);
 
   DEFINE_PARAM_B(AspWindowStartDepth, 4, 4, 34);
   DEFINE_PARAM_B(AspWindowStartDelta, 11, 5, 25);
@@ -859,7 +860,7 @@ namespace Search {
     if ( !IsPV
       && depth <= RfpMaxDepth
       && eval < SCORE_TB_WIN_IN_MAX_PLY
-      && eval - std::max(RfpDepthMul * (depth - improving), 20) >= beta)
+      && eval - std::max(RfpDepthMul * (depth - improving), RfpMin) >= beta)
       return (eval + beta) / 2;
 
     // Null move pruning. When our evaluation is above beta, we give the opponent
