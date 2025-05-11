@@ -366,7 +366,13 @@ namespace Search {
             + (ss - 4)->contHistory[chIndex];
   }
 
-  Score Thread::adjustEval(Position &pos, Score eval) {
+  int Thread::getCorrplexity(Position& pos) {
+    return std::abs(pawnCorrhist[ChIndex(pos.pawnKey)][pos.sideToMove])
+         + std::abs(wNonPawnCorrhist[ChIndex(pos.nonPawnKey[WHITE])][pos.sideToMove])
+         + std::abs(bNonPawnCorrhist[ChIndex(pos.nonPawnKey[BLACK])][pos.sideToMove]);
+  }
+
+  Score Thread::adjustEval(Position& pos, Score eval) {
     // 50 move rule scaling
     eval = (eval * (200 - pos.halfMoveClock)) / 200;
 
@@ -795,6 +801,8 @@ namespace Search {
 
     (ss + 1)->killerMove = MOVE_NONE;
 
+    const int corrplexity = getCorrplexity(pos);
+
     bool improving = false;
 
     // Do the static evaluation
@@ -1066,6 +1074,8 @@ namespace Search {
         int R = lmrTable[depth][seenMoves];
 
         R -= history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv);
+
+        R -= corrplexity / 1024;
 
         R -= (newPos.checkers != 0ULL);
 
