@@ -4,7 +4,7 @@ else
 	EXE := Obsidian
 endif
 
-DEFAULT_NET = net85perm.bin
+DEFAULT_NET = net86perm.bin
 
 ifndef EVALFILE
 	EVALFILE = $(DEFAULT_NET)
