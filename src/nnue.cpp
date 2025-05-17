@@ -294,6 +294,8 @@ namespace NNUE {
       }
     }
 
+    constexpr int Chunks = 64 / sizeof(VecF);
+
     { // propagate l2
       alignas(Alignment) float sums[L3];
       memcpy(sums, Weights->L2Biases[bucket], sizeof(sums));
@@ -309,11 +311,15 @@ namespace NNUE {
     }
 
     { // propagate l3
-      VecF sums = setzeroPs();
-      for (int i = 0; i < L3; i += FloatInVec)
-        sums = mulAddPs(AsVecF(l2Out[i]), AsVecF( Weights->L3Weights[bucket][i]), sums);
-
-      l3Out = reduceAddPs(sums) + Weights->L3Biases[bucket];
+      VecF sums[Chunks];
+      for (int j = 0; j < Chunks; j++)
+        sums[j] = vecfZero;
+      for (int i = 0; i < L3; i += FloatInVec * Chunks) {
+        for (int j = 0; j < Chunks; j++)
+          sums[j] = mulAddPs(AsVecF(l2Out[i + j * FloatInVec]), AsVecF( Weights->L3Weights[bucket][i + j * FloatInVec]), sums[j]);
+      }
+      
+      l3Out = Weights->L3Biases[bucket] + reduceAddPs(Chunks == 1 ? sums[0] : addPs(sums[0], sums[1]));
     }
 
     return l3Out * NetworkScale;
