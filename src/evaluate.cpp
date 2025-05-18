@@ -20,7 +20,7 @@ namespace Eval {
                + 5 * BitCount(pos.pieces(ROOK))
                + 12 * BitCount(pos.pieces(QUEEN));
 
-    score = score * (230 + phase) / 350;
+    score = score * (230 + phase) / 330;
 
     // Make sure the evaluation does not mix with guaranteed win/loss scores
     score = std::clamp(score, SCORE_TB_LOSS_IN_MAX_PLY + 1, SCORE_TB_WIN_IN_MAX_PLY - 1);
