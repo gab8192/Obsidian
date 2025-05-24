@@ -242,7 +242,7 @@ void Position::doNullMove() {
   key ^= ZOBRIST_TEMPO;
 }
 
-void Position::doMove(Move move, DirtyPieces& dp) {
+void Position::doMove(Move move) {
 
   const Color us = sideToMove, them = ~us;
 
@@ -267,20 +267,15 @@ void Position::doMove(Move move, DirtyPieces& dp) {
     const Piece movedPc = board[from];
     const Piece capturedPc = board[to];
 
-    dp.type = capturedPc ? DirtyPieces::CAPTURE : DirtyPieces::NORMAL;
-
     if (capturedPc != NO_PIECE) {
       halfMoveClock = 0;
 
       removePiece(to, capturedPc);
-      dp.sub1 = {to, capturedPc};
 
       newCastlingRights &= ROOK_SQR_TO_CR[to];
     }
 
     movePiece(from, to, movedPc);
-    dp.sub0 = {from, movedPc};
-    dp.add0 = {to, movedPc};
 
     newCastlingRights &= ROOK_SQR_TO_CR[from];
 
@@ -310,12 +305,6 @@ void Position::doMove(Move move, DirtyPieces& dp) {
     movePiece(rookSrc, rookDest, ourRookPc);
     newCastlingRights &= (us == WHITE ? BLACK_CASTLING : WHITE_CASTLING);
 
-    dp.type = DirtyPieces::CASTLING;
-    dp.sub0 = {kingSrc, ourKingPc};
-    dp.add0 = {kingDest, ourKingPc};
-    dp.sub1 = {rookSrc, ourRookPc};
-    dp.add1 = {rookDest, ourRookPc};
-
     break;
   }
   case MT_EN_PASSANT: {
@@ -331,11 +320,6 @@ void Position::doMove(Move move, DirtyPieces& dp) {
     removePiece(capSq, theirPawnPc);
     movePiece(from, to, ourPawnPc);
 
-    dp.type = DirtyPieces::CAPTURE;
-    dp.sub1 = {capSq, theirPawnPc};
-    dp.sub0 = {from, ourPawnPc};
-    dp.add0 = {to, ourPawnPc};
-
     break;
   }
   case MT_PROMOTION: {
@@ -348,19 +332,14 @@ void Position::doMove(Move move, DirtyPieces& dp) {
     const Piece capturedPc = board[to];
     const Piece promoteToPc = makePiece(us, promo_type(move));
 
-    dp.type = capturedPc ? DirtyPieces::CAPTURE : DirtyPieces::NORMAL;
-
     if (capturedPc != NO_PIECE) {
       removePiece(to, capturedPc);
-      dp.sub1 = {to, capturedPc};
 
       newCastlingRights &= ROOK_SQR_TO_CR[to];
     }
 
     removePiece(from, movedPc);
     putPiece(to, promoteToPc);
-    dp.sub0 = {from, movedPc};
-    dp.add0 = {to, promoteToPc};
 
     break;
   }

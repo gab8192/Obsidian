@@ -2,6 +2,7 @@
 //
 
 #include "cuckoo.h"
+#include "nnue/evaluate_nnue.h"
 #include "threads.h"
 #include "tt.h"
 #include "uci.h"
@@ -30,7 +31,7 @@ int main(int argc, char** argv)
   Threads::setThreadCount(UCI::Options["Threads"]);
   TT::resize(UCI::Options["Hash"]);
 
-  NNUE::loadWeights();
+  Stockfish::Eval::NNUE::init();
 
   UCI::loop(argc, argv);
 

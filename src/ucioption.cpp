@@ -1,6 +1,5 @@
 #include "uci.h"
 #include "fathom/src/tbprobe.h"
-#include "nnue.h"
 #include "threads.h"
 #include "tt.h"
 
@@ -100,6 +99,7 @@ void init() {
   Options["Minimal"]           = Option("false");
   Options["MultiPV"]           = Option(1, 1, MAX_MOVES);
   Options["UCI_Opponent"]      = Option("", refreshContempt);
+  Options["Use NNUE"]          = Option("true");
 }
 
 
