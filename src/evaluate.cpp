@@ -119,7 +119,7 @@ namespace Eval {
 
   Score evaluate(Position& pos) {
 
-    Score score = (NNUE::evaluate(pos, false) * 177) / 227;
+    Score score = NNUE::evaluate(pos, false);
 
     int phase =  2 * BitCount(pos.pieces(PAWN))
                + 3 * BitCount(pos.pieces(KNIGHT))
