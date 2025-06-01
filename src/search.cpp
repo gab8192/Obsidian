@@ -752,6 +752,7 @@ namespace Search {
       && !excludedMove
       && ttScore != SCORE_NONE
       && ttDepth >= depth
+      && (cutNode || ttScore < beta)
       && canUseScore(ttBound, ttScore, beta)
       && pos.halfMoveClock < 90) // The TT entry might trick us into thinking this is not a draw
         return ttScore;
