@@ -125,8 +125,7 @@ namespace Search {
     // Perform adjustments such as 50MR, correction history, contempt, ...
     int adjustEval(Position &pos, Score staticEval);
 
-    void updateHistories(Position& pos, int bonus, int malus, Move bestMove,
-      Move* quietMoves, int quietCount, int depth, SearchInfo* ss);
+    void updateMoveHistories(Position& pos, Move move, int bonus, SearchInfo* ss);
 
     bool hasUpcomingRepetition(Position& pos, int ply);
 

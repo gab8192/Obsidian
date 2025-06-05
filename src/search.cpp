@@ -390,49 +390,17 @@ namespace Search {
   }
 
   void addToContHistory(Position& pos, int bonus, Move move, SearchInfo* ss) {
-    int chIndex = pieceTo(pos, move);
-    if ((ss - 1)->playedMove)
-      addToHistory((ss - 1)->contHistory[chIndex], bonus);
-    if ((ss - 2)->playedMove)
-      addToHistory((ss - 2)->contHistory[chIndex], bonus);
-    if ((ss - 4)->playedMove)
-      addToHistory((ss - 4)->contHistory[chIndex], bonus/2);
-    if ((ss - 6)->playedMove)
-      addToHistory((ss - 6)->contHistory[chIndex], bonus/2);
+    addToContHistory(pieceTo(pos, move), bonus, ss);
   }
 
-  void Thread::updateHistories(Position& pos, int bonus, int malus, Move bestMove,
-                       Move* quiets, int quietCount, int depth, SearchInfo* ss) {
-
-    // Counter move
-    if ((ss - 1)->playedMove) {
-      Square prevSq = move_to((ss - 1)->playedMove);
-      counterMoveHistory[pos.board[prevSq] * SQUARE_NB + prevSq] = bestMove;
-    }
-
-    // Killer move
-    ss->killerMove = bestMove;
-
-    // Credits to Ethereal
-    // Don't prop up the best move if it was a quick low depth cutoff
-    if (depth <= 3 && !quietCount)
-      return;
-
+  void Thread::updateMoveHistories(Position& pos, Move move, int bonus, SearchInfo* ss) {
     // Butterfly history
-    addToHistory(mainHistory[pos.sideToMove][move_from_to(bestMove)], bonus);
+    addToHistory(mainHistory[pos.sideToMove][move_from_to(move)], bonus);
 
     // Continuation history
-    addToContHistory(pos, bonus, bestMove, ss);
+    addToContHistory(pos, bonus, move, ss);
 
-    addToHistory(pawnHistory[PhIndex(pos.pawnKey)][pieceTo(pos, bestMove)], bonus);
-
-    // Decrease score of other quiet moves
-    for (int i = 0; i < quietCount; i++) {
-      Move otherMove = quiets[i];
-      addToContHistory(pos, -malus, otherMove, ss);
-      addToHistory(mainHistory[pos.sideToMove][move_from_to(otherMove)], -malus);
-      addToHistory(pawnHistory[PhIndex(pos.pawnKey)][pieceTo(pos, otherMove)], -malus);
-    }
+    addToHistory(pawnHistory[PhIndex(pos.pawnKey)][pieceTo(pos, move)], bonus);
   }
 
   bool canUseScore(TT::Flag bound, Score score, Score operand) {
@@ -1195,7 +1163,23 @@ namespace Search {
 
       if (pos.isQuiet(bestMove))
       {
-        updateHistories(pos, bonus, malus, bestMove, quiets, quietCount, depth, ss);
+        // Counter move
+        if ((ss - 1)->playedMove) {
+          Square prevSq = move_to((ss - 1)->playedMove);
+          counterMoveHistory[pos.board[prevSq] * SQUARE_NB + prevSq] = bestMove;
+        }
+
+        // Killer move
+        ss->killerMove = bestMove;
+
+        // Credits to Ethereal
+        // Don't prop up the best move if it was a quick low depth cutoff
+        if (depth > 3 || quietCount)
+          updateMoveHistories(pos, bestMove, bonus, ss);
+
+        // Decrease score of other quiet moves
+        for (int i = 0; i < quietCount; i++)
+          updateMoveHistories(pos, quiets[i], -malus, ss);
       }
       else {
         PieceType captured = piece_type(pos.board[move_to(bestMove)]);
