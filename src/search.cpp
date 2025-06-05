@@ -1188,7 +1188,7 @@ namespace Search {
       bestScore = std::min(bestScore, maxScore);
 
     // Update histories
-    if (bestScore >= beta)
+    if (bestMove)
     {
       int bonus = statBonus(depth + (bestScore > beta + StatBonusBoostAt));
       int malus = statMalus(depth + (bestScore > beta + StatBonusBoostAt));
