@@ -21,10 +21,6 @@ namespace Search {
     std::vector<uint64_t> prevPositions;
 
     Settings();
-
-    inline bool standardTimeLimit() const {
-      return time[WHITE] || time[BLACK];
-    }
   };
 
   struct SearchInfo {

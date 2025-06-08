@@ -1255,6 +1255,7 @@ namespace Search {
     const Settings& settings = Threads::getSearchSettings();
 
     Position rootPos = settings.position;
+    const bool hasNormalTM = settings.time[rootPos.sideToMove];
 
     accumStackHead = 0;
     for (Color side = WHITE; side <= BLACK; ++side) {
@@ -1272,7 +1273,7 @@ namespace Search {
 
     maxTime = 999999999999LL;
 
-    if (settings.standardTimeLimit()) {
+    if (hasNormalTM) {
       int64_t stdMaxTime;
       TimeMan::calcOptimumTime(settings, rootPos.sideToMove, &optimumTime, &stdMaxTime);
       maxTime = std::min(maxTime, stdMaxTime);
@@ -1349,7 +1350,7 @@ namespace Search {
     for (rootDepth = 1; rootDepth <= settings.depth; rootDepth++) {
 
       // Only one legal move? For analysis purposes search, but with a limited depth
-      if (rootDepth > 10 && rootMoves.size() == 1)
+      if (hasNormalTM && rootMoves.size() == 1 && elapsedTime() >= 200)
         break;
 
       for (pvIdx = 0; pvIdx < multiPV; pvIdx++) {
@@ -1431,7 +1432,7 @@ namespace Search {
       else
         searchStability = 0;
 
-      if (settings.standardTimeLimit() && rootDepth >= 4) {
+      if (hasNormalTM && rootDepth >= 4) {
         int bmNodes = rootMoves[0].nodes;
         double notBestNodes = 1.0 - (bmNodes / double(nodesSearched));
         double nodesFactor     = (tm1/100.0) + notBestNodes * (tm0/100.0);
@@ -1503,16 +1504,37 @@ namespace Search {
       }
     }
 
-    if (!naturalExit || bestThread != this || std::string(UCI::Options["Minimal"]) == "true")
+    RootMove& finalBest = bestThread->rootMoves[0];
+
+    if (Threads::searchThreads.size() > 1 && multiPV == 1
+     && std::abs(finalBest.score) < SCORE_TB_WIN_IN_MAX_PLY) {
+      Score totalScore = 0;
+      int divisor = 0;
+      for (int i = 0; i < Threads::searchThreads.size(); i++) {
+        Search::Thread* st = Threads::searchThreads[i];
+        if (!st->completeDepth || st->rootMoves[0].move != finalBest.move)
+          continue;
+        Score currScore = st->rootMoves[0].score;
+        if (std::abs(currScore) < SCORE_TB_WIN_IN_MAX_PLY) {
+          totalScore += currScore;
+          divisor++;
+        }
+      }
+      finalBest.score = totalScore / divisor;
+     }
+
+    if (std::string(UCI::Options["Minimal"]) == "true"
+     || !naturalExit || Threads::searchThreads.size() > 1) {
         for (int i = 0; i < multiPV; i++)
           printInfo(bestThread->completeDepth, i+1, bestThread->rootMoves[i].score, getPvString(bestThread->rootMoves[i]));
+     }
 
-    searchPrevScore = bestThread->rootMoves[0].score;
+    searchPrevScore = finalBest.score;
 
     if (tbBestMove && std::abs(searchPrevScore) < SCORE_MATE_IN_MAX_PLY)
       printBestMove(tbBestMove);
     else
-      printBestMove(bestThread->rootMoves[0].move);
+      printBestMove(finalBest.move);
   }
 
   void Thread::idleLoop() {
