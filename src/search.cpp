@@ -1273,11 +1273,9 @@ namespace Search {
 
     maxTime = 999999999999LL;
 
-    if (hasNormalTM) {
-      int64_t stdMaxTime;
-      TimeMan::calcOptimumTime(settings, rootPos.sideToMove, &optimumTime, &stdMaxTime);
-      maxTime = std::min(maxTime, stdMaxTime);
-    }
+    if (hasNormalTM)
+      TimeMan::calcOptimumTime(settings, rootPos.sideToMove, &optimumTime, &maxTime);
+      
     if (settings.movetime)
       maxTime = std::min(maxTime, settings.movetime - int64_t(UCI::Options["Move Overhead"]));
 
@@ -1455,8 +1453,6 @@ namespace Search {
 
   bestMoveDecided:
 
-    // NOTE: When implementing best thread selection, don't mess up with tablebases dtz stuff
-
     if (this != Threads::mainThread())
       return;
 
@@ -1504,37 +1500,16 @@ namespace Search {
       }
     }
 
-    RootMove& finalBest = bestThread->rootMoves[0];
-
-    if (Threads::searchThreads.size() > 1 && multiPV == 1
-     && std::abs(finalBest.score) < SCORE_TB_WIN_IN_MAX_PLY) {
-      Score totalScore = 0;
-      int divisor = 0;
-      for (int i = 0; i < Threads::searchThreads.size(); i++) {
-        Search::Thread* st = Threads::searchThreads[i];
-        if (!st->completeDepth || st->rootMoves[0].move != finalBest.move)
-          continue;
-        Score currScore = st->rootMoves[0].score;
-        if (std::abs(currScore) < SCORE_TB_WIN_IN_MAX_PLY) {
-          totalScore += currScore;
-          divisor++;
-        }
-      }
-      finalBest.score = totalScore / divisor;
-     }
-
-    if (std::string(UCI::Options["Minimal"]) == "true"
-     || !naturalExit || Threads::searchThreads.size() > 1) {
+    if (!naturalExit || bestThread != this || std::string(UCI::Options["Minimal"]) == "true")
         for (int i = 0; i < multiPV; i++)
           printInfo(bestThread->completeDepth, i+1, bestThread->rootMoves[i].score, getPvString(bestThread->rootMoves[i]));
-     }
 
-    searchPrevScore = finalBest.score;
+    searchPrevScore = bestThread->rootMoves[0].score;
 
     if (tbBestMove && std::abs(searchPrevScore) < SCORE_MATE_IN_MAX_PLY)
       printBestMove(tbBestMove);
     else
-      printBestMove(finalBest.move);
+      printBestMove(bestThread->rootMoves[0].move);
   }
 
   void Thread::idleLoop() {
