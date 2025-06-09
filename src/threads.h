@@ -12,6 +12,8 @@ namespace Threads {
 
   bool isSearchStopped();
 
+  int totalAgreeToStop();
+
   uint64_t totalNodes();
 
   uint64_t totalTbHits();

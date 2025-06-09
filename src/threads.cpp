@@ -33,6 +33,13 @@ namespace Threads {
     return result;
   }
 
+  int totalAgreeToStop() {
+    int result = 0;
+    for (int i = 0; i < searchThreads.size(); i++)
+      result += searchThreads[i]->agreeToStop;
+    return result;
+  }
+
   void waitForSearch(bool waitMain) {
     for (int i = !waitMain; i < searchThreads.size(); i++) {
       Search::Thread* st = searchThreads[i];
@@ -53,6 +60,7 @@ namespace Threads {
     searchStopped = false;
     for (int i = 0; i < searchThreads.size(); i++) {
       Search::Thread* st = searchThreads[i];
+      st->agreeToStop = false;
       st->nodesSearched = 0;
       st->tbHits = 0;
       st->completeDepth = 0;

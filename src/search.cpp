@@ -1275,7 +1275,7 @@ namespace Search {
 
     if (hasNormalTM)
       TimeMan::calcOptimumTime(settings, rootPos.sideToMove, &optimumTime, &maxTime);
-      
+
     if (settings.movetime)
       maxTime = std::min(maxTime, settings.movetime - int64_t(UCI::Options["Move Overhead"]));
 
@@ -1410,16 +1410,13 @@ namespace Search {
         goto bestMoveDecided;
       }
 
-      if (this != Threads::mainThread())
-        continue;
-
       const int64_t elapsed = elapsedTime();
 
-      if (std::string(UCI::Options["Minimal"]) != "true")
+      if (this == Threads::mainThread() && std::string(UCI::Options["Minimal"]) != "true")
         for (int i = 0; i < multiPV; i++)
           printInfo(completeDepth, i+1, rootMoves[i].score, getPvString(rootMoves[i]));
 
-      if (elapsedTime() >= maxTime)
+      if (elapsed >= maxTime)
         goto bestMoveDecided;
 
       const Move bestMove = rootMoves[0].move;
@@ -1443,8 +1440,13 @@ namespace Search {
 
         double scoreFactor = std::clamp(scoreLoss, lol0 / 100.0, lol1 / 100.0);
 
-        if (elapsed > stabilityFactor * nodesFactor * scoreFactor * optimumTime)
+        agreeToStop = elapsed > stabilityFactor * nodesFactor * scoreFactor * optimumTime;
+
+        // Anyone can stop everyone, but we still let main handle the final operations
+        if (Threads::totalAgreeToStop() * 2 >= Threads::searchThreads.size()) {
+          Threads::stopSearch();
           goto bestMoveDecided;
+        }
       }
 
       idPrevMove = bestMove;
