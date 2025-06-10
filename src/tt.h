@@ -20,8 +20,6 @@ namespace TT {
 
     void store(Key _key, Flag _bound, int _depth, Move _move, Score _score, Score _eval, bool isPV, int ply);
 
-    int getAgeDistance();
-
     inline bool matches(Key key) const {
       return this->key16 == (uint16_t) key;
     }

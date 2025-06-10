@@ -64,7 +64,7 @@ namespace TT {
   }
 
   int qualityOf(Entry* e) {
-    return e->getDepth() - 8 * e->getAgeDistance();
+    return e->getDepth();
   }
 
   Entry* probe(Key key, bool& hit) {
@@ -101,10 +101,6 @@ namespace TT {
     return entryCount / EntriesPerBucket;
   }
 
-  int Entry::getAgeDistance() {
-    return (MAX_AGE + tableAge - getAge()) % MAX_AGE;
-  }
-
   void Entry::store(Key _key, Flag _bound, int _depth, Move _move, Score _score, Score _eval, bool isPV, int ply) {
 
      if (!matches(_key) || _move)
@@ -119,7 +115,6 @@ namespace TT {
 
     if ( _bound == FLAG_EXACT
       || !matches(_key)
-      || getAgeDistance()
       || _depth + 4 + 2*isPV > this->depth) {
 
         this->key16 = (uint16_t) _key;
