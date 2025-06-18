@@ -21,8 +21,9 @@ namespace Search {
   DEFINE_PARAM_S(LmrBase, 94, 10);
   DEFINE_PARAM_S(LmrDiv, 314, 29);
 
-  DEFINE_PARAM_S(PawnChWeight, 42, 5);
-  DEFINE_PARAM_S(NonPawnChWeight, 50, 5);
+  DEFINE_PARAM_S(PawnChWeight, 30, 5);
+  DEFINE_PARAM_S(NonPawnChWeight, 35, 5);
+  DEFINE_PARAM_S(ContChWeight, 27, 5);
 
   DEFINE_PARAM_S(StatBonusBias, 15, 30);
   DEFINE_PARAM_S(StatBonusLinear, 175, 15);
@@ -380,7 +381,7 @@ namespace Search {
 
     const Move m1 = (ss - 1)->playedMove;
     if (m1)
-      eval += CorrHistWeight * (ss - 2)->contCorrHist[pos.board[move_to(m1)] * 64 + move_to(m1)] / 512;
+      eval += ContChWeight * (ss - 2)->contCorrHist[pos.board[move_to(m1)] * 64 + move_to(m1)] / 512;
 
     return std::clamp(eval, SCORE_TB_LOSS_IN_MAX_PLY + 1, SCORE_TB_WIN_IN_MAX_PLY - 1);
   }
@@ -1220,7 +1221,7 @@ namespace Search {
       addToCorrhist(bNonPawnCorrhist[ChIndex(pos.nonPawnKey[BLACK])][pos.sideToMove], bonus);
 
       const Move m1 = (ss - 1)->playedMove;
-      if (m1)
+      if (m1 && (ss-2)->playedMove)
         addToCorrhist((ss - 2)->contCorrHist[pos.board[move_to(m1)] * 64 + move_to(m1)], bonus);
     }
 
