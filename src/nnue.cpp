@@ -256,6 +256,7 @@ namespace NNUE {
         VecI packed = packusEpi16(cProd, dProd);
         AsVecI(ftOut[them * L1 / 2 + i]) = packed;
 
+#if defined(__AVX2__)
         // a bit mask where each bit (x) is 1, if the xth int32 in the product is > 0
         uint16_t nnzMask = getNnzMask(packed);
 
@@ -267,8 +268,24 @@ namespace NNUE {
           nnzCount += BitCount(slice);
           base = _mm_add_epi16(base, lookupInc);
         }
+#endif
       }
     }
+
+#if !defined(__AVX2__) // if we are in SSSE3
+    for (int i = 0; i < L1; i += 2 * I8InVec) {
+      // a bit mask where each bit (x) is 1, if the xth int32 in the product is > 0
+      uint16_t nnzMask = getNnzMask(AsVecI(ftOut[i]));
+      nnzMask |= getNnzMask(AsVecI(ftOut[i + I8InVec])) << 4;
+
+      // Usually (in AVX2) only one lookup is needed, as there are 8 ints in a vec.
+      uint8_t slice = nnzMask & 0xFF;
+      __m128i indexes = _mm_loadu_si128((__m128i*)nnzTable[slice]);
+      _mm_storeu_si128((__m128i*)(nnzIndexes + nnzCount), _mm_add_epi16(base, indexes));
+      nnzCount += BitCount(slice);
+      base = _mm_add_epi16(base, lookupInc);
+    }
+#endif
 
     { // propagate l1
 
@@ -318,8 +335,12 @@ namespace NNUE {
         for (int j = 0; j < Chunks; j++)
           sums[j] = mulAddPs(AsVecF(l2Out[i + j * FloatInVec]), AsVecF( Weights->L3Weights[bucket][i + j * FloatInVec]), sums[j]);
       }
+
+      VecF totalSum = sums[0];
+      for (int j = 1; j < Chunks; j++)
+        totalSum = addPs(totalSum, sums[j]);
       
-      l3Out = Weights->L3Biases[bucket] + reduceAddPs(Chunks == 1 ? sums[0] : addPs(sums[0], sums[1]));
+      l3Out = Weights->L3Biases[bucket] + reduceAddPs(totalSum);
     }
 
     return l3Out * NetworkScale;
