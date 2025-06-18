@@ -21,8 +21,9 @@ namespace Search {
   DEFINE_PARAM_S(LmrBase, 94, 10);
   DEFINE_PARAM_S(LmrDiv, 314, 29);
 
-  DEFINE_PARAM_S(PawnChWeight, 42, 5);
-  DEFINE_PARAM_S(NonPawnChWeight, 50, 5);
+  DEFINE_PARAM_S(PawnChWeight, 30, 5);
+  DEFINE_PARAM_S(NonPawnChWeight, 35, 5);
+  DEFINE_PARAM_S(ContChWeight, 27, 5);
 
   DEFINE_PARAM_S(StatBonusBias, 15, 30);
   DEFINE_PARAM_S(StatBonusLinear, 175, 15);
@@ -142,6 +143,7 @@ namespace Search {
     memset(pawnCorrhist, 0, sizeof(pawnCorrhist));
     memset(wNonPawnCorrhist, 0, sizeof(wNonPawnCorrhist));
     memset(bNonPawnCorrhist, 0, sizeof(bNonPawnCorrhist));
+    memset(contCorrHist, 0, sizeof(contCorrHist));
 
     searchPrevScore = SCORE_NONE;
   }
@@ -244,6 +246,7 @@ namespace Search {
   }
 
   void Thread::playNullMove(Position& pos, SearchInfo* ss) {
+    ss->contCorrHist = contCorrHist[0];
     ss->contHistory = contHistory[false][0];
     ss->playedMove = MOVE_NONE;
     ss->playedCap = false;
@@ -330,6 +333,7 @@ namespace Search {
     nodesSearched++;
 
     const bool isCap = pos.board[move_to(move)] != NO_PIECE;
+    ss->contCorrHist = contCorrHist[pieceTo(pos, move)];
     ss->contHistory = contHistory[isCap][pieceTo(pos, move)];
     ss->playedMove = move;
     ss->playedCap = ! pos.isQuiet(move);
@@ -366,7 +370,7 @@ namespace Search {
             + (ss - 4)->contHistory[chIndex];
   }
 
-  Score Thread::adjustEval(Position &pos, Score eval) {
+  Score Thread::adjustEval(Position &pos, Score eval, SearchInfo* ss) {
     // 50 move rule scaling
     eval = (eval * (200 - pos.halfMoveClock)) / 200;
 
@@ -374,6 +378,10 @@ namespace Search {
     eval += PawnChWeight * pawnCorrhist[ChIndex(pos.pawnKey)][pos.sideToMove] / 512;
     eval += NonPawnChWeight * wNonPawnCorrhist[ChIndex(pos.nonPawnKey[WHITE])][pos.sideToMove] / 512;
     eval += NonPawnChWeight * bNonPawnCorrhist[ChIndex(pos.nonPawnKey[BLACK])][pos.sideToMove] / 512;
+
+    const Move m1 = (ss - 1)->playedMove;
+    if (m1)
+      eval += ContChWeight * (ss - 2)->contCorrHist[pos.board[move_to(m1)] * 64 + move_to(m1)] / 512;
 
     return std::clamp(eval, SCORE_TB_LOSS_IN_MAX_PLY + 1, SCORE_TB_WIN_IN_MAX_PLY - 1);
   }
@@ -487,7 +495,7 @@ namespace Search {
 
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY-4)
-      return pos.checkers ? SCORE_DRAW : adjustEval(pos, doEvaluation(pos));
+      return pos.checkers ? SCORE_DRAW : adjustEval(pos, doEvaluation(pos), ss);
 
     // Probe TT
     const Key posTtKey = pos.key ^ ZOBRIST_50MR[pos.halfMoveClock];
@@ -531,7 +539,7 @@ namespace Search {
       else
         rawStaticEval = doEvaluation(pos);
 
-      bestScore = ss->staticEval = adjustEval(pos, rawStaticEval);
+      bestScore = ss->staticEval = adjustEval(pos, rawStaticEval, ss);
 
       futility = bestScore + QsFpMargin;
 
@@ -685,7 +693,7 @@ namespace Search {
 
     // Quit if we are close to reaching max ply
     if (ply >= MAX_PLY - 4)
-      return pos.checkers ? SCORE_DRAW : adjustEval(pos, doEvaluation(pos));
+      return pos.checkers ? SCORE_DRAW : adjustEval(pos, doEvaluation(pos), ss);
 
     // Mate distance pruning
     alpha = std::max(alpha, ply - SCORE_MATE);
@@ -808,7 +816,7 @@ namespace Search {
       else
         rawStaticEval = doEvaluation(pos);
 
-      eval = ss->staticEval = adjustEval(pos, rawStaticEval);
+      eval = ss->staticEval = adjustEval(pos, rawStaticEval, ss);
 
       if (!ttHit) {
         // This (probably new) position has just been evaluated.
@@ -1211,6 +1219,10 @@ namespace Search {
       addToCorrhist(pawnCorrhist[ChIndex(pos.pawnKey)][pos.sideToMove], bonus);
       addToCorrhist(wNonPawnCorrhist[ChIndex(pos.nonPawnKey[WHITE])][pos.sideToMove], bonus);
       addToCorrhist(bNonPawnCorrhist[ChIndex(pos.nonPawnKey[BLACK])][pos.sideToMove], bonus);
+
+      const Move m1 = (ss - 1)->playedMove;
+      if (m1 && (ss-2)->playedMove)
+        addToCorrhist((ss - 2)->contCorrHist[pos.board[move_to(m1)] * 64 + move_to(m1)], bonus);
     }
 
     // Store to TT
@@ -1296,6 +1308,7 @@ namespace Search {
       searchStack[i].playedCap = false;
 
       searchStack[i].contHistory = contHistory[false][0];
+      searchStack[i].contCorrHist = contCorrHist[0];
 
       searchStack[i].seenMoves = 0;
     }

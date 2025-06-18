@@ -28,6 +28,8 @@ using PawnCorrHist = int16_t[CORRHIST_SIZE][2];
 // [stm][pawn hash]
 using NonPawnCorrHist = int16_t[CORRHIST_SIZE][2];
 
+// [piece to][piece to]
+using ContCorrHist = int16_t[PIECE_NB * SQUARE_NB][PIECE_NB * SQUARE_NB];
 
 inline int PhIndex(Key pawnKey) {
   return pawnKey % PAWNHIST_SIZE;
