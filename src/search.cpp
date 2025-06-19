@@ -701,6 +701,8 @@ namespace Search {
     if (alpha >= beta)
       return alpha;
 
+    const Square prevToSq = (ss - 1)->playedMove ? move_to((ss - 1)->playedMove) : SQ_NONE; 
+
     // Probe TT
     const Key posTtKey = pos.key ^ ZOBRIST_50MR[pos.halfMoveClock];
     bool ttHit;
@@ -726,7 +728,6 @@ namespace Search {
       ttMove = rootMoves[pvIdx].move;
 
     const bool ttMoveNoisy = ttMove && !pos.isQuiet(ttMove);
-
     const Score probcutBeta = beta + ProbcutBetaMargin;
 
     Score eval;
@@ -744,11 +745,10 @@ namespace Search {
       && canUseScore(ttBound, ttScore, beta)
       && pos.halfMoveClock < 90)  // The TT entry might trick us into thinking this is not a draw
     {
-      Square prevSq = (ss - 1)->playedMove ? move_to((ss - 1)->playedMove) : SQ_NONE; 
-      if ( ttScore >= beta && ttDepth > depth && prevSq != SQ_NONE
+      if ( ttScore >= beta && ttDepth > depth && prevToSq != SQ_NONE
          && !(ss-1)->playedCap && (ss-1)->seenMoves <= 3) 
       {
-        int chIndex = pos.board[prevSq] * SQUARE_NB + prevSq;
+        int chIndex = pos.board[prevToSq] * SQUARE_NB + prevToSq;
         addToContHistory(chIndex, -statMalus(depth), ss-1);
       }
       return ttScore;
@@ -835,6 +835,9 @@ namespace Search {
       int theirLoss = (ss-1)->staticEval + ss->staticEval - EvalHistA;
       int bonus = std::clamp(EvalHistB * theirLoss / 64, -EvalHistC, EvalHistC);
       addToHistory(mainHistory[~pos.sideToMove][move_from_to((ss-1)->playedMove)], bonus);
+
+      if (piece_type(pos.board[prevToSq]) != PAWN)
+        addToHistory(pawnHistory[PhIndex(pos.pawnKey)][pos.board[prevToSq] * 64 + prevToSq], bonus);
     }
 
     // Calculate whether the evaluation here is worse or better than it was 2 plies ago
