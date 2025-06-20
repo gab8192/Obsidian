@@ -18,7 +18,7 @@ namespace Search {
 
   DEFINE_PARAM_S(QsFpMargin, 156, 14);
 
-  DEFINE_PARAM_S(LmrBase, 94, 10);
+  DEFINE_PARAM_S(LmrBase, 99, 10);
   DEFINE_PARAM_S(LmrDiv, 314, 29);
 
   DEFINE_PARAM_S(PawnChWeight, 30, 5);
@@ -71,6 +71,7 @@ namespace Search {
   DEFINE_PARAM_S(TripleExtMargin, 121, 20);
   DEFINE_PARAM_S(DoubleExtMargin, 13, 1);
 
+  DEFINE_PARAM_S(LmrComplexityDiv, 120, 11);
   DEFINE_PARAM_S(LmrQuietHistoryDiv, 9621, 860);
   DEFINE_PARAM_S(LmrCapHistoryDiv, 5693, 660);
   DEFINE_PARAM_S(ZwsDeeperMargin, 43, 4);
@@ -728,12 +729,11 @@ namespace Search {
     const bool ttMoveNoisy = ttMove && !pos.isQuiet(ttMove);
 
     const Score probcutBeta = beta + ProbcutBetaMargin;
-
     Score eval;
-    Move bestMove = MOVE_NONE;
     Score rawStaticEval = SCORE_NONE;
     Score bestScore = -SCORE_INFINITE;
     Score maxScore  =  SCORE_INFINITE;
+    Move bestMove = MOVE_NONE;
 
     // In non PV nodes, if tt depth and bound allow it, return ttScore
     if ( !IsPV
@@ -799,6 +799,7 @@ namespace Search {
 
     if (pos.checkers) {
       // When in check avoid evaluating and skip pruning
+      ss->complexity = 0;
       ss->staticEval = eval = SCORE_NONE;
       goto moves_loop;
     }
@@ -817,6 +818,7 @@ namespace Search {
         rawStaticEval = doEvaluation(pos);
 
       eval = ss->staticEval = adjustEval(pos, rawStaticEval, ss);
+      ss->complexity = std::abs(ss->staticEval - rawStaticEval);
 
       if (!ttHit) {
         // This (probably new) position has just been evaluated.
@@ -1066,6 +1068,8 @@ namespace Search {
 
         R -= history / (isQuiet ? LmrQuietHistoryDiv : LmrCapHistoryDiv);
 
+        R -= ss->complexity / LmrComplexityDiv;
+
         R -= (newPos.checkers != 0ULL);
 
         R -= (ttDepth >= depth);
@@ -1300,6 +1304,7 @@ namespace Search {
 
     for (int i = 0; i < MAX_PLY + SsOffset; i++) {
       searchStack[i].staticEval = SCORE_NONE;
+      searchStack[i].complexity = 0;
 
       searchStack[i].pvLength = 0;
 
