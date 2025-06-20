@@ -565,7 +565,7 @@ namespace Search {
 
     movePicker.genQuietChecks = (depth == 0);
 
-    bool foundLegalMoves = false;
+    int seenMoves = 0;
 
     // Visit moves
     Move move;
@@ -577,7 +577,7 @@ namespace Search {
       if (!pos.isLegal(move))
         continue;
 
-      foundLegalMoves = true;
+      seenMoves++;
 
       bool isQuiet = pos.isQuiet(move);
 
@@ -613,12 +613,14 @@ namespace Search {
       }
 
       if (bestScore > SCORE_TB_LOSS_IN_MAX_PLY) {
+        if (!pos.checkers && seenMoves >= 3)
+          break;
         if (pos.checkers && isQuiet)
           break;
       }
     }
 
-    if (pos.checkers && !foundLegalMoves)
+    if (pos.checkers && !seenMoves)
       return ply - SCORE_MATE;
 
     if (bestScore >= beta && abs(bestScore) < SCORE_TB_WIN_IN_MAX_PLY)
