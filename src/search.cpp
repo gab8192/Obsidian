@@ -41,7 +41,8 @@ namespace Search {
   DEFINE_PARAM_S(RazoringDepthMul, 352, 40);
 
   DEFINE_PARAM_S(RfpMaxDepth, 11, 1);
-  DEFINE_PARAM_S(RfpDepthMul, 87, 8);
+  DEFINE_PARAM_S(RfpDepthMul, 77, 8);
+  DEFINE_PARAM_S(RfpCompMin, 50, 64);
   DEFINE_PARAM_S(RfpMin, 22, 4);
 
   DEFINE_PARAM_S(NmpBase, 4, 1);
@@ -860,7 +861,7 @@ namespace Search {
     if ( !IsPV
       && depth <= RfpMaxDepth
       && eval < SCORE_TB_WIN_IN_MAX_PLY
-      && eval - std::max(RfpDepthMul * (depth - improving), RfpMin) >= beta)
+      && eval - std::max(RfpDepthMul * (depth - improving) + ss->complexity * RfpCompMin / 64, RfpMin) >= beta)
       return (eval + beta) / 2;
 
     // Null move pruning. When our evaluation is above beta, we give the opponent
