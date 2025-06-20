@@ -41,7 +41,7 @@ namespace Search {
   DEFINE_PARAM_S(RazoringDepthMul, 352, 40);
 
   DEFINE_PARAM_S(RfpMaxDepth, 11, 1);
-  DEFINE_PARAM_S(RfpDepthMul, 77, 8);
+  DEFINE_PARAM_S(RfpDepthMul, 69, 8);
   DEFINE_PARAM_S(RfpCompMin, 50, 64);
   DEFINE_PARAM_S(RfpMin, 22, 4);
 
