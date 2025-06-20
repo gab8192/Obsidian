@@ -611,11 +611,6 @@ namespace Search {
           alpha = bestScore;
         }
       }
-
-      if (bestScore > SCORE_TB_LOSS_IN_MAX_PLY) {
-        if (pos.checkers && isQuiet)
-          break;
-      }
     }
 
     if (pos.checkers && !foundLegalMoves)
