@@ -25,6 +25,7 @@ namespace Search {
 
   struct SearchInfo {
     Score staticEval;
+    int complexity;
     Move playedMove;
     bool playedCap;
 
