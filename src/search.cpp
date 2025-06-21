@@ -615,8 +615,6 @@ namespace Search {
       if (bestScore > SCORE_TB_LOSS_IN_MAX_PLY) {
         if (!pos.checkers && seenMoves >= 3)
           break;
-        if (pos.checkers && isQuiet)
-          break;
       }
     }
 
@@ -628,7 +626,7 @@ namespace Search {
 
     ttEntry->store(posTtKey,
       bestScore >= beta ? TT::FLAG_LOWER : TT::FLAG_UPPER,
-      pos.checkers ? 1 : 0, bestMove, bestScore, rawStaticEval, ttPV, ply);
+      0, bestMove, bestScore, rawStaticEval, ttPV, ply);
 
     return bestScore;
   }
