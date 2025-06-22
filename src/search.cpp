@@ -78,7 +78,7 @@ namespace Search {
   DEFINE_PARAM_S(ZwsShallowerMargin, 11, 4);
 
   DEFINE_PARAM_B(AspWindowStartDepth, 4, 4, 34);
-  DEFINE_PARAM_B(AspWindowStartDelta, 10, 5, 25);
+  DEFINE_PARAM_B(AspWindowStartDelta, 6, 5, 25);
 
   int lmrTable[MAX_PLY][MAX_MOVES];
 
@@ -1116,8 +1116,11 @@ namespace Search {
         RootMove& rm = rootMoves[rootMoves.indexOf(move)];
         rm.nodes += nodesSearched - oldNodesSearched;
 
+        rm.averageScore = rm.averageScore != SCORE_NONE ? (rm.averageScore + score) / 2 : score;
+
         if (seenMoves == 1 || score > alpha) {
           rm.score = score;
+          
 
           rm.pvLength = (ss+1)->pvLength;
           rm.pv[0] = move;
@@ -1359,10 +1362,6 @@ namespace Search {
         tbBestMove = moveFromTbProbeRoot(result);
     }
 
-    // Search starting. Zero out the nodes of each root move
-    for (int i = 0; i < rootMoves.size(); i++)
-      rootMoves[i].nodes = 0;
-
     const int multiPV = std::min(int(UCI::Options["MultiPV"]), rootMoves.size());
 
     for (rootDepth = 1; rootDepth <= settings.depth; rootDepth++) {
@@ -1372,14 +1371,15 @@ namespace Search {
         break;
 
       for (pvIdx = 0; pvIdx < multiPV; pvIdx++) {
-        int window = AspWindowStartDelta;
+        int avgScore = rootMoves[0].averageScore;
+        int window = AspWindowStartDelta + avgScore * avgScore / 13000;
         Score alpha = -SCORE_INFINITE;
         Score beta  = SCORE_INFINITE;
         int failHighCount = 0;
 
         if (rootDepth >= AspWindowStartDepth) {
-          alpha = std::max(-SCORE_INFINITE, rootMoves[pvIdx].score - window);
-          beta  = std::min( SCORE_INFINITE, rootMoves[pvIdx].score + window);
+          alpha = std::max<int>(-SCORE_INFINITE, rootMoves[pvIdx].score - window);
+          beta  = std::min<int>( SCORE_INFINITE, rootMoves[pvIdx].score + window);
         }
 
         while (true) {

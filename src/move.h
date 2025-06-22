@@ -75,10 +75,18 @@ struct Move_Score {
 struct RootMove {
   Move move;
   int score;
+  int averageScore;
   int nodes;
 
   Move pv[MAX_PLY];
   int pvLength;
+
+  RootMove() {}
+
+  RootMove(Move _move) : 
+    move(_move), score(SCORE_NONE), averageScore(SCORE_NONE), 
+    nodes(0), pvLength(0) {
+  }
 };
 
 // This is very poorly written. TODO merge the following 2 structs
@@ -135,7 +143,7 @@ struct RootMoveList {
   }
 
   inline void add(Move move) {
-    moves[head++].move = move;
+    moves[head++] = RootMove(move);
   }
 
   inline int indexOf(Move move) const {
