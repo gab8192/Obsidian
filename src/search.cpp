@@ -1378,8 +1378,8 @@ namespace Search {
         int failHighCount = 0;
 
         if (rootDepth >= AspWindowStartDepth) {
-          alpha = std::max<int>(-SCORE_INFINITE, rootMoves[pvIdx].score - window);
-          beta  = std::min<int>( SCORE_INFINITE, rootMoves[pvIdx].score + window);
+          alpha = std::max(-SCORE_INFINITE, rootMoves[pvIdx].score - window);
+          beta  = std::min( SCORE_INFINITE, rootMoves[pvIdx].score + window);
         }
 
         while (true) {
