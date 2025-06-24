@@ -691,18 +691,20 @@ namespace Search {
     }
 
     // Detect draw
-    if (!IsRoot && (isRepetition(pos, ply) || pos.is50mrDraw()))
-      return SCORE_DRAW;
+    if (!IsRoot) {
+      if (isRepetition(pos, ply) || pos.is50mrDraw())
+        return SCORE_DRAW;
 
-    // Quit if we are close to reaching max ply
-    if (ply >= MAX_PLY - 4)
-      return pos.checkers ? SCORE_DRAW : adjustEval(pos, doEvaluation(pos), ss);
+      // Quit if we are close to reaching max ply
+      if (ply >= MAX_PLY - 4)
+        return pos.checkers ? SCORE_DRAW : adjustEval(pos, doEvaluation(pos), ss);
 
-    // Mate distance pruning
-    alpha = std::max(alpha, ply - SCORE_MATE);
-    beta = std::min(beta, SCORE_MATE - ply - 1);
-    if (alpha >= beta)
-      return alpha;
+      // Mate distance pruning
+      alpha = std::max(alpha, ply - SCORE_MATE);
+      beta = std::min(beta, SCORE_MATE - ply - 1);
+      if (alpha >= beta)
+        return alpha;
+    }
 
     // Probe TT
     const Key posTtKey = pos.key ^ ZOBRIST_50MR[pos.halfMoveClock];
