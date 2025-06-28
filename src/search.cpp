@@ -672,7 +672,7 @@ namespace Search {
         Threads::stopSearch();
 
     if (Threads::isSearchStopped())
-      return SCORE_DRAW;
+      return 0;
 
     // Init node
     ss->seenMoves = 0;
@@ -929,7 +929,7 @@ namespace Search {
         cancelMove();
 
         if (Threads::isSearchStopped())
-          return SCORE_DRAW;
+          return 0;
 
         if (score >= probcutBeta) {
           ttEntry->store(posTtKey, TT::FLAG_LOWER, depth - 3, move, score, rawStaticEval, ttPV, ply);
@@ -1099,8 +1099,10 @@ namespace Search {
           if (reducedDepth < newDepth)
             score = -negamax<false>(newPos, -alpha - 1, -alpha, newDepth, !cutNode, ss + 1);
 
-          int bonus = score <= alpha ? -statMalus(newDepth) : score >= beta ? statBonus(newDepth) : 0;
-          addToContHistory(pos, bonus, move, ss);
+          if (!Threads::isSearchStopped()) {
+            int bonus = score <= alpha ? -statMalus(newDepth) : score >= beta ? statBonus(newDepth) : 0;
+            addToContHistory(pos, bonus, move, ss);
+          }
         }
       }
       else if (!IsPV || seenMoves > 1)
@@ -1112,7 +1114,7 @@ namespace Search {
       cancelMove();
 
       if (Threads::isSearchStopped())
-        return SCORE_DRAW;
+        return 0;
 
       if (IsRoot) {
         RootMove& rm = rootMoves[rootMoves.indexOf(move)];
