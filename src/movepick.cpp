@@ -61,12 +61,12 @@ void MovePicker::scoreQuiets() {
   Threats threats;
   pos.calcThreats(threats);
 
-  int i = 0;
-  while (i < quiets.size()) {
-    Move move = quiets[i].move;
+  int i = quietIndex;
+  while (i < moves.size()) {
+    Move move = moves[i].move;
 
     if (move == ttMove || move == killerMove || move == counterMove) {
-      quiets.remove(i);
+      moves.remove(i);
       continue;
     }
 
@@ -87,7 +87,7 @@ void MovePicker::scoreQuiets() {
       if (threats.byPawn & to) threatScore -= 16384;
     }
 
-    quiets[i++].score =
+    moves[i++].score =
         threatScore
       + mainHist[pos.sideToMove][move_from_to(move)]
       + pawnHist[PhIndex(pos.pawnKey)][pieceTo(pos, move)]
@@ -100,18 +100,18 @@ void MovePicker::scoreQuiets() {
 
 void MovePicker::scoreCaptures() {
   int i = 0;
-  while (i < captures.size()) {
-    Move move = captures[i].move;
+  while (i < moves.size()) {
+    Move move = moves[i].move;
 
     if (move == ttMove) {
-      captures.remove(i);
+      moves.remove(i);
       continue;
     }
 
     MoveType mt = move_type(move);
     PieceType captured = piece_type(pos.board[move_to(move)]);
 
-    captures[i++].score =
+    moves[i++].score =
         PIECE_VALUE[mt == MT_EN_PASSANT ? PAWN : captured] * 16
       + (mt == MT_PROMOTION) * 16384
       + capHist[pieceTo(pos, move)][captured];
@@ -133,16 +133,17 @@ Move MovePicker::nextMove(bool skipQuiets) {
   case QS_GEN_CAPTURES:
   case GEN_CAPTURES:
   {
-    getStageMoves(pos, ADD_CAPTURES, &captures);
+    getStageMoves(pos, ADD_CAPTURES, &moves);
     scoreCaptures();
+    capCount = moves.size();
     ++stage;
     goto select;
   }
   case IN_CHECK_PLAY_CAPTURES:
   case QS_PLAY_CAPTURES:
   {
-    if (capIndex < captures.size())
-      return nextMove0(captures, capIndex++).move;
+    if (capIndex < capCount)
+      return nextMove0(moves, capIndex++).move;
 
     if (stage == QS_PLAY_CAPTURES && !genQuietChecks)
       return MOVE_NONE;
@@ -152,13 +153,12 @@ Move MovePicker::nextMove(bool skipQuiets) {
   }
   case PLAY_GOOD_CAPTURES:
   {
-    while (capIndex < captures.size()) {
-      Move_Score move = nextMove0(captures, capIndex++);
+    while (capIndex < capCount) {
+      Move_Score move = nextMove0(moves, capIndex++);
       int realMargin = searchType == PVS ? (- move.score / 32) : seeMargin;
       if (pos.seeGe(move.move, realMargin) && !isUnderPromo(move.move)) // good capture
         return move.move;
-
-      badCaptures.add(move);
+      moves[badCapCount++] = move;
     }
 
     if (searchType == PROBCUT)
@@ -188,8 +188,8 @@ Move MovePicker::nextMove(bool skipQuiets) {
       stage = PLAY_BAD_CAPTURES;
       goto select;
     }
-
-    getStageMoves(pos, ADD_QUIETS, &quiets);
+    quietIndex = moves.size();
+    getStageMoves(pos, ADD_QUIETS, &moves);
     scoreQuiets();
 
     ++stage;
@@ -203,8 +203,8 @@ Move MovePicker::nextMove(bool skipQuiets) {
       goto select;
     }
 
-    if (quietIndex < quiets.size())
-      return nextMove0(quiets, quietIndex++).move;
+    if (quietIndex < moves.size())
+      return nextMove0(moves, quietIndex++).move;
 
     if (stage == IN_CHECK_PLAY_QUIETS)
       return MOVE_NONE;
@@ -214,21 +214,22 @@ Move MovePicker::nextMove(bool skipQuiets) {
   }
   case PLAY_BAD_CAPTURES:
   {
-    if (badCapIndex < badCaptures.size())
-      return badCaptures[badCapIndex++].move;
+    if (badCapIndex < badCapCount)
+      return moves[badCapIndex++].move;
 
     return MOVE_NONE;
   }
   case QS_GEN_QUIET_CHECKS:
   {
-    getQuietChecks(pos, &quiets);
+    quietIndex = moves.size();
+    getQuietChecks(pos, &moves);
     ++stage;
     goto select;
   }
   case QS_PLAY_QUIET_CHECKS:
   {
-    while (quietIndex < quiets.size()) {
-      Move move = quiets[quietIndex++].move;
+    while (quietIndex < moves.size()) {
+      Move move = moves[quietIndex++].move;
       if (move != ttMove)
         return move;
     }
