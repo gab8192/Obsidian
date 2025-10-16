@@ -1108,8 +1108,11 @@ namespace Search {
       else if (!IsPV || seenMoves > 1)
         score = -negamax<false>(newPos, -alpha - 1, -alpha, newDepth, !cutNode, ss + 1);
 
-      if (IsPV && (seenMoves == 1 || score > alpha))
+      if (IsPV && (seenMoves == 1 || score > alpha)) {
+        if (move == ttMove && ttDepth >= 2 && rootDepth >= 10)
+          newDepth = std::max(newDepth, 1);
         score = -negamax<true>(newPos, -beta, -alpha, newDepth, false, ss + 1);
+	  }
 
       cancelMove();
 
