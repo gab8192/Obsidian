@@ -2,7 +2,13 @@
 
 #include <algorithm>
 #include <cstdint>
+
+#if defined(__x86_64__) || defined(_M_X64)
 #include <immintrin.h>
+#elif defined(__ARM_NEON)
+#include <arm_neon.h>
+#include "sse2neon.h"
+#endif
 
 namespace SIMD {
 
@@ -131,7 +137,7 @@ namespace SIMD {
     return _mm_cvtss_f32(sum_32);
   }
 
-#elif defined(__SSSE3__)
+#elif defined(__SSSE3__) || defined(__ARM_NEON)
 
   using VecI = __m128i;
   using VecF = __m128;
