@@ -5,7 +5,9 @@
 #include <cstdint>
 #include <cstring>
 #include <iostream>
+#if defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
 #include <nmmintrin.h>
+#endif
 #include <thread>
 
 const std::string engineVersion = "dev-16.15";

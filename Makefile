@@ -1,8 +1,14 @@
+CXX = g++
+CC = gcc
+
 ifeq ($(OS),Windows_NT)
 	EXE := Obsidian.exe
 else
 	EXE := Obsidian
 endif
+
+UNAME_S := $(shell uname -s)
+UNAME_M := $(shell uname -m)
 
 DEFAULT_NET = net89perm.bin
 
@@ -22,12 +28,24 @@ FILES = $(wildcard src/*.cpp) src/fathom/src/tbprobe.c
 OBJS = $(FILES:.cpp=.o)
 OBJS := $(OBJS:.c=.o)
 
-OPTIMIZE = -O3 -fno-stack-protector -fno-math-errno -funroll-loops -fno-exceptions -flto -flto-partition=one
+OPTIMIZE = -O3 -fno-stack-protector -fno-math-errno -funroll-loops -fno-exceptions -flto
 
-FLAGS = -s -pthread -std=c++17 -DNDEBUG -DEvalFile=\"$(EVALFILE)\" $(OPTIMIZE)
+ifneq ($(UNAME_S), Darwin)
+	OPTIMIZE += -flto-partition=one
+endif
+
+COMMON_FLAGS = -pthread -DNDEBUG -DEvalFile=\"$(EVALFILE)\" $(OPTIMIZE)
+CXXFLAGS = $(COMMON_FLAGS) -std=c++17
+CFLAGS = $(COMMON_FLAGS)
+
+ifneq ($(UNAME_S), Darwin)
+	CXXFLAGS += -s
+	CFLAGS += -s
+endif
 
 ifeq ($(OS),Windows_NT)
-	FLAGS += -static
+	CXXFLAGS += -static
+	CFLAGS += -static
 endif
 
 ifeq ($(build),)
@@ -35,58 +53,81 @@ ifeq ($(build),)
 endif
 
 ifeq ($(build), native)
-    FLAGS += -march=native
+    CXXFLAGS += -march=native
+    CFLAGS += -march=native
 else ifeq ($(findstring sse2, $(build)), sse2)
-	FLAGS += $(MSSE2)
+	CXXFLAGS += $(MSSE2)
+	CFLAGS += $(MSSE2)
 else ifeq ($(findstring ssse3, $(build)), ssse3)
-	FLAGS += $(MSSSE3)
+	CXXFLAGS += $(MSSSE3)
+	CFLAGS += $(MSSSE3)
 else ifeq ($(findstring avx2, $(build)), avx2)
-	FLAGS += $(MAVX2)
+	CXXFLAGS += $(MAVX2)
+	CFLAGS += $(MAVX2)
 else ifeq ($(findstring avx512, $(build)), avx512)
-	FLAGS += $(MAVX512)
+	CXXFLAGS += $(MAVX512)
+	CFLAGS += $(MAVX512)
 endif
 
 ifeq ($(build), native)
-	PROPS = $(shell echo | $(CC) -march=native -E -dM -)
-	ifneq ($(findstring __BMI2__, $(PROPS)),)
-		ifeq ($(findstring __znver1, $(PROPS)),)
-			ifeq ($(findstring __znver2, $(PROPS)),)
-				FLAGS += -DUSE_PEXT
-			else ifeq ($(shell uname), Linux)
-				ifneq ($(findstring AMD EPYC 7B, $(shell lscpu)),)
-					FLAGS += -DUSE_PEXT
+	ifeq ($(UNAME_M), x86_64)
+		PROPS = $(shell echo | $(CC) -march=native -E -dM -)
+		ifneq ($(findstring __BMI2__, $(PROPS)),)
+			ifeq ($(findstring __znver1, $(PROPS)),)
+				ifeq ($(findstring __znver2, $(PROPS)),)
+					CXXFLAGS += -DUSE_PEXT
+					CFLAGS += -DUSE_PEXT
+				else ifeq ($(shell uname), Linux)
+					ifneq ($(findstring AMD EPYC 7B, $(shell lscpu)),)
+						CXXFLAGS += -DUSE_PEXT
+						CFLAGS += -DUSE_PEXT
+					endif
 				endif
 			endif
 		endif
 	endif
 else ifeq ($(findstring avx512, $(build)), avx512)
-	FLAGS += -DUSE_PEXT -mbmi2
+	CXXFLAGS += -DUSE_PEXT -mbmi2
+	CFLAGS += -DUSE_PEXT -mbmi2
 else ifeq ($(findstring pext, $(build)), pext)
-	FLAGS += -DUSE_PEXT -mbmi2
+	CXXFLAGS += -DUSE_PEXT -mbmi2
+	CFLAGS += -DUSE_PEXT -mbmi2
 endif
 
 %.o: %.cpp
-	g++ $(FLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 %.o: %.c
-	gcc $(FLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 make: download-net $(FILES)
-	g++ $(FLAGS) $(FILES) -o $(EXE) -fprofile-generate="obs_pgo"
+ifeq ($(UNAME_S), Darwin)
+	$(CXX) $(CXXFLAGS) -fprofile-instr-generate -c src/*.cpp
+	$(CC) $(CFLAGS) -fprofile-instr-generate -c src/fathom/src/tbprobe.c
+	$(CXX) $(CXXFLAGS) -fprofile-instr-generate *.o -o $(EXE)
+	LLVM_PROFILE_FILE="obs_pgo.profraw" ./$(EXE) bench
+	xcrun llvm-profdata merge -output=obs_pgo.profdata obs_pgo.profraw
+	$(CXX) $(CXXFLAGS) -fprofile-instr-use=obs_pgo.profdata -c src/*.cpp
+	$(CC) $(CFLAGS) -fprofile-instr-use=obs_pgo.profdata -c src/fathom/src/tbprobe.c
+	$(CXX) $(CXXFLAGS) -fprofile-instr-use=obs_pgo.profdata *.o -o $(EXE)
+	rm -f *.o obs_pgo.profraw obs_pgo.profdata
+else
+	$(CXX) $(CXXFLAGS) $(FILES) -o $(EXE) -fprofile-generate="obs_pgo"
 ifeq ($(OS),Windows_NT)
 	$(EXE) bench
 else
 	./$(EXE) bench
 endif
-	g++ $(FLAGS) $(FILES) -o $(EXE) -fprofile-use="obs_pgo"
+	$(CXX) $(CXXFLAGS) $(FILES) -o $(EXE) -fprofile-use="obs_pgo"
 ifeq ($(OS),Windows_NT)
 	powershell.exe -Command "Remove-Item -Recurse -Force obs_pgo"
 else
 	rm -rf obs_pgo
 endif
+endif
 
 nopgo: download-net $(OBJS)
-	g++ $(FLAGS) $(OBJS) -o $(EXE)
+	$(CXX) $(CXXFLAGS) $(OBJS) -o $(EXE)
 
 clean:
 	rm -f $(OBJS)

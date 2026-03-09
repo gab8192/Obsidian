@@ -570,7 +570,7 @@ namespace Search {
     // Visit moves
     Move move;
 
-    while (move = movePicker.nextMove(false)) {
+    while ((move = movePicker.nextMove(false))) {
 
       TT::prefetch(pos.keyAfter(move));
 
@@ -910,7 +910,7 @@ namespace Search {
 
       Move move;
 
-      while (move = pcMovePicker.nextMove(false)) {
+      while ((move = pcMovePicker.nextMove(false))) {
 
         TT::prefetch(pos.keyAfter(move));
 
@@ -969,7 +969,7 @@ namespace Search {
 
     Move move;
 
-    while (move = movePicker.nextMove(skipQuiets)) {
+    while ((move = movePicker.nextMove(skipQuiets))) {
       if (move == excludedMove)
         continue;
 
